@@ -25,9 +25,9 @@ security, and both test suites have passed.
 ## Bootstrap
 
 The repository was seeded with verified `master` and `develop` roots before
-branch protections could exist. Every subsequent change, including this
-protection-verification update, arrives through a pull request with the full
-required check set green.
+branch protections could exist. After branch protection is configured, every
+subsequent change must arrive through a pull request with the full required
+check set green.
 
 ## Push, scheduled, and release workflows
 
