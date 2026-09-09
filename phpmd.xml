@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<ruleset name="JOOservices CrawlerX" xmlns="http://pmd.sf.net/ruleset/1.0.0">
+    <description>
+        Full PHPMD with crawler-library relaxations matching jooservices/client.
+        StaticAccess is excluded because adapters call CodeNormalizer / SizeParser facades.
+        Parser classes are data extractors: codesize limits that fight CSS-selector methods
+        are excluded here, not via per-class suppressions or path exclusions.
+    </description>
+    <rule ref="rulesets/cleancode.xml">
+        <exclude name="BooleanArgumentFlag"/>
+        <exclude name="StaticAccess"/>
+        <exclude name="ElseExpression"/>
+        <exclude name="MissingImport"/>
+        <exclude name="ErrorControlOperator"/>
+    </rule>
+    <rule ref="rulesets/codesize.xml">
+        <exclude name="TooManyPublicMethods"/>
+        <exclude name="CouplingBetweenObjects"/>
+        <exclude name="ExcessiveClassComplexity"/>
+        <exclude name="TooManyFields"/>
+        <exclude name="ExcessivePublicCount"/>
+        <exclude name="CyclomaticComplexity"/>
+        <exclude name="NPathComplexity"/>
+        <exclude name="ExcessiveMethodLength"/>
+        <exclude name="ExcessiveParameterList"/>
+    </rule>
+    <rule ref="rulesets/controversial.xml"/>
+    <rule ref="rulesets/design.xml">
+        <exclude name="CouplingBetweenObjects"/>
+        <exclude name="NumberOfChildren"/>
+    </rule>
+    <rule ref="rulesets/naming.xml">
+        <exclude name="ShortVariable"/>
+        <exclude name="LongVariable"/>
+    </rule>
+    <rule ref="rulesets/unusedcode.xml">
+        <exclude name="UnusedFormalParameter"/>
+    </rule>
+</ruleset>

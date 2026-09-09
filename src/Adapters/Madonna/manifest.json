@@ -1,0 +1,5 @@
+{
+  "slug": "madonna", "name": "Madonna", "version": "1.0.0", "description": "Crawler for official Madonna movie listings, covers, galleries, and details", "author": "JOOservices", "requires": {"php": ">=8.5"},
+  "adapter": {"class": "JOOservices\\CrawlerX\\Adapters\\Shared\\Catalog\\ManifestCatalogCrawler", "capabilities": ["listing", "detail"]}, "base_url": "https://madonna-av.com",
+  "runtime": {"fixtureSamples": [{"url": "https://madonna-av.com/top", "name": "listing.html", "type": "listing"}, {"url": "https://madonna-av.com/works/detail/JUVR281", "name": "detail-juvr281.html", "type": "detail"}], "defaultCrawlConfig": {"timeout": 45}, "defaultThrottle": {"default_gap_seconds": 10, "min_gap_seconds": 5, "max_gap_seconds": 60}, "playwrightFetchEnabled": true}, "type": "site"
+}

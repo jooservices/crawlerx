@@ -1,0 +1,5 @@
+{
+  "slug": "ideapocket", "name": "IDEAPOCKET", "version": "1.0.0", "description": "Crawler for official IDEAPOCKET movie listings, covers, galleries, and details", "author": "JOOservices", "requires": {"php": ">=8.5"},
+  "adapter": {"class": "JOOservices\\CrawlerX\\Adapters\\Shared\\Catalog\\ManifestCatalogCrawler", "capabilities": ["listing", "detail"]}, "base_url": "https://ideapocket.com",
+  "runtime": {"fixtureSamples": [{"url": "https://ideapocket.com/top", "name": "listing.html", "type": "listing"}, {"url": "https://ideapocket.com/works/detail/IPZZ972", "name": "detail-ipzz972.html", "type": "detail"}], "defaultCrawlConfig": {"timeout": 45}, "defaultThrottle": {"default_gap_seconds": 10, "min_gap_seconds": 5, "max_gap_seconds": 60}, "playwrightFetchEnabled": true}, "type": "site"
+}

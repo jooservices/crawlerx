@@ -1,0 +1,10 @@
+{
+  "slug": "javdatabase",
+  "source_url": "https://www.javdatabase.com/idols/",
+  "captured_at": "2026-08-28T21:57:57Z",
+  "http_status": 200,
+  "content_hash": "3c0a87ab0f0e2dfdfc7164de18542878558092061e301c9c75465072c6f12884",
+  "target_type": "listing",
+  "sanitized": false,
+  "notes": "Live capture through Playwright."
+}

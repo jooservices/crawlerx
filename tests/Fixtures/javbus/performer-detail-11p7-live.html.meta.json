@@ -1,0 +1,10 @@
+{
+  "slug": "javbus",
+  "source_url": "https://www.javbus.com/en/star/11p7",
+  "captured_at": "2026-08-28T22:59:00Z",
+  "http_status": 200,
+  "content_hash": "09f8b74badae93b27a7c9ba8a0646440f8e8f73ed6dd2e02ff1bef1b2539eb76",
+  "target_type": "performer_detail",
+  "sanitized": false,
+  "notes": "Live Playwright capture after JavBus age-verification cookie bypass"
+}

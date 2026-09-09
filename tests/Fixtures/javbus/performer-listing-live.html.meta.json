@@ -1,0 +1,10 @@
+{
+  "slug": "javbus",
+  "source_url": "https://www.javbus.com/en/actresses",
+  "captured_at": "2026-08-28T22:59:00Z",
+  "http_status": 200,
+  "content_hash": "fe51333abec13a10b58dd3c130e07ee3e1d914c6336856012657013a36e79eb4",
+  "target_type": "performer_listing",
+  "sanitized": false,
+  "notes": "Live Playwright capture after JavBus age-verification cookie bypass"
+}

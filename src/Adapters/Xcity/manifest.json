@@ -1,0 +1,134 @@
+{
+    "slug": "xcity",
+    "name": "XCITY",
+    "version": "1.0.0",
+    "description": "Crawler for XCITY",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\Xcity\\XcityCrawler",
+        "capabilities": [
+            "listing",
+            "detail",
+            "performer_listing",
+            "performer_detail"
+        ]
+    },
+    "base_url": "https://xxx.xcity.jp",
+    "pagination": {
+        "strategy": "query",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 2592000,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        },
+        {
+            "key": "performer_movie_crawl_enabled",
+            "type": "bool",
+            "default": true,
+            "tier": "operational",
+            "label": "Performer Movie Crawl Enabled"
+        },
+        {
+            "key": "performer_detail_dispatch_enabled",
+            "type": "bool",
+            "default": true,
+            "tier": "operational",
+            "label": "Performer Detail Dispatch Enabled"
+        }
+    ],
+    "runtime": {
+        "targetProfiles": {
+            "xcity_idol_index": {
+                "label": "XCity Idol Index",
+                "url": "https://xxx.xcity.jp/idol/"
+            },
+            "xcity_idol_kana": {
+                "label": "XCity Idol Kana",
+                "url": "https://xxx.xcity.jp/idol/?kana=%E3%81%82"
+            },
+            "new": {
+                "label": "AVOD New Releases",
+                "url": "https://xxx.xcity.jp/avod/list/?style=simple"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "new",
+                "url": "https://xxx.xcity.jp/avod/list/?style=simple",
+                "paginated": true,
+                "loop": true,
+                "priority": 2
+            },
+            {
+                "url_type": "xcity_idol_index",
+                "url": "https://xxx.xcity.jp/idol/",
+                "paginated": false,
+                "loop": true,
+                "priority": 0
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://xxx.xcity.jp/avod/list/",
+                "name": "listing_page1.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://xxx.xcity.jp/avod/detail/?id=186022",
+                "name": "detail-placeholder.html",
+                "type": "detail"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 10,
+            "detail_delay_seconds": 10,
+            "cycle_delay_seconds": 2592000,
+            "performer_movie_crawl_enabled": true,
+            "performer_detail_dispatch_enabled": true
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 5,
+            "min_gap_seconds": 2,
+            "max_gap_seconds": 30
+        },
+        "playwrightFetchEnabled": false,
+        "queueSupervisor": {
+            "balance": "simple",
+            "minProcesses": 1,
+            "maxProcesses": 1,
+            "nice": 10
+        }
+    },
+    "type": "site"
+}

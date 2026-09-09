@@ -1,0 +1,10 @@
+{
+  "slug": "javlibrary",
+  "source_url": "https://www.javlibrary.com/en/javme3rasy.html",
+  "captured_at": "2026-08-28T17:03:42Z",
+  "http_status": 200,
+  "content_hash": "c87250969db9697829281989427f8c664f4a4a59a5c2d98fd795f0fe7c772946",
+  "target_type": "detail",
+  "sanitized": false,
+  "notes": "Live capture through FlareSolverr after Cloudflare challenge bypass"
+}

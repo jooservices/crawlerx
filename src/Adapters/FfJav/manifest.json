@@ -1,0 +1,154 @@
+{
+    "slug": "ffjav",
+    "name": "FFJav",
+    "version": "1.0.0",
+    "description": "Crawler for FFJav",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\FfJav\\FfJavCrawler",
+        "capabilities": [
+            "listing",
+            "detail"
+        ]
+    },
+    "base_url": "https://ffjav.com",
+    "pagination": {
+        "strategy": "path",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 1,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 3600,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        },
+        {
+            "key": "performer_movie_crawl_enabled",
+            "type": "bool",
+            "default": true,
+            "tier": "operational",
+            "label": "Performer Movie Crawl Enabled"
+        }
+    ],
+    "runtime": {
+        "targetProfiles": {
+            "new": {
+                "label": "Latest",
+                "url": "https://ffjav.com/javtorrent/"
+            },
+            "popular": {
+                "label": "Popular",
+                "url": "https://ffjav.com/popular/"
+            },
+            "date_archive": {
+                "label": "Daily",
+                "url_template": "https://ffjav.com/{date}/",
+                "date_format": "Y/m/d"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "new",
+                "url": "https://ffjav.com/javtorrent/",
+                "paginated": true,
+                "loop": true,
+                "priority": 6
+            },
+            {
+                "url_type": "popular",
+                "url": "https://ffjav.com/popular/",
+                "paginated": true,
+                "loop": true,
+                "priority": 5
+            },
+            {
+                "url_type": "custom",
+                "url": "https://ffjav.com/category/amateur",
+                "paginated": true,
+                "loop": true,
+                "priority": 3,
+                "optional": true
+            },
+            {
+                "url_type": "custom",
+                "url": "https://ffjav.com/category/jav-censored",
+                "paginated": true,
+                "loop": true,
+                "priority": 2,
+                "optional": true
+            },
+            {
+                "url_type": "custom",
+                "url": "https://ffjav.com/category/jav-uncensored",
+                "paginated": true,
+                "loop": true,
+                "priority": 1,
+                "optional": true
+            },
+            {
+                "url_type": "date_archive",
+                "url": "https://ffjav.com/2026/06/06",
+                "paginated": true,
+                "loop": true,
+                "priority": 0
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://ffjav.com/javtorrent",
+                "name": "listing-page-1.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://ffjav.com/torrent/mida-768-%e5%a6%bb%e3%81%8c%e5%b8%b0%e7%9c%81%e4%b8%ad%e3%80%812%e4%ba%ba%e3%81%8d%e3%82%8a%e3%81%ae%e8%87%aa%e5%ae%85%e3%81%a7%e4%bd%95%e3%81%a7%e3%82%82ok%e3%81%97%e3%81%a6%e3%81%8f%e3%82%8c",
+                "name": "detail-sample-1.html",
+                "type": "detail"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 10,
+            "detail_delay_seconds": 1,
+            "cycle_delay_seconds": 3600,
+            "performer_movie_crawl_enabled": true
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 4,
+            "min_gap_seconds": 1,
+            "max_gap_seconds": 20
+        },
+        "playwrightFetchEnabled": false,
+        "queueSupervisor": {
+            "minProcesses": 2,
+            "maxProcesses": 5
+        }
+    },
+    "type": "site"
+}

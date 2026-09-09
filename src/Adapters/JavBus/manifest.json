@@ -1,0 +1,117 @@
+{
+    "slug": "javbus",
+    "name": "JavBus",
+    "version": "1.0.0",
+    "description": "Crawler for JavBus",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\JavBus\\JavBusCrawler",
+        "capabilities": [
+            "listing",
+            "detail",
+            "performer_listing",
+            "performer_detail"
+        ]
+    },
+    "base_url": "https://www.javbus.com",
+    "pagination": {
+        "strategy": "path",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 2592000,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        },
+        {
+            "key": "performer_movie_crawl_enabled",
+            "type": "bool",
+            "default": true,
+            "tier": "operational",
+            "label": "Performer Movie Crawl Enabled"
+        },
+        {
+            "key": "performer_detail_dispatch_enabled",
+            "type": "bool",
+            "default": true,
+            "tier": "operational",
+            "label": "Performer Detail Dispatch Enabled"
+        }
+    ],
+    "runtime": {
+        "targetProfiles": {
+            "javbus_home": {
+                "label": "JavBus Latest",
+                "url": "https://www.javbus.com/en/"
+            },
+            "javbus_stars": {
+                "label": "JavBus Stars",
+                "url": "https://www.javbus.com/en/actresses"
+            }
+        },
+        "fixtureSamples": [
+            {
+                "url": "https://www.javbus.com/en/",
+                "name": "listing-live.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://www.javbus.com/en/NAMH-074",
+                "name": "detail-namh-074-live.html",
+                "type": "detail"
+            },
+            {
+                "url": "https://www.javbus.com/en/actresses",
+                "name": "performer-listing-live.html",
+                "type": "performer_listing"
+            },
+            {
+                "url": "https://www.javbus.com/en/star/11p7",
+                "name": "performer-detail-11p7-live.html",
+                "type": "performer_detail"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 10,
+            "detail_delay_seconds": 10,
+            "cycle_delay_seconds": 2592000,
+            "performer_movie_crawl_enabled": true,
+            "performer_detail_dispatch_enabled": true
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 8,
+            "min_gap_seconds": 3,
+            "max_gap_seconds": 45
+        },
+        "playwrightFetchEnabled": true
+    },
+    "type": "site"
+}

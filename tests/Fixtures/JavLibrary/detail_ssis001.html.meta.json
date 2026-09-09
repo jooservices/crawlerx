@@ -1,0 +1,10 @@
+{
+  "slug": "javlibrary",
+  "source_url": "https://www.javlibrary.com/en/?v=javli3abc1",
+  "captured_at": "2026-08-28T21:59:33Z",
+  "http_status": 200,
+  "content_hash": "b168951e8e05a5e0dee7fdfe5c98b008cb464ca6f198894d54967ba058af2c94",
+  "target_type": "detail",
+  "sanitized": false,
+  "notes": "Live capture of JAVLibrary Cloudflare \"Just a moment\" challenge page; kept as block-detection evidence."
+}

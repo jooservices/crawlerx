@@ -1,0 +1,5 @@
+{
+  "slug": "muramura", "name": "Muramura", "version": "1.0.0", "description": "Crawler for Muramura movie listings, covers, galleries, and details", "author": "JOOservices", "requires": {"php": ">=8.5"},
+  "adapter": {"class": "JOOservices\\CrawlerX\\Adapters\\Shared\\Catalog\\ManifestCatalogCrawler", "capabilities": ["listing", "detail"]}, "base_url": "https://www.muramura.tv",
+  "runtime": {"fixtureSamples": [{"url": "https://www.muramura.tv/", "name": "listing.html", "type": "listing"}, {"url": "https://www.muramura.tv/movies/020426_1218/", "name": "detail-020426_1218.html", "type": "detail"}], "defaultCrawlConfig": {"timeout": 45}, "defaultThrottle": {"default_gap_seconds": 10, "min_gap_seconds": 5, "max_gap_seconds": 60}, "playwrightFetchEnabled": true}, "type": "site"
+}

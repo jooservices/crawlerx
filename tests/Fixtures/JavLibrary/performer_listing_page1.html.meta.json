@@ -1,0 +1,10 @@
+{
+  "slug": "javlibrary",
+  "source_url": "https://www.javlibrary.com/en/star_list.php",
+  "captured_at": "2026-08-28T22:00:05Z",
+  "http_status": 200,
+  "content_hash": "dca746df9fd759c41bd3358ce50e63a96c37dd494470a59feb60fe9cb75def1c",
+  "target_type": "performer_listing",
+  "sanitized": false,
+  "notes": "Live capture of JAVLibrary Cloudflare \"Just a moment\" challenge page; kept as block-detection evidence."
+}

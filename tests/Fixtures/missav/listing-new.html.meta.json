@@ -1,0 +1,10 @@
+{
+  "slug": "missav",
+  "source_url": "https://missav.ws/en/new",
+  "captured_at": "2026-08-28T00:00:00Z",
+  "http_status": 200,
+  "content_hash": "6166089b44dc31c58710174d7049186af1c779396052246a2f0d4b2a97ebafe8",
+  "target_type": "listing",
+  "sanitized": false,
+  "notes": "Live capture through Playwright; retained as parser regression evidence"
+}

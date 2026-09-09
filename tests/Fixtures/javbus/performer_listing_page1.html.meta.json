@@ -1,0 +1,10 @@
+{
+  "slug": "javbus",
+  "source_url": "https://www.javbus.com/en/stars",
+  "captured_at": "2026-08-28T22:05:20Z",
+  "http_status": 200,
+  "content_hash": "fa97edcd8f78ffe7141e076738eae366cb324296243a4825a203bcada363f77a",
+  "target_type": "performer_listing",
+  "sanitized": false,
+  "notes": "Live capture of JavBus age/captcha (driver-verify) wall; kept as block-detection evidence."
+}

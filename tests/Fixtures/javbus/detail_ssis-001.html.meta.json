@@ -1,0 +1,10 @@
+{
+  "slug": "javbus",
+  "source_url": "https://www.javbus.com/en/SSIS-001",
+  "captured_at": "2026-08-28T22:05:13Z",
+  "http_status": 200,
+  "content_hash": "3b50e360eb57a93bf8ab377d35c7f931f4dd6b24eb040870eca06da373559802",
+  "target_type": "detail",
+  "sanitized": false,
+  "notes": "Live capture of JavBus age/captcha (driver-verify) wall; kept as block-detection evidence, not a movie detail page."
+}

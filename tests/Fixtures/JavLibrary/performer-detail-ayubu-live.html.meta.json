@@ -1,0 +1,10 @@
+{
+  "slug": "javlibrary",
+  "source_url": "https://www.javlibrary.com/en/vl_star.php?s=ayubu",
+  "captured_at": "2026-08-28T17:04:16Z",
+  "http_status": 200,
+  "content_hash": "91b5748534ca1483db7015b4707296098590fa69ff507c4f274c969981e356e3",
+  "target_type": "performer_detail",
+  "sanitized": false,
+  "notes": "Live capture through FlareSolverr after Cloudflare challenge bypass"
+}

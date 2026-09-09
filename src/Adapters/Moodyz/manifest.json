@@ -1,0 +1,5 @@
+{
+  "slug": "moodyz", "name": "MOODYZ", "version": "1.0.0", "description": "Crawler for official MOODYZ movie listings, covers, galleries, and details", "author": "JOOservices", "requires": {"php": ">=8.5"},
+  "adapter": {"class": "JOOservices\\CrawlerX\\Adapters\\Shared\\Catalog\\ManifestCatalogCrawler", "capabilities": ["listing", "detail"]}, "base_url": "https://moodyz.com",
+  "runtime": {"fixtureSamples": [{"url": "https://moodyz.com/top", "name": "listing.html", "type": "listing"}, {"url": "https://moodyz.com/works/detail/MIDA812", "name": "detail-mida812.html", "type": "detail"}], "defaultCrawlConfig": {"timeout": 45}, "defaultThrottle": {"default_gap_seconds": 10, "min_gap_seconds": 5, "max_gap_seconds": 60}, "playwrightFetchEnabled": true}, "type": "site"
+}

@@ -1,0 +1,22 @@
+{
+    "slug": "heyzo",
+    "name": "HEYZO",
+    "version": "1.0.0",
+    "description": "Crawler for HEYZO English movie listings and details",
+    "author": "JOOservices",
+    "requires": {"php": ">=8.5"},
+    "adapter": {"class": "JOOservices\\CrawlerX\\Adapters\\Heyzo\\HeyzoCrawler", "capabilities": ["listing", "detail"]},
+    "base_url": "https://en.heyzo.com",
+    "pagination": {"strategy": "path", "param": "page"},
+    "runtime": {
+        "targetProfiles": {"heyzo_all": {"label": "HEYZO All Movies", "url": "https://en.heyzo.com/listpages/all_1.html"}},
+        "fixtureSamples": [
+            {"url": "https://en.heyzo.com/listpages/all_1.html", "name": "listing.html", "type": "listing"},
+            {"url": "https://en.heyzo.com/moviepages/3927/index.html", "name": "detail.html", "type": "detail"}
+        ],
+        "defaultCrawlConfig": {"timeout": 45},
+        "defaultThrottle": {"default_gap_seconds": 10, "min_gap_seconds": 5, "max_gap_seconds": 60},
+        "playwrightFetchEnabled": false
+    },
+    "type": "site"
+}

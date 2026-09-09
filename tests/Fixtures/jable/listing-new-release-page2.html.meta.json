@@ -1,0 +1,10 @@
+{
+  "slug": "jable",
+  "source_url": "https://en.jable.tv/new-release/2/",
+  "captured_at": "2026-09-09T05:26:51Z",
+  "http_status": 200,
+  "content_hash": "03e3b6202abae4f3103597490396c3857c7fd6e9707086e9869f535309c8a7a1",
+  "target_type": "listing",
+  "sanitized": false,
+  "notes": "Live capture through Playwright (tools/fixtures/capture.mjs), replacing a hand-authored placeholder fixture."
+}

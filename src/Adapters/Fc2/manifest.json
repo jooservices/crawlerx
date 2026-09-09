@@ -1,0 +1,22 @@
+{
+    "slug": "fc2",
+    "name": "FC2 Content Market",
+    "version": "1.0.0",
+    "description": "Crawler for public FC2 Content Market movie listings and details",
+    "author": "JOOservices",
+    "requires": {"php": ">=8.5"},
+    "adapter": {"class": "JOOservices\\CrawlerX\\Adapters\\Fc2\\Fc2Crawler", "capabilities": ["listing", "detail"]},
+    "base_url": "https://adult.contents.fc2.com",
+    "pagination": {"strategy": "query", "param": "page"},
+    "runtime": {
+        "targetProfiles": {"fc2_home": {"label": "FC2 Adult Content", "url": "https://adult.contents.fc2.com/"}},
+        "fixtureSamples": [
+            {"url": "https://adult.contents.fc2.com/", "name": "listing.html", "type": "listing"},
+            {"url": "https://adult.contents.fc2.com/article/4968399/", "name": "detail.html", "type": "detail"}
+        ],
+        "defaultCrawlConfig": {"timeout": 45},
+        "defaultThrottle": {"default_gap_seconds": 10, "min_gap_seconds": 5, "max_gap_seconds": 60},
+        "playwrightFetchEnabled": false
+    },
+    "type": "site"
+}

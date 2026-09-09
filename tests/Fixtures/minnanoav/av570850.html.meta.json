@@ -1,0 +1,10 @@
+{
+  "slug": "minnanoav",
+  "source_url": "https://www.minnano-av.com/av570850.html",
+  "captured_at": "2026-09-09T05:26:51Z",
+  "http_status": 200,
+  "content_hash": "4e3333b211840237db4e280f2f093d32eea278dae2ea433b8837b92d52fc7e56",
+  "target_type": "detail",
+  "sanitized": false,
+  "notes": "Live capture through Playwright (tools/fixtures/capture.mjs), replacing a hand-authored placeholder fixture."
+}

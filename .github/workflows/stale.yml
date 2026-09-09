@@ -1,0 +1,32 @@
+name: Stale
+
+on:
+  schedule:
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    name: Mark stale issues and PRs
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Mark stale items
+        uses: actions/stale@v11
+        with:
+          stale-issue-message: 'This issue has been inactive for 60 days and is marked stale.'
+          stale-pr-message: 'This pull request has been inactive for 60 days and is marked stale.'
+          close-issue-message: 'This stale issue is closed after 14 additional inactive days.'
+          close-pr-message: 'This stale pull request is closed after 14 additional inactive days.'
+          days-before-stale: 60
+          days-before-close: 14
+          exempt-issue-labels: pinned,security,dependencies
+          exempt-pr-labels: pinned,security,dependencies

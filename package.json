@@ -1,0 +1,15 @@
+{
+    "name": "crawlerx-scripts",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "fixtures": "node tools/fixtures/capture.mjs --manifest",
+        "playwright:install": "npx playwright install chromium"
+    },
+    "dependencies": {
+        "playwright": "1.62.1",
+        "puppeteer": "^25.9.0",
+        "puppeteer-extra": "^3.3.6",
+        "puppeteer-extra-plugin-stealth": "^2.11.2"
+    }
+}

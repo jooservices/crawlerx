@@ -1,0 +1,10 @@
+{
+  "slug": "onepondo",
+  "source_url": "https://en.1pondo.tv/dyn/phpauto/movie_lists/list_newest_0.json",
+  "captured_at": "2026-08-28T22:12:59Z",
+  "http_status": 200,
+  "content_hash": "989f5e2cd70fef6f9b5813a4224d242915c2333e5a9eeb7ab57670d087915196",
+  "target_type": "listing",
+  "sanitized": false,
+  "notes": "Live capture via curl (JSON API; Playwright is unsuitable for JSON endpoints)."
+}

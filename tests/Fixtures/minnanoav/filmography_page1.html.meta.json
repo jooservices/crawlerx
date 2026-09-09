@@ -1,0 +1,10 @@
+{
+  "slug": "minnanoav",
+  "source_url": "https://www.minnano-av.com/actress.php?actress_id=945093",
+  "captured_at": "2026-09-09T05:26:51Z",
+  "http_status": 200,
+  "content_hash": "f081191bf096d65ec5290f8f64f6703338b897eb769ebc4abf2f8c1c2372bf9d",
+  "target_type": "listing",
+  "sanitized": false,
+  "notes": "Live capture through Playwright (tools/fixtures/capture.mjs), replacing a hand-authored placeholder fixture."
+}

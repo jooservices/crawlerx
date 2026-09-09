@@ -1,0 +1,119 @@
+{
+    "slug": "minnanoav",
+    "name": "Minnano AV",
+    "version": "1.0.0",
+    "description": "Crawler for Minnano AV",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\MinnanoAv\\MinnanoAvCrawler",
+        "capabilities": [
+            "listing",
+            "detail",
+            "performer_listing",
+            "performer_detail"
+        ]
+    },
+    "base_url": "https://www.minnano-av.com",
+    "pagination": {
+        "strategy": "query",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 2592000,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        },
+        {
+            "key": "performer_movie_crawl_enabled",
+            "type": "bool",
+            "default": false,
+            "tier": "operational",
+            "label": "Performer Movie Crawl Enabled"
+        },
+        {
+            "key": "performer_detail_dispatch_enabled",
+            "type": "bool",
+            "default": true,
+            "tier": "operational",
+            "label": "Performer Detail Dispatch Enabled"
+        }
+    ],
+    "runtime": {
+        "targetProfiles": {
+            "minnano_actress_index": {
+                "label": "Minnano AV Actress Index",
+                "url": "https://www.minnano-av.com/actress_list.php"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "minnano_actress_index",
+                "url": "https://www.minnano-av.com/actress_list.php",
+                "paginated": true,
+                "loop": true,
+                "priority": 0
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://www.minnano-av.com/actress_list.php",
+                "name": "listing_page1.html",
+                "type": "performer_listing"
+            },
+            {
+                "url": "https://www.minnano-av.com/actress945093.html",
+                "name": "detail_rich.html",
+                "type": "performer_detail"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 10,
+            "detail_delay_seconds": 10,
+            "cycle_delay_seconds": 2592000,
+            "performer_movie_crawl_enabled": false,
+            "performer_detail_dispatch_enabled": true
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 8,
+            "min_gap_seconds": 3,
+            "max_gap_seconds": 45
+        },
+        "playwrightFetchEnabled": false,
+        "queueSupervisor": {
+            "balance": "simple",
+            "minProcesses": 1,
+            "maxProcesses": 1,
+            "nice": 10
+        }
+    },
+    "type": "site"
+}

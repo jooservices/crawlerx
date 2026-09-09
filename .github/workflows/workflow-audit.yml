@@ -1,0 +1,60 @@
+name: Workflow audit
+
+on:
+  push:
+    branches: [master, develop]
+    paths: ['.github/**']
+  pull_request:
+    branches: [master, develop]
+    paths: ['.github/**']
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  actionlint:
+    name: Actionlint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Run actionlint
+        run: |
+          curl -sSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash | bash
+          ./actionlint -color
+
+  zizmor:
+    name: Zizmor
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Run Zizmor
+        uses: zizmorcore/zizmor-action@70fb788f84895a7701f5643d103d587e460b5c99 # v0.6.3
+        with:
+          format: sarif
+          output: zizmor.sarif
+      - name: Upload Zizmor SARIF
+        if: always() && hashFiles('zizmor.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: zizmor.sarif
+          category: zizmor

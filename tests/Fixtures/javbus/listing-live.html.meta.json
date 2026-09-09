@@ -1,0 +1,10 @@
+{
+  "slug": "javbus",
+  "source_url": "https://www.javbus.com/en/",
+  "captured_at": "2026-08-28T22:58:00Z",
+  "http_status": 200,
+  "content_hash": "39f2bd6292915387e0cbd4a984eca7c59ed2afbb70457d1c6a7a9e865f2f5fda",
+  "target_type": "listing",
+  "sanitized": false,
+  "notes": "Live Playwright capture after JavBus age-verification cookie bypass"
+}

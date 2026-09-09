@@ -1,0 +1,5 @@
+{
+  "slug": "pacopacomama", "name": "Pacopacomama", "version": "1.0.0", "description": "Crawler for Pacopacomama movie listings, covers, galleries, and details", "author": "JOOservices", "requires": {"php": ">=8.5"},
+  "adapter": {"class": "JOOservices\\CrawlerX\\Adapters\\Shared\\Catalog\\ManifestCatalogCrawler", "capabilities": ["listing", "detail"]}, "base_url": "https://www.pacopacomama.com",
+  "runtime": {"fixtureSamples": [{"url": "https://www.pacopacomama.com/", "name": "listing.html", "type": "listing"}, {"url": "https://www.pacopacomama.com/movies/090826_100/", "name": "detail-090826_100.html", "type": "detail"}], "defaultCrawlConfig": {"timeout": 45}, "defaultThrottle": {"default_gap_seconds": 10, "min_gap_seconds": 5, "max_gap_seconds": 60}, "playwrightFetchEnabled": true}, "type": "site"
+}

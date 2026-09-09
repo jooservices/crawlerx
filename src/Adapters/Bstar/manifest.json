@@ -1,0 +1,5 @@
+{
+  "slug": "bstar", "name": "Bstar", "version": "1.0.0", "description": "Crawler for the official Bstar performer directory and profiles", "author": "JOOservices", "requires": {"php": ">=8.5"},
+  "adapter": {"class": "JOOservices\\CrawlerX\\Adapters\\Shared\\PerformerDirectory\\ManifestPerformerDirectoryCrawler", "capabilities": ["performer_listing", "performer_detail"]}, "base_url": "https://bstar-pro.com",
+  "runtime": {"fixtureSamples": [{"url": "https://bstar-pro.com/models.html", "name": "models.html", "type": "performer_listing"}, {"url": "https://bstar-pro.com/model.html?mid=410", "name": "detail-410.html", "type": "performer_detail"}], "defaultCrawlConfig": {"timeout": 45}, "defaultThrottle": {"default_gap_seconds": 10, "min_gap_seconds": 5, "max_gap_seconds": 60}, "playwrightFetchEnabled": true}, "type": "site"
+}

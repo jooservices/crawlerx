@@ -1,0 +1,10 @@
+{
+  "slug": "missav",
+  "source_url": "https://missav.ws/en/fns-247",
+  "captured_at": "2026-08-28T00:00:00Z",
+  "http_status": 200,
+  "content_hash": "854ef1107650369ad588d7391994e1e74cd3a9e7e1f8577c9f92e4eaf6f45138",
+  "target_type": "detail",
+  "sanitized": false,
+  "notes": "Live capture through Playwright; retained as parser regression evidence"
+}

@@ -1,0 +1,10 @@
+{
+  "slug": "javbus",
+  "source_url": "https://www.javbus.com/en/",
+  "captured_at": "2026-08-28T22:05:05Z",
+  "http_status": 200,
+  "content_hash": "6ebb751fecd73b5035238abc0f8d76c4b4c7c5b2db62a2a213cbd2458d1be13f",
+  "target_type": "listing",
+  "sanitized": false,
+  "notes": "Live capture of JavBus age/captcha (driver-verify) wall; kept as block-detection evidence, not a movie listing."
+}

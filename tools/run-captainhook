@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+
+exec docker compose run --rm --no-deps php vendor/bin/captainhook "$@"

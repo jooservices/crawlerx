@@ -1,0 +1,10 @@
+{
+  "slug": "xcity",
+  "source_url": "https://xxx.xcity.jp/avod/detail/?id=186022",
+  "captured_at": "2026-08-28T22:04:29Z",
+  "http_status": 200,
+  "content_hash": "5869eab939c01b469670501186a950a90dcf9cd5d0060eb6d76e5a55bf67b503",
+  "target_type": "detail",
+  "sanitized": false,
+  "notes": "Live capture through Playwright."
+}

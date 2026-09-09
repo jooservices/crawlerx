@@ -1,0 +1,22 @@
+{
+    "slug": "tokyohot",
+    "name": "Tokyo-Hot",
+    "version": "1.0.0",
+    "description": "Crawler for Tokyo-Hot movie listings and details with accepted landing URL",
+    "author": "JOOservices",
+    "requires": {"php": ">=8.5"},
+    "adapter": {"class": "JOOservices\\CrawlerX\\Adapters\\TokyoHot\\TokyoHotCrawler", "capabilities": ["listing", "detail"]},
+    "base_url": "https://my.tokyo-hot.com",
+    "pagination": {"strategy": "query", "param": "page"},
+    "runtime": {
+        "targetProfiles": {"tokyohot_home": {"label": "Tokyo-Hot Accepted Home", "url": "https://my.tokyo-hot.com/index?lang=en"}},
+        "fixtureSamples": [
+            {"url": "https://my.tokyo-hot.com/index?lang=en", "name": "listing.html", "type": "listing"},
+            {"url": "https://my.tokyo-hot.com/product/crazyasia097085/", "name": "detail.html", "type": "detail"}
+        ],
+        "defaultCrawlConfig": {"timeout": 45},
+        "defaultThrottle": {"default_gap_seconds": 10, "min_gap_seconds": 5, "max_gap_seconds": 60},
+        "playwrightFetchEnabled": false
+    },
+    "type": "site"
+}

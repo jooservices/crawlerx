@@ -1,0 +1,22 @@
+{
+    "slug": "caribbeancom",
+    "name": "Caribbeancom",
+    "version": "1.0.0",
+    "description": "Crawler for Caribbeancom English movie listings and details",
+    "author": "JOOservices",
+    "requires": {"php": ">=8.5"},
+    "adapter": {"class": "JOOservices\\CrawlerX\\Adapters\\CaribbeanCom\\CaribbeanComCrawler", "capabilities": ["listing", "detail"]},
+    "base_url": "https://en.caribbeancom.com",
+    "pagination": {"strategy": "path", "param": "page"},
+    "runtime": {
+        "targetProfiles": {"caribbean_home": {"label": "Caribbeancom English Home", "url": "https://en.caribbeancom.com/eng/index2.htm"}},
+        "fixtureSamples": [
+            {"url": "https://en.caribbeancom.com/eng/index2.htm", "name": "listing.html", "type": "listing"},
+            {"url": "https://en.caribbeancom.com/eng/moviepages/080826-001/index.html", "name": "detail.html", "type": "detail"}
+        ],
+        "defaultCrawlConfig": {"timeout": 45},
+        "defaultThrottle": {"default_gap_seconds": 10, "min_gap_seconds": 5, "max_gap_seconds": 60},
+        "playwrightFetchEnabled": false
+    },
+    "type": "site"
+}

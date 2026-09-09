@@ -1,0 +1,56 @@
+name: CI post-merge
+
+on:
+  push:
+    branches: [master, develop]
+
+concurrency:
+  group: ci-post-merge-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate post-merge
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Build PHP image
+        run: tools/ci/docker-compose build php
+      - name: Install dependencies
+        run: tools/ci/docker-compose run --rm php composer install --no-interaction --prefer-dist
+      - name: Validate Composer metadata
+        run: tools/ci/docker-compose run --rm php composer validate --strict
+
+  test:
+    name: Test post-merge (${{ matrix.suite }})
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: true
+      matrix:
+        suite: [Unit, Feature]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Build PHP image
+        run: tools/ci/docker-compose build php
+      - name: Install dependencies
+        run: tools/ci/docker-compose run --rm php composer install --no-interaction --prefer-dist
+      - name: Run test suite with coverage
+        run: tools/ci/docker-compose run --rm php ./vendor/bin/phpunit --testsuite=${{ matrix.suite }} --coverage-clover=build/coverage/clover-${{ matrix.suite }}.xml
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: post-merge-coverage-${{ matrix.suite }}
+          path: build/coverage/clover-${{ matrix.suite }}.xml
+          if-no-files-found: error

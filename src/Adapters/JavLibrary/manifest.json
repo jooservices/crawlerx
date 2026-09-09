@@ -1,0 +1,117 @@
+{
+    "slug": "javlibrary",
+    "name": "JAVLibrary",
+    "version": "1.0.0",
+    "description": "Crawler for JAVLibrary",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\JavLibrary\\JavLibraryCrawler",
+        "capabilities": [
+            "listing",
+            "detail",
+            "performer_listing",
+            "performer_detail"
+        ]
+    },
+    "base_url": "https://www.javlibrary.com",
+    "pagination": {
+        "strategy": "query",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 2592000,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        },
+        {
+            "key": "performer_movie_crawl_enabled",
+            "type": "bool",
+            "default": true,
+            "tier": "operational",
+            "label": "Performer Movie Crawl Enabled"
+        },
+        {
+            "key": "performer_detail_dispatch_enabled",
+            "type": "bool",
+            "default": true,
+            "tier": "operational",
+            "label": "Performer Detail Dispatch Enabled"
+        }
+    ],
+    "runtime": {
+        "targetProfiles": {
+            "javlibrary_new_release": {
+                "label": "JAVLibrary New Release",
+                "url": "https://www.javlibrary.com/en/vl_newrelease.php"
+            },
+            "javlibrary_star_index": {
+                "label": "JAVLibrary Star Index",
+                "url": "https://www.javlibrary.com/en/star_list.php"
+            }
+        },
+        "fixtureSamples": [
+            {
+                "url": "https://www.javlibrary.com/en/vl_newrelease.php",
+                "name": "listing-live.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://www.javlibrary.com/en/javme3rasy.html",
+                "name": "detail-javme3rasy-live.html",
+                "type": "detail"
+            },
+            {
+                "url": "https://www.javlibrary.com/en/star_list.php?prefix=A",
+                "name": "performer-listing-live.html",
+                "type": "performer_listing"
+            },
+            {
+                "url": "https://www.javlibrary.com/en/vl_star.php?s=ayubu",
+                "name": "performer-detail-ayubu-live.html",
+                "type": "performer_detail"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 10,
+            "detail_delay_seconds": 10,
+            "cycle_delay_seconds": 2592000,
+            "performer_movie_crawl_enabled": true,
+            "performer_detail_dispatch_enabled": true
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 10,
+            "min_gap_seconds": 5,
+            "max_gap_seconds": 45
+        },
+        "playwrightFetchEnabled": true
+    },
+    "type": "site"
+}

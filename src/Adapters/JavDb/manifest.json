@@ -1,0 +1,22 @@
+{
+    "slug": "javdb",
+    "name": "JavDB",
+    "version": "1.0.0",
+    "description": "Crawler for JavDB movie listings and details",
+    "author": "JOOservices",
+    "requires": {"php": ">=8.5"},
+    "adapter": {"class": "JOOservices\\CrawlerX\\Adapters\\JavDb\\JavDbCrawler", "capabilities": ["listing", "detail"]},
+    "base_url": "https://javdb.com",
+    "pagination": {"strategy": "query", "param": "page"},
+    "runtime": {
+        "targetProfiles": {"javdb_home": {"label": "JavDB Home", "url": "https://javdb.com/"}},
+        "fixtureSamples": [
+            {"url": "https://javdb.com/", "name": "listing.html", "type": "listing"},
+            {"url": "https://javdb.com/v/a8yV0p", "name": "detail.html", "type": "detail"}
+        ],
+        "defaultCrawlConfig": {"timeout": 45},
+        "defaultThrottle": {"default_gap_seconds": 20, "min_gap_seconds": 20, "max_gap_seconds": 60},
+        "playwrightFetchEnabled": false
+    },
+    "type": "site"
+}

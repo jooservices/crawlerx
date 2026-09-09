@@ -1,0 +1,165 @@
+{
+    "slug": "javbtc",
+    "name": "JavBTC",
+    "version": "1.0.0",
+    "description": "Crawler for JavBTC",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\Javbtc\\JavbtcCrawler",
+        "capabilities": [
+            "listing",
+            "detail"
+        ]
+    },
+    "base_url": "https://javbtc.com",
+    "pagination": {
+        "strategy": "segment",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 2,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 3600,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        },
+        {
+            "key": "performer_movie_crawl_enabled",
+            "type": "bool",
+            "default": true,
+            "tier": "operational",
+            "label": "Performer Movie Crawl Enabled"
+        }
+    ],
+    "runtime": {
+        "targetProfiles": {
+            "new": {
+                "label": "New",
+                "url": "https://javbtc.com/"
+            },
+            "popular_pornstars": {
+                "label": "Popular pornstars",
+                "url": "https://javbtc.com/popular/pornstars"
+            },
+            "popular_categories": {
+                "label": "Popular categories",
+                "url": "https://javbtc.com/popular/categories"
+            },
+            "popular_channels": {
+                "label": "Popular channels",
+                "url": "https://javbtc.com/popular/channels"
+            },
+            "pornstars": {
+                "label": "Pornstars A-Z",
+                "url": "https://javbtc.com/pornstars"
+            },
+            "categories": {
+                "label": "Categories A-Z",
+                "url": "https://javbtc.com/categories"
+            },
+            "channels": {
+                "label": "Channels A-Z",
+                "url": "https://javbtc.com/channels"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "new",
+                "url": "https://javbtc.com/",
+                "paginated": true,
+                "loop": true,
+                "priority": 7,
+                "status": "paused"
+            },
+            {
+                "url_type": "popular",
+                "url": "https://javbtc.com/popular/pornstars",
+                "paginated": true,
+                "loop": true,
+                "priority": 6,
+                "status": "paused"
+            },
+            {
+                "url_type": "custom",
+                "url": "https://javbtc.com/popular/categories",
+                "paginated": true,
+                "loop": true,
+                "priority": 5,
+                "status": "paused"
+            },
+            {
+                "url_type": "custom",
+                "url": "https://javbtc.com/popular/channels",
+                "paginated": true,
+                "loop": true,
+                "priority": 4,
+                "status": "paused"
+            },
+            {
+                "url_type": "actress_listing",
+                "url": "https://javbtc.com/pornstars",
+                "paginated": true,
+                "loop": true,
+                "priority": 3,
+                "optional": true,
+                "status": "paused"
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://javbtc.com/",
+                "name": "listing-page-1.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://javbtc.com/r18/s1no1style-yua-mikami-sougouwiki-celebrity",
+                "name": "detail-sample-1.html",
+                "type": "detail"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 10,
+            "detail_delay_seconds": 2,
+            "cycle_delay_seconds": 3600,
+            "performer_movie_crawl_enabled": true
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 3,
+            "min_gap_seconds": 1,
+            "max_gap_seconds": 20
+        },
+        "playwrightFetchEnabled": false,
+        "queueSupervisor": {
+            "minProcesses": 1,
+            "maxProcesses": 3
+        }
+    },
+    "type": "site"
+}

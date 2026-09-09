@@ -1,0 +1,10 @@
+{
+  "slug": "javbus",
+  "source_url": "https://www.javbus.red/en/star/aabc",
+  "captured_at": "2026-08-28T21:57:24Z",
+  "http_status": 200,
+  "content_hash": "7ed29ba9569921bb19836420dd1d4193191e91a3f9aa178a1a9b06aef120447b",
+  "target_type": "performer_detail",
+  "sanitized": false,
+  "notes": "Live capture of JavBus age/captcha (driver-verify) wall; kept as block-detection evidence."
+}

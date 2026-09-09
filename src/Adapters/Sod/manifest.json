@@ -1,0 +1,5 @@
+{
+  "slug": "sod", "name": "SOFT ON DEMAND", "version": "1.0.0", "description": "Crawler for official SOFT ON DEMAND performer listings and profiles", "author": "JOOservices", "requires": {"php": ">=8.5"},
+  "adapter": {"class": "JOOservices\\CrawlerX\\Adapters\\Shared\\PerformerDirectory\\ManifestPerformerDirectoryCrawler", "capabilities": ["performer_listing", "performer_detail"]}, "base_url": "https://www.sod.co.jp",
+  "runtime": {"fixtureSamples": [{"url": "https://www.sod.co.jp/actress/", "name": "performer-listing.html", "type": "performer_listing"}, {"url": "https://www.sod.co.jp/actress/matsunagaakari", "name": "performer-detail-matsunagaakari.html", "type": "performer_detail"}], "defaultCrawlConfig": {"timeout": 45}, "defaultThrottle": {"default_gap_seconds": 10, "min_gap_seconds": 5, "max_gap_seconds": 60}, "playwrightFetchEnabled": true}, "type": "site"
+}

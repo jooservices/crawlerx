@@ -1,0 +1,10 @@
+{
+  "slug": "javlibrary",
+  "source_url": "https://www.javlibrary.com/en/vl_newrelease.php",
+  "captured_at": "2026-08-28T21:59:01Z",
+  "http_status": 200,
+  "content_hash": "c06717dd3d864734f9f592eed9e7a8fa3634fc47a9961a6b7fec1b6d595d3105",
+  "target_type": "listing",
+  "sanitized": false,
+  "notes": "Live capture of JAVLibrary Cloudflare \"Just a moment\" challenge page; kept as block-detection evidence, not a movie listing."
+}

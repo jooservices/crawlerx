@@ -1,0 +1,11 @@
+{
+  "slug": "warashi",
+  "source_path": "Modules/Crawler/tests/Fixtures/warashi/detail_partial_fields.html",
+  "source_repo": "XCrawlerII",
+  "captured_at": "2026-06-25T12:00:00Z",
+  "http_status": 200,
+  "content_hash": "synthetic",
+  "target_type": "performer_detail",
+  "sanitized": true,
+  "notes": "Synthetic sparse performer detail fixture for unit tests"
+}

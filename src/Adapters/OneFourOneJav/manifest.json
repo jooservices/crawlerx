@@ -1,0 +1,160 @@
+{
+    "slug": "141jav",
+    "name": "141Jav",
+    "version": "1.0.0",
+    "description": "Crawler for 141Jav",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\OneFourOneJav\\OneFourOneJavCrawler",
+        "capabilities": [
+            "listing",
+            "detail"
+        ]
+    },
+    "base_url": "https://www.141jav.com",
+    "pagination": {
+        "strategy": "query",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 1,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 3600,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        },
+        {
+            "key": "performer_movie_crawl_enabled",
+            "type": "bool",
+            "default": true,
+            "tier": "operational",
+            "label": "Performer Movie Crawl Enabled"
+        }
+    ],
+    "runtime": {
+        "targetProfiles": {
+            "new": {
+                "label": "New",
+                "url": "https://www.141jav.com/new"
+            },
+            "popular": {
+                "label": "Popular",
+                "url": "https://www.141jav.com/popular/"
+            },
+            "date_archive": {
+                "label": "Daily",
+                "url_template": "https://www.141jav.com/date/{date}",
+                "date_format": "Y/m/d"
+            },
+            "tag_listing": {
+                "label": "Tags",
+                "url": "https://www.141jav.com/tag/"
+            },
+            "actress_listing": {
+                "label": "Actresses",
+                "url": "https://www.141jav.com/actress/"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "new",
+                "url": "https://www.141jav.com/new",
+                "paginated": true,
+                "loop": true,
+                "priority": 5
+            },
+            {
+                "url_type": "popular",
+                "url": "https://www.141jav.com/popular/",
+                "paginated": true,
+                "loop": true,
+                "priority": 4
+            },
+            {
+                "url_type": "tag_listing",
+                "url": "https://www.141jav.com/tag/",
+                "paginated": true,
+                "loop": true,
+                "priority": 3
+            },
+            {
+                "url_type": "actress_listing",
+                "url": "https://www.141jav.com/actress/",
+                "paginated": true,
+                "loop": true,
+                "priority": 2
+            },
+            {
+                "url_type": "custom",
+                "url": "https://www.141jav.com/random/",
+                "paginated": true,
+                "loop": true,
+                "priority": 1,
+                "optional": true
+            },
+            {
+                "url_type": "date_archive",
+                "url": "https://www.141jav.com/date/2026/06/05",
+                "paginated": true,
+                "loop": true,
+                "priority": 0
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://www.141jav.com/new?page=1",
+                "name": "listing-page-1.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://www.141jav.com/torrent/SMOK039",
+                "name": "detail-sample-1.html",
+                "type": "detail"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 10,
+            "detail_delay_seconds": 1,
+            "cycle_delay_seconds": 3600,
+            "performer_movie_crawl_enabled": true
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 2,
+            "min_gap_seconds": 0.5,
+            "max_gap_seconds": 15
+        },
+        "playwrightFetchEnabled": false,
+        "queueSupervisor": {
+            "minProcesses": 2,
+            "maxProcesses": 5
+        }
+    },
+    "type": "site"
+}

@@ -1,0 +1,10 @@
+{
+  "slug": "javlibrary",
+  "source_url": "https://www.javlibrary.com/en/star_list.php?prefix=A",
+  "captured_at": "2026-08-28T17:03:54Z",
+  "http_status": 200,
+  "content_hash": "f67a38f87f5847529c780e67d755853bd8097476655979c269c0d03a3bccb926",
+  "target_type": "performer_listing",
+  "sanitized": false,
+  "notes": "Live capture through FlareSolverr after Cloudflare challenge bypass"
+}

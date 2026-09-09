@@ -1,0 +1,117 @@
+{
+    "slug": "javdatabase",
+    "name": "JAV Database",
+    "version": "1.0.0",
+    "description": "Crawler for JAV Database",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\JavDatabase\\JavDatabaseCrawler",
+        "capabilities": [
+            "performer_listing",
+            "performer_detail"
+        ]
+    },
+    "base_url": "https://www.javdatabase.com",
+    "pagination": {
+        "strategy": "path",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 2592000,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        },
+        {
+            "key": "performer_movie_crawl_enabled",
+            "type": "bool",
+            "default": false,
+            "tier": "operational",
+            "label": "Performer Movie Crawl Enabled"
+        },
+        {
+            "key": "performer_detail_dispatch_enabled",
+            "type": "bool",
+            "default": true,
+            "tier": "operational",
+            "label": "Performer Detail Dispatch Enabled"
+        }
+    ],
+    "runtime": {
+        "targetProfiles": {
+            "javdatabase_idol_index": {
+                "label": "JAV Database Idol Index",
+                "url": "https://www.javdatabase.com/idols/"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "javdatabase_idol_index",
+                "url": "https://www.javdatabase.com/idols/",
+                "paginated": true,
+                "loop": true,
+                "priority": 0
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://www.javdatabase.com/idols/",
+                "name": "listing_page1.html",
+                "type": "performer_listing"
+            },
+            {
+                "url": "https://www.javdatabase.com/idols/yua-mikami/",
+                "name": "detail_yua_mikami.html",
+                "type": "performer_detail"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 10,
+            "detail_delay_seconds": 10,
+            "cycle_delay_seconds": 2592000,
+            "performer_movie_crawl_enabled": false,
+            "performer_detail_dispatch_enabled": true
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 10,
+            "min_gap_seconds": 5,
+            "max_gap_seconds": 45
+        },
+        "playwrightFetchEnabled": false,
+        "queueSupervisor": {
+            "balance": "simple",
+            "minProcesses": 1,
+            "maxProcesses": 1,
+            "nice": 10
+        }
+    },
+    "type": "site"
+}

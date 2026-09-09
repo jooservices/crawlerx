@@ -1,0 +1,22 @@
+{
+    "slug": "duga",
+    "name": "DUGA",
+    "version": "1.0.0",
+    "description": "Crawler for DUGA movie listings and details with age-gate bypass URL",
+    "author": "JOOservices",
+    "requires": {"php": ">=8.5"},
+    "adapter": {"class": "JOOservices\\CrawlerX\\Adapters\\Duga\\DugaCrawler", "capabilities": ["listing", "detail"]},
+    "base_url": "https://duga.jp",
+    "pagination": {"strategy": "query", "param": "page"},
+    "runtime": {
+        "targetProfiles": {"duga_main": {"label": "DUGA Accepted Main", "url": "https://duga.jp/main/"}},
+        "fixtureSamples": [
+            {"url": "https://duga.jp/main/", "name": "listing.html", "type": "listing"},
+            {"url": "https://duga.jp/ppv/vrpandemic-0023/", "name": "detail.html", "type": "detail"}
+        ],
+        "defaultCrawlConfig": {"timeout": 45},
+        "defaultThrottle": {"default_gap_seconds": 10, "min_gap_seconds": 5, "max_gap_seconds": 60},
+        "playwrightFetchEnabled": false
+    },
+    "type": "site"
+}

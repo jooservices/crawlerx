@@ -1,0 +1,104 @@
+{
+    "slug": "avfan",
+    "name": "Avfan",
+    "version": "1.0.0",
+    "description": "Crawler for Avfan",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\Avfan\\AvfanCrawler",
+        "capabilities": [
+            "listing",
+            "detail"
+        ]
+    },
+    "base_url": "https://avfan.com",
+    "pagination": {
+        "strategy": "query",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 1,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 3600,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        },
+        {
+            "key": "performer_movie_crawl_enabled",
+            "type": "bool",
+            "default": true,
+            "tier": "operational",
+            "label": "Performer Movie Crawl Enabled"
+        }
+    ],
+    "runtime": {
+        "targetProfiles": {
+            "new": {
+                "label": "New",
+                "url": "https://avfan.com/en"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "new",
+                "url": "https://avfan.com/en",
+                "paginated": true,
+                "loop": true,
+                "priority": 0,
+                "max_pages": 5
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://avfan.com/en",
+                "name": "listing-placeholder.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://avfan.com/en/movies/ewTlM3Fj",
+                "name": "detail-ewTlM3Fj.html",
+                "type": "detail"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 10,
+            "detail_delay_seconds": 1,
+            "cycle_delay_seconds": 3600,
+            "performer_movie_crawl_enabled": true
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 5,
+            "min_gap_seconds": 2,
+            "max_gap_seconds": 30
+        },
+        "playwrightFetchEnabled": true
+    },
+    "type": "site"
+}

@@ -1,0 +1,10 @@
+{
+  "slug": "onejav",
+  "source_url": "https://onejav.com/new",
+  "captured_at": "2026-08-28T22:03:27Z",
+  "http_status": 200,
+  "content_hash": "7afae17c7c511d14ad5491b6400d8062cef39f9b1cd90a804e410d22166adbc4",
+  "target_type": "listing",
+  "sanitized": false,
+  "notes": "Live capture through Playwright."
+}

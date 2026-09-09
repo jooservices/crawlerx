@@ -1,0 +1,5 @@
+{
+  "slug": "tpowers", "name": "T-Powers", "version": "1.0.0", "description": "Crawler for the official T-Powers performer directory and profiles", "author": "JOOservices", "requires": {"php": ">=8.5"},
+  "adapter": {"class": "JOOservices\\CrawlerX\\Adapters\\Shared\\PerformerDirectory\\ManifestPerformerDirectoryCrawler", "capabilities": ["performer_listing", "performer_detail"]}, "base_url": "https://www.t-powers.co.jp",
+  "runtime": {"fixtureSamples": [{"url": "https://www.t-powers.co.jp/talent/", "name": "listing.html", "type": "performer_listing"}, {"url": "https://www.t-powers.co.jp/talent/aika/", "name": "detail-aika.html", "type": "performer_detail"}], "defaultCrawlConfig": {"timeout": 45}, "defaultThrottle": {"default_gap_seconds": 10, "min_gap_seconds": 5, "max_gap_seconds": 60}, "playwrightFetchEnabled": true}, "type": "site"
+}

@@ -1,0 +1,10 @@
+{
+  "slug": "avfan",
+  "source_url": "https://avfan.com/en",
+  "captured_at": "2026-08-28T21:56:29Z",
+  "http_status": 200,
+  "content_hash": "d1608900acfddda61845b257fd23a153ca0477a3dc22761befa57a652288483a",
+  "target_type": "listing",
+  "sanitized": false,
+  "notes": "Live capture through Playwright; age-gate overlay markup present but movie listing links parse correctly."
+}

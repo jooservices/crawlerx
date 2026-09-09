@@ -1,0 +1,10 @@
+{
+  "slug": "jable",
+  "source_url": "https://en.jable.tv/videos/dsod-031/",
+  "captured_at": "2026-09-09T05:26:51Z",
+  "http_status": 200,
+  "content_hash": "2474c5c75fa7e6a2a687e05a75357c4bc0751758ee0c35aa96ad979e62710756",
+  "target_type": "detail",
+  "sanitized": false,
+  "notes": "Live capture through Playwright (tools/fixtures/capture.mjs), replacing a hand-authored placeholder fixture."
+}

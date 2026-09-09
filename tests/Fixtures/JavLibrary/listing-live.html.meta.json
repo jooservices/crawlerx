@@ -1,0 +1,10 @@
+{
+  "slug": "javlibrary",
+  "source_url": "https://www.javlibrary.com/en/vl_newrelease.php",
+  "captured_at": "2026-08-28T17:03:15Z",
+  "http_status": 200,
+  "content_hash": "798842200cc33210e516118594bf8237a4b0db94abccf842992a1c4788c8c7fb",
+  "target_type": "listing",
+  "sanitized": false,
+  "notes": "Live capture through FlareSolverr after Cloudflare challenge bypass"
+}

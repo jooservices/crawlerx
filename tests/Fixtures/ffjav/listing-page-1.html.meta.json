@@ -1,0 +1,10 @@
+{
+  "slug": "ffjav",
+  "source_url": "https://ffjav.com/javtorrent",
+  "captured_at": "2026-08-28T21:56:35Z",
+  "http_status": 200,
+  "content_hash": "066627b862515a60dead0bccb84fa42fb7cfb937173bfac965476d5deac1fe28",
+  "target_type": "listing",
+  "sanitized": false,
+  "notes": "Live capture through Playwright."
+}

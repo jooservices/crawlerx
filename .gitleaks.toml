@@ -1,0 +1,11 @@
+title = "gitleaks"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Allowlisted generated assets and dependency lock file"
+paths = [
+  '''(.*?)(png|jpg|gif|svg)$''',
+  '''^composer\\.lock$''',
+]

@@ -1,0 +1,5 @@
+{
+  "slug": "kin8tengoku", "name": "Kin8tengoku", "version": "1.0.0", "description": "Crawler for Kin8tengoku movie listings, covers, and details", "author": "JOOservices", "requires": {"php": ">=8.5"},
+  "adapter": {"class": "JOOservices\\CrawlerX\\Adapters\\Shared\\Catalog\\ManifestCatalogCrawler", "capabilities": ["listing", "detail"]}, "base_url": "https://www.kin8tengoku.com",
+  "runtime": {"fixtureSamples": [{"url": "https://www.kin8tengoku.com/", "name": "listing.html", "type": "listing"}, {"url": "https://www.kin8tengoku.com/movie/4245", "name": "detail-4245.html", "type": "detail"}], "defaultCrawlConfig": {"timeout": 45}, "defaultThrottle": {"default_gap_seconds": 10, "min_gap_seconds": 5, "max_gap_seconds": 60}, "playwrightFetchEnabled": true}, "type": "site"
+}

@@ -1,0 +1,6 @@
+/vendor/
+/build/
+/coverage/
+/.phpunit.cache/
+/.php-cs-fixer.cache
+/node_modules/

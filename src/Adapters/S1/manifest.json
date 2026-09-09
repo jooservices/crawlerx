@@ -1,0 +1,5 @@
+{
+  "slug": "s1", "name": "S1 NO.1 STYLE", "version": "1.0.0", "description": "Crawler for official S1 movie listings, covers, galleries, and details", "author": "JOOservices", "requires": {"php": ">=8.5"},
+  "adapter": {"class": "JOOservices\\CrawlerX\\Adapters\\Shared\\Catalog\\ManifestCatalogCrawler", "capabilities": ["listing", "detail"]}, "base_url": "https://s1s1s1.com",
+  "runtime": {"fixtureSamples": [{"url": "https://s1s1s1.com/top", "name": "listing.html", "type": "listing"}, {"url": "https://s1s1s1.com/works/detail/SNOS444", "name": "detail-snos444.html", "type": "detail"}], "defaultCrawlConfig": {"timeout": 45}, "defaultThrottle": {"default_gap_seconds": 10, "min_gap_seconds": 5, "max_gap_seconds": 60}, "playwrightFetchEnabled": true}, "type": "site"
+}

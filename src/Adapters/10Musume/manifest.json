@@ -1,0 +1,5 @@
+{
+  "slug": "10musume", "name": "10musume", "version": "1.0.0", "description": "Crawler for 10musume movie listings, covers, galleries, and details", "author": "JOOservices", "requires": {"php": ">=8.5"},
+  "adapter": {"class": "JOOservices\\CrawlerX\\Adapters\\Shared\\Catalog\\ManifestCatalogCrawler", "capabilities": ["listing", "detail"]}, "base_url": "https://www.10musume.com",
+  "runtime": {"fixtureSamples": [{"url": "https://www.10musume.com/", "name": "listing.html", "type": "listing"}, {"url": "https://www.10musume.com/movies/090826_01/", "name": "detail-090826_01.html", "type": "detail"}], "defaultCrawlConfig": {"timeout": 45}, "defaultThrottle": {"default_gap_seconds": 10, "min_gap_seconds": 5, "max_gap_seconds": 60}, "playwrightFetchEnabled": true}, "type": "site"
+}
