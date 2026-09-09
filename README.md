@@ -22,11 +22,9 @@ echo $item->meta['movie']['external_id'];       // ymds282
 echo $item->meta['movie']['code'];              // YMDS-282
 ```
 
-> [!WARNING]
-> This repository is a ground-up, framework-agnostic rebuild. The currently
-> published Packagist `v1.0.0` is the retired Laravel implementation and does
-> **not** provide the API documented here. Until this rebuild receives a new
-> tagged release, install this checkout as a Composer path repository.
+> [!NOTE]
+> This is the framework-agnostic CrawlerX `v1.0.0` release. It replaces the
+> retired Laravel implementation and provides the API documented here.
 
 ## Features
 
@@ -68,11 +66,10 @@ The path installation uses this checkout's actual requirements, including
 
 ### Tagged release
 
-After the rebuilt package receives a new release newer than the retired
-`v1.0.0`, normal Composer installation will be:
+After the GitHub release is registered on Packagist, install it with:
 
 ```bash
-composer require jooservices/crawlerx
+composer require jooservices/crawlerx:^1.0
 ```
 
 For development inside this repository, build the PHP 8.5 tooling image and
