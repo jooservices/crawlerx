@@ -2,9 +2,9 @@
 
 ## Supported versions
 
-The current unreleased rebuild on the `develop` branch receives security fixes.
-The historical Packagist `v1.0.0` Laravel implementation is retired and is not
-maintained by this repository.
+The `v1.0.x` release line and the `develop` branch receive security fixes. The
+historical Laravel implementation is retired and is not maintained by this
+repository.
 
 ## Reporting a vulnerability
 
