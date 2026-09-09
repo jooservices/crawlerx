@@ -6,6 +6,10 @@ package follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+No unreleased changes.
+
+## [1.0.0] - 2026-09-09
+
 ### Added
 
 - Catalog providers for 10musume, Pacopacomama, Muramura, Kin8tengoku, MOODYZ,
@@ -14,14 +18,10 @@ package follows [Semantic Versioning](https://semver.org/).
   DEMAND.
 - Captured live-site fixtures for the added providers and deterministic tests
   that exercise them without network access.
+- URL-driven crawl orchestration with typed DTO results, adaptive fetch
+  fallbacks, browser-service integrations, and 32 catalog/performer providers.
 
 ### Changed
 
 - GitHub Actions now uses GitHub-hosted runners and the repository includes the
   JOOservices community, governance, workflow, and contribution documents.
-
-## [1.0.0]
-
-The historic Packagist release is the retired Laravel implementation. The
-current framework-agnostic rebuild is not a continuation of that API and has
-not yet received a replacement release tag.

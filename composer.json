@@ -11,8 +11,8 @@
         "jooservices/dto": "^3.0",
         "nyholm/psr7": "^1.8",
         "psr/http-message": "^2.0",
-        "symfony/css-selector": "^7.0",
-        "symfony/dom-crawler": "^7.0"
+        "symfony/css-selector": "^7.0 || ^8.0",
+        "symfony/dom-crawler": "^7.0 || ^8.0"
     },
     "require-dev": {
         "captainhook/captainhook": "^5.23",
