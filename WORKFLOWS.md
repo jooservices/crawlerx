@@ -22,6 +22,13 @@ Pull requests to `master` or `develop` run the following independent checks:
 The `Coverage upload` job is the CI leaf gate: it cannot pass until lint,
 security, and both test suites have passed.
 
+## Bootstrap
+
+The repository was seeded with verified `master` and `develop` roots before
+branch protections could exist. After branch protection is configured, every
+subsequent change must arrive through a pull request with the full required
+check set green.
+
 ## Push, scheduled, and release workflows
 
 | Workflow | Trigger | Result |

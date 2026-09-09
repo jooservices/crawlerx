@@ -1,3 +1,4 @@
+# JOOservices baseline workflow: validated by workflow-audit.
 name: Stale
 
 on:
