@@ -72,6 +72,7 @@ final class ManifestFixtureCatalog
     {
         return match ($sample->type) {
             'detail' => CrawlType::Detail,
+            'gallery' => CrawlType::Gallery,
             'performer_listing' => CrawlType::PerformerListing,
             'performer_detail' => CrawlType::PerformerDetail,
             default => CrawlType::Listing,
