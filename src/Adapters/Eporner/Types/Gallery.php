@@ -78,7 +78,7 @@ final class Gallery extends AbstractHtmlType implements TypeInterface
             $photos[] = new PhotoDto(
                 id: $node->attr('data-gallery-photo'),
                 url: $link === null ? null : $this->absolute($baseUrl, $link),
-                imageUrl: $this->fullImageUrl($thumbnail),
+                imageUrl: $this->fullImageUrl($baseUrl, $thumbnail),
                 thumbnailUrl: $thumbnail === null ? null : $this->absolute($baseUrl, $thumbnail),
                 position: $this->photoPosition($node),
                 views: $this->photoViews($node),
@@ -142,7 +142,7 @@ final class Gallery extends AbstractHtmlType implements TypeInterface
         return $text === null ? null : $this->toInt($text);
     }
 
-    private function fullImageUrl(?string $thumbnail): ?string
+    private function fullImageUrl(string $baseUrl, ?string $thumbnail): ?string
     {
         if ($thumbnail === null) {
             return null;
@@ -150,7 +150,7 @@ final class Gallery extends AbstractHtmlType implements TypeInterface
 
         $full = preg_replace('/_\d+x\d+(?=\.(?:jpe?g|png|webp|gif)$)/i', '', $thumbnail);
 
-        return is_string($full) && trim($full) !== '' ? trim($full) : null;
+        return is_string($full) && trim($full) !== '' ? $this->absolute($baseUrl, trim($full)) : null;
     }
 
     /**
