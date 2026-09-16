@@ -6,6 +6,7 @@ namespace JOOservices\CrawlerX\Services;
 
 use JOOservices\CrawlerX\Adapters\AbstractBaseCrawler;
 use JOOservices\CrawlerX\Contracts\DetailCapable;
+use JOOservices\CrawlerX\Contracts\GalleryCapable;
 use JOOservices\CrawlerX\Contracts\ListingCapable;
 use JOOservices\CrawlerX\Contracts\PerformerDetailCapable;
 use JOOservices\CrawlerX\Contracts\PerformerListingCapable;
@@ -26,6 +27,7 @@ final class AdapterExecutor
         return match ($request->type) {
             CrawlType::Listing => $this->listing($adapter, $request),
             CrawlType::Detail => $this->detail($adapter, $request),
+            CrawlType::Gallery => $this->gallery($adapter, $request),
             CrawlType::PerformerListing => $this->performerListing($adapter, $request),
             CrawlType::PerformerDetail => $this->performerDetail($adapter, $request),
         };
@@ -51,6 +53,17 @@ final class AdapterExecutor
         }
 
         return $adapter->detail($request);
+    }
+
+    public function gallery(SiteAdapter $adapter, CrawlRequestDto $request): CrawlItemResultDto
+    {
+        $this->prepareAdapter($adapter, $request);
+
+        if (! $adapter instanceof GalleryCapable) {
+            throw new CrawlParseException(sprintf('%s does not implement GalleryCapable.', $adapter::class));
+        }
+
+        return $adapter->gallery($request);
     }
 
     public function performerListing(SiteAdapter $adapter, CrawlRequestDto $request): CrawlListResultDto
