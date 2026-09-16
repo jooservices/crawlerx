@@ -6,8 +6,10 @@ namespace JOOservices\CrawlerX\Tests\Unit;
 
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
+use JOOservices\CrawlerX\Dto\Entity\GalleryDto;
 use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
+use JOOservices\CrawlerX\Dto\Entity\PhotoDto;
 use JOOservices\CrawlerX\Tests\TestCase;
 
 final class EntityDtoContractTest extends TestCase
@@ -53,5 +55,76 @@ final class EntityDtoContractTest extends TestCase
         self::assertSame(['performer'], array_keys($serialized['items'][0]['meta']));
         self::assertSame('Actress A', $serialized['items'][0]['meta']['performer']['name']);
         self::assertArrayNotHasKey('performers', $serialized);
+    }
+
+    public function test_gallery_item_serializes_photo_list_and_metadata(): void
+    {
+        $item = GalleryDto::fromParsed(
+            externalId: 'gallery-1',
+            title: 'Gallery One',
+            data: [
+                'photo_count' => 2,
+                'views' => 100,
+                'rating' => '95%',
+                'votes' => 7,
+                'uploader' => 'uploader-x',
+                'uploader_url' => 'https://www.eporner.com/profile/uploader-x/',
+                'date' => '2025-01-01',
+                'performers' => ['Actress A', ''],
+                'categories' => ['Japanese'],
+                'tags' => ['Uncensored'],
+                'photos' => [
+                    [
+                        'id' => '111',
+                        'url' => 'https://www.eporner.com/photo/AbCd/one/',
+                        'image_url' => 'https://cdn.eporner.com/111-one.jpg',
+                        'thumbnail_url' => 'https://cdn.eporner.com/111-one_296x1000.jpg',
+                        'position' => 1,
+                        'views' => 5,
+                        'rating' => '100%',
+                    ],
+                ],
+                'custom_field' => 'kept-in-metadata',
+            ],
+        )->toItem('https://www.eporner.com/gallery/gallery-1/Gallery-One/');
+
+        $serialized = $item->toArray();
+
+        self::assertSame('gallery', $serialized['entity_type']);
+        self::assertSame(['gallery'], array_keys($serialized['meta']));
+        self::assertSame('gallery-1', $serialized['meta']['gallery']['external_id']);
+        self::assertSame(2, $serialized['meta']['gallery']['photo_count']);
+        self::assertSame(['Actress A'], $serialized['meta']['gallery']['performers']);
+        self::assertSame('kept-in-metadata', $serialized['meta']['gallery']['metadata']['custom_field']);
+
+        $photo = $serialized['meta']['gallery']['photos'][0] ?? null;
+        self::assertIsArray($photo);
+        self::assertSame('111', $photo['id']);
+        self::assertSame('https://cdn.eporner.com/111-one.jpg', $photo['image_url']);
+        self::assertSame('https://cdn.eporner.com/111-one_296x1000.jpg', $photo['thumbnail_url']);
+        self::assertSame(1, $photo['position']);
+        self::assertSame(5, $photo['views']);
+        self::assertSame('100%', $photo['rating']);
+    }
+
+    public function test_photo_from_parsed_keeps_unknown_keys_in_metadata(): void
+    {
+        $photo = PhotoDto::fromParsed([
+            'id' => '222',
+            'url' => 'https://www.eporner.com/photo/ZzYy/two/',
+            'image_url' => 'https://cdn.eporner.com/222-two.jpg',
+            'thumbnail_url' => 'https://cdn.eporner.com/222-two_296x1000.jpg',
+            'position' => 2,
+            'views' => 9,
+            'rating' => '80%',
+            'orientation' => 'portrait',
+        ]);
+
+        $serialized = $photo->toArray();
+
+        self::assertSame('222', $serialized['id']);
+        self::assertSame('https://cdn.eporner.com/222-two.jpg', $serialized['image_url']);
+        self::assertSame(2, $serialized['position']);
+        self::assertSame('portrait', $serialized['metadata']['orientation']);
     }
 }
