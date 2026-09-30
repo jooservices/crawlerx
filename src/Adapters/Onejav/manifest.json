@@ -152,6 +152,11 @@
                 "url": "https://onejav.com/torrent/ymds282",
                 "name": "detail-sample-1.html",
                 "type": "detail"
+            },
+            {
+                "url": "https://onejav.com/tag/FC2",
+                "name": "tag-fc2.html",
+                "type": "listing"
             }
         ],
         "defaultCrawlConfig": {

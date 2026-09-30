@@ -11,6 +11,8 @@ use JOOservices\CrawlerX\Adapters\MinnanoAv\Types\Detail;
 use JOOservices\CrawlerX\Adapters\MinnanoAv\Types\Listing;
 use JOOservices\CrawlerX\Adapters\MinnanoAv\Types\PerformerDetail;
 use JOOservices\CrawlerX\Adapters\MinnanoAv\Types\PerformerListing;
+use JOOservices\CrawlerX\Contracts\DetailCapable;
+use JOOservices\CrawlerX\Contracts\ListingCapable;
 use JOOservices\CrawlerX\Contracts\PerformerDetailCapable;
 use JOOservices\CrawlerX\Contracts\PerformerListingCapable;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
@@ -19,7 +21,7 @@ use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 
-final class MinnanoAvCrawler extends AbstractBaseCrawler implements PerformerDetailCapable, PerformerListingCapable, UrlDetectCapable
+final class MinnanoAvCrawler extends AbstractBaseCrawler implements DetailCapable, ListingCapable, PerformerDetailCapable, PerformerListingCapable, UrlDetectCapable
 {
     use DetectsUrls;
     use MinnanoAvUrlDetectRules;

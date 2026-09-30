@@ -24,7 +24,10 @@ final class MissavAdapterTest extends TestCase
         ));
 
         self::assertNotEmpty($result->items);
-        self::assertSame('fns-247', $result->items[0]->meta['movie']['external_id']);
+        $movie = $result->items[0]->meta['movie'] ?? null;
+        self::assertIsArray($movie);
+        self::assertIsString($movie['external_id'] ?? null);
+        self::assertNotSame('', trim($movie['external_id']));
     }
 
     public function test_detail_parses_metadata_from_fixture(): void
@@ -36,18 +39,26 @@ final class MissavAdapterTest extends TestCase
             type: CrawlType::Detail,
         ));
 
-        self::assertSame('fns-247', $result->meta['movie']['external_id']);
-        self::assertStringStartsWith('FNS-247', (string) $result->meta['movie']['title']);
-        self::assertSame('FNS-247', $result->meta['movie']['code']);
-        self::assertNotNull($result->meta['movie']['cover_url']);
-        self::assertSame('2026-08-29', $result->meta['movie']['date']);
-        self::assertSame(172, $result->meta['movie']['duration']);
-        self::assertContains('Tsubasa Mai', array_column($result->meta['movie']['performers'], 'name'));
+        $movie = $result->meta['movie'] ?? null;
+        self::assertIsArray($movie);
+        self::assertSame('fns-247', $movie['external_id'] ?? null);
+        self::assertIsString($movie['title'] ?? null);
+        self::assertStringStartsWith('FNS-247', $movie['title']);
+        self::assertSame('FNS-247', $movie['code'] ?? null);
+        self::assertNotNull($movie['cover_url'] ?? null);
+        self::assertSame('2026-08-29', $movie['date'] ?? null);
+        self::assertSame(172, $movie['duration'] ?? null);
+        self::assertIsArray($movie['performers'] ?? null);
+        self::assertContains('Tsubasa Mai', array_column($movie['performers'], 'name'));
     }
 
     public function test_listing_fails_on_cloudflare_challenge(): void
     {
-        $client = $this->clientWithFixture('missav/cloudflare.html', 403, ['cf-mitigated' => 'challenge']);
+        $client = $this->clientWithHtml(
+            '<html><title>Just a moment...</title><body>challenges.cloudflare.com</body></html>',
+            403,
+            ['cf-mitigated' => 'challenge'],
+        );
 
         $this->expectException(CrawlBlockedException::class);
         $this->expectExceptionMessage('MissAV listing page is blocked or unavailable.');

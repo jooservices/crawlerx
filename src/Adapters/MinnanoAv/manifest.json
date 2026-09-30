@@ -92,6 +92,16 @@
                 "url": "https://www.minnano-av.com/actress945093.html",
                 "name": "detail_rich.html",
                 "type": "performer_detail"
+            },
+            {
+                "url": "https://www.minnano-av.com/actress.php?actress_id=945093",
+                "name": "movie-listing.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://www.minnano-av.com/av159081.html",
+                "name": "movie-detail.html",
+                "type": "detail"
             }
         ],
         "defaultCrawlConfig": {

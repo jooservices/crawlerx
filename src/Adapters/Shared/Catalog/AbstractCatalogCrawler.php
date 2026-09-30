@@ -6,6 +6,8 @@ namespace JOOservices\CrawlerX\Adapters\Shared\Catalog;
 
 use JOOservices\CrawlerX\Adapters\AbstractBaseCrawler;
 use JOOservices\CrawlerX\Adapters\Concerns\DetectsUrls;
+use JOOservices\CrawlerX\Contracts\DetailCapable;
+use JOOservices\CrawlerX\Contracts\ListingCapable;
 use JOOservices\CrawlerX\Contracts\UrlDetectCapable;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
@@ -15,7 +17,7 @@ use JOOservices\CrawlerX\Dto\UrlDetectionResult;
 use JOOservices\CrawlerX\Enums\CrawlType;
 use JOOservices\CrawlerX\Enums\ImportEntity;
 
-abstract class AbstractCatalogCrawler extends AbstractBaseCrawler implements UrlDetectCapable
+abstract class AbstractCatalogCrawler extends AbstractBaseCrawler implements DetailCapable, ListingCapable, UrlDetectCapable
 {
     use DetectsUrls {
         detectUrl as private detectCatalogUrl;

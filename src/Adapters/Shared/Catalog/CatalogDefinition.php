@@ -12,8 +12,6 @@ final class CatalogDefinition
      * @param list<string> $performerSelectors
      * @param list<string> $tagSelectors
      * @param list<string> $screenshotSelectors
-     * @param list<string> $detailTitleSelectors
-     * @param array<string, string> $coverSelectors
      */
     public function __construct(
         public readonly string $slug,
@@ -29,8 +27,6 @@ final class CatalogDefinition
         public readonly array $tagSelectors = [],
         public readonly array $screenshotSelectors = [],
         public readonly ?string $externalIdPrefix = null,
-        public readonly array $detailTitleSelectors = [],
-        public readonly array $coverSelectors = [],
     ) {
     }
 
@@ -42,11 +38,17 @@ final class CatalogDefinition
         }
 
         $id = trim($match[1] ?? '');
-        if ($id === '') {
+
+        return $id === '' ? null : $id;
+    }
+
+    public function code(?string $externalId): ?string
+    {
+        if ($externalId === null) {
             return null;
         }
 
-        return $this->externalIdPrefix === null ? $id : $this->externalIdPrefix . $id;
+        return $this->externalIdPrefix === null ? $externalId : $this->externalIdPrefix . $externalId;
     }
 
     public function isDetailPath(string $path): bool

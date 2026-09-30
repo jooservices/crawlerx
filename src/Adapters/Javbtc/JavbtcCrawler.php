@@ -9,12 +9,14 @@ use JOOservices\CrawlerX\Adapters\Concerns\DetectsUrls;
 use JOOservices\CrawlerX\Adapters\Concerns\UrlDetect\JavbtcUrlDetectRules;
 use JOOservices\CrawlerX\Adapters\Javbtc\Types\Detail;
 use JOOservices\CrawlerX\Adapters\Javbtc\Types\Listing;
+use JOOservices\CrawlerX\Contracts\DetailCapable;
+use JOOservices\CrawlerX\Contracts\ListingCapable;
 use JOOservices\CrawlerX\Contracts\UrlDetectCapable;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 
-final class JavbtcCrawler extends AbstractBaseCrawler implements UrlDetectCapable
+final class JavbtcCrawler extends AbstractBaseCrawler implements DetailCapable, ListingCapable, UrlDetectCapable
 {
     use DetectsUrls;
     use JavbtcUrlDetectRules;

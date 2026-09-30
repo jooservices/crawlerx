@@ -49,7 +49,7 @@ final class PerformerListing extends AbstractType implements TypeInterface
                     url: $url,
                     externalId: $externalId,
                     title: $name,
-                );
+                )->withNextCrawlType('performer_detail');
             });
 
         $nextUrl = $this->nextPageUrl($crawler, $request->url);

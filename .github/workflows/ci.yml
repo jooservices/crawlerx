@@ -1,10 +1,9 @@
-# Dedicated CI for jooservices/crawlerx on GitHub-hosted runners.
+# Dedicated CI for jooservices/crawlerx — GitHub-hosted runners
 name: CI
 
 on:
   pull_request:
     branches: [master, develop]
-  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -149,7 +148,7 @@ jobs:
             --volume "${GITHUB_WORKSPACE}:/repo:ro" \
             --workdir /repo \
             ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:b109bc5f8f76a38196a3e413704fc5b9e3c32360bce4e4b603bd6f45b3721dbb \
-            detect --source . --redact --exit-code 1
+            detect --source . --redact --config=.gitleaks.toml --exit-code 1
 
       - name: Semgrep (OSS)
         if: matrix.name == 'SAST'
@@ -240,9 +239,40 @@ jobs:
             build/coverage/clover-combined.xml
           ls -la build/coverage
 
-      - name: Upload merged coverage artifact
-        uses: actions/upload-artifact@v7
+      - name: Upload to Codecov
+        if: github.event.pull_request.user.type != 'Bot'
+        uses: codecov/codecov-action@f9fe539f5290016afa014f8ef31597d3a61c2dea
         with:
-          name: coverage-combined
-          path: build/coverage/clover-combined.xml
-          if-no-files-found: error
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: build/coverage/clover-combined.xml
+          fail_ci_if_error: true
+          verbose: true
+
+      - name: Resolve SonarQube host URL
+        if: github.event.pull_request.user.type != 'Bot'
+        id: sonar-config
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          set -euo pipefail
+          host_url="${SONAR_HOST_URL:-https://sonarcloud.io}"
+          host_url="${host_url%/}"
+          case "${host_url}" in
+            http://*|https://*) ;;
+            *) host_url="https://${host_url}" ;;
+          esac
+          if [[ ! "${host_url}" =~ ^https?://[^[:space:]/]+ ]]; then
+            echo "SONAR_HOST_URL must be a valid HTTP(S) URL"
+            exit 1
+          fi
+          echo "host_url=${host_url}" >> "${GITHUB_OUTPUT}"
+
+      - name: Upload SonarQube analysis
+        if: github.event.pull_request.user.type != 'Bot'
+        uses: SonarSource/sonarqube-scan-action@ba9859eae8dd6bd29e412f25ddbbef3d032000f4
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ steps.sonar-config.outputs.host_url }}
+        with:
+          args: >
+            -Dsonar.php.coverage.reportPaths=build/coverage/clover-combined.xml

@@ -1,10 +1,10 @@
 {
-  "slug": "jable",
   "source_url": "https://en.jable.tv/new-release/",
-  "captured_at": "2026-08-28T21:56:53Z",
+  "final_url": "https://en.jable.tv/new-release/",
+  "captured_at": "2026-09-09T04:08:59.946Z",
   "http_status": 200,
-  "content_hash": "d32e4087ec78a16c81ec2c1c2f2ef52c4a397dc74c0b2bf696c2bc68b6336772",
+  "content_hash": "36a90ae85fb33624a6cd13e27d63dfbedc5dbbab6815c15d321b236e255561bc",
   "target_type": "listing",
-  "sanitized": false,
-  "notes": "Live capture through Playwright (stealth chain, bypasses Cloudflare)."
+  "fetch_method": "playwright",
+  "sanitized": false
 }

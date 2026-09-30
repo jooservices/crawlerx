@@ -13,6 +13,8 @@ use JOOservices\CrawlerX\Adapters\Xcity\Types\PerformerDetail;
 use JOOservices\CrawlerX\Adapters\Xcity\Types\PerformerIndex;
 use JOOservices\CrawlerX\Adapters\Xcity\Types\PerformerKana;
 use JOOservices\CrawlerX\Adapters\Xcity\Types\PerformerListing;
+use JOOservices\CrawlerX\Contracts\DetailCapable;
+use JOOservices\CrawlerX\Contracts\ListingCapable;
 use JOOservices\CrawlerX\Contracts\PerformerDetailCapable;
 use JOOservices\CrawlerX\Contracts\PerformerListingCapable;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
@@ -22,7 +24,7 @@ use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use RuntimeException;
 
-final class XcityCrawler extends AbstractBaseCrawler implements PerformerDetailCapable, PerformerListingCapable, UrlDetectCapable
+final class XcityCrawler extends AbstractBaseCrawler implements DetailCapable, ListingCapable, PerformerDetailCapable, PerformerListingCapable, UrlDetectCapable
 {
     use DetectsUrls;
     use XcityUrlDetectRules;

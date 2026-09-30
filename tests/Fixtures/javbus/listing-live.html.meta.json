@@ -1,10 +1,10 @@
 {
-  "slug": "javbus",
   "source_url": "https://www.javbus.com/en/",
-  "captured_at": "2026-08-28T22:58:00Z",
+  "final_url": "https://www.javbus.com/en",
+  "captured_at": "2026-09-09T04:09:44.931Z",
   "http_status": 200,
-  "content_hash": "39f2bd6292915387e0cbd4a984eca7c59ed2afbb70457d1c6a7a9e865f2f5fda",
+  "content_hash": "a8a90ab1f6d275e3ef601eeb382af5940b2586bdff4be30e3f4043f46029dc10",
   "target_type": "listing",
-  "sanitized": false,
-  "notes": "Live Playwright capture after JavBus age-verification cookie bypass"
+  "fetch_method": "playwright",
+  "sanitized": false
 }

@@ -107,6 +107,26 @@
                 "url": "https://xxx.xcity.jp/avod/detail/?id=186022",
                 "name": "detail-placeholder.html",
                 "type": "detail"
+            },
+            {
+                "url": "https://xxx.xcity.jp/idol/",
+                "name": "performer-index.html",
+                "type": "performer_listing"
+            },
+            {
+                "url": "https://xxx.xcity.jp/idol/?kana=%E3%81%82",
+                "name": "performer-kana-a.html",
+                "type": "performer_listing"
+            },
+            {
+                "url": "https://xxx.xcity.jp/idol/?ini=%E3%81%82&num=100",
+                "name": "performer-listing-a.html",
+                "type": "performer_listing"
+            },
+            {
+                "url": "https://xxx.xcity.jp/idol/detail/5517/",
+                "name": "performer-detail-5517.html",
+                "type": "performer_detail"
             }
         ],
         "defaultCrawlConfig": {

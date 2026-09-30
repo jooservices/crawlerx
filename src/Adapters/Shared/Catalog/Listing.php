@@ -36,12 +36,12 @@ final class Listing extends AbstractType implements TypeInterface
         $items = [];
 
         $crawler->filter($this->definition->listingItemSelector)->each(function (Crawler $card) use (&$items, $fetchUrl): void {
-            $link = $card->matches($this->definition->listingLinkSelector)
-                ? $card
-                : $card->filter($this->definition->listingLinkSelector)->first();
+            $link = $card->filter($this->definition->listingLinkSelector);
             if ($link->count() === 0) {
                 return;
             }
+
+            $link = $link->first();
             $href = $link->attr('href');
             if (! is_string($href) || trim($href) === '') {
                 return;
