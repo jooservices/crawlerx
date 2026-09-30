@@ -132,15 +132,26 @@ again with that type and keep going until the item is terminal (`next_crawl_type
 === null`, i.e. a detail page).
 
 ```php
-$next = CrawlerX::url('https://xxx.xcity.jp/idol/')
-    ->site('xcity')
-    ->type(CrawlType::PerformerListing)
-    ->crawl();
+$pending = [
+    ['url' => 'https://xxx.xcity.jp/idol/', 'type' => CrawlType::PerformerListing],
+];
 
-foreach ($next->items as $item) {
-    $hop = CrawlerX::url($item->url)->site('xcity')->type($item->nextCrawlType)->crawl();
-    // hop is a CrawlListResultDto while $item->nextCrawlType is a listing type;
-    // terminal detail items carry a null next_crawl_type
+while ($pending !== []) {
+    $current = array_shift($pending);
+
+    $result = CrawlerX::url($current['url'])
+        ->site('xcity')
+        ->type($current['type'])
+        ->crawl();
+
+    foreach ($result->items as $item) {
+        if ($item->nextCrawlType === null) {
+            // Terminal detail item — no further hop needed.
+            continue;
+        }
+
+        $pending[] = ['url' => $item->url, 'type' => CrawlType::from($item->nextCrawlType)];
+    }
 }
 ```
 
