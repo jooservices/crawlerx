@@ -1,10 +1,10 @@
 {
-  "slug": "javlibrary",
   "source_url": "https://www.javlibrary.com/en/javme3rasy.html",
-  "captured_at": "2026-08-28T17:03:42Z",
+  "final_url": "https://www.javlibrary.com/en/javme3rasy.html",
+  "captured_at": "2026-09-09T04:13:02.483Z",
   "http_status": 200,
-  "content_hash": "c87250969db9697829281989427f8c664f4a4a59a5c2d98fd795f0fe7c772946",
+  "content_hash": "9bf2e1aa8f5b54fb176782a562e7a05274d5607f87f5a3f5dbce5ea11458f5fd",
   "target_type": "detail",
-  "sanitized": false,
-  "notes": "Live capture through FlareSolverr after Cloudflare challenge bypass"
+  "fetch_method": "flaresolverr",
+  "sanitized": false
 }

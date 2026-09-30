@@ -9,7 +9,6 @@ use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlOptionsDto;
 use JOOservices\CrawlerX\Dto\CrawlOutcomeDto;
-use JOOservices\CrawlerX\Dto\FetchMetaDto;
 use JOOservices\CrawlerX\Enums\CrawlErrorCode;
 use JOOservices\CrawlerX\Enums\CrawlType;
 use JOOservices\CrawlerX\Exceptions\AdapterNotFoundException;
@@ -28,6 +27,8 @@ final class CrawlRequestBuilder
     private ?int $page = null;
 
     private ?CrawlOptionsDto $options = null;
+
+    private ?string $query = null;
 
     public function __construct(
         private readonly CrawlOrchestrator $orchestrator,
@@ -75,6 +76,14 @@ final class CrawlRequestBuilder
         return $clone;
     }
 
+    public function query(string $query): self
+    {
+        $clone = clone $this;
+        $clone->query = $query;
+
+        return $clone;
+    }
+
     public function crawl(): CrawlListResultDto|CrawlItemResultDto
     {
         return $this->orchestrator->crawl(
@@ -83,6 +92,7 @@ final class CrawlRequestBuilder
             $this->type,
             $this->page,
             $this->options,
+            $this->query,
         );
     }
 
@@ -108,7 +118,7 @@ final class CrawlRequestBuilder
     private function failure(
         CrawlErrorCode $code,
         string $message,
-        ?FetchMetaDto $fetch = null,
+        ?\JOOservices\CrawlerX\Dto\FetchMetaDto $fetch = null,
     ): CrawlOutcomeDto {
         return CrawlOutcomeDto::failure(new CrawlErrorDto(
             code: $code,

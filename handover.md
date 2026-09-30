@@ -2,12 +2,8 @@
 
 **Package:** `jooservices/crawlerx`  
 **Path:** `/Users/vietvu/Sites/JOOservices/crawlerx`  
-**Handover date:** 2026-08-28 (fixture/runtime audit refresh: 2026-09-08)  
+**Handover date:** 2026-08-28  
 **Audience:** next developer continuing this work. Git is **not** required.
-
-> Numbers below (test counts, coverage, adapter count) were re-verified on
-> 2026-09-08 and no longer match the original 2026-08-28 handover. Trust the
-> 2026-09-08 notes where the two disagree.
 
 This file is the working contract. `knowledge.md` is older research; parts of it (Laravel, a split fetch package) are **rejected**. Trust this file over `knowledge.md`.
 
@@ -185,15 +181,10 @@ Inject a fake chain in tests: `CrawlerXFactory::useFetchChain($chain)` then `Cra
 
 ### 4.1 Product
 
-- PHP `^8.5`. `make` runs PHP tooling on the **host** PHP when it matches
-  `^8.5` (verified via `php -r 'echo PHP_VERSION;'`) and falls back to
-  `php:8.5-cli-bookworm` in Docker only when it does not. Docker stays
-  mandatory for the Playwright/FlareSolverr sidecars (`make fetch-up`).
+- PHP `^8.5`, Docker-only PHP (`php:8.5-cli-bookworm`)
 - `jooservices/client` `^4.0`, `jooservices/dto` `^3.0`
 - Symfony DomCrawler + css-selector
-- 20 site adapters (grew from the original 14): onejav, onefouronejav, ffjav,
-  xcity, warashi, onepondo, javbtc, javlibrary, javdatabase, javbus, jable,
-  missav, minnanoav, avfan, duga, fc2, heyzo, tokyohot, javdb, caribbeancom
+- 14 site adapters from XCrawlerII: onejav, onefouronejav, ffjav, xcity, warashi, onepondo, javbtc, javlibrary, javdatabase, javbus, jable, missav, minnanoav, avfan
 - URL-only DX; optional `site` / `type` / `page` / `options`
 - Fetch **in this repo**, including Playwright/stealth/chrome-stealth
 - No Laravel, no live HTTP in CI
@@ -245,14 +236,7 @@ Done only when **all** of these are true:
 8. Docker PHP for CI; optional Node/Playwright compose profile for local crawl/capture.
 9. Owner can use the library as a crawler, not only as a parser.
 
-**Status as of 2026-09-08:** item 6 (coverage) is now met — `make ci` is green
-with Unit 86.49% / Feature 85.71%, lint clean (Pint, PHPCS, PHPStan max,
-PHPMD, PHP-CS-Fixer). Items 1 and 5 (JavBus/JavLibrary/MissAV walled sites)
-were **not re-verified live** in this pass — this session only replaced
-fixtures that were confirmed fabricated by content inspection (see §6.4); it
-did not re-probe javbus.com / javlibrary.com / missav for whether the
-CF/captcha walls documented on 2026-08-28 still apply. Re-check before
-relying on that section.
+**Not done today:** items 1 (walled sites), 5, 6 (coverage).
 
 ---
 
@@ -279,10 +263,9 @@ relying on that section.
 | Avfan synthetic HTML | Replaced with live listing + detail (`ewTlM3Fj`). |
 | `CrawlerX::site()` missing | Implemented. Classifier still detects type when site is forced. |
 
-### 6.3 Tests (last green run, no coverage — 2026-09-08)
+### 6.3 Tests (last green run, no coverage)
 
-- Unit **388** tests, Feature **103** tests, **491** total, all passing
-- `make ci`: Unit coverage 86.49%, Feature coverage 85.71% (both over the 85% floor)
+- Unit **338** tests, Feature **61** tests, **399** total, all passing
 - Fetch unit tests: plan resolver, fallback chain, Playwright handler (stubbed process), challenge detector
 - Feature: `CrawlerX::url()` / `site()` / `tryCrawl()` / all remaining manifest samples
 
@@ -320,64 +303,20 @@ Playwright (`scripts/playwright-fetch.mjs`) or curl. Report: `tools/fixtures/cap
 
 ## 7. What is left (do this, in order)
 
-### P0 — Honest 85% coverage (`make ci` blocker) — DONE (2026-09-08)
+### P0 — Honest 85% coverage (`make ci` blocker)
 
-`make ci` is green: Unit 86.49%, Feature 85.71%. No Unit tests were moved into
-the Feature suite to get there.
+Last numbers:
 
-### P0b — Fixture authenticity audit — DONE (2026-09-08)
+- Unit: **69.87%** (3589/5137)
+- Feature: **62.27%** (3199/5137)
 
-An audit found several fixtures that were hand-authored instead of captured,
-and one real bug that the fabricated fixtures had been masking:
+New fetch code is large and barely hit by Feature (fake forces HTTP). Add:
 
-- `minnanoav/av159081.html` + `filmography_page1.html` were fabricated
-  ("SSIS-001 Sample Title One"). Replaced with a real capture of actress
-  945093's filmography page 1 and her first real listed movie
-  (`av570850.html`). Test assertions in `MinnanoAvAdapterTest` and
-  `ExtendedAdapterCrawlTest` now match the real parsed values.
-- `jable/detail-abf-359.html`, `detail-mudr-369.html`, `detail-hmn-862.html`,
-  `listing-new-release-page2.html`, `listing-new-release-last-page.html` were
-  fabricated. Replaced with real Playwright captures
-  (`detail-dsod-031.html`, `detail-royd-348.html`, `detail-abf-382.html`,
-  a real `new-release/2/`, and the real current last page `new-release/1625/`
-  — the site's total page count moves over time; re-derive it from the
-  pagination markup on `new-release/` before recapturing again, don't assume
-  1625 stays current).
-- **Real bug found while recapturing jable page 2**: `Jable\Types\Listing::pageFromUrl()`
-  built its "sibling page" regex from the *current request URL* instead of the
-  listing's root path. That happened to work at page 1 (request URL == root)
-  and at the true last page (no bug-observable effect), but silently returned
-  `hasNextPage: false` for every other real mid-listing page — jable.tv's real
-  pagination markup has no `aria-label="next"`, only numbered page links, so
-  production pagination was broken for any page beyond the first. The
-  original fake `listing-new-release-page2.html` fixture had a hand-added
-  `aria-label="Next Page"` link that isn't present on the real site, which is
-  exactly what hid this from `make ci`. Fixed in `pageFromUrl()`: it now
-  strips a trailing `/\d+` page segment from the request URL before matching
-  sibling links. Covered by `ListingTest::test_listing_page_two_advances_pagination`.
-- Removed `src/Adapters/*/fixtures/` entirely (44 files). It was a second,
-  stale copy of `tests/Fixtures/`, never read by any test or runtime code
-  (`ManifestFixtureCatalog::fixturePath()` only resolves under
-  `tests/Fixtures/`), but shipped inside `src/` — meaning it was published to
-  every Composer install of this package. Some of its files were still the
-  fabricated stand-ins from initial scaffolding.
-- Regenerated `.meta.json` provenance for 20 fixtures that were real captures
-  but still labeled `"sanitized": true` / `"content_hash": "synthetic"` from
-  the original scaffold (stale metadata, not stale content — verified each by
-  reading the actual file). Several of these (the JavBus and JavLibrary
-  4-file sets) are deliberately-kept real captures of the site's
-  age/captcha-wall or Cloudflare challenge page, used to test the
-  block-detection path — not movie pages, by design.
-- Deleted two orphaned files with no test reference at all:
-  `missav/detail.html` (fabricated, unused) and `missav/latest-page1.html`
-  (real but superseded by `listing-new.html`, unused).
+- Unit tests for `CurlImpersonateFetchHandler`, `FlaresolverrFetchHandler`, `PuppeteerStealthFetchHandler`, `ProcOpenProcessRunner`, `CookieHandoffStore`, `HttpFetchHandler` (fake client), `SeededCrawlHttpClient`, `FetchRuntimeConfig`
+- Feature tests that inject `CrawlerXFactory::useFetchChain()` with stub handlers: fallback, blocked exhaustion, `FetchOptionsDto` chain/method, seed used by adapter
+- Enough L1 `CrawlerX::url()` Feature cases that Feature ≥ 85% **without** putting Unit tests back in the Feature suite
 
-Not done in this pass: a similar authenticity sweep of `Javbtc`'s two-arg
-`pageFromUrl($url, $listingUrl)` (same signature shape as Jable's, not
-verified to have or lack the same bug) and the single-arg `pageFromUrl()`
-variants in Avfan/JavBus/Xcity/MinnanoAv/JavLibrary/Missav — none were flagged
-by the audit and all currently pass against real fixtures, but they weren't
-specifically checked for the "request URL used as root" mistake.
+Do **not** restore `<directory>tests/Unit</directory>` under Feature. That was the old cheat.
 
 ### P1 — Usable fixtures for the three walled sites
 
@@ -441,10 +380,7 @@ curl -fsSL 'https://en.1pondo.tv/dyn/phpauto/movie_lists/list_newest_0.json' \
   -o tests/Fixtures/onepondo/list-newest-0.json
 ```
 
-PHPUnit runs on host PHP directly when the host is `^8.5` (the `Makefile`
-detects this and skips Docker); Docker is the fallback for a mismatched host,
-and stays mandatory for the Playwright/FlareSolverr sidecars. Node/Playwright
-can run on the host (Node v26 was available).
+PHPUnit always through Docker. Node/Playwright can run on the host (Node v26 was available).
 
 After test/fixture edits, re-run `make ci`. Coverage XML: `build/coverage/clover-Unit.xml`, `clover-Feature.xml`.
 
@@ -460,17 +396,6 @@ After test/fixture edits, re-run `make ci`. Coverage XML: `build/coverage/clover
 - **Do not** treat Turnstile script tags on a full page as a block.
 - **Do not** put Unit tests back into the Feature suite to hit 85%.
 - **Do not** recreate a companion fetch package.
-- **Do not** add a second fixtures directory under `src/Adapters/*/fixtures/`.
-  It existed once, was never read by `ManifestFixtureCatalog` (which only
-  resolves `tests/Fixtures/`), drifted out of sync with the real captures,
-  and shipped stale/fake data inside the published package. Removed
-  2026-09-08 — keep fixtures in `tests/Fixtures/` only.
-- **Site pagination "next page" logic must be derived from the listing's root
-  path, not from the current request URL.** Jable's `pageFromUrl()` had this
-  bug (see §7 P0b) and it was invisible in tests because the fake fixture
-  added a `aria-label="Next Page"` link the real site doesn't have. When
-  writing or reviewing a `pageFromUrl`-style helper, test it against a
-  fixture for a page **other than page 1**, not just the canonical sample.
 
 ---
 

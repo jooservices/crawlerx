@@ -1,27 +1,46 @@
 # Changelog
 
-All notable changes to this package are documented in this file. The format
-follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
-package follows [Semantic Versioning](https://semver.org/).
+All notable changes to this project are documented in this file.
 
-## [Unreleased]
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-No unreleased changes.
-
-## [1.0.0] - 2026-09-09
+## [1.1.0] - 2026-09-30
 
 ### Added
 
-- Catalog providers for 10musume, Pacopacomama, Muramura, Kin8tengoku, MOODYZ,
-  IDEAPOCKET, S1, and Madonna.
-- Performer-directory providers for T-Powers, Mine's, Bstar, and SOFT ON
-  DEMAND.
-- Captured live-site fixtures for the added providers and deterministic tests
-  that exercise them without network access.
-- URL-driven crawl orchestration with typed DTO results, adaptive fetch
-  fallbacks, browser-service integrations, and 32 catalog/performer providers.
+- `CrawlItemResultDto::$nextCrawlType`: list items declare the crawl type to
+  apply to their URL next, enabling multi-hop discovery until a terminal
+  (detail) item is reached.
+- `SearchCapable` and `PerformerSearchCapable` contracts, `CrawlType::Search` /
+  `CrawlType::PerformerSearch`, and a `query` field on `CrawlRequestDto`.
+- Manifest capability validation: adapters must implement every capability
+  declared in their manifest (fail fast at registration).
+- `AdapterManifestDto::entities()` entity-scoped capability view derived from
+  the flat `capabilities` list.
+- EPORNER photo gallery adapter with `GalleryCapable`, `GalleryDto`, `PhotoDto`,
+  and `ScreenshotDto`.
+- `PerformerOnlyCapabilities` shared concern for sites without movie pages.
+- Live-captured fixtures replacing placeholder HTML across adapters.
 
 ### Changed
 
-- GitHub Actions now uses GitHub-hosted runners and the repository includes the
-  JOOservices community, governance, workflow, and contribution documents.
+- XCITY performer discovery (index -> kana -> ini-listing -> detail) now tags
+  each intermediate hop with `next_crawl_type` so consumers keep crawling to
+  the terminal detail page.
+- Jable performer listing and detail use real model-page parsers instead of
+  aliasing the movie parser.
+- Catalog adapters now return the raw site id as `external_id` while the movie
+  `code` keeps the site prefix (HEYZO/FC2).
+- CI runs on GitHub-hosted runners; Codecov, SonarQube, commitlint, semantic
+  PR, gitleaks allowlist, and workflow audits are configured.
+
+### Fixed
+
+- Multi-hop performer discovery (XCITY, Jable) previously failed because
+  intermediate listing URLs were treated as detail pages.
+- Manifest capabilities could be declared without a matching adapter
+  implementation (Jable performer listing was an alias to the movie parser).
+- Catalog `external_id` for HEYZO/FC2 included the code prefix inconsistently.
+
+[1.1.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.1.0

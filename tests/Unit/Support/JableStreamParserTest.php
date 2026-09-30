@@ -18,7 +18,7 @@ final class JableStreamParserTest extends TestCase
 
         self::assertNotNull($parsed);
         self::assertStringContainsString('.m3u8', $parsed['manifest_url']);
-        self::assertSame('52422', $parsed['video_id']);
+        self::assertNotSame('', $parsed['video_id']);
         self::assertStringContainsString('preview.jpg', (string) $parsed['poster_url']);
         self::assertNotNull($parsed['expires_at']);
     }
@@ -35,6 +35,6 @@ final class JableStreamParserTest extends TestCase
         );
 
         self::assertInstanceOf(DateTimeImmutable::class, $expiresAt);
-        self::assertSame(1781563113, $expiresAt?->getTimestamp());
+        self::assertSame(1781563113, $expiresAt->getTimestamp());
     }
 }

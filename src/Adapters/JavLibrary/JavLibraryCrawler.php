@@ -12,6 +12,8 @@ use JOOservices\CrawlerX\Adapters\JavLibrary\Types\Detail;
 use JOOservices\CrawlerX\Adapters\JavLibrary\Types\Listing;
 use JOOservices\CrawlerX\Adapters\JavLibrary\Types\PerformerDetail;
 use JOOservices\CrawlerX\Adapters\JavLibrary\Types\PerformerListing;
+use JOOservices\CrawlerX\Contracts\DetailCapable;
+use JOOservices\CrawlerX\Contracts\ListingCapable;
 use JOOservices\CrawlerX\Contracts\PerformerDetailCapable;
 use JOOservices\CrawlerX\Contracts\PerformerListingCapable;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
@@ -20,7 +22,7 @@ use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 
-final class JavLibraryCrawler extends AbstractBaseCrawler implements PerformerDetailCapable, PerformerListingCapable, UrlDetectCapable
+final class JavLibraryCrawler extends AbstractBaseCrawler implements DetailCapable, ListingCapable, PerformerDetailCapable, PerformerListingCapable, UrlDetectCapable
 {
     use AliasesPerformerCapabilities;
     use DetectsUrls;

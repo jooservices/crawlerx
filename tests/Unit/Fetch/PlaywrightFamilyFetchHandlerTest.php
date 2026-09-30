@@ -6,6 +6,7 @@ namespace JOOservices\CrawlerX\Tests\Unit\Fetch;
 
 use JOOservices\CrawlerX\Contracts\ProcessRunner;
 use JOOservices\CrawlerX\Dto\HttpProfileDto;
+use JOOservices\CrawlerX\Dto\PlaywrightProfileDto;
 use JOOservices\CrawlerX\Dto\ProcessResultDto;
 use JOOservices\CrawlerX\Dto\SiteProfileDto;
 use JOOservices\CrawlerX\Enums\FetchMethod;
@@ -90,5 +91,48 @@ final class PlaywrightFamilyFetchHandlerTest extends TestCase
 
         self::assertFalse($result->ok);
         self::assertStringContainsString('not found', (string) $result->error);
+    }
+
+    public function test_chrome_stealth_respects_the_site_headless_profile(): void
+    {
+        $script = tempnam(sys_get_temp_dir(), 'pw-script-');
+        self::assertNotFalse($script);
+        file_put_contents($script, '// stub');
+
+        $runner = new class implements ProcessRunner {
+            /** @var array<string, mixed> */
+            public array $config = [];
+
+            public function run(array $command, int $timeoutSeconds = 120, ?string $cwd = null): ProcessResultDto
+            {
+                $configPath = substr($command[2], strlen('--config='));
+                $this->config = json_decode((string) file_get_contents($configPath), true, flags: JSON_THROW_ON_ERROR);
+
+                return new ProcessResultDto(
+                    exitCode: 0,
+                    stdout: json_encode([
+                        'status' => 200,
+                        'finalUrl' => 'https://example.test',
+                        'html' => '<html><body>usable</body></html>',
+                    ], JSON_THROW_ON_ERROR),
+                );
+            }
+        };
+        $handler = new PlaywrightFamilyFetchHandler(new FetchRuntimeConfig(playwrightScript: $script), $runner);
+        $profile = new SiteProfileDto(
+            slug: 'demo',
+            displayName: 'Demo',
+            baseUrl: 'https://example.test',
+            fetchProfile: FetchProfile::BrowserLikely,
+            fetchChain: FetchMethod::browserChain(),
+            http: new HttpProfileDto(),
+            playwright: new PlaywrightProfileDto(headless: true),
+        );
+
+        $result = $handler->fetch('https://example.test', $profile, FetchMethod::ChromeStealth);
+
+        self::assertTrue($result->ok);
+        self::assertTrue($runner->config['headless']);
+        unlink($script);
     }
 }

@@ -1,10 +1,10 @@
 {
-  "slug": "minnanoav",
   "source_url": "https://www.minnano-av.com/actress_list.php",
-  "captured_at": "2026-08-28T22:01:48Z",
+  "final_url": "https://www.minnano-av.com/actress_list.php",
+  "captured_at": "2026-09-09T04:15:40.086Z",
   "http_status": 200,
-  "content_hash": "a8a99bf03d845e730d8f6ada8417e263fa1487f6a0fb2a5016b02eac6ccc8406",
+  "content_hash": "29f87590e433978ade2f721678325da3b1d28e60a2f3713b7747c7722ec7c7ed",
   "target_type": "performer_listing",
-  "sanitized": false,
-  "notes": "Live capture through Playwright."
+  "fetch_method": "playwright",
+  "sanitized": false
 }

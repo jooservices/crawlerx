@@ -1,10 +1,10 @@
 {
-  "slug": "avfan",
   "source_url": "https://avfan.com/en",
-  "captured_at": "2026-08-28T21:56:29Z",
+  "final_url": "https://avfan.com/en",
+  "captured_at": "2026-09-09T04:05:39.221Z",
   "http_status": 200,
-  "content_hash": "d1608900acfddda61845b257fd23a153ca0477a3dc22761befa57a652288483a",
+  "content_hash": "6507b6c4becf4a57b49320d1cde0ca96c307a7e92dd863e8790fe5ea30dec36b",
   "target_type": "listing",
-  "sanitized": false,
-  "notes": "Live capture through Playwright; age-gate overlay markup present but movie listing links parse correctly."
+  "fetch_method": "playwright",
+  "sanitized": false
 }

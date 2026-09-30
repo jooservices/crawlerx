@@ -1,10 +1,10 @@
 {
-  "slug": "warashi",
   "source_url": "https://warashi-asian-pornstars.fr/en/s-2-0/yua-mikami/asian-female-pornstar/1234",
-  "captured_at": "2026-08-28T22:04:14Z",
+  "final_url": "https://warashi-asian-pornstars.fr/en/s-2-0/yua-mikami/asian-female-pornstar/1234",
+  "captured_at": "2026-09-09T04:18:59.572Z",
   "http_status": 200,
-  "content_hash": "c2cb71cd98b40a195fb8e99dc20b62bb18ad6fd7a513a68d9493c64c02162e32",
+  "content_hash": "2711114b09bb42b61e3e0e2ae38e50c8909dda15f0384b7b66f4b4d52ea6ccd4",
   "target_type": "performer_detail",
-  "sanitized": false,
-  "notes": "Live capture through Playwright."
+  "fetch_method": "playwright",
+  "sanitized": false
 }

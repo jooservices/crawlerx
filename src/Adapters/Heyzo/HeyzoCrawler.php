@@ -26,6 +26,7 @@ final class HeyzoCrawler extends AbstractCatalogCrawler
             performerSelectors: ['a.actor', 'a[href*="actor"]'],
             tagSelectors: ['a[href*="genre"]', 'a[href*="tag"]'],
             screenshotSelectors: ['a[href*="gallery"]', 'a[rel="lightbox"]'],
+            externalIdPrefix: 'HEYZO-',
         );
     }
 }

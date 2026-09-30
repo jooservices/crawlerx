@@ -43,6 +43,7 @@ final class CrawlOrchestrator
         ?CrawlType $type = null,
         ?int $page = null,
         ?CrawlOptionsDto $options = null,
+        ?string $query = null,
     ): CrawlListResultDto|CrawlItemResultDto {
         if ($url === null || trim($url) === '') {
             throw new UnsupportedUrlException('');
@@ -64,6 +65,7 @@ final class CrawlOrchestrator
             page: $classified['page'],
             options: $options,
             fetch: $fetch,
+            query: $query,
         );
 
         return $this->service->site($classified['slug'])->crawl($request);

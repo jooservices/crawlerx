@@ -15,6 +15,7 @@ final class CrawlRequestDto extends Dto
         public readonly int $page = 1,
         public readonly ?CrawlOptionsDto $options = null,
         public readonly ?FetchResultDto $fetch = null,
+        public readonly ?string $query = null,
     ) {
     }
 }

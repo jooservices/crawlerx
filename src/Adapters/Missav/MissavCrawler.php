@@ -9,12 +9,14 @@ use JOOservices\CrawlerX\Adapters\Concerns\DetectsUrls;
 use JOOservices\CrawlerX\Adapters\Concerns\UrlDetect\MissavUrlDetectRules;
 use JOOservices\CrawlerX\Adapters\Missav\Types\Detail;
 use JOOservices\CrawlerX\Adapters\Missav\Types\Listing;
+use JOOservices\CrawlerX\Contracts\DetailCapable;
+use JOOservices\CrawlerX\Contracts\ListingCapable;
 use JOOservices\CrawlerX\Contracts\UrlDetectCapable;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 
-final class MissavCrawler extends AbstractBaseCrawler implements UrlDetectCapable
+final class MissavCrawler extends AbstractBaseCrawler implements DetailCapable, ListingCapable, UrlDetectCapable
 {
     use DetectsUrls;
     use MissavUrlDetectRules;

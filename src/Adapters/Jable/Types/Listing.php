@@ -288,22 +288,13 @@ final class Listing extends AbstractHtmlType implements TypeInterface
             return null;
         }
 
-        // $listingUrl is the URL being crawled, which already carries its own
-        // page segment (e.g. /new-release/2/). Strip it so sibling page links
-        // (e.g. /new-release/3/) resolve against the listing root, not against
-        // the current page as if it were the root.
-        $root = preg_replace('#/\d+$#', '', trim($listingPath, '/')) ?? trim($listingPath, '/');
-        if ($root === '') {
+        $listingBase = trim($listingPath, '/');
+        if ($listingBase === '') {
             return null;
         }
 
-        $normalizedPath = trim($path, '/');
-        if (strcasecmp($normalizedPath, $root) === 0) {
-            return 1;
-        }
-
-        $pattern = '#^' . preg_quote($root, '#') . '/(\d+)$#i';
-        if (preg_match($pattern, $normalizedPath, $matches) !== 1) {
+        $pattern = '#^/' . preg_quote($listingBase, '#') . '/(\d+)/?$#i';
+        if (preg_match($pattern, $path, $matches) !== 1) {
             return null;
         }
 

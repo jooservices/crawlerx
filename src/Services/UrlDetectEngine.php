@@ -77,6 +77,8 @@ final class UrlDetectEngine
 
     private static function isDetailCrawlType(CrawlType $crawlType): bool
     {
-        return $crawlType === CrawlType::Detail || $crawlType === CrawlType::PerformerDetail;
+        return $crawlType === CrawlType::Detail
+            || $crawlType === CrawlType::Gallery
+            || $crawlType === CrawlType::PerformerDetail;
     }
 }

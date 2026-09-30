@@ -48,7 +48,7 @@ final class PlaywrightFamilyFetchHandler implements FetchMethodHandler
             'url' => $url,
             'waitMs' => $playwright->postWaitMs,
             'browser' => $playwright->browser,
-            'headless' => $method === FetchMethod::ChromeStealth ? false : $playwright->headless,
+            'headless' => $playwright->headless,
             'navigationTimeoutMs' => $playwright->navigationTimeoutMs,
             'viewport' => $playwright->viewport,
             'locale' => $playwright->locale,

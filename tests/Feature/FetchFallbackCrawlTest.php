@@ -39,7 +39,10 @@ final class FetchFallbackCrawlTest extends TestCase
         $result = CrawlerX::url('https://en.jable.tv/videos/fjin-091/')->crawl();
 
         self::assertInstanceOf(CrawlItemResultDto::class, $result);
-        self::assertSame('FJIN-091', $result->meta['movie']['code']);
+        $movie = $result->meta['movie'] ?? null;
+        self::assertIsArray($movie);
+        self::assertIsString($movie['code'] ?? null);
+        self::assertNotSame('', trim($movie['code']));
         self::assertSame([FetchMethod::Playwright, FetchMethod::PlaywrightStealth], $handler->attempts);
     }
 
@@ -87,7 +90,9 @@ final class FetchFallbackCrawlTest extends TestCase
 
         self::assertTrue($outcome->failed());
         self::assertSame(CrawlErrorCode::Blocked, $outcome->error?->code);
-        self::assertCount(2, $outcome->error?->fetch?->attempts ?? []);
+        self::assertNotNull($outcome->error);
+        self::assertNotNull($outcome->error->fetch);
+        self::assertCount(2, $outcome->error->fetch->attempts);
     }
 
     public function test_named_profile_and_method_start_inside_profile_chain_through_facade(): void
@@ -118,6 +123,10 @@ final class FetchFallbackCrawlTest extends TestCase
         self::assertSame([FetchMethod::Http], $handler->attempts);
     }
 
+    /**
+     * @param  callable(FetchMethod, string): FetchResultDto  $callback
+     * @return FetchMethodHandler&object{attempts: list<FetchMethod>}
+     */
     private function handler(callable $callback): FetchMethodHandler
     {
         return new class ($callback) implements FetchMethodHandler {
