@@ -31,15 +31,19 @@ final class Detail extends AbstractType implements TypeInterface
         $html = $this->htmlFromResponse($response->toPsrResponse(), $this->definition->label, 'detail');
         $crawler = new Crawler($html, $request->url);
         $externalId = $this->definition->externalId($request->url);
+        $fields = array_merge($this->definitionFields($crawler), $this->panelFields($crawler));
         $title = $this->title($crawler) ?? $externalId;
-        $fields = $this->definitionFields($crawler);
 
         $item = MovieDto::item(
             url: $request->url,
             externalId: $externalId,
             title: $title,
             data: [
-                'code' => $fields['Product ID'] ?? $fields['品番'] ?? $externalId,
+                'code' => $fields['Product ID']
+                    ?? $fields['品番']
+                    ?? $fields['ID']
+                    ?? $this->clipboardId($crawler)
+                    ?? $this->definition->code($externalId),
                 'cover_url' => $this->cover($crawler, $request->url),
                 'description' => $this->meta($crawler, 'name', 'description'),
                 'date' => $this->date($fields),
@@ -58,15 +62,7 @@ final class Detail extends AbstractType implements TypeInterface
 
     private function title(Crawler $crawler): ?string
     {
-        $title = null;
-        foreach ($this->definition->detailTitleSelectors as $selector) {
-            $title = $this->firstText($crawler, $selector);
-            if ($title !== null) {
-                break;
-            }
-        }
-
-        $title ??= $this->meta($crawler, 'property', 'og:title')
+        $title = $this->meta($crawler, 'property', 'og:title')
             ?? $this->firstText($crawler, 'h1, .pagetitle h2, #video_title, .video-title')
             ?? $this->firstText($crawler, 'title');
 
@@ -87,14 +83,7 @@ final class Detail extends AbstractType implements TypeInterface
     {
         $cover = $this->meta($crawler, 'property', 'og:image');
         if ($cover === null) {
-            /** @var array<string, string> $selectors */
-            $selectors = $this->definition->coverSelectors + [
-                'video[poster]' => 'poster',
-                '.video-cover img' => 'src',
-                '#video_jacket_img' => 'src',
-                '.movie img' => 'src',
-            ];
-            foreach ($selectors as $selector => $attribute) {
+            foreach (['video[poster]' => 'poster', '.video-cover img' => 'src', '#video_jacket_img' => 'src', '.movie img' => 'src'] as $selector => $attribute) {
                 $cover = $this->firstAttribute($crawler, $selector, $attribute);
                 if ($cover !== null) {
                     break;
@@ -123,23 +112,61 @@ final class Detail extends AbstractType implements TypeInterface
             }
         });
 
-        $crawler->filter('.movie-spec')->each(function (Crawler $item) use (&$fields): void {
-            $key = $this->firstText($item, '.spec-title');
-            $value = $this->firstText($item, '.spec-content');
-            if ($key !== null && $value !== null) {
-                $fields[rtrim($key, ':')] = $value;
-            }
-        });
+        return $fields;
+    }
 
-        $crawler->filter('.p-workPage__table .item')->each(function (Crawler $item) use (&$fields): void {
-            $key = $this->firstText($item, '.th');
-            $value = $this->firstText($item, '.td');
-            if ($key !== null && $value !== null) {
-                $fields[rtrim($key, ':')] = $value;
+    /**
+     * JavDB-style panel rows: <strong>ID:</strong> <span class="value">…</span>
+     * plus optional data-clipboard-text on a copy button.
+     *
+     * @return array<string, string>
+     */
+    private function panelFields(Crawler $crawler): array
+    {
+        $fields = [];
+        $crawler->filter('.panel-block')->each(function (Crawler $block) use (&$fields): void {
+            if ($block->filter('strong')->count() === 0) {
+                return;
+            }
+
+            $key = $this->normalizeText($block->filter('strong')->first()->text(''));
+            if ($key === null) {
+                return;
+            }
+            $key = rtrim($key, ':');
+
+            $clipboard = $block->filter('[data-clipboard-text]')->first();
+            if ($clipboard->count() > 0) {
+                $copied = $clipboard->attr('data-clipboard-text');
+                if (is_string($copied) && trim($copied) !== '') {
+                    $fields[$key] = trim($copied);
+
+                    return;
+                }
+            }
+
+            if ($block->filter('.value')->count() === 0) {
+                return;
+            }
+
+            $text = $this->normalizeText($block->filter('.value')->first()->text(''));
+            if ($text !== null) {
+                $fields[$key] = $text;
             }
         });
 
         return $fields;
+    }
+
+    private function clipboardId(Crawler $crawler): ?string
+    {
+        if ($crawler->filter('[data-clipboard-text]')->count() === 0) {
+            return null;
+        }
+
+        $value = $crawler->filter('[data-clipboard-text]')->first()->attr('data-clipboard-text');
+
+        return is_string($value) && trim($value) !== '' ? trim($value) : null;
     }
 
     /**
@@ -166,7 +193,7 @@ final class Detail extends AbstractType implements TypeInterface
         $screenshots = [];
         foreach ($this->definition->screenshotSelectors as $selector) {
             $crawler->filter($selector)->each(function (Crawler $node) use (&$screenshots, $baseUrl): void {
-                $href = $node->attr('href') ?? $node->attr('data-vue-img-src');
+                $href = $node->attr('href');
                 if (! is_string($href) || trim($href) === '') {
                     return;
                 }

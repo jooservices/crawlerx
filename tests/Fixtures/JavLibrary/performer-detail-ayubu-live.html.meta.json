@@ -1,10 +1,10 @@
 {
-  "slug": "javlibrary",
   "source_url": "https://www.javlibrary.com/en/vl_star.php?s=ayubu",
-  "captured_at": "2026-08-28T17:04:16Z",
+  "final_url": "https://www.javlibrary.com/en/vl_star.php?s=ayubu",
+  "captured_at": "2026-09-09T04:14:47.497Z",
   "http_status": 200,
-  "content_hash": "91b5748534ca1483db7015b4707296098590fa69ff507c4f274c969981e356e3",
+  "content_hash": "09f5d10dfcf1305ddc0a53ac7c333406116bf72bb4adbd9d34f29da9e3761fd3",
   "target_type": "performer_detail",
-  "sanitized": false,
-  "notes": "Live capture through FlareSolverr after Cloudflare challenge bypass"
+  "fetch_method": "flaresolverr",
+  "sanitized": false
 }

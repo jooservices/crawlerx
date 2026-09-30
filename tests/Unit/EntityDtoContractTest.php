@@ -26,8 +26,9 @@ final class EntityDtoContractTest extends TestCase
 
         $serialized = $item->toArray();
 
-        self::assertSame(['url', 'entity_type', 'meta'], array_keys($serialized));
+        self::assertSame(['url', 'entity_type', 'meta', 'next_crawl_type'], array_keys($serialized));
         self::assertSame('movie', $serialized['entity_type']);
+        self::assertNull($serialized['next_crawl_type']);
         self::assertSame(['movie'], array_keys($serialized['meta']));
         self::assertSame('NAMH-074', $serialized['meta']['movie']['external_id']);
         self::assertSame('Actress A', $serialized['meta']['movie']['performers'][0]['name']);

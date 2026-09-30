@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters;
 
+use JOOservices\CrawlerX\Contracts\DetailCapable;
+use JOOservices\CrawlerX\Contracts\ListingCapable;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 
-abstract class SimpleHtmlCrawler extends AbstractBaseCrawler
+abstract class SimpleHtmlCrawler extends AbstractBaseCrawler implements DetailCapable, ListingCapable
 {
     protected string $listingType = '';
 

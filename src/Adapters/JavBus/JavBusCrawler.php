@@ -11,6 +11,8 @@ use JOOservices\CrawlerX\Adapters\JavBus\Types\Detail;
 use JOOservices\CrawlerX\Adapters\JavBus\Types\Listing;
 use JOOservices\CrawlerX\Adapters\JavBus\Types\PerformerDetail;
 use JOOservices\CrawlerX\Adapters\JavBus\Types\PerformerListing;
+use JOOservices\CrawlerX\Contracts\DetailCapable;
+use JOOservices\CrawlerX\Contracts\ListingCapable;
 use JOOservices\CrawlerX\Contracts\PerformerDetailCapable;
 use JOOservices\CrawlerX\Contracts\PerformerListingCapable;
 use JOOservices\CrawlerX\Contracts\UrlDetectCapable;
@@ -19,7 +21,7 @@ use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Dto\UrlDetectionResult;
 
-final class JavBusCrawler extends AbstractBaseCrawler implements PerformerDetailCapable, PerformerListingCapable, UrlDetectCapable
+final class JavBusCrawler extends AbstractBaseCrawler implements DetailCapable, ListingCapable, PerformerDetailCapable, PerformerListingCapable, UrlDetectCapable
 {
     use DetectsUrls {
         detectUrl as private detectJavBusUrl;

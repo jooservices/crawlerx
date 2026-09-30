@@ -46,7 +46,11 @@ final class PerformerIndex extends AbstractType implements TypeInterface
             $urls[$this->canonicalDiscoveryUrl($absolute, ['kana'])] = true;
         });
 
-        $items = array_map(fn(string $url): CrawlItemResultDto => PerformerDto::item(url: $url, externalId: $url, title: $url), array_keys($urls));
+        $items = array_map(
+            fn(string $url): CrawlItemResultDto => PerformerDto::item(url: $url, externalId: $url, title: $url)
+                ->withNextCrawlType('performer_listing'),
+            array_keys($urls),
+        );
 
         return new CrawlListResultDto(
             url: $request->url,

@@ -1,10 +1,10 @@
 {
-  "slug": "javbtc",
   "source_url": "https://javbtc.com/",
-  "captured_at": "2026-08-28T22:01:08Z",
+  "final_url": "https://javbtc.com/",
+  "captured_at": "2026-09-09T04:14:57.540Z",
   "http_status": 200,
-  "content_hash": "9cd9455b4ad360348892f384bca885361bf9bb46f19fc0d2170588637830618f",
+  "content_hash": "67d05b127bf31ab2aaf0f94edc0d3b76dc47bb704cdcec81d647686ed6e58bba",
   "target_type": "listing",
-  "sanitized": false,
-  "notes": "Live capture through Playwright."
+  "fetch_method": "playwright",
+  "sanitized": false
 }

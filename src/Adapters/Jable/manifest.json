@@ -86,6 +86,16 @@
                 "url": "https://en.jable.tv/videos/fjin-091/",
                 "name": "detail-fjin-091.html",
                 "type": "detail"
+            },
+            {
+                "url": "https://en.jable.tv/models/",
+                "name": "models-listing.html",
+                "type": "performer_listing"
+            },
+            {
+                "url": "https://en.jable.tv/models/bfaca44240620be2f3092c294fb22fbe/",
+                "name": "performer-detail-bfaca44240620be2f3092c294fb22fbe.html",
+                "type": "performer_detail"
             }
         ],
         "defaultCrawlConfig": {

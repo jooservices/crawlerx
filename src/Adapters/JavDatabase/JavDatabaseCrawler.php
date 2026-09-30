@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Adapters\JavDatabase;
 
 use JOOservices\CrawlerX\Adapters\AbstractBaseCrawler;
-use JOOservices\CrawlerX\Adapters\Concerns\AliasesPerformerCapabilities;
 use JOOservices\CrawlerX\Adapters\Concerns\DetectsUrls;
+use JOOservices\CrawlerX\Adapters\Concerns\PerformerOnlyCapabilities;
 use JOOservices\CrawlerX\Adapters\Concerns\UrlDetect\JavDatabaseUrlDetectRules;
 use JOOservices\CrawlerX\Adapters\JavDatabase\Types\PerformerDetail;
 use JOOservices\CrawlerX\Adapters\JavDatabase\Types\PerformerListing;
@@ -19,7 +19,7 @@ use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 
 final class JavDatabaseCrawler extends AbstractBaseCrawler implements PerformerDetailCapable, PerformerListingCapable, UrlDetectCapable
 {
-    use AliasesPerformerCapabilities;
+    use PerformerOnlyCapabilities;
     use DetectsUrls;
     use JavDatabaseUrlDetectRules;
 
@@ -32,12 +32,12 @@ final class JavDatabaseCrawler extends AbstractBaseCrawler implements PerformerD
         return 'javdatabase';
     }
 
-    public function listing(CrawlRequestDto $request): CrawlListResultDto
+    protected function parsePerformerListing(CrawlRequestDto $request): CrawlListResultDto
     {
         return (new PerformerListing($this->client))->execute($request);
     }
 
-    public function detail(CrawlRequestDto $request): CrawlItemResultDto
+    protected function parsePerformerDetail(CrawlRequestDto $request): CrawlItemResultDto
     {
         return (new PerformerDetail($this->client))->execute($request);
     }

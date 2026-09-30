@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Exceptions;
 
-use RuntimeException;
-
-final class AmbiguousUrlException extends RuntimeException
+final class AmbiguousUrlException extends AbstractCrawlerException
 {
     public function __construct(string $url)
     {

@@ -26,6 +26,26 @@ trait JableUrlDetectRules
     {
         return [
             new ImportMatchRule(
+                entity: ImportEntity::Performer,
+                urlType: 'performer_detail',
+                crawlType: CrawlType::PerformerDetail,
+                priority: 110,
+                matcher: fn(string $url, string $path, string $query): bool => ImportRuleHelpers::pathMatches(
+                    $path,
+                    '#^/models/[^/]+/?$#i',
+                ),
+            ),
+            new ImportMatchRule(
+                entity: ImportEntity::Performer,
+                urlType: 'performer_listing',
+                crawlType: CrawlType::PerformerListing,
+                priority: 90,
+                matcher: fn(string $url, string $path, string $query): bool => ImportRuleHelpers::pathMatches(
+                    $path,
+                    '#^/models/?$#i',
+                ),
+            ),
+            new ImportMatchRule(
                 entity: ImportEntity::Movie,
                 urlType: 'import_detail',
                 crawlType: CrawlType::Detail,

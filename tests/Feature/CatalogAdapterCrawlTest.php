@@ -25,7 +25,7 @@ final class CatalogAdapterCrawlTest extends CrawlerXTestCase
     {
         yield 'javdb' => ['https://javdb.com/v/a8yV0p', 'javdb/detail.html', 'a8yV0p'];
         yield 'duga' => ['https://duga.jp/ppv/vrpandemic-0023/', 'duga/detail.html', 'vrpandemic-0023'];
-        yield 'fc2' => ['https://adult.contents.fc2.com/article/4968399/', 'fc2/detail.html', 'FC2-PPV-4968399'];
+        yield 'fc2' => ['https://adult.contents.fc2.com/article/4968399/', 'fc2/detail.html', '4968399'];
         yield 'tokyohot' => ['https://my.tokyo-hot.com/product/crazyasia097085/', 'tokyohot/detail.html', 'crazyasia097085'];
         yield 'caribbeancom' => ['https://en.caribbeancom.com/eng/moviepages/080826-001/index.html', 'caribbeancom/detail.html', '080826-001'];
         yield 'heyzo' => ['https://en.heyzo.com/moviepages/3927/index.html', 'heyzo/detail.html', '3927'];

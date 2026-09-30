@@ -5,9 +5,17 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Registry;
 
 use JOOservices\CrawlerX\Contracts\AdapterManifestRegistry;
+use JOOservices\CrawlerX\Contracts\DetailCapable;
+use JOOservices\CrawlerX\Contracts\GalleryCapable;
+use JOOservices\CrawlerX\Contracts\ListingCapable;
+use JOOservices\CrawlerX\Contracts\PerformerDetailCapable;
+use JOOservices\CrawlerX\Contracts\PerformerListingCapable;
+use JOOservices\CrawlerX\Contracts\PerformerSearchCapable;
+use JOOservices\CrawlerX\Contracts\SearchCapable;
 use JOOservices\CrawlerX\Contracts\SiteAdapter;
 use JOOservices\CrawlerX\Exceptions\AdapterNotFoundException;
 use JOOservices\CrawlerX\Services\ClientFactory;
+use InvalidArgumentException;
 
 final class AdapterRegistry
 {
@@ -35,7 +43,45 @@ final class AdapterRegistry
                 throw new AdapterNotFoundException($slug);
             }
 
+            $manifest = $manifests->get($slug);
+            if ($manifest !== null) {
+                $this->validateCapabilities($slug, $class, $manifest->capabilities);
+            }
+
             $this->register($slug, $class);
+        }
+    }
+
+    /** @var array<string, class-string> */
+    private const CAPABILITY_CONTRACT = [
+        'listing' => ListingCapable::class,
+        'detail' => DetailCapable::class,
+        'search' => SearchCapable::class,
+        'gallery' => GalleryCapable::class,
+        'performer_listing' => PerformerListingCapable::class,
+        'performer_detail' => PerformerDetailCapable::class,
+        'performer_search' => PerformerSearchCapable::class,
+    ];
+
+    /**
+     * Fail fast when a manifest declares a capability the adapter does not implement.
+     *
+     * @param  list<string>  $capabilities
+     * @param  class-string<SiteAdapter>  $class
+     */
+    private function validateCapabilities(string $slug, string $class, array $capabilities): void
+    {
+        foreach ($capabilities as $capability) {
+            $contract = self::CAPABILITY_CONTRACT[$capability] ?? null;
+            if ($contract === null) {
+                throw new InvalidArgumentException("Manifest [{$slug}] declares unknown capability [{$capability}].");
+            }
+
+            if (! is_a($class, $contract, true)) {
+                throw new InvalidArgumentException(
+                    "Manifest [{$slug}] declares capability [{$capability}] but adapter does not implement {$contract}.",
+                );
+            }
         }
     }
 

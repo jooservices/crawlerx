@@ -33,7 +33,9 @@ final class CrawlerXFacadeTest extends CrawlerXTestCase
         $item = CrawlerX::site('onejav')->url($url)->crawl();
 
         self::assertInstanceOf(CrawlItemResultDto::class, $item);
-        self::assertSame('YMDS-282', $item->meta['movie']['code']);
+        $movie = $item->meta['movie'] ?? null;
+        self::assertIsArray($movie);
+        self::assertSame('YMDS-282', $movie['code'] ?? null);
     }
 
     public function test_try_crawl_returns_unsupported_url(): void
@@ -76,7 +78,11 @@ final class CrawlerXFacadeTest extends CrawlerXTestCase
     public function test_try_crawl_parse_failure_maps_blocked_challenge(): void
     {
         $url = 'https://missav.to/latest-updates';
-        FixtureResponder::for('GET', $url)->file('missav/cloudflare.html', 403, ['cf-mitigated' => 'challenge']);
+        FixtureResponder::for('GET', $url)->body(
+            '<html><title>Just a moment...</title><body>challenges.cloudflare.com</body></html>',
+            403,
+            ['cf-mitigated' => 'challenge'],
+        );
 
         $outcome = CrawlerX::url($url)->tryCrawl();
 

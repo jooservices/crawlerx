@@ -5,19 +5,15 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Adapters;
 
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
-use JOOservices\CrawlerX\Contracts\DetailCapable;
-use JOOservices\CrawlerX\Contracts\ListingCapable;
 use JOOservices\CrawlerX\Contracts\SiteAdapter;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\AdapterManifestDto;
-use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
-use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Http\SeededCrawlHttpClient;
 use JOOservices\CrawlerX\Services\ClientFactory;
 use RuntimeException;
 
-abstract class AbstractBaseCrawler implements DetailCapable, ListingCapable, SiteAdapter
+abstract class AbstractBaseCrawler implements SiteAdapter
 {
     /**
      * @var array<string, mixed>
@@ -62,10 +58,6 @@ abstract class AbstractBaseCrawler implements DetailCapable, ListingCapable, Sit
             ? new SeededCrawlHttpClient($inner, $request->fetch)
             : $inner;
     }
-
-    abstract public function listing(CrawlRequestDto $request): CrawlListResultDto;
-
-    abstract public function detail(CrawlRequestDto $request): CrawlItemResultDto;
 
     /**
      * @return list<array{match: string|callable(CrawlRequestDto): bool, type: class-string<TypeInterface>}>

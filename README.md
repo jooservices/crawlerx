@@ -1,13 +1,5 @@
 # jooservices/crawlerx
 
-[![CI](https://github.com/jooservices/crawlerx/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/jooservices/crawlerx/actions/workflows/ci.yml)
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/jooservices/crawlerx/badge)](https://securityscorecards.dev/viewer/?uri=github.com/jooservices/crawlerx)
-[![PHP Version](https://img.shields.io/badge/PHP-8.5%2B-blue.svg)](https://www.php.net/)
-[![GitHub Release](https://img.shields.io/github/v/release/jooservices/crawlerx?display_name=tag)](https://github.com/jooservices/crawlerx/releases)
-[![Packagist Version](https://img.shields.io/packagist/v/jooservices/crawlerx)](https://packagist.org/packages/jooservices/crawlerx)
-[![Total Downloads](https://img.shields.io/packagist/dt/jooservices/crawlerx)](https://packagist.org/packages/jooservices/crawlerx)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-
 A PHP 8.5+ URL-driven crawl and parse library for JAV catalog sites. Give
 CrawlerX a supported URL and it detects the site and page type, fetches the
 page through the appropriate HTTP or browser strategy, and returns typed DTOs.
@@ -22,13 +14,15 @@ echo $item->meta['movie']['external_id'];       // ymds282
 echo $item->meta['movie']['code'];              // YMDS-282
 ```
 
-> [!NOTE]
-> This is the framework-agnostic CrawlerX `v1.0.0` release. It replaces the
-> retired Laravel implementation and provides the API documented here.
+> [!WARNING]
+> This repository is a ground-up, framework-agnostic rebuild. The currently
+> published Packagist `v1.0.0` is the retired Laravel implementation and does
+> **not** provide the API documented here. Until this rebuild receives a new
+> tagged release, install this checkout as a Composer path repository.
 
 ## Features
 
-- One public builder API for listing, detail, performer-listing, and performer-detail pages
+- One public builder API for listing, detail, gallery, performer-listing, and performer-detail pages
 - Automatic site and crawl-type detection from the URL
 - Typed immutable results built on `jooservices/dto` v3
 - HTTP fetching through `jooservices/client` v4
@@ -66,10 +60,11 @@ The path installation uses this checkout's actual requirements, including
 
 ### Tagged release
 
-After the GitHub release is registered on Packagist, install it with:
+After the rebuilt package receives a new release newer than the retired
+`v1.0.0`, normal Composer installation will be:
 
 ```bash
-composer require jooservices/crawlerx:^1.0
+composer require jooservices/crawlerx
 ```
 
 For development inside this repository, build the PHP 8.5 tooling image and
@@ -114,7 +109,7 @@ $result = CrawlerX::url('https://en.1pondo.tv/list/?o=n&page=2')
     ->crawl();
 ```
 
-Supported crawl types are `Listing`, `Detail`, `PerformerListing`, and
+Supported crawl types are `Listing`, `Detail`, `Gallery`, `PerformerListing`, and
 `PerformerDetail`.
 
 ### Result DTOs
@@ -179,43 +174,32 @@ Available methods are `http`, `curl_impersonate`, `playwright`,
 
 ## Supported sites
 
-CrawlerX currently registers 32 adapters. Capabilities below come from each
+CrawlerX currently registers 21 adapters. Capabilities below come from each
 adapter's current manifest.
 
-| Site | Slug | Listing | Detail | Performer listing | Performer detail |
-| --- | --- | :---: | :---: | :---: | :---: |
-| 141Jav | `141jav` | Yes | Yes | — | — |
-| 1Pondo | `onepondo` | Yes | Yes | — | — |
-| 10musume | `10musume` | Yes | Yes | — | — |
-| Avfan | `avfan` | Yes | Yes | — | — |
-| Bstar | `bstar` | — | — | Yes | Yes |
-| Caribbeancom | `caribbeancom` | Yes | Yes | — | — |
-| DUGA | `duga` | Yes | Yes | — | — |
-| FC2 Content Market | `fc2` | Yes | Yes | — | — |
-| FFJav | `ffjav` | Yes | Yes | — | — |
-| HEYZO | `heyzo` | Yes | Yes | — | — |
-| IDEAPOCKET | `ideapocket` | Yes | Yes | — | — |
-| Jable | `jable` | Yes | Yes | Yes | Yes |
-| JAV Database | `javdatabase` | — | — | Yes | Yes |
-| JavBTC | `javbtc` | Yes | Yes | — | — |
-| JavBus | `javbus` | Yes | Yes | Yes | Yes |
-| JavDB | `javdb` | Yes | Yes | — | — |
-| JAVLibrary | `javlibrary` | Yes | Yes | Yes | Yes |
-| Kin8tengoku | `kin8tengoku` | Yes | Yes | — | — |
-| Madonna | `madonna` | Yes | Yes | — | — |
-| Mine's | `mines` | — | — | Yes | Yes |
-| Minnano AV | `minnanoav` | Yes | Yes | Yes | Yes |
-| MissAV | `missav` | Yes | Yes | — | — |
-| MOODYZ | `moodyz` | Yes | Yes | — | — |
-| Muramura | `muramura` | Yes | Yes | — | — |
-| OneJav | `onejav` | Yes | Yes | — | — |
-| Pacopacomama | `pacopacomama` | Yes | Yes | — | — |
-| S1 NO.1 STYLE | `s1` | Yes | Yes | — | — |
-| SOFT ON DEMAND | `sod` | — | — | Yes | Yes |
-| T-Powers | `tpowers` | — | — | Yes | Yes |
-| Tokyo-Hot | `tokyohot` | Yes | Yes | — | — |
-| Warashi | `warashi` | — | — | Yes | Yes |
-| XCITY | `xcity` | Yes | Yes | Yes | Yes |
+| Site | Slug | Listing | Detail | Gallery | Performer listing | Performer detail |
+| --- | --- | :---: | :---: | :---: | :---: | :---: |
+| 141Jav | `141jav` | Yes | Yes | — | — | — |
+| 1Pondo | `onepondo` | Yes | Yes | — | — | — |
+| Avfan | `avfan` | Yes | Yes | — | — | — |
+| Caribbeancom | `caribbeancom` | Yes | Yes | — | — | — |
+| DUGA | `duga` | Yes | Yes | — | — | — |
+| EPORNER | `eporner` | — | — | Yes | — | — |
+| FC2 Content Market | `fc2` | Yes | Yes | — | — | — |
+| FFJav | `ffjav` | Yes | Yes | — | — | — |
+| HEYZO | `heyzo` | Yes | Yes | — | — | — |
+| Jable | `jable` | Yes | Yes | — | Yes | Yes |
+| JAV Database | `javdatabase` | — | — | — | Yes | Yes |
+| JavBTC | `javbtc` | Yes | Yes | — | — | — |
+| JavBus | `javbus` | Yes | Yes | — | Yes | Yes |
+| JavDB | `javdb` | Yes | Yes | — | — | — |
+| JAVLibrary | `javlibrary` | Yes | Yes | — | Yes | Yes |
+| Minnano AV | `minnanoav` | Yes | Yes | — | Yes | Yes |
+| MissAV | `missav` | Yes | Yes | — | — | — |
+| OneJav | `onejav` | Yes | Yes | — | — | — |
+| Tokyo-Hot | `tokyohot` | Yes | Yes | — | — | — |
+| Warashi | `warashi` | — | — | — | Yes | Yes |
+| XCITY | `xcity` | Yes | Yes | — | Yes | Yes |
 
 DUGA, Tokyo-Hot, Caribbeancom, HEYZO, and JavBus use accepted adult landing
 routes when a root listing URL would otherwise return an age-verification page.
@@ -309,12 +293,9 @@ or custom-container integrations can use these environment variables:
 | `CRAWLERX_BROWSER_SERVICE_URL` | Remote Node browser service base URL |
 | `CRAWLERX_FLARESOLVERR_URL` | FlareSolverr API endpoint |
 
-## Testing
+## Testing with Docker
 
-PHP tooling runs on the host PHP directly when it satisfies `^8.5`, and falls
-back to `php:8.5-cli-bookworm` through Docker Compose otherwise. Docker
-remains required for the Node/Playwright/FlareSolverr fetch sidecars
-regardless of the host PHP version.
+All PHP tooling runs in `php:8.5-cli-bookworm` through Docker Compose.
 
 ```bash
 make build
@@ -328,8 +309,8 @@ analysis, both coverage suites, and the 85% coverage checks.
 
 | Command | Purpose |
 | --- | --- |
-| `make build` | Build the PHP 8.5 Docker image (skipped when host PHP matches `^8.5`) |
-| `make install` | Run `composer install` on the host, or inside Docker as a fallback |
+| `make build` | Build the PHP 8.5 Docker image |
+| `make install` | Build and run `composer install` inside Docker |
 | `make shell` | Open an interactive shell in the PHP container |
 | `make validate` | Run `composer validate --strict` |
 | `make lint` | Run Pint, PHPCS, PHPStan, PHPMD, and PHP-CS-Fixer |
@@ -384,29 +365,3 @@ CrawlerX facade
 Adapter behavior and supported page types are declared under
 `src/Adapters/*/manifest.json`. `CrawlerXFactory::reset()` is available for
 long-running workers that need to release the process-wide runtime instance.
-
-## Documentation
-
-- [Changelog](CHANGELOG.md)
-- [Fixture capture guide](tools/fixtures/README.md)
-- [GitHub Actions workflows](WORKFLOWS.md)
-- [Contributing guide](CONTRIBUTING.md)
-
-## Development
-
-Use the verified commands in the [Testing](#testing) section before opening a
-pull request. The branch model, local hooks, and review requirements are
-defined in [CONTRIBUTING.md](CONTRIBUTING.md); the remote checks are documented
-in [WORKFLOWS.md](WORKFLOWS.md).
-
-## Community
-
-- [Contributing](CONTRIBUTING.md)
-- [Security policy](SECURITY.md)
-- [Code of Conduct](CODE_OF_CONDUCT.md)
-- [Support](SUPPORT.md)
-- [Governance](GOVERNANCE.md)
-
-## License
-
-MIT — see [LICENSE](LICENSE).

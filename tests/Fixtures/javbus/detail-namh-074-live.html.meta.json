@@ -1,10 +1,10 @@
 {
-  "slug": "javbus",
   "source_url": "https://www.javbus.com/en/NAMH-074",
-  "captured_at": "2026-08-28T22:58:00Z",
+  "final_url": "https://www.javbus.com/en/NAMH-074",
+  "captured_at": "2026-09-09T04:09:54.696Z",
   "http_status": 200,
-  "content_hash": "52b4a02bc339ca211cecd3e12b820f9f3958b404ead0906940035e13783190d5",
+  "content_hash": "fac3af9a9efd6da4caa6edd350e2efdd1640e8f35aab37e0a7a08efacdb79532",
   "target_type": "detail",
-  "sanitized": false,
-  "notes": "Live Playwright capture after JavBus age-verification cookie bypass"
+  "fetch_method": "playwright",
+  "sanitized": false
 }

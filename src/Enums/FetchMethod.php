@@ -24,7 +24,6 @@ enum FetchMethod: string
             self::CurlImpersonate,
             self::Playwright,
             self::PlaywrightStealth,
-            self::ChromeStealth,
             self::PuppeteerStealth,
             self::Flaresolverr,
         ];
@@ -38,7 +37,6 @@ enum FetchMethod: string
         return [
             self::Playwright,
             self::PlaywrightStealth,
-            self::ChromeStealth,
             self::PuppeteerStealth,
             self::Flaresolverr,
         ];

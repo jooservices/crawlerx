@@ -10,6 +10,8 @@ use JOOservices\CrawlerX\Contracts\GalleryCapable;
 use JOOservices\CrawlerX\Contracts\ListingCapable;
 use JOOservices\CrawlerX\Contracts\PerformerDetailCapable;
 use JOOservices\CrawlerX\Contracts\PerformerListingCapable;
+use JOOservices\CrawlerX\Contracts\PerformerSearchCapable;
+use JOOservices\CrawlerX\Contracts\SearchCapable;
 use JOOservices\CrawlerX\Contracts\SiteAdapter;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
@@ -27,9 +29,11 @@ final class AdapterExecutor
         return match ($request->type) {
             CrawlType::Listing => $this->listing($adapter, $request),
             CrawlType::Detail => $this->detail($adapter, $request),
+            CrawlType::Search => $this->search($adapter, $request),
             CrawlType::Gallery => $this->gallery($adapter, $request),
             CrawlType::PerformerListing => $this->performerListing($adapter, $request),
             CrawlType::PerformerDetail => $this->performerDetail($adapter, $request),
+            CrawlType::PerformerSearch => $this->performerSearch($adapter, $request),
         };
     }
 
@@ -53,6 +57,28 @@ final class AdapterExecutor
         }
 
         return $adapter->detail($request);
+    }
+
+    public function search(SiteAdapter $adapter, CrawlRequestDto $request): CrawlListResultDto
+    {
+        $this->prepareAdapter($adapter, $request);
+
+        if (! $adapter instanceof SearchCapable) {
+            throw new CrawlParseException(sprintf('%s does not implement SearchCapable.', $adapter::class));
+        }
+
+        return $adapter->search($request);
+    }
+
+    public function performerSearch(SiteAdapter $adapter, CrawlRequestDto $request): CrawlListResultDto
+    {
+        $this->prepareAdapter($adapter, $request);
+
+        if (! $adapter instanceof PerformerSearchCapable) {
+            throw new CrawlParseException(sprintf('%s does not implement PerformerSearchCapable.', $adapter::class));
+        }
+
+        return $adapter->performerSearch($request);
     }
 
     public function gallery(SiteAdapter $adapter, CrawlRequestDto $request): CrawlItemResultDto

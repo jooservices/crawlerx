@@ -10,13 +10,15 @@ use JOOservices\CrawlerX\Adapters\Concerns\UrlDetect\TorrentThemeUrlDetectRules;
 use JOOservices\CrawlerX\Adapters\OneFourOneJav\Types\Detail;
 use JOOservices\CrawlerX\Adapters\OneFourOneJav\Types\Listing;
 use JOOservices\CrawlerX\Adapters\Shared\OnejavTheme\TagActressListing;
+use JOOservices\CrawlerX\Contracts\DetailCapable;
+use JOOservices\CrawlerX\Contracts\ListingCapable;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Contracts\UrlDetectCapable;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 
-final class OneFourOneJavCrawler extends AbstractBaseCrawler implements UrlDetectCapable
+final class OneFourOneJavCrawler extends AbstractBaseCrawler implements DetailCapable, ListingCapable, UrlDetectCapable
 {
     use DetectsUrls;
     use TorrentThemeUrlDetectRules;

@@ -142,13 +142,6 @@ async function dismissInterstitials(page, context, targetUrl) {
         'button:has-text("Enter")',
         'input[value="I am over 18"]',
         '#age-verify-yes',
-        'a:has-text("18歳以上なので進む")',
-        'a:has-text("はい（アダルトへ）")',
-        'a:has-text("はい（入室する）")',
-        'a:has-text("18歳以上です")',
-        'a:has(img[alt*="18歳以上"])',
-        'button:has-text("はい")',
-        'a:has-text("はい")',
     ];
 
     for (const selector of ageSelectors) {
@@ -316,7 +309,7 @@ try {
     // A blocked response is diagnostic evidence, not a fixture. Preserve the
     // last known-good capture instead of replacing it with an interstitial.
     if (config.saveHtmlPath && !challenge) {
-        writeFileSync(config.saveHtmlPath, html.replace(/[\t ]+$/gm, ''), 'utf8');
+        writeFileSync(config.saveHtmlPath, html, 'utf8');
     }
 
     await context.close();

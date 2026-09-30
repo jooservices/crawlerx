@@ -37,7 +37,7 @@ final class Detail extends AbstractType implements TypeInterface
             externalId: $externalId,
             title: $title,
             data: [
-                'code' => $fields['Maker Code'] ?? $fields['XCITY Code'] ?? null,
+                'code' => $fields['Maker Code'] ?? $fields['XCITY Code'] ?? $externalId,
                 'cover_url' => $coverUrl,
                 'description' => $this->firstText($crawler, 'p.lead'),
                 'date' => $fields['Release Date'] ?? $fields['Sales Date'] ?? null,

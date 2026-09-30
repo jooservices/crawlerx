@@ -34,7 +34,7 @@ final class FetchPlanResolverTest extends TestCase
         $plan = (new FetchPlanResolver())->resolve($this->profile(true));
 
         self::assertSame(FetchMethod::Playwright, $plan[0]);
-        self::assertContains(FetchMethod::ChromeStealth, $plan);
+        self::assertNotContains(FetchMethod::ChromeStealth, $plan);
         self::assertNotContains(FetchMethod::Http, $plan);
     }
 

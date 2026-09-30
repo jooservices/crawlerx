@@ -4,8 +4,15 @@ title = "gitleaks"
 useDefault = true
 
 [[allowlists]]
-description = "Allowlisted generated assets and dependency lock file"
+description = "Live-captured public page fixtures used by tests"
+paths = [
+  '''^tests/Fixtures/''',
+  '''^src/Adapters/[^/]+/fixtures/''',
+]
+
+[[allowlists]]
+description = "Allowlisted files"
 paths = [
   '''(.*?)(png|jpg|gif|svg)$''',
-  '''^composer\\.lock$''',
+  '''^composer\.lock$''',
 ]
