@@ -14,20 +14,22 @@ echo $item->meta['movie']['external_id'];       // ymds282
 echo $item->meta['movie']['code'];              // YMDS-282
 ```
 
-> [!WARNING]
-> This repository is a ground-up, framework-agnostic rebuild. The currently
-> published Packagist `v1.0.0` is the retired Laravel implementation and does
-> **not** provide the API documented here. Until this rebuild receives a new
-> tagged release, install this checkout as a Composer path repository.
+> [!NOTE]
+> The current Packagist `v1.0.0` is the retired Laravel implementation. This
+> framework-agnostic rebuild is released as `1.1.0` and provides the API
+> documented here.
 
 ## Features
 
-- One public builder API for listing, detail, gallery, performer-listing, and performer-detail pages
+- One public builder API for listing, detail, search, gallery, performer-listing, and performer-detail pages
+- Multi-hop discovery: list items carry a `nextCrawlType` so sub-listings
+  (e.g. XCITY) crawl to terminal detail items
 - Automatic site and crawl-type detection from the URL
 - Typed immutable results built on `jooservices/dto` v3
 - HTTP fetching through `jooservices/client` v4
 - Adaptive fallback through curl-impersonate, Playwright, stealth browser modes, Puppeteer, and FlareSolverr
 - Browser cookie handoff, challenge-page detection, and JavBus age-verification handling
+- Manifest-driven capability declaration validated against adapter implementations
 - Pagination metadata and structured non-throwing errors
 - Network-free CI tests backed by captured HTML fixtures
 - Docker CLI for running the same public crawl flow against live URLs
@@ -60,12 +62,14 @@ The path installation uses this checkout's actual requirements, including
 
 ### Tagged release
 
-After the rebuilt package receives a new release newer than the retired
-`v1.0.0`, normal Composer installation will be:
+Released as `1.1.0` — install from Packagist:
 
 ```bash
-composer require jooservices/crawlerx
+composer require jooservices/crawlerx:^1.1
 ```
+
+The retired `v1.0.0` is the previous Laravel implementation and does not
+provide this API.
 
 For development inside this repository, build the PHP 8.5 tooling image and
 install its dependencies:
@@ -109,16 +113,54 @@ $result = CrawlerX::url('https://en.1pondo.tv/list/?o=n&page=2')
     ->crawl();
 ```
 
-Supported crawl types are `Listing`, `Detail`, `Gallery`, `PerformerListing`, and
-`PerformerDetail`.
+Supported crawl types are `Listing`, `Detail`, `Search`, `Gallery`,
+`PerformerListing`, `PerformerDetail`, and `PerformerSearch`.
 
 ### Result DTOs
 
 `crawl()` returns only `CrawlItemResultDto` or `CrawlListResultDto`. Item roots
-contain `url`, `entity_type`, and `meta`; movie data lives under `meta.movie`,
-and performer data under `meta.performer`. Listings declare the same
-`entity_type` and contain one entity per `items[]` entry. CrawlerX does not
-create a `track_id`; correlation belongs to the consuming application.
+contain `url`, `entity_type`, `meta`, and `next_crawl_type`; movie data lives
+under `meta.movie`, and performer data under `meta.performer`. Listings declare
+the same `entity_type` and contain one entity per `items[]` entry. CrawlerX does
+not create a `track_id`; correlation belongs to the consuming application.
+
+### Multi-hop discovery
+
+Some sites (e.g. XCITY) reach performers through several listing hops. A list
+item with a non-null `next_crawl_type` is an intermediate hop: crawl its URL
+again with that type and keep going until the item is terminal (`next_crawl_type
+=== null`, i.e. a detail page).
+
+```php
+$next = CrawlerX::url('https://xxx.xcity.jp/idol/')
+    ->site('xcity')
+    ->type(CrawlType::PerformerListing)
+    ->crawl();
+
+foreach ($next->items as $item) {
+    $hop = CrawlerX::url($item->url)->site('xcity')->type($item->nextCrawlType)->crawl();
+    // hop is a CrawlListResultDto while $item->nextCrawlType is a listing type;
+    // terminal detail items carry a null next_crawl_type
+}
+```
+
+### Search
+
+Sites that expose search declare the `SearchCapable` / `PerformerSearchCapable`
+contract. Pass the search-results URL with the matching crawl type; the query
+term is carried on the request as metadata:
+
+```php
+use JOOservices\CrawlerX\Enums\CrawlType;
+
+$results = CrawlerX::url('https://www.javbus.com/search/STARS-456')
+    ->site('javbus')
+    ->type(CrawlType::Search)
+    ->query('STARS-456')
+    ->crawl();
+```
+
+### Pagination
 
 A listing or performer-listing result also provides pagination:
 
