@@ -227,7 +227,7 @@ Available methods are `http`, `curl_impersonate`, `playwright`,
 
 ## Supported sites
 
-CrawlerX currently registers 22 adapters. Capabilities below come from each
+CrawlerX currently registers 23 adapters. Capabilities below come from each
 adapter's current manifest.
 
 | Site | Slug | Listing | Detail | Gallery | Performer listing | Performer detail |
@@ -235,6 +235,7 @@ adapter's current manifest.
 | 141Jav | `141jav` | Yes | Yes | — | — | — |
 | 1Pondo | `onepondo` | Yes | Yes | — | — | — |
 | Avfan | `avfan` | Yes | Yes | — | — | — |
+| Avjoho | `avjoho` | — | — | — | Yes | Yes |
 | Caribbeancom | `caribbeancom` | Yes | Yes | — | — | — |
 | DUGA | `duga` | Yes | Yes | — | — | — |
 | EPORNER | `eporner` | — | — | Yes | — | — |
