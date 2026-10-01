@@ -106,15 +106,10 @@ final class PerformerDetail extends AbstractType implements TypeInterface
                 return;
             }
 
-            $label = $this->normalizeText($node->text(''));
-            if ($label === null) {
-                return;
-            }
-
-            $links[$this->absolute($baseUrl, $href)] = $label;
+            $links[$this->absolute($baseUrl, $href)] = true;
         });
 
-        return array_values($links);
+        return array_keys($links);
     }
 
     private function cupFromSize(?string $size): ?string
