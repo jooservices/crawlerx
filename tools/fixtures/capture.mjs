@@ -231,6 +231,7 @@ function runPuppeteer(targetUrl, extraWait = waitMs) {
 
 function fixtureFolder(slug) {
     return {
+        aisex: 'Aisex',
         avfan: 'Avfan',
         avfan_profiles: 'AvfanProfiles',
         avjoho: 'avjoho',

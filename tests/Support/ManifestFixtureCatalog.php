@@ -62,6 +62,7 @@ final class ManifestFixtureCatalog
     public static function fixtureFolder(string $slug): string
     {
         return match ($slug) {
+            'aisex' => 'Aisex',
             'avfan' => 'Avfan',
             'avfan_profiles' => 'AvfanProfiles',
             'avjoho' => 'avjoho',
