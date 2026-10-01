@@ -14,6 +14,8 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
+    cooldown:
+      default-days: 7
     groups:
       dev-dependencies:
         dependency-type: "development"
@@ -34,6 +36,8 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
+    cooldown:
+      default-days: 7
     groups:
       dev-dependencies:
         dependency-type: "development"
@@ -54,3 +58,5 @@ updates:
     commit-message:
       prefix: "ci"
       include: "scope"
+    cooldown:
+      default-days: 7
