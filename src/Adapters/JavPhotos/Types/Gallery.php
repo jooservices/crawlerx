@@ -114,7 +114,10 @@ final class Gallery extends AbstractHtmlType implements TypeInterface
             }
         });
 
-        $performers = array_values(array_filter($labels, fn(string $label): bool => preg_match('/^[A-Za-z][A-Za-z -]+$/u', $label) === 1));
+        $performers = array_values(array_filter(
+            $labels,
+            fn(string $label): bool => preg_match('/^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+$/u', $label) === 1,
+        ));
 
         return [
             'performers' => array_slice($performers, 0, 3),

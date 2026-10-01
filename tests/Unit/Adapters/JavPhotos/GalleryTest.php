@@ -31,7 +31,13 @@ final class GalleryTest extends TestCase
         self::assertSame('1pondo-hana-aoyama-sexist-mobile-pics', $gallery['external_id']);
         self::assertStringContainsString('Hana Aoyama', (string) $gallery['title']);
         self::assertSame(24, $gallery['photo_count']);
-        self::assertContains('Hana Aoyama', $gallery['performers']);
+        self::assertSame(['Hana Aoyama'], $gallery['performers']);
+        self::assertContains('Sexist', $gallery['tags']);
+        self::assertContains('Mobile', $gallery['tags']);
+        self::assertContains('Pics', $gallery['tags']);
+        self::assertContains('1pondo', $gallery['tags']);
+        self::assertNotContains('Hana', $gallery['performers']);
+        self::assertNotContains('Aoyama', $gallery['performers']);
         self::assertSame('111424_001', $gallery['metadata']['movie_code']);
     }
 
