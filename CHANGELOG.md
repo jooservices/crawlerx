@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and parses photo galleries under `/photo-gallery/` into `GalleryDto` with
   full-resolution `image_url`, `thumbnail_url`, position, performer names, and
   picture source.
+- JavPhotos photo gallery adapter with `GalleryCapable` and `ListingCapable`:
+  the listing page discovers gallery URLs (multi-hop via `nextCrawlType`), and
+  each gallery parses photos with full-resolution `image_url`, `thumbnail_url`,
+  position, performer names, tags, and the movie code from image paths.
 
 ## [1.1.0] - 2026-09-30
 

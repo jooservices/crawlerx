@@ -1,0 +1,127 @@
+{
+    "slug": "javphotos",
+    "name": "JavPhotos",
+    "version": "1.0.0",
+    "description": "Crawler for JavPhotos photo galleries",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\JavPhotos\\JavPhotosCrawler",
+        "capabilities": [
+            "listing",
+            "gallery"
+        ]
+    },
+    "base_url": "https://jav.photos",
+    "pagination": {
+        "strategy": "path",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 5,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 2592000,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        }
+    ],
+    "runtime": {
+        "targetProfiles": {
+            "javphotos_listing": {
+                "label": "JavPhotos Gallery Listing",
+                "url": "https://jav.photos/free/"
+            },
+            "javphotos_gallery_sample": {
+                "label": "JavPhotos Sample Gallery",
+                "url": "https://jav.photos/free/1pondo-hana-aoyama-sexist-mobile-pics"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "javphotos_listing",
+                "url": "https://jav.photos/free/",
+                "paginated": true,
+                "loop": true,
+                "priority": 0,
+                "status": "paused"
+            },
+            {
+                "url_type": "javphotos_gallery_sample",
+                "url": "https://jav.photos/free/1pondo-hana-aoyama-sexist-mobile-pics",
+                "paginated": false,
+                "loop": true,
+                "priority": 1,
+                "status": "paused"
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://jav.photos/free/",
+                "name": "listing-page1.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://jav.photos/free/1pondo-hana-aoyama-sexist-mobile-pics",
+                "name": "gallery-hana-aoyama.html",
+                "type": "gallery"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 10,
+            "detail_delay_seconds": 5,
+            "cycle_delay_seconds": 2592000
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 8,
+            "min_gap_seconds": 4,
+            "max_gap_seconds": 60
+        },
+        "browserHeaders": {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Connection": "keep-alive",
+            "Upgrade-Insecure-Requests": "1",
+            "Sec-Fetch-Site": "none",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-User": "?1",
+            "Sec-Fetch-Dest": "document",
+            "Cache-Control": "max-age=0"
+        },
+        "playwrightFetchEnabled": false,
+        "queueSupervisor": {
+            "balance": "simple",
+            "minProcesses": 1,
+            "maxProcesses": 1,
+            "nice": 10
+        }
+    },
+    "type": "site"
+}
