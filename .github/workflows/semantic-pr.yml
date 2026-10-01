@@ -18,7 +18,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: Allow Dependabot PR title
+        if: github.event.pull_request.user.login == 'dependabot[bot]'
+        run: echo "Dependabot PR titles use Dependabot's generated convention."
       - name: Validate title
+        if: github.event.pull_request.user.login != 'dependabot[bot]'
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
