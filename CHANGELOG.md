@@ -27,6 +27,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   yields performer URLs, and each detail page parses birth date, B/W/H sizes,
   cup size, birthplace, blood type, hobby, debut date, agency, official site,
   SNS links, and a profile image.
+- Aisex performer adapter (`aisex.jp`, 60k+ actresses) with
+  `PerformerListingCapable` and `PerformerDetailCapable`: the paginated
+  listing yields performer URLs, and each detail page parses birth date,
+  zodiac sign, blood type, height, bust, cup size, waist, hip, and a profile
+  image.
 
 ## [1.1.0] - 2026-09-30
 
