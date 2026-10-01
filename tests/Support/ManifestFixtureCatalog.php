@@ -63,6 +63,8 @@ final class ManifestFixtureCatalog
     {
         return match ($slug) {
             'avfan' => 'Avfan',
+            'avfan_profiles' => 'AvfanProfiles',
+            'avjoho' => 'avjoho',
             'javlibrary' => 'JavLibrary',
             default => $slug,
         };

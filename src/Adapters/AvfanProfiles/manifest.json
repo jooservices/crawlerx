@@ -1,0 +1,127 @@
+{
+    "slug": "avfan_profiles",
+    "name": "Avfan Profiles",
+    "version": "1.0.0",
+    "description": "Crawler for the AVfan actress profile database (av-fan.tokyo)",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\AvfanProfiles\\AvfanProfilesCrawler",
+        "capabilities": [
+            "performer_listing",
+            "performer_detail"
+        ]
+    },
+    "base_url": "https://av-fan.tokyo",
+    "pagination": {
+        "strategy": "static",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 5,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 2592000,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        }
+    ],
+    "runtime": {
+        "targetProfiles": {
+            "avfan_profiles_cup_a_listing": {
+                "label": "Avfan Profiles A-Cup Actress Listing",
+                "url": "https://av-fan.tokyo/actress/cup/A.html"
+            },
+            "avfan_profiles_detail_sample": {
+                "label": "Avfan Profiles Performer Sample",
+                "url": "https://av-fan.tokyo/actress/%E6%9C%89%E6%A0%96%E8%88%9E%E8%A1%A3.html"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "avfan_profiles_cup_a_listing",
+                "url": "https://av-fan.tokyo/actress/cup/A.html",
+                "paginated": false,
+                "loop": true,
+                "priority": 0,
+                "status": "paused"
+            },
+            {
+                "url_type": "avfan_profiles_detail_sample",
+                "url": "https://av-fan.tokyo/actress/%E6%9C%89%E6%A0%96%E8%88%9E%E8%A1%A3.html",
+                "paginated": false,
+                "loop": true,
+                "priority": 1,
+                "status": "paused"
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://av-fan.tokyo/actress/cup/A.html",
+                "name": "listing-cup-a.html",
+                "type": "performer_listing"
+            },
+            {
+                "url": "https://av-fan.tokyo/actress/%E6%9C%89%E6%A0%96%E8%88%9E%E8%A1%A3.html",
+                "name": "detail-arisu-mai.html",
+                "type": "performer_detail"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 10,
+            "detail_delay_seconds": 5,
+            "cycle_delay_seconds": 2592000
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 8,
+            "min_gap_seconds": 4,
+            "max_gap_seconds": 60
+        },
+        "browserHeaders": {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Connection": "keep-alive",
+            "Upgrade-Insecure-Requests": "1",
+            "Sec-Fetch-Site": "none",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-User": "?1",
+            "Sec-Fetch-Dest": "document",
+            "Cache-Control": "max-age=0"
+        },
+        "playwrightFetchEnabled": false,
+        "queueSupervisor": {
+            "balance": "simple",
+            "minProcesses": 1,
+            "maxProcesses": 1,
+            "nice": 10
+        }
+    },
+    "type": "site"
+}
