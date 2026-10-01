@@ -12,7 +12,8 @@
         "class": "JOOservices\\CrawlerX\\Adapters\\Warashi\\WarashiCrawler",
         "capabilities": [
             "performer_listing",
-            "performer_detail"
+            "performer_detail",
+            "gallery"
         ]
     },
     "base_url": "https://warashi-asian-pornstars.fr",
@@ -69,6 +70,10 @@
             "warashi_female_index": {
                 "label": "Warashi Female Performer Index",
                 "url": "https://warashi-asian-pornstars.fr/en/s-2-2/female-pornstars/toutes/all/page/1"
+            },
+            "warashi_gallery_sample": {
+                "label": "Warashi Photo Gallery Sample",
+                "url": "https://warashi-asian-pornstars.fr/en/s-7-0/yuna-ishikawa/female-asian-pornstar/photo-gallery/56092"
             }
         },
         "defaultTargets": [
@@ -78,9 +83,22 @@
                 "paginated": true,
                 "loop": true,
                 "priority": 0
+            },
+            {
+                "url_type": "warashi_gallery_sample",
+                "url": "https://warashi-asian-pornstars.fr/en/s-7-0/yuna-ishikawa/female-asian-pornstar/photo-gallery/56092",
+                "paginated": false,
+                "loop": true,
+                "priority": 1,
+                "status": "paused"
             }
         ],
         "fixtureSamples": [
+            {
+                "url": "https://warashi-asian-pornstars.fr/en/s-7-0/yuna-ishikawa/female-asian-pornstar/photo-gallery/56092",
+                "name": "gallery-yuna-ishikawa.html",
+                "type": "gallery"
+            },
             {
                 "url": "https://warashi-asian-pornstars.fr/en/s-2-2/female-pornstars/toutes/all/page/1",
                 "name": "listing_page1.html",

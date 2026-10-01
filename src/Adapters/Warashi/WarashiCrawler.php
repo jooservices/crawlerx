@@ -8,8 +8,10 @@ use JOOservices\CrawlerX\Adapters\AbstractBaseCrawler;
 use JOOservices\CrawlerX\Adapters\Concerns\DetectsUrls;
 use JOOservices\CrawlerX\Adapters\Concerns\PerformerOnlyCapabilities;
 use JOOservices\CrawlerX\Adapters\Concerns\UrlDetect\WarashiUrlDetectRules;
+use JOOservices\CrawlerX\Adapters\Warashi\Types\Gallery;
 use JOOservices\CrawlerX\Adapters\Warashi\Types\PerformerDetail;
 use JOOservices\CrawlerX\Adapters\Warashi\Types\PerformerListing;
+use JOOservices\CrawlerX\Contracts\GalleryCapable;
 use JOOservices\CrawlerX\Contracts\PerformerDetailCapable;
 use JOOservices\CrawlerX\Contracts\PerformerListingCapable;
 use JOOservices\CrawlerX\Contracts\UrlDetectCapable;
@@ -17,7 +19,7 @@ use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 
-final class WarashiCrawler extends AbstractBaseCrawler implements PerformerDetailCapable, PerformerListingCapable, UrlDetectCapable
+final class WarashiCrawler extends AbstractBaseCrawler implements GalleryCapable, PerformerDetailCapable, PerformerListingCapable, UrlDetectCapable
 {
     use PerformerOnlyCapabilities;
     use DetectsUrls;
@@ -40,5 +42,10 @@ final class WarashiCrawler extends AbstractBaseCrawler implements PerformerDetai
     protected function parsePerformerDetail(CrawlRequestDto $request): CrawlItemResultDto
     {
         return (new PerformerDetail($this->client))->execute($request);
+    }
+
+    public function gallery(CrawlRequestDto $request): CrawlItemResultDto
+    {
+        return (new Gallery($this->client))->execute($request);
     }
 }
