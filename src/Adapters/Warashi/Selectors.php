@@ -31,4 +31,12 @@ final class Selectors
     public const BIRTHPLACE = '#pornostar-profil-infos span[itemprop="addressCountry"]';
 
     public const HEIGHT_VALUE = '#pornostar-profil-infos span[itemprop="value"]';
+
+    public const GALLERY_TITLE = '#main h1';
+
+    public const GALLERY_PERFORMER_LINK = '#fiche-galerie-infos-pornostar p a[href*="/asian-female-pornstar/"], #fiche-galerie-infos-pornostar p a[href*="/asian-male-pornstar/"]';
+
+    public const GALLERY_SOURCE_LINK = '#fiche-galerie-infos-credits a';
+
+    public const GALLERY_PHOTOS = '#fiche-galerie-listing-photos a[href*="/large/"]';
 }

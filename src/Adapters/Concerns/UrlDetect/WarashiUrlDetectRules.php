@@ -26,6 +26,16 @@ trait WarashiUrlDetectRules
     {
         return [
             new ImportMatchRule(
+                entity: ImportEntity::Gallery,
+                urlType: 'gallery_detail',
+                crawlType: CrawlType::Gallery,
+                priority: 150,
+                matcher: fn(string $url, string $path, string $query): bool => ImportRuleHelpers::pathContains(
+                    $path,
+                    '/photo-gallery/',
+                ),
+            ),
+            new ImportMatchRule(
                 entity: ImportEntity::Performer,
                 urlType: 'performer_detail',
                 crawlType: CrawlType::PerformerDetail,
