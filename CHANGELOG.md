@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the listing page discovers gallery URLs (multi-hop via `nextCrawlType`), and
   each gallery parses photos with full-resolution `image_url`, `thumbnail_url`,
   position, performer names, tags, and the movie code from image paths.
+- Avjoho performer database adapter (`db.avjoho.com`) with
+  `PerformerListingCapable` and `PerformerDetailCapable`: the category listing
+  is paginated, and each detail page parses debut date, birth date, height,
+  B/W/H sizes, cup size, birthplace, blood type, hobby, aliases, exclusive
+  makers, SNS, a bio text, and a profile image.
 
 ## [1.1.0] - 2026-09-30
 
