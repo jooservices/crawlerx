@@ -22,6 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   is paginated, and each detail page parses debut date, birth date, height,
   B/W/H sizes, cup size, birthplace, blood type, hobby, aliases, exclusive
   makers, SNS, a bio text, and a profile image.
+- Avfan Profiles performer adapter (`av-fan.tokyo`) with
+  `PerformerListingCapable` and `PerformerDetailCapable`: cup-based listing
+  yields performer URLs, and each detail page parses birth date, B/W/H sizes,
+  cup size, birthplace, blood type, hobby, debut date, agency, official site,
+  SNS links, and a profile image.
 
 ## [1.1.0] - 2026-09-30
 

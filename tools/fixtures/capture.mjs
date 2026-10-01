@@ -232,6 +232,8 @@ function runPuppeteer(targetUrl, extraWait = waitMs) {
 function fixtureFolder(slug) {
     return {
         avfan: 'Avfan',
+        avfan_profiles: 'AvfanProfiles',
+        avjoho: 'avjoho',
         javlibrary: 'JavLibrary',
         onefouronejav: '141jav',
     }[slug] ?? slug;
