@@ -4,7 +4,8 @@
 
 | Version line | Status |
 | --- | --- |
-| `1.1.x` (this repository) | Current supported — receives security fixes |
+| `1.2.x` (this repository) | Current supported — receives security fixes |
+| `1.1.x` | Supported — receives security fixes |
 | `v1.0.0` (retired Laravel implementation) | **End of life.** The archived previous implementation is a separate codebase lineage and receives no fixes |
 
 The current rebuild is **not backward compatible** with the retired `v1.0.0`; security reports against the archived version cannot be actioned here.

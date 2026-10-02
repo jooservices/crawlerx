@@ -4,7 +4,7 @@ Thank you for using `jooservices/crawlerx`. Here is where to get help.
 
 > [!NOTE]
 > The current Packagist `v1.0.0` is the **retired** Laravel implementation. This
-> framework-agnostic rebuild is released as `1.1.0`. Questions about the
+> framework-agnostic rebuild is released as `1.2.0`. Questions about the
 > archived implementation are out of scope for this repository.
 
 ## Documentation
