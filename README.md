@@ -16,7 +16,7 @@ echo $item->meta['movie']['code'];              // YMDS-282
 
 > [!NOTE]
 > The current Packagist `v1.0.0` is the retired Laravel implementation. This
-> framework-agnostic rebuild is released as `1.1.0` and provides the API
+> framework-agnostic rebuild is released as `1.2.0` and provides the API
 > documented here.
 
 ## Features
@@ -62,10 +62,10 @@ The path installation uses this checkout's actual requirements, including
 
 ### Tagged release
 
-Released as `1.1.0` — install from Packagist:
+Released as `1.2.0` — install from Packagist:
 
 ```bash
-composer require jooservices/crawlerx:^1.1
+composer require jooservices/crawlerx:^1.2
 ```
 
 The retired `v1.0.0` is the previous Laravel implementation and does not
@@ -132,15 +132,26 @@ again with that type and keep going until the item is terminal (`next_crawl_type
 === null`, i.e. a detail page).
 
 ```php
-$next = CrawlerX::url('https://xxx.xcity.jp/idol/')
-    ->site('xcity')
-    ->type(CrawlType::PerformerListing)
-    ->crawl();
+$pending = [
+    ['url' => 'https://xxx.xcity.jp/idol/', 'type' => CrawlType::PerformerListing],
+];
 
-foreach ($next->items as $item) {
-    $hop = CrawlerX::url($item->url)->site('xcity')->type($item->nextCrawlType)->crawl();
-    // hop is a CrawlListResultDto while $item->nextCrawlType is a listing type;
-    // terminal detail items carry a null next_crawl_type
+while ($pending !== []) {
+    $current = array_shift($pending);
+
+    $result = CrawlerX::url($current['url'])
+        ->site('xcity')
+        ->type($current['type'])
+        ->crawl();
+
+    foreach ($result->items as $item) {
+        if ($item->nextCrawlType === null) {
+            // Terminal detail item — no further hop needed.
+            continue;
+        }
+
+        $pending[] = ['url' => $item->url, 'type' => CrawlType::from($item->nextCrawlType)];
+    }
 }
 ```
 
@@ -216,14 +227,17 @@ Available methods are `http`, `curl_impersonate`, `playwright`,
 
 ## Supported sites
 
-CrawlerX currently registers 21 adapters. Capabilities below come from each
+CrawlerX currently registers 25 adapters. Capabilities below come from each
 adapter's current manifest.
 
 | Site | Slug | Listing | Detail | Gallery | Performer listing | Performer detail |
 | --- | --- | :---: | :---: | :---: | :---: | :---: |
 | 141Jav | `141jav` | Yes | Yes | — | — | — |
 | 1Pondo | `onepondo` | Yes | Yes | — | — | — |
+| Aisex | `aisex` | — | — | — | Yes | Yes |
 | Avfan | `avfan` | Yes | Yes | — | — | — |
+| Avfan Profiles | `avfan_profiles` | — | — | — | Yes | Yes |
+| Avjoho | `avjoho` | — | — | — | Yes | Yes |
 | Caribbeancom | `caribbeancom` | Yes | Yes | — | — | — |
 | DUGA | `duga` | Yes | Yes | — | — | — |
 | EPORNER | `eporner` | — | — | Yes | — | — |
@@ -236,11 +250,12 @@ adapter's current manifest.
 | JavBus | `javbus` | Yes | Yes | — | Yes | Yes |
 | JavDB | `javdb` | Yes | Yes | — | — | — |
 | JAVLibrary | `javlibrary` | Yes | Yes | — | Yes | Yes |
+| JavPhotos | `javphotos` | Yes | — | Yes | — | — |
 | Minnano AV | `minnanoav` | Yes | Yes | — | Yes | Yes |
 | MissAV | `missav` | Yes | Yes | — | — | — |
 | OneJav | `onejav` | Yes | Yes | — | — | — |
 | Tokyo-Hot | `tokyohot` | Yes | Yes | — | — | — |
-| Warashi | `warashi` | — | — | — | Yes | Yes |
+| Warashi | `warashi` | — | — | Yes | Yes | Yes |
 | XCITY | `xcity` | Yes | Yes | — | Yes | Yes |
 
 DUGA, Tokyo-Hot, Caribbeancom, HEYZO, and JavBus use accepted adult landing

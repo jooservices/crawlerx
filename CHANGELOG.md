@@ -5,6 +5,49 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-10-01
+
+### Added
+
+- Warashi photo gallery crawling: the adapter now implements `GalleryCapable`
+  and parses photo galleries under `/photo-gallery/` into `GalleryDto` with
+  full-resolution `image_url`, `thumbnail_url`, position, performer names, and
+  picture source.
+- JavPhotos photo gallery adapter with `GalleryCapable` and `ListingCapable`:
+  the listing page discovers gallery URLs (multi-hop via `nextCrawlType`), and
+  each gallery parses photos with full-resolution `image_url`, `thumbnail_url`,
+  position, performer names, tags, and the movie code from image paths.
+- Avjoho performer database adapter (`db.avjoho.com`) with
+  `PerformerListingCapable` and `PerformerDetailCapable`: the category listing
+  is paginated, and each detail page parses debut date, birth date, height,
+  B/W/H sizes, cup size, birthplace, blood type, hobby, aliases, exclusive
+  makers, SNS, a bio text, and a profile image.
+- Avfan Profiles performer adapter (`av-fan.tokyo`) with
+  `PerformerListingCapable` and `PerformerDetailCapable`: cup-based listing
+  yields performer URLs, and each detail page parses birth date, B/W/H sizes,
+  cup size, birthplace, blood type, hobby, debut date, agency, official site,
+  SNS links, and a profile image.
+- Aisex performer adapter (`aisex.jp`, 60k+ actresses) with
+  `PerformerListingCapable` and `PerformerDetailCapable`: the paginated
+  listing yields performer URLs, and each detail page parses birth date,
+  zodiac sign, blood type, height, bust, cup size, waist, hip, and a profile
+  image.
+- JOOservices community and workflow standards (`CODEOWNERS`,
+  `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, `GOVERNANCE.md`, `SECURITY.md`,
+  `SUPPORT.md`, `WORKFLOWS.md`), an MIT `LICENSE`, and a Dependabot
+  configuration with `dev-dependencies` groups.
+
+### Changed
+
+- Adapter count grows from 21 to 25: gallery capability now covers EPORNER,
+  Warashi, and JavPhotos, and three bio-rich performer sources (Avjoho, Avfan
+  Profiles, Aisex) join the existing performer adapters.
+
+### Fixed
+
+- JavPhotos performer names separated from keyword tags; image-only SNS links
+  retained in Avfan Profiles performer details.
+
 ## [1.1.0] - 2026-09-30
 
 ### Added
@@ -43,4 +86,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   implementation (Jable performer listing was an alias to the movie parser).
 - Catalog `external_id` for HEYZO/FC2 included the code prefix inconsistently.
 
+[1.2.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.2.0
 [1.1.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.1.0

@@ -131,7 +131,7 @@ jobs:
 
       - name: OSV Scanner
         if: matrix.name == 'Dependencies'
-        uses: google/osv-scanner-action/osv-scanner-action@6e4298ebc4db23e847df9b2e2de2939d6f066c67 # v2.5.1
+        uses: google/osv-scanner-action/osv-scanner-action@a345acffa64b0eaede81a3d9aae6141214d9c8fc # v2.6.0
         with:
           scan-args: |-
             --recursive
@@ -241,7 +241,7 @@ jobs:
 
       - name: Upload to Codecov
         if: github.event.pull_request.user.type != 'Bot'
-        uses: codecov/codecov-action@f9fe539f5290016afa014f8ef31597d3a61c2dea
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: build/coverage/clover-combined.xml
