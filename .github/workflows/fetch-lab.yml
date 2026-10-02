@@ -35,7 +35,11 @@ jobs:
         run: docker compose --profile fetch up -d --build --wait fixture-site node flaresolverr
 
       - name: Run Node browser lab
-        run: docker compose --profile fetch run --rm --volume "$PWD/tests:/app/tests:ro" node node --test tests/Browser/*.mjs
+        run: >-
+          docker compose --profile fetch run --rm
+          --env FIXTURE_SITE_URL=http://fixture-site:8080
+          --volume "$PWD/tests:/app/tests:ro"
+          node node --test tests/Browser/*.mjs
 
       - name: Run PHP fetch lab
         run: >-
