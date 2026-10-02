@@ -7,6 +7,7 @@ namespace JOOservices\CrawlerX\Tests\Unit;
 use JOOservices\Client\Client\ClientBuilder;
 use JOOservices\Client\Client\HttpClient;
 use JOOservices\Client\Dto\ClientConfig;
+use JOOservices\Client\Exceptions\TimeoutException;
 use JOOservices\Client\Testing\TestResponse;
 use JOOservices\Client\Testing\TestResponseSequence;
 use JOOservices\CrawlerX\Http\ClientCrawlHttpClient;
@@ -78,7 +79,7 @@ final class ClientFactoryTest extends TestCase
                 $exception = $caught;
             }
 
-            self::assertNotNull($exception);
+            self::assertInstanceOf(TimeoutException::class, $exception);
             self::assertLessThan(1.75, microtime(true) - $started);
         } finally {
             proc_terminate($process);
