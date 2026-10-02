@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.0] - 2026-10-01
 
 ### Added
 
@@ -32,6 +32,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   listing yields performer URLs, and each detail page parses birth date,
   zodiac sign, blood type, height, bust, cup size, waist, hip, and a profile
   image.
+- JOOservices community and workflow standards (`CODEOWNERS`,
+  `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, `GOVERNANCE.md`, `SECURITY.md`,
+  `SUPPORT.md`, `WORKFLOWS.md`), an MIT `LICENSE`, and a Dependabot
+  configuration with `dev-dependencies` groups.
+
+### Changed
+
+- Adapter count grows from 21 to 25: gallery capability now covers EPORNER,
+  Warashi, and JavPhotos, and three bio-rich performer sources (Avjoho, Avfan
+  Profiles, Aisex) join the existing performer adapters.
+
+### Fixed
+
+- JavPhotos performer names separated from keyword tags; image-only SNS links
+  retained in Avfan Profiles performer details.
 
 ## [1.1.0] - 2026-09-30
 
@@ -71,4 +86,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   implementation (Jable performer listing was an alias to the movie parser).
 - Catalog `external_id` for HEYZO/FC2 included the code prefix inconsistently.
 
+[1.2.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.2.0
 [1.1.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.1.0
