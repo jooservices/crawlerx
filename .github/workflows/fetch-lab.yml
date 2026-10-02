@@ -1,0 +1,58 @@
+# Optional fetch-lab workflow; it is not a required branch check.
+name: Fetch lab
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop]
+
+concurrency:
+  group: fetch-lab-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  fetch-lab:
+    name: Fetch lab
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Build browser lab image
+        run: docker compose --profile fetch build node
+
+      - name: Install PHP dependencies
+        run: make install
+
+      - name: Start fixture site and fetch sidecars
+        run: docker compose --profile fetch up -d --build --wait fixture-site node flaresolverr
+
+      - name: Run Node browser lab
+        run: >-
+          docker compose --profile fetch run --rm
+          --env FIXTURE_SITE_URL=http://fixture-site:8080
+          --volume "$PWD/tests:/app/tests:ro"
+          node node --test tests/Browser/*.mjs
+
+      - name: Run PHP fetch lab
+        run: >-
+          docker compose --profile fetch run --rm
+          --env CRAWLERX_FETCH_LAB=1
+          --env CRAWLERX_FIXTURE_SITE_URL=http://fixture-site:8080
+          --env CRAWLERX_BROWSER_SERVICE_URL=http://node:3000
+          --env CRAWLERX_FLARESOLVERR_URL=http://flaresolverr:8191/v1
+          php ./vendor/bin/phpunit tests/Feature/FetchLab
+
+      - name: Run Playwright version guard
+        run: docker compose --profile fetch run --rm --volume "$PWD:/workspace:ro" --workdir /workspace node node tools/check-playwright-version.mjs
+
+      - name: Stop fetch lab services
+        if: always()
+        run: make fetch-down
