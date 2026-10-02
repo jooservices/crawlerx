@@ -16,7 +16,7 @@ echo $item->meta['movie']['code'];              // YMDS-282
 
 > [!NOTE]
 > The current Packagist `v1.0.0` is the retired Laravel implementation. This
-> framework-agnostic rebuild is released as `1.1.0` and provides the API
+> framework-agnostic rebuild is released as `1.2.0` and provides the API
 > documented here.
 
 ## Features
@@ -62,10 +62,10 @@ The path installation uses this checkout's actual requirements, including
 
 ### Tagged release
 
-Released as `1.1.0` — install from Packagist:
+Released as `1.2.0` — install from Packagist:
 
 ```bash
-composer require jooservices/crawlerx:^1.1
+composer require jooservices/crawlerx:^1.2
 ```
 
 The retired `v1.0.0` is the previous Laravel implementation and does not
