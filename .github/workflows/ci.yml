@@ -241,7 +241,7 @@ jobs:
 
       - name: Upload to Codecov
         if: github.event.pull_request.user.type != 'Bot'
-        uses: codecov/codecov-action@f9fe539f5290016afa014f8ef31597d3a61c2dea
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: build/coverage/clover-combined.xml
