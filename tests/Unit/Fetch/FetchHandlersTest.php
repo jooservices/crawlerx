@@ -230,6 +230,12 @@ final class FetchHandlersTest extends TestCase
         );
         self::assertTrue($success->ok);
         self::assertSame(['yes'], $success->headers['X-Test']);
+        $recorded = ClientBuilder::lastRequest();
+        self::assertNotNull($recorded);
+        self::assertSame('yes', $recorded->request->getHeaderLine('X-Override'));
+        self::assertSame('clearance=ok', $recorded->request->getHeaderLine('Cookie'));
+        self::assertSame('CrawlerX-Test', $recorded->request->getHeaderLine('User-Agent'));
+        self::assertSame('text/html', $recorded->request->getHeaderLine('Accept'));
 
         $blocked = $handler->fetch('https://example.test/wall', $this->profile(), FetchMethod::Http);
         self::assertFalse($blocked->ok);
@@ -244,7 +250,13 @@ final class FetchHandlersTest extends TestCase
             baseUrl: 'https://example.test',
             fetchProfile: FetchProfile::BrowserLikely,
             fetchChain: FetchMethod::browserChain(),
-            http: new HttpProfileDto(timeout: 30, headers: ['User-Agent' => 'CrawlerX-Test']),
+            http: new HttpProfileDto(
+                timeout: 30,
+                headers: [
+                    'User-Agent' => 'CrawlerX-Test',
+                    'Accept' => 'text/html',
+                ],
+            ),
         );
     }
 
