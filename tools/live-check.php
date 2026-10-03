@@ -23,8 +23,10 @@ use JOOservices\CrawlerX\Fetch\Handlers\PlaywrightFamilyFetchHandler;
 use JOOservices\CrawlerX\Fetch\Handlers\PuppeteerStealthFetchHandler;
 use JOOservices\CrawlerX\Fetch\ProcOpenProcessRunner;
 use JOOservices\CrawlerX\Fetch\Session\CookieHandoffStore;
+use JOOservices\CrawlerX\Fetch\Session\SessionStore;
 use JOOservices\CrawlerX\Registry\FileAdapterManifestRegistry;
 use JOOservices\CrawlerX\Tools\Canary\Env;
+use JOOservices\CrawlerX\Tools\Canary\EnvLoginCookieProvider;
 use JOOservices\CrawlerX\Tools\Canary\FetchTrace;
 use JOOservices\CrawlerX\Tools\Canary\Redactor;
 use JOOservices\CrawlerX\Tools\Canary\RequiredFields;
@@ -33,6 +35,7 @@ require __DIR__ . '/canary/Env.php';
 require __DIR__ . '/canary/Redactor.php';
 require __DIR__ . '/canary/required-fields.php';
 require dirname(__DIR__) . '/vendor/autoload.php';
+require __DIR__ . '/canary/EnvLoginCookieProvider.php';
 require __DIR__ . '/canary/FetchTrace.php';
 
 $arguments = array_slice($argv, 1);
@@ -351,6 +354,7 @@ function runCanary(array $arguments): never
 
     $envPath = dirname(__DIR__) . '/.env';
     $env = Env::load($envPath);
+    $loginProvider = new EnvLoginCookieProvider($env);
     $secrets = array_values(array_filter(array_map(
         static fn(string $key): string => str_starts_with($key, 'CRAWLERX_COOKIE_') ? $env[$key] : '',
         array_keys($env),
@@ -358,7 +362,8 @@ function runCanary(array $arguments): never
     $registry = new FileAdapterManifestRegistry();
     $manifests = $registry->all();
     $trace = new FetchTrace();
-    CrawlerXFactory::useFetchChain(buildCanaryFetchChain($trace));
+    CrawlerXFactory::configure(logins: $loginProvider);
+    CrawlerXFactory::useFetchChain(buildCanaryFetchChain($trace, $loginProvider));
 
     $samples = [];
     foreach ($manifests as $slug => $manifest) {
@@ -388,7 +393,7 @@ function runCanary(array $arguments): never
         $id = $slug . ':' . $sample->type . ':' . $sample->name;
         emitCanary(['event' => 'sample_start', 'id' => $id, 'site' => $slug, 'type' => $sample->type]);
 
-        $cookie = Env::cookieForSite($slug, $env);
+        $loginCookies = $loginProvider->cookiesFor($slug);
         $started = hrtime(true);
         $usageBefore = usageSnapshot();
         $trace->reset();
@@ -407,13 +412,11 @@ function runCanary(array $arguments): never
             'php_peak_rss_bytes' => 0,
         ];
 
-        if (in_array($slug, ['avfan', 'avfan_profiles'], true) && $cookie === null) {
+        if (in_array($slug, ['avfan', 'avfan_profiles'], true) && $loginCookies === []) {
             $record['status'] = 'skipped_no_cookie';
         } else {
             try {
-                $headers = $cookie === null ? null : ['Cookie' => $cookie];
                 $options = new CrawlOptionsDto(
-                    http: $headers === null ? null : new HttpOptionsDto(headers: $headers),
                     fetch: new FetchOptionsDto(profile: FetchProfile::Adaptive),
                 );
                 $outcome = CrawlerX::url($sample->url)
@@ -478,7 +481,7 @@ function canaryType(string $type): CrawlType
     };
 }
 
-function buildCanaryFetchChain(FetchTrace $trace): FetchFallbackChain
+function buildCanaryFetchChain(FetchTrace $trace, EnvLoginCookieProvider $loginProvider): FetchFallbackChain
 {
     $runtime = FetchRuntimeConfig::fromEnvironment();
     $runner = new ProcOpenProcessRunner();
@@ -486,19 +489,20 @@ function buildCanaryFetchChain(FetchTrace $trace): FetchFallbackChain
         ? $runner
         : new BrowserServiceProcessRunner($runtime->browserServiceUrl);
     $cookies = new CookieHandoffStore();
+    $sessions = new SessionStore(node: $runtime->nodeId);
     $playwright = new PlaywrightFamilyFetchHandler($runtime, $browserRunner);
 
     $handlers = [
-        FetchMethod::Http->value => $trace->handler(new HttpFetchHandler(new \JOOservices\CrawlerX\Services\ClientFactory(), $cookies)),
-        FetchMethod::CurlImpersonate->value => $trace->handler(new CurlImpersonateFetchHandler($runtime, $runner, $cookies)),
+        FetchMethod::Http->value => $trace->handler(new HttpFetchHandler(new \JOOservices\CrawlerX\Services\ClientFactory(), $cookies, $sessions, $loginProvider)),
+        FetchMethod::CurlImpersonate->value => $trace->handler(new CurlImpersonateFetchHandler($runtime, $runner, $cookies, $sessions, $loginProvider)),
         FetchMethod::Playwright->value => $trace->handler($playwright),
         FetchMethod::PlaywrightStealth->value => $trace->handler($playwright),
         FetchMethod::ChromeStealth->value => $trace->handler($playwright),
         FetchMethod::PuppeteerStealth->value => $trace->handler(new PuppeteerStealthFetchHandler($runtime, $browserRunner)),
-        FetchMethod::Flaresolverr->value => $trace->handler(new FlaresolverrFetchHandler($runtime)),
+        FetchMethod::Flaresolverr->value => $trace->handler(new FlaresolverrFetchHandler($runtime, null, $sessions, $loginProvider)),
     ];
 
-    return new FetchFallbackChain($handlers, $cookies);
+    return new FetchFallbackChain($handlers, $cookies, $sessions, $loginProvider, $runtime);
 }
 
 /** @param array<string, mixed> $outcome @param list<array<string, mixed>> $attempts */

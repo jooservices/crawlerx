@@ -41,6 +41,27 @@ The consumer receives these terminal error codes and retry hints:
 Terminal results stop the fallback chain. FlareSolverr is never called unless
 the preceding response was classified as a challenge.
 
+## Sessions and login cookies
+
+`SessionStore` keeps solved cookies, the matching user agent, the solving
+method, browser `storageState`, and an expiry per site and node. Consumers can
+share the store through an injected PSR-16 `CacheInterface`; without one,
+CrawlerX uses process-local memory. The key is
+`crawlerx:session:<site>:<node>` and its lifetime is capped at 30 minutes.
+A replayed challenge forgets the session before the next fallback attempt.
+
+Configure consumers with `CrawlerXFactory::configure($cache, $logins)`, where
+`$logins` implements `LoginCookieProvider::cookiesFor(string $site): array`.
+Provider cookies are attached to every request for that site. A persistent
+login wall returns `auth_required` and is not retryable.
+
+`CRAWLERX_NODE` identifies the node and remains the Node.js binary override for
+backward compatibility. When it is unset, the node id is the host name.
+`CRAWLERX_USER_AGENT` sets the fixed per-node user agent. The default is a
+modern Chrome user agent. `CRAWLERX_USER_AGENT_POOL` accepts a comma-separated
+pool; after three consecutive challenges for a site, CrawlerX switches to the
+next user agent and keeps it sticky in that site's session.
+
 ## Budgets
 
 The default total budget is 150 seconds. Individual method caps are 20 seconds

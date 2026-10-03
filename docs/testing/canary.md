@@ -4,8 +4,11 @@ The canary is a manual, sequential live check. It is never run in CI and must
 only be run with the owner's local `.env` present.
 
 Create the local file from `.env.example` and add only the owner-provided
-cookie values. `.env` is ignored by Git. Cookie values are not printed or
-stored in reports, snapshots, exceptions, or test output.
+cookie values. `.env` is ignored by Git. The canary loads those values through
+the `LoginCookieProvider` contract; cookie values are not printed or stored in
+reports, snapshots, exceptions, or test output. Optional node identity and
+user-agent settings are read from `CRAWLERX_NODE`, `CRAWLERX_USER_AGENT`, and
+`CRAWLERX_USER_AGENT_POOL`.
 
 Run the complete canary with:
 
@@ -31,4 +34,3 @@ After each full run, update
 [`canary-status.md`](./canary-status.md) with the status, missing fields, and
 XP item for every affected adapter/page type. A parser failure requires a
 sanitized snapshot, a failing snapshot test, and a parser fix in an XP PR.
-
