@@ -23,10 +23,10 @@ This table records the first full canary from `1.2.0-develop` (`b91b7ce`, genera
 | ffjav | detail | ok | — | — |
 | heyzo | listing | ok | — | — |
 | heyzo | detail | ok | — | — |
-| jable | listing | unknown | — | XP-jable-listing |
-| jable | detail | parse_failed | — | XP-jable-detail |
-| jable | performer_listing | parse_failed | items | XP-jable-performer_listing |
-| jable | performer_detail | parse_failed | — | XP-jable-performer_detail |
+| jable | listing | ok | — | — |
+| jable | detail | ok | — | — |
+| jable | performer_listing | ok | — | — |
+| jable | performer_detail | ok | — | — |
 | javbus | listing | ok | — | — |
 | javbus | detail | ok | — | — |
 | javbus | performer_listing | ok | — | — |
@@ -64,3 +64,5 @@ This table records the first full canary from `1.2.0-develop` (`b91b7ce`, genera
 | xcity | detail | ok | — | — |
 | xcity | performer_listing | ok | — | — |
 | xcity | performer_detail | ok | — | — |
+
+Jable was reverified on 2026-10-03 at `358f7fd` after the performer-specific readiness markers and sanitized snapshots were refreshed: 4/4 `ok`, p50/p95 wall time 9679/9952 ms.

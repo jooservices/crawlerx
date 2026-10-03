@@ -8,6 +8,8 @@ use JOOservices\CrawlerX\CrawlerX;
 use JOOservices\CrawlerX\CrawlerXFactory;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Enums\CrawlType;
+use JOOservices\CrawlerX\Dto\SiteProfileDto;
+use JOOservices\CrawlerX\Registry\FileAdapterManifestRegistry;
 use JOOservices\CrawlerX\Tests\CrawlerXTestCase;
 
 /**
@@ -102,6 +104,17 @@ final class SubListingDiscoveryTest extends CrawlerXTestCase
         self::assertStringContainsString('/models/', $first->url);
         self::assertSame('performer_detail', $first->nextCrawlType);
         self::assertNotSame('', trim((string) $first->meta['performer']['name'] ?? ''));
+    }
+
+    public function test_jable_performer_pages_have_type_specific_ready_markers(): void
+    {
+        $manifest = (new FileAdapterManifestRegistry())->get('jable');
+        self::assertNotNull($manifest);
+
+        $profile = SiteProfileDto::fromManifest($manifest);
+
+        self::assertSame(['.horizontal-img-box'], $profile->readyMarkersFor(CrawlType::PerformerListing));
+        self::assertSame(['.title-with-avatar .title-box h2'], $profile->readyMarkersFor(CrawlType::PerformerDetail));
     }
 
     public function test_jable_performer_detail_returns_model(): void
