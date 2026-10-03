@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Fetch\Handlers;
 
 use JOOservices\CrawlerX\Contracts\FetchMethodHandler;
+use JOOservices\CrawlerX\Contracts\LoginCookieProvider;
 use JOOservices\CrawlerX\Dto\CrawlOptionsDto;
 use JOOservices\CrawlerX\Dto\FetchResultDto;
 use JOOservices\CrawlerX\Dto\SiteProfileDto;
 use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Fetch\ChallengeDetector;
 use JOOservices\CrawlerX\Fetch\Session\CookieHandoffStore;
+use JOOservices\CrawlerX\Fetch\Session\SessionStore;
 use JOOservices\CrawlerX\Services\ClientFactory;
 use Throwable;
 
@@ -19,6 +21,8 @@ final class HttpFetchHandler implements FetchMethodHandler
     public function __construct(
         private readonly ClientFactory $clientFactory,
         private readonly CookieHandoffStore $cookies = new CookieHandoffStore(),
+        private readonly ?SessionStore $sessions = null,
+        private readonly ?LoginCookieProvider $logins = null,
     ) {
     }
 
@@ -42,6 +46,16 @@ final class HttpFetchHandler implements FetchMethodHandler
 
         if ($options?->http?->headers !== null) {
             $headers = array_merge($headers, $options->http->headers);
+        }
+
+        $loginCookies = $this->logins?->cookiesFor($profile->slug) ?? [];
+        $sessionCookie = $this->sessions?->cookieHeader($profile->slug, $loginCookies);
+        if ($sessionCookie !== null) {
+            $headers['Cookie'] = $sessionCookie;
+        }
+        $sessionUserAgent = $this->sessions?->userAgent($profile->slug);
+        if ($sessionUserAgent !== null && $sessionUserAgent !== '') {
+            $headers['User-Agent'] = $sessionUserAgent;
         }
 
         $http = $options?->http;
