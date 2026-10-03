@@ -15,6 +15,7 @@ final class FetchOptionsDto extends Dto
         public readonly ?FetchMethod $method = null,
         public readonly ?FetchChainDto $chain = null,
         public readonly bool $noFallback = false,
+        public readonly ?int $deadlineSeconds = null,
     ) {
     }
 }

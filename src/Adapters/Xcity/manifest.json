@@ -67,6 +67,16 @@
         }
     ],
     "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [".x-itemBox"],
+                "detail": ["#program_detail_title, h1"],
+                "performer_listing": ["#avidol", ".x-itemBox"],
+                "performer_detail": ["h1"]
+            },
+            "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
+        },
         "targetProfiles": {
             "xcity_idol_index": {
                 "label": "XCity Idol Index",

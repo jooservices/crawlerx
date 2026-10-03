@@ -42,9 +42,13 @@ final class FlaresolverrFetchHandler implements FetchMethodHandler
         }
 
         $httpOptions = $options?->http;
-        $timeoutSeconds = $httpOptions !== null && $httpOptions->timeout !== null
+        $timeoutSeconds = $options->methodTimeoutSeconds
+            ?? ($httpOptions !== null && $httpOptions->timeout !== null
             ? $httpOptions->timeout
-            : $profile->http->timeout;
+            : $profile->http->timeout);
+        if ($httpOptions?->timeout !== null) {
+            $timeoutSeconds = min($timeoutSeconds, $httpOptions->timeout);
+        }
         $maxTimeoutMs = max(1, $timeoutSeconds) * 1000;
 
         $payload = json_encode([
@@ -54,7 +58,7 @@ final class FlaresolverrFetchHandler implements FetchMethodHandler
         ], JSON_THROW_ON_ERROR);
 
         try {
-            $client = $this->client ?? ClientBuilder::create()->withTimeout($timeoutSeconds + 30)->build();
+            $client = $this->client ?? ClientBuilder::create()->withTimeout($timeoutSeconds)->build();
             $response = $client->sendRequest(new Request('POST', $endpoint, [
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',

@@ -24,8 +24,12 @@ final class PlaywrightFamilyFetchHandlerTest extends TestCase
         file_put_contents($script, '// stub');
 
         $runner = new class implements ProcessRunner {
+            public int $timeout = 0;
+
             public function run(array $command, int $timeoutSeconds = 120, ?string $cwd = null): ProcessResultDto
             {
+                $this->timeout = $timeoutSeconds;
+
                 return new ProcessResultDto(
                     exitCode: 0,
                     stdout: json_encode([
@@ -61,6 +65,7 @@ final class PlaywrightFamilyFetchHandlerTest extends TestCase
         self::assertTrue($result->ok);
         self::assertSame(FetchMethod::PlaywrightStealth, $result->methodUsed);
         self::assertSame('tok', $result->cookies['cf_clearance']);
+        self::assertSame(90, $runner->timeout);
         unlink($script);
     }
 

@@ -50,6 +50,13 @@
         }
     ],
     "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "gallery": [".gallery-heading"]
+            },
+            "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
+        },
         "targetProfiles": {
             "gallery_sample": {
                 "label": "Sample Photo Gallery",

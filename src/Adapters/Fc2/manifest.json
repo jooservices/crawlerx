@@ -9,6 +9,14 @@
     "base_url": "https://adult.contents.fc2.com",
     "pagination": {"strategy": "query", "param": "page"},
     "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [".c-neoItem-1000_wrap, .c-neoItem-1000L_wrap"],
+                "detail": ["a[href^='/article/']"]
+            },
+            "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
+        },
         "targetProfiles": {"fc2_home": {"label": "FC2 Adult Content", "url": "https://adult.contents.fc2.com/"}},
         "fixtureSamples": [
             {"url": "https://adult.contents.fc2.com/", "name": "listing.html", "type": "listing"},

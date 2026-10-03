@@ -14,7 +14,9 @@ use JOOservices\CrawlerX\CrawlerXFactory;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlOptionsDto;
 use JOOservices\CrawlerX\Dto\FetchOptionsDto;
+use JOOservices\CrawlerX\Dto\FetchResultDto;
 use JOOservices\CrawlerX\Dto\ProcessResultDto;
+use JOOservices\CrawlerX\Dto\SiteProfileDto;
 use JOOservices\CrawlerX\Enums\CrawlErrorCode;
 use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Fetch\BrowserServiceProcessRunner;
@@ -90,7 +92,40 @@ final class FetchRuntimeIntegrationTest extends TestCase
             $client,
         );
 
-        self::assertNotEmpty($this->crawlWith($handler, FetchMethod::Flaresolverr)->items);
+        $challenge = new class implements FetchMethodHandler {
+            public function supports(FetchMethod $method): bool
+            {
+                return $method === FetchMethod::Playwright;
+            }
+
+            public function fetch(
+                string $url,
+                SiteProfileDto $profile,
+                FetchMethod $method,
+                ?CrawlOptionsDto $options = null,
+            ): FetchResultDto {
+                return new FetchResultDto(
+                    ok: false,
+                    body: '<title>Just a moment...</title>',
+                    status: 403,
+                    methodUsed: $method,
+                    elapsedMs: 1,
+                    challengeDetected: true,
+                    finalUrl: $url,
+                    error: 'challenge',
+                );
+            }
+        };
+        CrawlerXFactory::useFetchChain(new FetchFallbackChain([
+            FetchMethod::Playwright->value => $challenge,
+            FetchMethod::Flaresolverr->value => $handler,
+        ]));
+
+        $result = CrawlerX::url('https://onejav.com/new')->options(new CrawlOptionsDto(
+            fetch: new FetchOptionsDto(method: FetchMethod::Playwright),
+        ))->crawl();
+
+        self::assertNotEmpty($result->items);
     }
 
     public function test_curl_impersonate_handler_crawls_through_facade(): void
@@ -116,7 +151,7 @@ final class FetchRuntimeIntegrationTest extends TestCase
         self::assertSame('runtime-note', $result->stderr);
     }
 
-    public function test_runtime_failures_map_to_blocked_outcomes(): void
+    public function test_runtime_failures_map_to_fetch_outcomes(): void
     {
         $runtime = FetchRuntimeConfig::fromEnvironment();
         $cases = [
@@ -160,11 +195,11 @@ final class FetchRuntimeIntegrationTest extends TestCase
                 fetch: new FetchOptionsDto(method: $method, noFallback: true),
             ))->tryCrawl();
             self::assertTrue($outcome->failed());
-            self::assertSame(CrawlErrorCode::Blocked, $outcome->error?->code);
+            self::assertContains($outcome->error?->code, [CrawlErrorCode::Challenge, CrawlErrorCode::Network]);
         }
     }
 
-    public function test_http_challenge_maps_to_blocked_outcome(): void
+    public function test_http_challenge_maps_to_challenge_outcome(): void
     {
         ClientBuilder::fake();
         ClientBuilder::respond('GET', 'https://onejav.com/new', (new TestResponseSequence())->push(
@@ -176,7 +211,7 @@ final class FetchRuntimeIntegrationTest extends TestCase
         $outcome = CrawlerX::url('https://onejav.com/new')->tryCrawl();
 
         self::assertTrue($outcome->failed());
-        self::assertSame(CrawlErrorCode::Blocked, $outcome->error?->code);
+        self::assertSame(CrawlErrorCode::Challenge, $outcome->error?->code);
     }
 
     public function test_browser_service_rejects_invalid_response(): void

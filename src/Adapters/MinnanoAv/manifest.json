@@ -67,6 +67,16 @@
         }
     ],
     "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": ["h3.ttl"],
+                "detail": ["h1, .av-title, title"],
+                "performer_listing": ["table.tbllist a[href*='actress'][href*='.html'], a.actress-link[href*='actress']"],
+                "performer_detail": ["h1"]
+            },
+            "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
+        },
         "targetProfiles": {
             "minnano_actress_index": {
                 "label": "Minnano AV Actress Index",

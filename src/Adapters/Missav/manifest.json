@@ -58,6 +58,14 @@
         }
     ],
     "runtime": {
+        "fetch": {
+            "profile": "browser_likely",
+            "readyMarkers": {
+                "listing": ["a[href]"],
+                "detail": ["h1, h2, meta[property='og:title'], meta[name='title']"]
+            },
+            "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
+        },
         "targetProfiles": {
             "new": {
                 "label": "Latest Updates",
