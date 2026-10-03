@@ -13,10 +13,29 @@ use JOOservices\CrawlerX\Dto\HttpOptionsDto;
 use JOOservices\CrawlerX\Enums\CrawlType;
 use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Enums\FetchProfile;
+use JOOservices\CrawlerX\Fetch\BrowserServiceProcessRunner;
+use JOOservices\CrawlerX\Fetch\FetchFallbackChain;
+use JOOservices\CrawlerX\Fetch\FetchRuntimeConfig;
+use JOOservices\CrawlerX\Fetch\Handlers\CurlImpersonateFetchHandler;
+use JOOservices\CrawlerX\Fetch\Handlers\FlaresolverrFetchHandler;
+use JOOservices\CrawlerX\Fetch\Handlers\PlaywrightFamilyFetchHandler;
+use JOOservices\CrawlerX\Fetch\Handlers\PuppeteerStealthFetchHandler;
+use JOOservices\CrawlerX\Fetch\ProcOpenProcessRunner;
+use JOOservices\CrawlerX\Fetch\Session\CookieHandoffStore;
+use JOOservices\CrawlerX\Registry\FileAdapterManifestRegistry;
+use JOOservices\CrawlerX\Tools\Canary\Env;
+use JOOservices\CrawlerX\Tools\Canary\FetchTrace;
+use JOOservices\CrawlerX\Tools\Canary\Redactor;
+use JOOservices\CrawlerX\Tools\Canary\RequiredFields;
 
+require __DIR__ . '/canary/Env.php';
+require __DIR__ . '/canary/Redactor.php';
+require __DIR__ . '/canary/required-fields.php';
+require __DIR__ . '/canary/FetchTrace.php';
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 $arguments = array_slice($argv, 1);
+$canaryMode = in_array('--canary', $arguments, true);
 if (in_array('--help', $arguments, true) || in_array('-h', $arguments, true)) {
     fwrite(STDOUT, <<<'HELP'
 Usage:
@@ -43,6 +62,10 @@ Crawl/fetch options:
   --header='Name: Value'        Repeat for multiple HTTP headers
 HELP);
     exit(0);
+}
+
+if ($canaryMode) {
+    runCanary($arguments);
 }
 
 $urlArgument = null;
@@ -313,4 +336,246 @@ function failUsage(string $message): never
 {
     fwrite(STDERR, $message . "\nRun with --help for usage.\n");
     exit(2);
+}
+
+/** @param list<string> $arguments */
+function runCanary(array $arguments): never
+{
+    $siteFilter = null;
+    foreach ($arguments as $argument) {
+        if (str_starts_with($argument, '--site=')) {
+            $siteFilter = substr($argument, strlen('--site='));
+        }
+    }
+
+    $envPath = dirname(__DIR__) . '/.env';
+    $env = Env::load($envPath);
+    $secrets = array_values(array_filter(array_map(
+        static fn(string $key): string => str_starts_with($key, 'CRAWLERX_COOKIE_') ? $env[$key] : '',
+        array_keys($env),
+    )));
+    $registry = new FileAdapterManifestRegistry();
+    $manifests = $registry->all();
+    $trace = new FetchTrace();
+    CrawlerXFactory::useFetchChain(buildCanaryFetchChain($trace));
+
+    $samples = [];
+    foreach ($manifests as $slug => $manifest) {
+        if ($siteFilter !== null && $slug !== $siteFilter) {
+            continue;
+        }
+
+        foreach ($manifest->fixtureSamples as $sample) {
+            $samples[] = [$slug, $sample];
+        }
+    }
+
+    if ($samples === []) {
+        CrawlerXFactory::reset();
+        fwrite(STDERR, "No matching canary samples found.\n");
+        exit(2);
+    }
+
+    $failed = 0;
+    $previousSite = null;
+    foreach ($samples as [$slug, $sample]) {
+        if ($previousSite !== null && $previousSite !== $slug) {
+            sleep(1);
+        }
+        $previousSite = $slug;
+
+        $id = $slug . ':' . $sample->type . ':' . $sample->name;
+        emitCanary(['event' => 'sample_start', 'id' => $id, 'site' => $slug, 'type' => $sample->type]);
+
+        $cookie = Env::cookieForSite($slug, $env);
+        $started = hrtime(true);
+        $usageBefore = usageSnapshot();
+        $trace->reset();
+        $record = [
+            'id' => $id,
+            'site' => $slug,
+            'page_type' => $sample->type,
+            'sample' => $sample->name,
+            'url' => $sample->url,
+            'status' => 'network',
+            'missing_fields' => [],
+            'winning_method' => null,
+            'attempts' => [],
+            'wall_ms' => 0,
+            'php_cpu_seconds' => 0.0,
+            'php_peak_rss_bytes' => 0,
+        ];
+
+        if (in_array($slug, ['avfan', 'avfan_profiles'], true) && $cookie === null) {
+            $record['status'] = 'skipped_no_cookie';
+        } else {
+            try {
+                $headers = $cookie === null ? null : ['Cookie' => $cookie];
+                $options = new CrawlOptionsDto(
+                    http: $headers === null ? null : new HttpOptionsDto(headers: $headers),
+                    fetch: new FetchOptionsDto(profile: FetchProfile::Adaptive),
+                );
+                $outcome = CrawlerX::url($sample->url)
+                    ->site($slug)
+                    ->type(canaryType($sample->type))
+                    ->options($options)
+                    ->tryCrawl();
+
+                if ($outcome->ok && ($outcome->list !== null || $outcome->item !== null)) {
+                    $result = $outcome->list ?? $outcome->item;
+                    $coverage = RequiredFields::check($result, $sample->type);
+                    $record['status'] = $coverage['missing'] === [] ? 'ok' : 'parse_failed';
+                    $record['missing_fields'] = $coverage['missing'];
+                    $record['coverage'] = [
+                        'found' => count($coverage['found']),
+                        'expected' => count($coverage['expected']),
+                    ];
+                } else {
+                    $record['status'] = classifyCanaryFailure($outcome, $trace->attempts);
+                }
+            } catch (Throwable $exception) {
+                $record['status'] = classifyCanaryMessage($exception->getMessage());
+            }
+        }
+
+        $usageAfter = usageSnapshot();
+        $record['wall_ms'] = (int) round((hrtime(true) - $started) / 1_000_000);
+        $record['php_cpu_seconds'] = cpuSeconds($usageBefore, $usageAfter);
+        $record['php_peak_rss_bytes'] = memory_get_peak_usage(true);
+        $record['attempts'] = redactAttempts($trace->attempts, $secrets);
+        foreach ($record['attempts'] as $attempt) {
+            if (($attempt['ok'] ?? false) === true) {
+                $record['winning_method'] = $attempt['method'];
+            }
+        }
+        if ($record['status'] !== 'ok') {
+            ++$failed;
+        }
+
+        emitCanary(['event' => 'sample_end', 'record' => $record]);
+    }
+
+    CrawlerXFactory::reset();
+    emitCanary(['event' => 'complete', 'failed' => $failed, 'total' => count($samples)]);
+    exit($failed === 0 ? 0 : 1);
+}
+
+function emitCanary(array $payload): void
+{
+    fwrite(STDOUT, json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n");
+    fflush(STDOUT);
+}
+
+function canaryType(string $type): CrawlType
+{
+    return match ($type) {
+        'detail' => CrawlType::Detail,
+        'gallery' => CrawlType::Gallery,
+        'performer_listing' => CrawlType::PerformerListing,
+        'performer_detail' => CrawlType::PerformerDetail,
+        default => CrawlType::Listing,
+    };
+}
+
+function buildCanaryFetchChain(FetchTrace $trace): FetchFallbackChain
+{
+    $runtime = FetchRuntimeConfig::fromEnvironment();
+    $runner = new ProcOpenProcessRunner();
+    $browserRunner = $runtime->browserServiceUrl === null
+        ? $runner
+        : new BrowserServiceProcessRunner($runtime->browserServiceUrl);
+    $cookies = new CookieHandoffStore();
+    $playwright = new PlaywrightFamilyFetchHandler($runtime, $browserRunner);
+
+    $handlers = [
+        FetchMethod::Http->value => $trace->handler(new HttpFetchHandler(new \JOOservices\CrawlerX\Services\ClientFactory(), $cookies)),
+        FetchMethod::CurlImpersonate->value => $trace->handler(new CurlImpersonateFetchHandler($runtime, $runner, $cookies)),
+        FetchMethod::Playwright->value => $trace->handler($playwright),
+        FetchMethod::PlaywrightStealth->value => $trace->handler($playwright),
+        FetchMethod::ChromeStealth->value => $trace->handler($playwright),
+        FetchMethod::PuppeteerStealth->value => $trace->handler(new PuppeteerStealthFetchHandler($runtime, $browserRunner)),
+        FetchMethod::Flaresolverr->value => $trace->handler(new FlaresolverrFetchHandler($runtime)),
+    ];
+
+    return new FetchFallbackChain($handlers, $cookies);
+}
+
+/** @param array<string, mixed> $outcome @param list<array<string, mixed>> $attempts */
+function classifyCanaryFailure(mixed $outcome, array $attempts): string
+{
+    $code = null;
+    if (is_object($outcome) && isset($outcome->error) && is_object($outcome->error)) {
+        $errorCode = $outcome->error->code ?? null;
+        $code = is_object($errorCode) && property_exists($errorCode, 'value') ? $errorCode->value : null;
+    }
+
+    if ($code === 'parse_failed') {
+        return 'parse_failed';
+    }
+    if ($code === 'not_found') {
+        return 'not_found';
+    }
+
+    foreach ($attempts as $attempt) {
+        if (($attempt['status'] ?? 0) === 404) {
+            return 'not_found';
+        }
+        if (($attempt['challenge'] ?? false) === true) {
+            return 'challenge';
+        }
+        if (str_contains(strtolower((string) ($attempt['error'] ?? '')), 'timed out')) {
+            return 'timeout';
+        }
+    }
+
+    return $code === 'blocked' ? 'network' : ($code ?? 'network');
+}
+
+function classifyCanaryMessage(string $message): string
+{
+    $message = strtolower($message);
+    if (str_contains($message, 'timeout') || str_contains($message, 'timed out')) {
+        return 'timeout';
+    }
+    if (str_contains($message, '404') || str_contains($message, 'not found')) {
+        return 'not_found';
+    }
+    if (str_contains($message, 'challenge') || str_contains($message, 'cloudflare')) {
+        return 'challenge';
+    }
+
+    return 'network';
+}
+
+/** @return array<string, mixed> */
+function usageSnapshot(): array
+{
+    /** @var array<string, mixed> $usage */
+    $usage = function_exists('getrusage') ? \getrusage() : [];
+
+    return $usage;
+}
+
+/** @param array<string, mixed> $before @param array<string, mixed> $after */
+function cpuSeconds(array $before, array $after): float
+{
+    $user = ((int) ($after['ru_utime.tv_sec'] ?? 0) * 1_000_000 + (int) ($after['ru_utime.tv_usec'] ?? 0))
+        - ((int) ($before['ru_utime.tv_sec'] ?? 0) * 1_000_000 + (int) ($before['ru_utime.tv_usec'] ?? 0));
+    $system = ((int) ($after['ru_stime.tv_sec'] ?? 0) * 1_000_000 + (int) ($after['ru_stime.tv_usec'] ?? 0))
+        - ((int) ($before['ru_stime.tv_sec'] ?? 0) * 1_000_000 + (int) ($before['ru_stime.tv_usec'] ?? 0));
+
+    return max(0.0, ($user + $system) / 1_000_000);
+}
+
+/** @param list<array<string, mixed>> $attempts @param list<string> $secrets */
+function redactAttempts(array $attempts, array $secrets): array
+{
+    foreach ($attempts as &$attempt) {
+        if (isset($attempt['error']) && is_string($attempt['error'])) {
+            $attempt['error'] = Redactor::text($attempt['error'], $secrets);
+        }
+    }
+    unset($attempt);
+
+    return $attempts;
 }
