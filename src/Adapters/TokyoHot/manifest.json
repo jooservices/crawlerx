@@ -13,7 +13,7 @@
             "profile": "adaptive",
             "readyMarkers": {
                 "listing": [".new li, .grid li"],
-                "detail": ["dl.info a[href*='cast']"]
+                "detail": ["dl.info"]
             },
             "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
         },

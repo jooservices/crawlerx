@@ -13,7 +13,7 @@
             "profile": "adaptive",
             "readyMarkers": {
                 "listing": [".entry, .swiper-slide"],
-                "detail": ["a[href*='/eng/moviepages/']"]
+                "detail": ["#moviepages"]
             },
             "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
         },
