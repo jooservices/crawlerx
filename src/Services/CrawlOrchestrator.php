@@ -57,7 +57,7 @@ final class CrawlOrchestrator
 
         $profile = SiteProfileDto::fromManifest($manifest);
         $plan = $this->fetchPlanResolver->resolve($profile, $options?->fetch);
-        $fetch = $this->fetchChain->fetch($classified['url'], $profile, $plan, $options);
+        $fetch = $this->fetchChain->fetch($classified['url'], $profile, $plan, $options, $classified['type']);
 
         $request = new CrawlRequestDto(
             url: $fetch->finalUrl ?? $classified['url'],

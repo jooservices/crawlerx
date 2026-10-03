@@ -9,6 +9,14 @@
     "base_url": "https://my.tokyo-hot.com",
     "pagination": {"strategy": "query", "param": "page"},
     "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [".new li, .grid li"],
+                "detail": ["dl.info a[href*='cast']"]
+            },
+            "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
+        },
         "targetProfiles": {"tokyohot_home": {"label": "Tokyo-Hot Accepted Home", "url": "https://my.tokyo-hot.com/index?lang=en"}},
         "fixtureSamples": [
             {"url": "https://my.tokyo-hot.com/index?lang=en", "name": "listing.html", "type": "listing"},

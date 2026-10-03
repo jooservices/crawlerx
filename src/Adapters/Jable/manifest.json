@@ -60,6 +60,14 @@
         }
     ],
     "runtime": {
+        "fetch": {
+            "profile": "browser_likely",
+            "readyMarkers": {
+                "listing": [".video-img-box"],
+                "detail": ["section.video-info h4"]
+            },
+            "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
+        },
         "targetProfiles": {
             "new": {
                 "label": "New Release",

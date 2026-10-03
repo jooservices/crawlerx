@@ -43,7 +43,7 @@ final class FetchFallbackCrawlTest extends TestCase
         self::assertIsArray($movie);
         self::assertIsString($movie['code'] ?? null);
         self::assertNotSame('', trim($movie['code']));
-        self::assertSame([FetchMethod::Playwright, FetchMethod::PlaywrightStealth], $handler->attempts);
+        self::assertSame([FetchMethod::Playwright, FetchMethod::Flaresolverr], $handler->attempts);
     }
 
     public function test_explicit_method_without_fallback_uses_only_requested_handler(): void
@@ -65,7 +65,7 @@ final class FetchFallbackCrawlTest extends TestCase
     {
         $body = $this->loadFixture('onejav/detail-sample-1.html');
         $handler = $this->handler(static fn(FetchMethod $method, string $url): FetchResultDto => $method === FetchMethod::CurlImpersonate
-            ? self::failure($method)
+            ? self::failure($method, challenge: true)
             : self::success($method, $body, $url));
         $methods = [FetchMethod::CurlImpersonate, FetchMethod::Flaresolverr];
         $this->useHandler($handler, $methods);
@@ -89,7 +89,7 @@ final class FetchFallbackCrawlTest extends TestCase
         ))->tryCrawl();
 
         self::assertTrue($outcome->failed());
-        self::assertSame(CrawlErrorCode::Blocked, $outcome->error?->code);
+        self::assertSame(CrawlErrorCode::Challenge, $outcome->error?->code);
         self::assertNotNull($outcome->error);
         self::assertNotNull($outcome->error->fetch);
         self::assertCount(2, $outcome->error->fetch->attempts);

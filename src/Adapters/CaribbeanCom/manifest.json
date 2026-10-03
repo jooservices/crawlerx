@@ -9,6 +9,14 @@
     "base_url": "https://en.caribbeancom.com",
     "pagination": {"strategy": "path", "param": "page"},
     "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [".entry, .swiper-slide"],
+                "detail": ["a[href*='/eng/moviepages/']"]
+            },
+            "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
+        },
         "targetProfiles": {"caribbean_home": {"label": "Caribbeancom English Home", "url": "https://en.caribbeancom.com/eng/index2.htm"}},
         "fixtureSamples": [
             {"url": "https://en.caribbeancom.com/eng/index2.htm", "name": "listing.html", "type": "listing"},

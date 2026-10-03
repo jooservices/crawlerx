@@ -58,6 +58,14 @@
         }
     ],
     "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": ["a[href]"],
+                "detail": ["h5.title a"]
+            },
+            "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
+        },
         "targetProfiles": {
             "new": {
                 "label": "Latest",

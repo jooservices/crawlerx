@@ -19,14 +19,17 @@ enum FetchMethod: string
      */
     public static function defaultChain(): array
     {
-        return [
+        $chain = [
             self::Http,
-            self::CurlImpersonate,
             self::Playwright,
-            self::PlaywrightStealth,
-            self::PuppeteerStealth,
             self::Flaresolverr,
         ];
+
+        if (getenv('CRAWLERX_CURL_IMPERSONATE') !== false && trim((string) getenv('CRAWLERX_CURL_IMPERSONATE')) !== '') {
+            array_splice($chain, 1, 0, [self::CurlImpersonate]);
+        }
+
+        return $chain;
     }
 
     /**
@@ -36,8 +39,6 @@ enum FetchMethod: string
     {
         return [
             self::Playwright,
-            self::PlaywrightStealth,
-            self::PuppeteerStealth,
             self::Flaresolverr,
         ];
     }

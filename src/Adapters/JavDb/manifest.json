@@ -9,6 +9,14 @@
     "base_url": "https://javdb.com",
     "pagination": {"strategy": "query", "param": "page"},
     "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [".movie-list .item"],
+                "detail": ["a[href^='/v/']"]
+            },
+            "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
+        },
         "targetProfiles": {"javdb_home": {"label": "JavDB Home", "url": "https://javdb.com/"}},
         "fixtureSamples": [
             {"url": "https://javdb.com/", "name": "listing.html", "type": "listing"},

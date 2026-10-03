@@ -14,6 +14,7 @@ use JOOservices\CrawlerX\Enums\CrawlType;
 use JOOservices\CrawlerX\Exceptions\AdapterNotFoundException;
 use JOOservices\CrawlerX\Exceptions\AmbiguousUrlException;
 use JOOservices\CrawlerX\Exceptions\CrawlBlockedException;
+use JOOservices\CrawlerX\Exceptions\CrawlFetchException;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
 use JOOservices\CrawlerX\Exceptions\UnsupportedUrlException;
 use Throwable;
@@ -106,6 +107,14 @@ final class CrawlRequestBuilder
             return $this->failure(CrawlErrorCode::AmbiguousUrl, $exception->getMessage());
         } catch (AdapterNotFoundException $exception) {
             return $this->failure(CrawlErrorCode::AdapterNotFound, $exception->getMessage());
+        } catch (CrawlFetchException $exception) {
+            return $this->failure(
+                $exception->errorCode,
+                $exception->getMessage(),
+                $exception->fetch,
+                $exception->retryable,
+                $exception->retryAfterSeconds,
+            );
         } catch (CrawlBlockedException $exception) {
             return $this->failure(CrawlErrorCode::Blocked, $exception->getMessage(), $exception->fetch);
         } catch (CrawlParseException $exception) {
@@ -119,12 +128,16 @@ final class CrawlRequestBuilder
         CrawlErrorCode $code,
         string $message,
         ?\JOOservices\CrawlerX\Dto\FetchMetaDto $fetch = null,
+        ?bool $retryable = null,
+        ?int $retryAfterSeconds = null,
     ): CrawlOutcomeDto {
         return CrawlOutcomeDto::failure(new CrawlErrorDto(
             code: $code,
             message: $message,
             url: $this->url,
             fetch: $fetch,
+            retryable: $retryable ?? $code->defaultRetryable(),
+            retryAfterSeconds: $retryAfterSeconds,
         ));
     }
 }

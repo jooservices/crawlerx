@@ -7,7 +7,7 @@ namespace JOOservices\CrawlerX\Exceptions;
 use JOOservices\CrawlerX\Dto\FetchMetaDto;
 use Throwable;
 
-final class CrawlBlockedException extends AbstractCrawlerException
+class CrawlBlockedException extends AbstractCrawlerException
 {
     public function __construct(
         string $message,

@@ -9,6 +9,7 @@ use JOOservices\CrawlerX\Dto\AdapterManifestDto;
 use JOOservices\CrawlerX\Dto\FixtureSampleDto;
 use JOOservices\CrawlerX\Contracts\AdapterManifestRegistry;
 use JOOservices\CrawlerX\Contracts\SiteAdapter;
+use JOOservices\CrawlerX\Enums\FetchProfile;
 
 final class FileAdapterManifestRegistry implements AdapterManifestRegistry
 {
@@ -120,6 +121,11 @@ final class FileAdapterManifestRegistry implements AdapterManifestRegistry
         $queueSupervisor = is_array($runtime['queueSupervisor'] ?? null) ? $runtime['queueSupervisor'] : null;
         $fixtureSamples = $this->fixtureSamplesFromRuntime($runtime);
         $configSchema = is_array($data['config_schema'] ?? null) ? $data['config_schema'] : [];
+        $fetch = is_array($runtime['fetch'] ?? null) ? $runtime['fetch'] : [];
+        $fetchProfile = FetchProfile::tryFrom(is_string($fetch['profile'] ?? null) ? $fetch['profile'] : '')
+            ?? ($playwrightFetchEnabled ? FetchProfile::BrowserLikely : FetchProfile::Adaptive);
+        $readyMarkers = $this->normalizeMarkers($fetch['readyMarkers'] ?? []);
+        $soft404Markers = $this->normalizeStringList($fetch['soft404Markers'] ?? []);
 
         if ($slug === '' || $name === '' || $baseUrl === '' || $adapterClass === '') {
             throw new InvalidArgumentException("Manifest [{$path}] is missing required slug, name, base_url, or adapter.class.");
@@ -148,6 +154,9 @@ final class FileAdapterManifestRegistry implements AdapterManifestRegistry
             queueSupervisor: $queueSupervisor,
             fixtureSamples: $fixtureSamples,
             configSchema: $this->normalizeConfigSchema($configSchema),
+            fetchProfile: $fetchProfile,
+            readyMarkers: $readyMarkers,
+            soft404Markers: $soft404Markers,
         );
     }
 
@@ -176,6 +185,43 @@ final class FileAdapterManifestRegistry implements AdapterManifestRegistry
         }
 
         return $normalized;
+    }
+
+    /**
+     * @return array<string, list<string>>
+     */
+    private function normalizeMarkers(mixed $markers): array
+    {
+        if (! is_array($markers)) {
+            return [];
+        }
+
+        $normalized = [];
+        foreach ($markers as $type => $values) {
+            if (! is_string($type) || ! is_array($values)) {
+                continue;
+            }
+
+            $strings = array_values(array_filter($values, static fn(mixed $value): bool => is_string($value) && trim($value) !== ''));
+            if ($strings !== []) {
+                $normalized[$type] = array_map(static fn(string $value): string => trim($value), $strings);
+            }
+        }
+
+        return $normalized;
+    }
+
+    /** @return list<string> */
+    private function normalizeStringList(mixed $values): array
+    {
+        if (! is_array($values)) {
+            return [];
+        }
+
+        return array_values(array_map(
+            static fn(string $value): string => trim($value),
+            array_filter($values, static fn(mixed $value): bool => is_string($value) && trim($value) !== ''),
+        ));
     }
 
     /**

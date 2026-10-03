@@ -51,6 +51,14 @@
         }
     ],
     "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "performer_listing": [".post .entry-title a[href*='db.avjoho.com/']"],
+                "performer_detail": ["h1.entry-title"]
+            },
+            "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
+        },
         "targetProfiles": {
             "avjoho_listing": {
                 "label": "Avjoho Debut 2025 Listing",

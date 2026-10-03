@@ -54,7 +54,7 @@ final class PlaywrightFamilyFetchHandler implements FetchMethodHandler
             'locale' => $playwright->locale,
             'timezoneId' => $playwright->timezoneId,
             'stealthEnabled' => true,
-            'stealthLevel' => $method === FetchMethod::Playwright ? 'minimal' : 'enhanced',
+            'stealthLevel' => 'enhanced',
             'extraHttpHeaders' => $profile->http->headers,
             'storageStatePath' => $playwright->storageStatePath,
             'userAgent' => $playwright->userAgent,

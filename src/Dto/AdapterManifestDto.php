@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Dto;
 
 use JOOservices\Dto\Core\Dto;
+use JOOservices\CrawlerX\Enums\FetchProfile;
 
 final class AdapterManifestDto extends Dto
 {
@@ -54,6 +55,11 @@ final class AdapterManifestDto extends Dto
         public readonly array $fixtureSamples = [],
         public readonly array $configSchema = [],
         public readonly array $debugTypes = [],
+        public readonly ?FetchProfile $fetchProfile = null,
+        /** @var array<string, list<string>> */
+        public readonly array $readyMarkers = [],
+        /** @var list<string> */
+        public readonly array $soft404Markers = [],
     ) {
     }
 
