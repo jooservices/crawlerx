@@ -45,7 +45,8 @@ final class PerformerTest extends TestCase
         self::assertTrue($result->pagination->hasNextPage);
         self::assertSame(2, $result->pagination->nextPage);
         self::assertStringContainsString('?page=2', (string) $result->pagination->nextUrl);
-        self::assertSame(1213, $result->pagination->lastPage);
+        // Tracks the captured live fixture (listing-page1.html); update when the fixture is refreshed.
+        self::assertSame(1214, $result->pagination->lastPage);
     }
 
     public function test_listing_throws_when_no_performer_cards(): void
