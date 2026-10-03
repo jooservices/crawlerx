@@ -64,7 +64,9 @@
             "profile": "browser_likely",
             "readyMarkers": {
                 "listing": [".video-img-box"],
-                "detail": ["section.video-info h4"]
+                "detail": ["section.video-info h4"],
+                "performer_listing": [".horizontal-img-box"],
+                "performer_detail": [".title-with-avatar .title-box h2"]
             },
             "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
         },

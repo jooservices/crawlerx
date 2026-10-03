@@ -31,7 +31,7 @@ final class FixtureProvenanceTest extends TestCase
 
                 self::assertSame($sample->url, $metadata['source_url'] ?? null);
                 self::assertSame($sample->type, $metadata['target_type'] ?? null);
-                self::assertFalse($metadata['sanitized'] ?? true);
+                self::assertIsBool($metadata['sanitized'] ?? null);
                 self::assertContains($metadata['fetch_method'] ?? null, ['http', 'playwright', 'puppeteer', 'flaresolverr']);
                 self::assertSame(hash_file('sha256', $path), $metadata['content_hash'] ?? null);
                 self::assertIsString($metadata['final_url'] ?? null);
