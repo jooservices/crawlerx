@@ -6,6 +6,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'no
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { chromium } from 'playwright';
+import { fetchWithBrowser } from './playwright-fetch.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const port = Number.parseInt(process.env.CRAWLERX_BROWSER_SERVICE_PORT ?? '3000', 10);
@@ -13,6 +14,8 @@ const maxRequestBytes = 1024 * 1024;
 const maxConcurrency = positiveInteger(process.env.CRAWLERX_BROWSER_MAX_CONCURRENCY, 2);
 const maxQueue = nonNegativeInteger(process.env.CRAWLERX_BROWSER_MAX_QUEUE, 8);
 const requestTimeoutMs = positiveInteger(process.env.CRAWLERX_BROWSER_REQUEST_TIMEOUT_MS, 120000);
+const maxBrowserRequests = positiveInteger(process.env.CRAWLERX_BROWSER_MAX_REQUESTS, 200);
+const maxBrowserRssMb = positiveInteger(process.env.CRAWLERX_BROWSER_MAX_RSS_MB, 0);
 const playwrightVersion = readPackageVersion('playwright-core');
 const chromiumRevision = readChromiumRevision();
 const crawlerxVersion = process.env.CRAWLERX_VERSION ?? 'dev';
@@ -22,8 +25,14 @@ let inFlight = 0;
 let stopping = false;
 let server;
 let shutdownStarted = false;
+let browser = null;
+let browserLaunchPromise = null;
+let requestsSinceLaunch = 0;
+let relaunchCount = 0;
+let consecutiveLaunchFailures = 0;
+let fatalLaunchFailures = false;
+let hasLaunchedBrowser = false;
 let launchStatus = { ok: false, error: 'browser launch has not been checked' };
-let launchCheck = null;
 
 function positiveInteger(value, fallback) {
     const parsed = Number.parseInt(value ?? '', 10);
@@ -48,7 +57,7 @@ function readChromiumRevision() {
     }
 
     const browsersJson = JSON.parse(readFileSync(browsersPath, 'utf8'));
-    const chromiumBrowser = browsersJson.browsers?.find((browser) => browser.name === 'chromium');
+    const chromiumBrowser = browsersJson.browsers?.find((candidate) => candidate.name === 'chromium');
     return typeof chromiumBrowser?.revision === 'string' ? chromiumBrowser.revision : null;
 }
 
@@ -62,6 +71,11 @@ function respond(response, status, body) {
         'Content-Type': 'application/json',
     });
     response.end(JSON.stringify(body));
+}
+
+function logEvent(event, fields = {}) {
+    // Keep operational events JSON-only and never include request config/cookies.
+    process.stdout.write(`${JSON.stringify({ event, ...fields })}\n`);
 }
 
 function killProcessTree(child) {
@@ -91,14 +105,12 @@ function killProcessTree(child) {
     return forceKill;
 }
 
-function execute(scriptName, config) {
+function executePuppeteer(config) {
     return new Promise((resolvePromise) => {
         const directory = mkdtempSync(join(tmpdir(), 'crawlerx-browser-'));
         const configPath = join(directory, 'config.json');
         writeFileSync(configPath, JSON.stringify(config));
-        const script = scriptName === 'puppeteer'
-            ? join(root, 'scripts/puppeteer-stealth-fetch.mjs')
-            : join(root, 'scripts/playwright-fetch.mjs');
+        const script = join(root, 'scripts/puppeteer-stealth-fetch.mjs');
         const child = spawn(process.execPath, [script, `--config=${configPath}`], {
             cwd: root,
             detached: true,
@@ -153,43 +165,154 @@ function execute(scriptName, config) {
     });
 }
 
-async function checkBrowserLaunch() {
-    if (launchCheck !== null) {
-        return launchCheck;
+async function closeBrowser(reason) {
+    const current = browser;
+    browser = null;
+    requestsSinceLaunch = 0;
+    if (current !== null) {
+        logEvent('browser_close', { reason, relaunch_count: relaunchCount });
+        await current.close().catch(() => {});
+    }
+}
+
+async function launchBrowser(relaunch = false) {
+    if (browser !== null) {
+        return browser;
+    }
+    if (browserLaunchPromise !== null) {
+        return browserLaunchPromise;
     }
 
-    launchCheck = (async () => {
-        let browser;
+    browserLaunchPromise = (async () => {
         try {
-            browser = await chromium.launch({ headless: true });
+            const launched = await chromium.launch({
+                headless: true,
+                ...(process.env.CRAWLERX_BROWSER_EXECUTABLE_PATH
+                    ? { executablePath: process.env.CRAWLERX_BROWSER_EXECUTABLE_PATH }
+                    : {}),
+                args: ['--disable-blink-features=AutomationControlled'],
+            });
+            browser = launched;
+            hasLaunchedBrowser = true;
+            requestsSinceLaunch = 0;
+            consecutiveLaunchFailures = 0;
             launchStatus = { ok: true, error: null };
+            if (relaunch) {
+                relaunchCount += 1;
+            }
+            logEvent(relaunch ? 'browser_relaunch' : 'browser_launch', {
+                relaunch_count: relaunchCount,
+                max_requests: maxBrowserRequests,
+            });
+            launched.on('disconnected', () => {
+                if (browser !== launched) {
+                    return;
+                }
+                browser = null;
+                requestsSinceLaunch = 0;
+                launchStatus = { ok: false, error: 'browser disconnected' };
+                logEvent('browser_crash', { relaunch_count: relaunchCount });
+            });
+            return launched;
         } catch (error) {
+            consecutiveLaunchFailures += 1;
             launchStatus = {
                 ok: false,
                 error: error instanceof Error ? error.message : String(error),
             };
-        } finally {
-            if (browser !== undefined) {
-                await browser.close().catch(() => {});
+            logEvent('browser_launch_failed', { consecutive_failures: consecutiveLaunchFailures });
+            if (consecutiveLaunchFailures >= 3) {
+                fatalLaunchFailures = true;
+                logEvent('browser_fatal', { consecutive_failures: consecutiveLaunchFailures });
+                setImmediate(() => process.exit(1));
             }
+            throw error;
+        } finally {
+            browserLaunchPromise = null;
         }
-        return launchStatus;
-    })().finally(() => {
-        launchCheck = null;
-    });
+    })();
 
-    return launchCheck;
+    return browserLaunchPromise;
+}
+
+async function browserForRequest() {
+    if (fatalLaunchFailures) {
+        throw new Error('browser launch failed three consecutive times');
+    }
+
+    const rssMb = process.memoryUsage().rss / (1024 * 1024);
+    const needsRelaunch = browser !== null && (
+        requestsSinceLaunch >= maxBrowserRequests ||
+        (maxBrowserRssMb > 0 && rssMb >= maxBrowserRssMb)
+    );
+    if (needsRelaunch) {
+        await closeBrowser(maxBrowserRssMb > 0 && rssMb >= maxBrowserRssMb ? 'rss_limit' : 'max_requests');
+        return launchBrowser(true);
+    }
+
+    return launchBrowser(browser !== null ? false : hasLaunchedBrowser);
+}
+
+async function execute(scriptName, config) {
+    if (scriptName === 'puppeteer') {
+        return executePuppeteer(config);
+    }
+
+    let currentBrowser;
+    try {
+        currentBrowser = await browserForRequest();
+    } catch (error) {
+        return {
+            exitCode: 1,
+            stderr: error instanceof Error ? error.message : String(error),
+            stdout: '',
+            browserUnavailable: true,
+        };
+    }
+
+    requestsSinceLaunch += 1;
+    let timer;
+    let timedOut = false;
+    const operation = fetchWithBrowser(config, currentBrowser).then((payload) => ({
+        exitCode: payload.error && !payload.html ? 1 : 0,
+        stderr: payload.error && !payload.html ? payload.error : '',
+        stdout: JSON.stringify(payload),
+        timedOut: false,
+    }));
+    const timeout = new Promise((resolvePromise) => {
+        timer = setTimeout(async () => {
+            timedOut = true;
+            await closeBrowser('request_timeout');
+            resolvePromise({
+                exitCode: 124,
+                stderr: 'browser request timed out',
+                stdout: '',
+                timedOut: true,
+            });
+        }, requestTimeoutMs);
+    });
+    const result = await Promise.race([operation, timeout]);
+    clearTimeout(timer);
+    if (timedOut) {
+        operation.catch(() => {});
+    }
+    return result;
 }
 
 function healthPayload() {
     return {
-        ok: launchStatus.ok,
+        ok: launchStatus.ok && !fatalLaunchFailures,
         playwright_version: playwrightVersion,
         chromium_revision: chromiumRevision,
         browser_launch_ok: launchStatus.ok,
         crawlerx_version: crawlerxVersion,
         in_flight: inFlight,
         queued: jobs.length,
+        browser_requests: requestsSinceLaunch,
+        relaunch_count: relaunchCount,
+        browser_max_requests: maxBrowserRequests,
+        browser_max_rss_mb: maxBrowserRssMb,
+        rss_mb: Math.round((process.memoryUsage().rss / (1024 * 1024)) * 100) / 100,
     };
 }
 
@@ -207,6 +330,8 @@ function logRequest(config, script, receivedAt, startedAt, queuedAt, result) {
         ms: Date.now() - receivedAt,
         exit_code: result.exitCode,
         queued_ms: queuedAt === null ? 0 : startedAt - queuedAt,
+        relaunch_count: relaunchCount,
+        rss_mb: Math.round((process.memoryUsage().rss / (1024 * 1024)) * 100) / 100,
     })}\n`);
 }
 
@@ -229,6 +354,10 @@ function startJob(job, queuedAt = null) {
 
     execute(job.script, job.config).then((result) => {
         logRequest(job.config, job.script, job.receivedAt, startedAt, queuedAt, result);
+        if (result.browserUnavailable) {
+            respond(job.response, 503, { error: 'browser unavailable' });
+            return;
+        }
         if (result.timedOut) {
             respond(job.response, 504, {
                 error: 'browser request timed out',
@@ -278,9 +407,10 @@ function beginShutdown(signal) {
     shutdownStarted = true;
     stopping = true;
     rejectQueuedJobs();
+    void closeBrowser('shutdown');
     server.close(() => finishShutdown());
     finishShutdown();
-    process.stderr.write(`${JSON.stringify({ event: 'shutdown', signal })}\n`);
+    logEvent('shutdown', { signal });
 }
 
 async function handleRequest(request, response) {
@@ -288,7 +418,7 @@ async function handleRequest(request, response) {
 
     if (request.method === 'GET' && requestUrl.pathname === '/health') {
         if (requestUrl.searchParams.get('deep') === '1') {
-            await checkBrowserLaunch();
+            await launchBrowser().catch(() => {});
         }
         const payload = healthPayload();
         respond(response, payload.ok ? 200 : 503, payload);
@@ -347,7 +477,7 @@ async function handleRequest(request, response) {
 }
 
 async function start() {
-    await checkBrowserLaunch();
+    await launchBrowser().catch(() => {});
     server = createServer((request, response) => {
         handleRequest(request, response).catch((error) => {
             respond(response, 500, { error: error instanceof Error ? error.message : String(error) });

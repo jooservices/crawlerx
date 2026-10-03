@@ -14,6 +14,7 @@ final class PlaywrightProfileDto extends Dto
     public function __construct(
         public readonly string $browser = 'chromium',
         public readonly bool $headless = true,
+        /** @deprecated Use readyTimeoutMs. This value is ignored by the browser sidecar. */
         public readonly int $postWaitMs = 8000,
         public readonly int $navigationTimeoutMs = 90000,
         public readonly bool $stealthEnabled = true,
@@ -22,6 +23,8 @@ final class PlaywrightProfileDto extends Dto
         public readonly ?string $timezoneId = null,
         public readonly ?string $userAgent = null,
         public readonly ?string $storageStatePath = null,
+        public readonly int $readyTimeoutMs = 45000,
+        public readonly bool $blockResources = true,
     ) {
     }
 }
