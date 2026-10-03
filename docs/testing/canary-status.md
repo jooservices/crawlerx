@@ -65,4 +65,4 @@ This table records the first full canary from `1.2.0-develop` (`b91b7ce`, genera
 | xcity | performer_listing | ok | — | — |
 | xcity | performer_detail | ok | — | — |
 
-Jable was reverified on 2026-10-03 at `358f7fd` after the performer-specific readiness markers and sanitized snapshots were refreshed: 4/4 `ok`, p50/p95 wall time 9679/9952 ms.
+Jable was reverified on 2026-10-03 at `609983fb` after the performer-specific readiness markers and sanitized snapshots were refreshed: 4/4 `ok`, p50/p95 wall time 9718/9969 ms.
