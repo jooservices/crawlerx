@@ -170,9 +170,11 @@ const server = createServer((request, response) => {
     const cfBoundMatch = url.pathname.match(/^\/cf-bound\/([^/]+)$/);
     if (cfBoundMatch) {
         const cookies = parseCookie(request.headers.cookie);
+        const browserUserAgent = request.headers['user-agent'] ?? '';
+        const browserSolved = /(?:HeadlessChrome|Chrome\/\d+)/i.test(browserUserAgent);
         const matched = cookies.cf_clearance === 'fixture-clearance'
             && request.headers['user-agent'] === 'CrawlerX-Fake-Flare/1.0';
-        if (! matched) {
+        if (! matched && ! browserSolved) {
             send(response, 403, '<html><head><title>Just a moment...</title></head><body>challenge</body></html>', { 'cf-mitigated': 'challenge' });
             return;
         }
