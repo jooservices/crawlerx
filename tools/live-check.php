@@ -26,6 +26,7 @@ use JOOservices\CrawlerX\Fetch\Session\CookieHandoffStore;
 use JOOservices\CrawlerX\Fetch\Session\SessionStore;
 use JOOservices\CrawlerX\Registry\FileAdapterManifestRegistry;
 use JOOservices\CrawlerX\Tools\Canary\Env;
+use JOOservices\CrawlerX\Tools\Canary\EnvLoginCookieProvider;
 use JOOservices\CrawlerX\Tools\Canary\FetchTrace;
 use JOOservices\CrawlerX\Tools\Canary\Redactor;
 use JOOservices\CrawlerX\Tools\Canary\RequiredFields;
