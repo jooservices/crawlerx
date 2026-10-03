@@ -77,13 +77,13 @@ final class FetchStrategyContractTest extends TestCase
         $terminal = TerminalStatus::fromResult(
             new FetchResultDto(
                 ok: true,
-                body: '<html><script>const text = "page not found";</script></html>',
+                body: '<html><script>const text = "404 not found";</script></html>',
                 status: 200,
                 methodUsed: FetchMethod::Http,
                 elapsedMs: 1,
                 challengeDetected: false,
             ),
-            ['page not found'],
+            ['404 not found'],
         );
 
         self::assertNull($terminal);

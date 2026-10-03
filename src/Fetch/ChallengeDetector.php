@@ -95,9 +95,9 @@ final class ChallengeDetector
         try {
             return (new Crawler($body))->filter($selector)->count() > 0;
         } catch (\Throwable) {
-            // Text markers are handled by TerminalStatus; keep this fallback
-            // for malformed or non-CSS markers without making them fatal.
-            return str_contains($body, $selector);
+            // Text markers are handled by TerminalStatus against visible text.
+            // A raw-body fallback would also match content inside scripts.
+            return false;
         }
     }
 
