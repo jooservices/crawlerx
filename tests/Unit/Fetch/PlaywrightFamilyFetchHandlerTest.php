@@ -140,4 +140,62 @@ final class PlaywrightFamilyFetchHandlerTest extends TestCase
         self::assertTrue($runner->config['headless']);
         unlink($script);
     }
+
+    public function test_passes_ready_contract_and_returns_storage_state(): void
+    {
+        $script = tempnam(sys_get_temp_dir(), 'pw-script-');
+        self::assertNotFalse($script);
+        file_put_contents($script, '// stub');
+
+        $runner = new class implements ProcessRunner {
+            /** @var array<string, mixed> */
+            public array $config = [];
+
+            public function run(array $command, int $timeoutSeconds = 120, ?string $cwd = null): ProcessResultDto
+            {
+                $configPath = substr($command[2], strlen('--config='));
+                $this->config = json_decode((string) file_get_contents($configPath), true, flags: JSON_THROW_ON_ERROR);
+
+                return new ProcessResultDto(
+                    exitCode: 0,
+                    stdout: json_encode([
+                        'status' => 200,
+                        'finalUrl' => 'https://example.test',
+                        'html' => '<html><body><p id="movie">usable</p></body></html>',
+                        'storageState' => ['cookies' => [['name' => 'fixture_session', 'value' => 'fixture-value']]],
+                        'userAgent' => 'Fixture-Agent/1.0',
+                    ], JSON_THROW_ON_ERROR),
+                );
+            }
+        };
+
+        $handler = new PlaywrightFamilyFetchHandler(new FetchRuntimeConfig(playwrightScript: $script), $runner);
+        $result = $handler->fetch(
+            'https://example.test',
+            new SiteProfileDto(
+                slug: 'demo',
+                displayName: 'Demo',
+                baseUrl: 'https://example.test',
+                fetchProfile: FetchProfile::BrowserLikely,
+                fetchChain: FetchMethod::browserChain(),
+                http: new HttpProfileDto(),
+                playwright: new PlaywrightProfileDto(readyTimeoutMs: 3210, blockResources: false),
+                readyMarkers: ['detail' => ['#movie']],
+            ),
+            FetchMethod::Playwright,
+            new \JOOservices\CrawlerX\Dto\CrawlOptionsDto(
+                storageState: ['cookies' => [['name' => 'fixture_session', 'value' => 'fixture-value']]],
+                readyMarkers: ['#movie'],
+            ),
+        );
+
+        self::assertTrue($result->ok);
+        self::assertSame('fixture_session', $result->storageState['cookies'][0]['name']);
+        self::assertSame('Fixture-Agent/1.0', $result->userAgent);
+        self::assertSame(3210, $runner->config['readyTimeoutMs']);
+        self::assertSame(['#movie'], $runner->config['readyMarkers']);
+        self::assertFalse($runner->config['blockResources']);
+        self::assertSame('fixture_session', $runner->config['storageState']['cookies'][0]['name']);
+        unlink($script);
+    }
 }

@@ -32,6 +32,19 @@ function containerIds() {
     }
 }
 
+function browserRelaunchCount() {
+    try {
+        const output = execFileSync('docker', ['compose', 'logs', '--no-color', 'node'], {
+            cwd: root,
+            encoding: 'utf8',
+            stdio: ['ignore', 'pipe', 'ignore'],
+        });
+        return (output.match(/"event":"browser_relaunch"/g) ?? []).length;
+    } catch {
+        return 0;
+    }
+}
+
 function memoryBytes(value) {
     const match = /^([\d.]+)\s*(B|KiB|MiB|GiB|kB|MB|GB)$/i.exec(value.trim());
     if (!match) return 0;
@@ -91,6 +104,7 @@ function execute(url, method, index) {
                 flaresolverr: { cpu_seconds: 0, peak_rss_bytes: 0 },
             },
         };
+        const relaunchesBefore = browserRelaunchCount();
         active.set(id, sample);
         const child = spawn('docker', [
             'compose', 'run', '--rm', '--no-deps', 'php',
@@ -103,6 +117,7 @@ function execute(url, method, index) {
         child.on('close', (code) => {
             poll();
             active.delete(id);
+            sample.resources.node.relaunches = Math.max(0, browserRelaunchCount() - relaunchesBefore);
             let payload;
             try {
                 const lines = stdout.trim().split('\n').filter(Boolean);
@@ -135,7 +150,7 @@ function percentile(values, percentage) {
 
 const byMethod = {};
 for (const sample of samples) {
-    const entry = byMethod[sample.method] ?? { samples: 0, wall_ms: [], php_cpu_seconds: 0, php_peak_rss_bytes: 0, node: { cpu_seconds: 0, peak_rss_bytes: 0 }, flaresolverr: { cpu_seconds: 0, peak_rss_bytes: 0 } };
+    const entry = byMethod[sample.method] ?? { samples: 0, wall_ms: [], php_cpu_seconds: 0, php_peak_rss_bytes: 0, node: { cpu_seconds: 0, peak_rss_bytes: 0, relaunches: 0 }, flaresolverr: { cpu_seconds: 0, peak_rss_bytes: 0 } };
     entry.samples += 1;
     entry.wall_ms.push(sample.wall_ms ?? 0);
     entry.php_cpu_seconds += sample.php_cpu_seconds ?? 0;
@@ -144,6 +159,7 @@ for (const sample of samples) {
         entry[service].cpu_seconds += sample.resources?.[service]?.cpu_seconds ?? 0;
         entry[service].peak_rss_bytes = Math.max(entry[service].peak_rss_bytes, sample.resources?.[service]?.peak_rss_bytes ?? 0);
     }
+    entry.node.relaunches += sample.resources?.node?.relaunches ?? 0;
     byMethod[sample.method] = entry;
 }
 for (const entry of Object.values(byMethod)) {
@@ -170,12 +186,11 @@ const lines = [
     '',
     `URLs per method/page: ${count}`,
     '',
-    '| Method | Samples | p50 ms | p95 ms | PHP CPU-s | PHP peak RSS | Node CPU-s | Node peak RSS | Flare CPU-s | Flare peak RSS |',
-    '| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |',
+    '| Method | Samples | p50 ms | p95 ms | PHP CPU-s | PHP peak RSS | Node CPU-s | Node peak RSS | Node relaunches | Flare CPU-s | Flare peak RSS |',
+    '| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |',
 ];
 for (const [method, data] of Object.entries(byMethod)) {
-    lines.push(`| ${method} | ${data.samples} | ${data.p50_ms} | ${data.p95_ms} | ${data.php_cpu_seconds.toFixed(3)} | ${data.php_peak_rss_bytes} | ${data.node.cpu_seconds.toFixed(3)} | ${data.node.peak_rss_bytes} | ${data.flaresolverr.cpu_seconds.toFixed(3)} | ${data.flaresolverr.peak_rss_bytes} |`);
+    lines.push(`| ${method} | ${data.samples} | ${data.p50_ms} | ${data.p95_ms} | ${data.php_cpu_seconds.toFixed(3)} | ${data.php_peak_rss_bytes} | ${data.node.cpu_seconds.toFixed(3)} | ${data.node.peak_rss_bytes} | ${data.node.relaunches} | ${data.flaresolverr.cpu_seconds.toFixed(3)} | ${data.flaresolverr.peak_rss_bytes} |`);
 }
 const markdown = `${lines.join('\n')}\n`;
 process.stdout.write(`${markdown}\nJSON: ${outputPath}\n`);
-

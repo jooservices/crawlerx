@@ -68,7 +68,7 @@ final class FetchFallbackChain
                     $url,
                     $this->boundedProfile($profile, $method, $budget),
                     $method,
-                    $this->boundedOptions($options, $method, $budget),
+                    $this->boundedOptions($options, $method, $budget, $readyMarkers),
                 );
                 $result = $this->applyReadyMarker($result, $readyMarkers);
             } catch (Throwable $exception) {
@@ -202,8 +202,10 @@ final class FetchFallbackChain
                 browser: $playwright->browser,
                 headless: $playwright->headless,
                 postWaitMs: min($playwright->postWaitMs, max(0, ($budget->timeoutSeconds($method) - 1) * 1000)),
+                readyTimeoutMs: min($playwright->readyTimeoutMs, max(1, ($budget->timeoutSeconds($method) - 1) * 1000)),
                 navigationTimeoutMs: $timeoutMs,
                 stealthEnabled: $playwright->stealthEnabled,
+                blockResources: $playwright->blockResources,
                 viewport: $playwright->viewport,
                 locale: $playwright->locale,
                 timezoneId: $playwright->timezoneId,
@@ -242,8 +244,13 @@ final class FetchFallbackChain
         );
     }
 
-    private function boundedOptions(?CrawlOptionsDto $options, FetchMethod $method, FetchBudget $budget): CrawlOptionsDto
-    {
+    /** @param list<string> $readyMarkers */
+    private function boundedOptions(
+        ?CrawlOptionsDto $options,
+        FetchMethod $method,
+        FetchBudget $budget,
+        array $readyMarkers = [],
+    ): CrawlOptionsDto {
         $http = $options?->http;
         $timeout = $budget->timeoutSeconds($method);
         if ($http?->timeout !== null) {
@@ -262,6 +269,8 @@ final class FetchFallbackChain
             http: $httpOptions,
             fetch: $options?->fetch,
             methodTimeoutSeconds: $budget->timeoutSeconds($method),
+            storageState: $options?->storageState,
+            readyMarkers: $readyMarkers !== [] ? $readyMarkers : ($options !== null ? $options->readyMarkers : []),
         );
     }
 }

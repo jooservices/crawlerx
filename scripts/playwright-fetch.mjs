@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 
 import { chromium, firefox, webkit } from 'playwright';
-import { readFileSync, writeFileSync, readdirSync, renameSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
-const DEFAULT_USER_AGENT =
+export const DEFAULT_USER_AGENT =
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 
 const MINIMAL_STEALTH = `
@@ -29,50 +30,6 @@ if (originalQuery) {
     );
 }
 `;
-
-const args = process.argv.slice(2);
-let configPath = '';
-let legacyUrl = '';
-let legacyWaitMs = 8000;
-
-for (const arg of args) {
-    if (arg.startsWith('--config=')) {
-        configPath = arg.slice('--config='.length);
-    } else if (arg.startsWith('--url=')) {
-        legacyUrl = arg.slice('--url='.length);
-    } else if (arg.startsWith('--wait-ms=')) {
-        legacyWaitMs = Number.parseInt(arg.slice('--wait-ms='.length), 10) || 8000;
-    } else if (arg.startsWith('--out=')) {
-        // handled via config.saveHtmlPath
-    }
-}
-
-function loadConfig() {
-    if (configPath !== '' && existsSync(configPath)) {
-        const parsed = JSON.parse(readFileSync(configPath, 'utf8'));
-        if (!parsed.url) {
-            throw new Error('Playwright config missing url');
-        }
-        return parsed;
-    }
-
-    if (legacyUrl === '') {
-        throw new Error('missing --url or --config');
-    }
-
-    return {
-        url: legacyUrl,
-        waitMs: legacyWaitMs,
-        browser: 'chromium',
-        headless: true,
-        navigationTimeoutMs: 90000,
-        viewport: { width: 1440, height: 900 },
-        locale: 'en-US',
-        stealthEnabled: true,
-        stealthLevel: 'enhanced',
-        userAgent: DEFAULT_USER_AGENT,
-    };
-}
 
 function browserType(browserName) {
     switch (browserName) {
@@ -132,7 +89,7 @@ async function dismissInterstitials(page, context, targetUrl) {
         // best-effort JavBus age form submission
     }
 
-    const ageSelectors = [
+    for (const selector of [
         'button[data-action="over18#accept"]',
         'button:has-text("Yes, I am of legal age")',
         'button:has-text("I am 18")',
@@ -142,9 +99,7 @@ async function dismissInterstitials(page, context, targetUrl) {
         'button:has-text("Enter")',
         'input[value="I am over 18"]',
         '#age-verify-yes',
-    ];
-
-    for (const selector of ageSelectors) {
+    ]) {
         try {
             const locator = page.locator(selector).first();
             if ((await locator.count()) > 0 && (await locator.isVisible())) {
@@ -182,175 +137,259 @@ function isChallenge(pageTitle, html) {
     );
 }
 
-const config = loadConfig();
-const url = config.url;
-const waitMs = config.waitMs ?? 8000;
-const navigationTimeoutMs = config.navigationTimeoutMs ?? 90000;
-const viewport = config.viewport ?? { width: 1440, height: 900 };
-const userAgent = config.userAgent ?? DEFAULT_USER_AGENT;
-const phases = [];
-
-function closePhase(id, label, startMs, status = 'ok') {
-    phases.push({
-        id,
-        label,
-        status,
-        started_at: new Date(startMs).toISOString(),
-        duration_ms: Math.max(0, Date.now() - startMs),
-    });
+function positiveTimeout(value, fallback) {
+    const parsed = Number.parseInt(value ?? '', 10);
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-let browser = null;
-const started = Date.now();
+/**
+ * Fetch one page in a caller-owned browser. The context is request scoped and
+ * is closed before this function resolves.
+ *
+ * @param {Record<string, any>} config
+ * @param {import('playwright').Browser} browser
+ * @returns {Promise<Record<string, any>>}
+ */
+export async function fetchWithBrowser(config, browser) {
+    const started = Date.now();
+    const url = config.url;
+    const navigationTimeoutMs = positiveTimeout(config.navigationTimeoutMs, 90000);
+    const viewport = config.viewport ?? { width: 1440, height: 900 };
+    const userAgent = config.userAgent ?? DEFAULT_USER_AGENT;
+    const phases = [];
+    let context = null;
 
-const shutdown = async (signal) => {
-    if (browser !== null) {
-        await browser.close().catch(() => {});
-        browser = null;
-    }
-    if (signal) {
-        process.exit(signal === 'SIGTERM' ? 143 : 130);
-    }
-};
-
-process.on('SIGINT', () => shutdown('SIGINT'));
-process.on('SIGTERM', () => shutdown('SIGTERM'));
-
-try {
-    const launchStarted = Date.now();
-    const launcher = browserType(config.browser ?? 'chromium');
-    browser = await launcher.launch({
-        headless: config.headless ?? true,
-        args: ['--disable-blink-features=AutomationControlled'],
-    });
-    closePhase('browser_launch', 'Open Playwright browser', launchStarted);
-
-    const contextStarted = Date.now();
-    const contextOptions = {
-        userAgent,
-        locale: config.locale ?? 'en-US',
-        viewport,
-        extraHTTPHeaders: {
-            'Accept-Language': 'en-US,en;q=0.9',
-            ...(config.extraHttpHeaders ?? {}),
-        },
+    const closePhase = (id, label, startMs, status = 'ok') => {
+        phases.push({
+            id,
+            label,
+            status,
+            started_at: new Date(startMs).toISOString(),
+            duration_ms: Math.max(0, Date.now() - startMs),
+        });
     };
 
-    if (config.timezoneId) {
-        contextOptions.timezoneId = config.timezoneId;
-    }
-    if (config.storageStatePath && existsSync(config.storageStatePath)) {
-        contextOptions.storageState = config.storageStatePath;
-    }
-    if (config.recordVideoDir) {
-        contextOptions.recordVideo = {
-            dir: config.recordVideoDir,
-            size: { width: viewport.width, height: viewport.height },
+    try {
+        const contextStarted = Date.now();
+        const contextOptions = {
+            userAgent,
+            locale: config.locale ?? 'en-US',
+            viewport,
+            extraHTTPHeaders: {
+                'Accept-Language': 'en-US,en;q=0.9',
+                ...(config.extraHttpHeaders ?? {}),
+            },
         };
-    }
 
-    const context = await browser.newContext(contextOptions);
-    try {
-        const hostname = new URL(url).hostname;
-        const cookieDomain = hostname.startsWith('www.') ? hostname.slice(3) : hostname;
-        await context.addCookies([
-            { name: 'over18', value: '18', domain: cookieDomain, path: '/' },
-            { name: 'over18', value: '18', domain: '.' + cookieDomain.replace(/^\./, ''), path: '/' },
-            { name: 'age', value: 'verified', domain: cookieDomain, path: '/' },
-            { name: 'dv', value: '1', domain: cookieDomain, path: '/' },
-            { name: 'existmag', value: 'all', domain: cookieDomain, path: '/' },
-        ]);
-    } catch {
-        // ignore
-    }
-    const page = await context.newPage();
-    closePhase('browser_context', 'Create browser context', contextStarted);
+        if (config.timezoneId) {
+            contextOptions.timezoneId = config.timezoneId;
+        }
+        if (config.storageState && typeof config.storageState === 'object') {
+            contextOptions.storageState = config.storageState;
+        } else if (config.storageStatePath && existsSync(config.storageStatePath)) {
+            contextOptions.storageState = config.storageStatePath;
+        }
+        if (config.recordVideoDir) {
+            contextOptions.recordVideo = {
+                dir: config.recordVideoDir,
+                size: { width: viewport.width, height: viewport.height },
+            };
+        }
 
-    if (config.stealthEnabled !== false) {
-        const script = config.stealthLevel === 'minimal' ? MINIMAL_STEALTH : ENHANCED_STEALTH;
-        await page.addInitScript(script);
-    }
+        context = await browser.newContext(contextOptions);
+        if (config.blockResources !== false) {
+            await context.route('**/*', (route) => {
+                const type = route.request().resourceType();
+                if (['image', 'font', 'media'].includes(type)) {
+                    return route.abort();
+                }
+                return route.continue();
+            });
+        }
 
-    const navigationStarted = Date.now();
-    const response = await page.goto(url, {
-        waitUntil: 'domcontentloaded',
-        timeout: navigationTimeoutMs,
-    });
-    closePhase('navigation', 'Load page (domcontentloaded)', navigationStarted);
+        try {
+            const hostname = new URL(url).hostname;
+            const cookieDomain = hostname.startsWith('www.') ? hostname.slice(3) : hostname;
+            await context.addCookies([
+                { name: 'over18', value: '18', domain: cookieDomain, path: '/' },
+                { name: 'over18', value: '18', domain: `.${cookieDomain.replace(/^\./, '')}`, path: '/' },
+                { name: 'age', value: 'verified', domain: cookieDomain, path: '/' },
+                { name: 'dv', value: '1', domain: cookieDomain, path: '/' },
+                { name: 'existmag', value: 'all', domain: cookieDomain, path: '/' },
+            ]);
+        } catch {
+            // ignore age-cookie failures
+        }
 
-    await dismissInterstitials(page, context, url);
+        const page = await context.newPage();
+        closePhase('browser_context', 'Create browser context', contextStarted);
 
-    const waitStarted = Date.now();
-    try {
-        await page.waitForLoadState('networkidle', { timeout: 30000 });
-    } catch {
-        // best-effort
-    }
+        if (config.stealthEnabled !== false) {
+            const script = config.stealthLevel === 'minimal' ? MINIMAL_STEALTH : ENHANCED_STEALTH;
+            await page.addInitScript(script);
+        }
 
-    const elapsed = Date.now() - waitStarted;
-    if (elapsed < waitMs) {
-        await page.waitForTimeout(waitMs - elapsed);
-    }
-    closePhase('network_idle', 'Wait for network idle / settle', waitStarted);
+        const navigationStarted = Date.now();
+        const response = await page.goto(url, {
+            waitUntil: 'domcontentloaded',
+            timeout: navigationTimeoutMs,
+        });
+        closePhase('navigation', 'Load page (domcontentloaded)', navigationStarted);
 
-    const extractStarted = Date.now();
-    await page.evaluate('window.scrollTo(0, Math.max(document.body.scrollHeight / 2, 0))');
-    await page.waitForTimeout(1000);
+        await dismissInterstitials(page, context, url);
 
-    const html = await page.content();
-    const finalUrl = page.url();
-    const pageTitle = await page.title();
-    const cookies = await context.cookies();
-    closePhase('extract_html', 'Capture page HTML', extractStarted);
+        const waitStarted = Date.now();
+        const readyMarkers = Array.isArray(config.readyMarkers)
+            ? [...new Set(config.readyMarkers.filter((marker) => typeof marker === 'string' && marker !== ''))]
+            : [];
+        const readyTimeoutMs = Math.min(
+            positiveTimeout(config.readyTimeoutMs, 45000),
+            positiveTimeout(config.remainingTimeoutMs, 45000),
+        );
+        let readyMarker = null;
+        if (readyMarkers.length > 0) {
+            try {
+                readyMarker = await Promise.any(readyMarkers.map((marker) => (
+                    page.waitForSelector(marker, { state: 'attached', timeout: readyTimeoutMs }).then(() => marker)
+                )));
+            } catch {
+                // The PHP layer performs the final marker validation.
+            }
+        } else {
+            try {
+                await page.waitForLoadState('networkidle', { timeout: Math.min(5000, readyTimeoutMs) });
+            } catch {
+                // best-effort network settle
+            }
+        }
+        closePhase(
+            readyMarkers.length > 0 ? 'ready_marker' : 'network_idle',
+            readyMarkers.length > 0 ? 'Wait for ready marker' : 'Wait for network idle',
+            waitStarted,
+            readyMarkers.length > 0 && readyMarker === null ? 'error' : 'ok',
+        );
 
-    const challenge = isChallenge(pageTitle, html);
-    closePhase(challenge ? 'challenge_detected' : 'load_success', challenge ? 'Challenge page detected' : 'Page load success', Date.now(), challenge ? 'error' : 'ok');
+        const extractStarted = Date.now();
+        const html = await page.content();
+        const finalUrl = page.url();
+        const pageTitle = await page.title();
+        const cookies = await context.cookies();
+        const storageState = await context.storageState();
+        const actualUserAgent = await page.evaluate(() => navigator.userAgent);
+        closePhase('extract_html', 'Capture page HTML', extractStarted);
 
-    // A blocked response is diagnostic evidence, not a fixture. Preserve the
-    // last known-good capture instead of replacing it with an interstitial.
-    if (config.saveHtmlPath && !challenge) {
-        writeFileSync(config.saveHtmlPath, html, 'utf8');
-    }
+        const challenge = isChallenge(pageTitle, html);
+        closePhase(
+            challenge ? 'challenge_detected' : 'load_success',
+            challenge ? 'Challenge page detected' : 'Page load success',
+            Date.now(),
+            challenge ? 'error' : 'ok',
+        );
 
-    await context.close();
-    await browser.close();
-    browser = null;
+        if (config.saveHtmlPath && !challenge) {
+            writeFileSync(config.saveHtmlPath, html, 'utf8');
+        }
 
-    const artifacts = {};
-    if (config.saveHtmlPath && !challenge) {
-        artifacts.html = config.saveHtmlPath;
-    }
-    const videoPath = resolveRecordedVideo(config.recordVideoDir ?? null);
-    if (videoPath) {
-        artifacts.video = videoPath;
-    }
+        const artifacts = {};
+        if (config.saveHtmlPath && !challenge) {
+            artifacts.html = config.saveHtmlPath;
+        }
+        const videoPath = resolveRecordedVideo(config.recordVideoDir ?? null);
+        if (videoPath) {
+            artifacts.video = videoPath;
+        }
 
-    console.log(
-        JSON.stringify({
+        return {
             status: challenge ? 403 : (response?.status() ?? 200),
             finalUrl,
             pageTitle,
             htmlBytes: html.length,
             html,
             cookies,
+            storageState,
+            userAgent: actualUserAgent,
             elapsedMs: Date.now() - started,
             challenge,
             artifacts,
             phases,
-        }),
-    );
-} catch (error) {
-    if (browser !== null) {
-        await browser.close().catch(() => {});
-    }
-
-    console.log(
-        JSON.stringify({
+        };
+    } catch (error) {
+        return {
             error: error instanceof Error ? error.message : String(error),
             status: 1,
             elapsedMs: Date.now() - started,
             challenge: false,
-        }),
-    );
-    process.exit(1);
+        };
+    } finally {
+        if (context !== null) {
+            await context.close().catch(() => {});
+        }
+    }
+}
+
+function loadConfig(args) {
+    let configPath = '';
+    let legacyUrl = '';
+    let legacyWaitMs = 8000;
+
+    for (const arg of args) {
+        if (arg.startsWith('--config=')) {
+            configPath = arg.slice('--config='.length);
+        } else if (arg.startsWith('--url=')) {
+            legacyUrl = arg.slice('--url='.length);
+        } else if (arg.startsWith('--wait-ms=')) {
+            legacyWaitMs = Number.parseInt(arg.slice('--wait-ms='.length), 10) || 8000;
+        }
+    }
+
+    if (configPath !== '' && existsSync(configPath)) {
+        const parsed = JSON.parse(readFileSync(configPath, 'utf8'));
+        if (!parsed.url) {
+            throw new Error('Playwright config missing url');
+        }
+        return parsed;
+    }
+
+    if (legacyUrl === '') {
+        throw new Error('missing --url or --config');
+    }
+
+    return {
+        url: legacyUrl,
+        readyTimeoutMs: legacyWaitMs,
+        browser: 'chromium',
+        headless: true,
+        navigationTimeoutMs: 90000,
+        viewport: { width: 1440, height: 900 },
+        locale: 'en-US',
+        stealthEnabled: true,
+        stealthLevel: 'enhanced',
+        userAgent: DEFAULT_USER_AGENT,
+    };
+}
+
+async function main() {
+    const config = loadConfig(process.argv.slice(2));
+    const launcher = browserType(config.browser ?? 'chromium');
+    const browser = await launcher.launch({
+        headless: config.headless ?? true,
+        args: ['--disable-blink-features=AutomationControlled'],
+    });
+
+    try {
+        console.log(JSON.stringify(await fetchWithBrowser(config, browser)));
+    } finally {
+        await browser.close().catch(() => {});
+    }
+}
+
+if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
+    main().catch((error) => {
+        console.log(JSON.stringify({
+            error: error instanceof Error ? error.message : String(error),
+            status: 1,
+            challenge: false,
+        }));
+        process.exitCode = 1;
+    });
 }
