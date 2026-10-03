@@ -50,7 +50,7 @@ This table records the first full canary from `1.2.0-develop` (`b91b7ce`, genera
 | missav | listing | ok | — | — |
 | missav | detail | ok | — | — |
 | 141jav | listing | ok | — | — |
-| 141jav | detail | parse_failed | — | XP-141jav-detail |
+| 141jav | detail | ok | — | — |
 | onepondo | listing | ok | — | — |
 | onepondo | detail | ok | — | — |
 | onejav | listing | ok | — | — |
@@ -66,3 +66,5 @@ This table records the first full canary from `1.2.0-develop` (`b91b7ce`, genera
 | xcity | performer_detail | ok | — | — |
 
 Jable was reverified on 2026-10-03 at `609983fb` after the performer-specific readiness markers and sanitized snapshots were refreshed: 4/4 `ok`, p50/p95 wall time 9718/9969 ms.
+
+141jav was reverified on 2026-10-03 at `88ccfe8` after the detail fixture sample moved to the owner-provided `JUQ521` URL: 2/2 `ok`, p50/p95 wall time 151/220 ms.
