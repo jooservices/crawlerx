@@ -37,6 +37,12 @@ final class ChallengeDetectorTest extends TestCase
         self::assertFalse(ChallengeDetector::isUsableBody('', 200));
     }
 
+    public function test_http_error_body_is_not_usable(): void
+    {
+        self::assertFalse(ChallengeDetector::isUsableBody('{"ok":true}', 404));
+        self::assertFalse(ChallengeDetector::isUsableBody('<html>server error</html>', 500));
+    }
+
     public function test_ready_marker_attribute_predicates_apply_to_the_same_element(): void
     {
         self::assertTrue(ChallengeDetector::isUsableBody(

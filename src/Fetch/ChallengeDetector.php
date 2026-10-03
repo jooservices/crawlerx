@@ -47,6 +47,10 @@ final class ChallengeDetector
     /** @param list<string> $readyMarkers */
     public static function isUsableBody(string $body, int $status, array $readyMarkers = []): bool
     {
+        if ($status >= 400) {
+            return false;
+        }
+
         $trimmed = trim($body);
         if ($trimmed === '') {
             return false;
