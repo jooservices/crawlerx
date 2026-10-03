@@ -31,10 +31,10 @@ use JOOservices\CrawlerX\Tools\Canary\Redactor;
 use JOOservices\CrawlerX\Tools\Canary\RequiredFields;
 
 require __DIR__ . '/canary/Env.php';
-require __DIR__ . '/canary/EnvLoginCookieProvider.php';
 require __DIR__ . '/canary/Redactor.php';
 require __DIR__ . '/canary/required-fields.php';
 require dirname(__DIR__) . '/vendor/autoload.php';
+require __DIR__ . '/canary/EnvLoginCookieProvider.php';
 require __DIR__ . '/canary/FetchTrace.php';
 
 $arguments = array_slice($argv, 1);
