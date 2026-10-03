@@ -32,7 +32,10 @@ final readonly class TerminalStatus
         }
 
         foreach ($soft404Markers as $marker) {
-            if (self::bodyContainsMarker($result->body, $marker)) {
+            if (
+                self::bodyContainsMarker($result->body, $marker)
+                || str_contains(self::visibleText($result->body), strtolower(trim($marker)))
+            ) {
                 return new self(CrawlErrorCode::NotFound, false);
             }
         }
@@ -58,7 +61,18 @@ final readonly class TerminalStatus
 
     private static function bodyContainsMarker(string $body, string $marker): bool
     {
-        return ChallengeDetector::bodyContainsMarker($body, $marker)
-            || str_contains(strtolower($body), strtolower(trim($marker)));
+        return ChallengeDetector::bodyContainsMarker($body, $marker);
+    }
+
+    private static function visibleText(string $body): string
+    {
+        $withoutNonVisible = preg_replace(
+            '/<(script|style|template)\b[^>]*>.*?<\/\1\s*>/is',
+            ' ',
+            $body,
+        ) ?? $body;
+        $text = html_entity_decode(strip_tags($withoutNonVisible), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        return strtolower(trim((string) preg_replace('/\s+/u', ' ', $text)));
     }
 }

@@ -11,6 +11,7 @@ final class CrawlOptionsDto extends Dto
     public function __construct(
         public readonly ?HttpOptionsDto $http = null,
         public readonly ?FetchOptionsDto $fetch = null,
+        public readonly ?int $methodTimeoutSeconds = null,
     ) {
     }
 }

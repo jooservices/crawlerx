@@ -36,4 +36,18 @@ final class ChallengeDetectorTest extends TestCase
         self::assertTrue(ChallengeDetector::isUsableBody('{"ok":true}', 200));
         self::assertFalse(ChallengeDetector::isUsableBody('', 200));
     }
+
+    public function test_ready_marker_attribute_predicates_apply_to_the_same_element(): void
+    {
+        self::assertTrue(ChallengeDetector::isUsableBody(
+            '<a href="/moviepages/123">Movie</a>',
+            200,
+            ['a[href*="/moviepages/"]'],
+        ));
+        self::assertFalse(ChallengeDetector::isUsableBody(
+            '<a href="/actors/123">Actor</a><div>/moviepages/</div>',
+            200,
+            ['a[href*="/moviepages/"]'],
+        ));
+    }
 }

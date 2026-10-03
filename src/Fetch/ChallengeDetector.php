@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Fetch;
 
+use Symfony\Component\DomCrawler\Crawler;
+
 final class ChallengeDetector
 {
     /**
@@ -90,39 +92,13 @@ final class ChallengeDetector
             return false;
         }
 
-        $first = preg_split('/\s+/', $selector, 2)[0] ?? $selector;
-        $tag = preg_match('/^[a-z][a-z0-9:-]*/i', $first, $tagMatch) === 1 ? $tagMatch[0] : null;
-        $id = preg_match('/#([a-z][a-z0-9:_-]*)/i', $first, $idMatch) === 1 ? $idMatch[1] : null;
-        preg_match_all('/\.([a-z][a-z0-9:_-]*)/i', $first, $classMatch);
-
-        if ($tag !== null && preg_match('/<' . preg_quote($tag, '/') . '\b/i', $body) !== 1) {
-            return false;
+        try {
+            return (new Crawler($body))->filter($selector)->count() > 0;
+        } catch (\Throwable) {
+            // Text markers are handled by TerminalStatus; keep this fallback
+            // for malformed or non-CSS markers without making them fatal.
+            return str_contains($body, $selector);
         }
-
-        if ($id !== null && preg_match('/\bid\s*=\s*["\']' . preg_quote($id, '/') . '["\']/i', $body) !== 1) {
-            return false;
-        }
-
-        preg_match_all('/\bclass\s*=\s*["\']([^"\']*)["\']/i', $body, $classAttributes);
-        $classes = [];
-        foreach ($classAttributes[1] as $attribute) {
-            $tokens = preg_split('/\s+/', trim($attribute));
-            if ($tokens !== false) {
-                $classes = array_merge($classes, $tokens);
-            }
-        }
-
-        foreach ($classMatch[1] as $class) {
-            if (! in_array($class, $classes, true)) {
-                return false;
-            }
-        }
-
-        if ($tag !== null || $id !== null || $classMatch[1] !== []) {
-            return true;
-        }
-
-        return str_contains($body, $selector);
     }
 
     /**

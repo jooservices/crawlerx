@@ -54,9 +54,11 @@ final class PuppeteerStealthFetchHandler implements FetchMethodHandler
         ], JSON_THROW_ON_ERROR));
 
         try {
+            $processTimeoutSeconds = $options->methodTimeoutSeconds
+                ?? max(1, (int) ceil($playwright->navigationTimeoutMs / 1000));
             $result = $this->runner->run(
                 [$this->runtime->nodeBinary, $script, '--config=' . $configPath],
-                (int) ceil($playwright->navigationTimeoutMs / 1000) + 30,
+                $processTimeoutSeconds,
             );
         } finally {
             if (is_file($configPath)) {

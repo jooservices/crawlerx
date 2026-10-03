@@ -242,25 +242,26 @@ final class FetchFallbackChain
         );
     }
 
-    private function boundedOptions(?CrawlOptionsDto $options, FetchMethod $method, FetchBudget $budget): ?CrawlOptionsDto
+    private function boundedOptions(?CrawlOptionsDto $options, FetchMethod $method, FetchBudget $budget): CrawlOptionsDto
     {
-        if (! in_array($method, [FetchMethod::Http, FetchMethod::CurlImpersonate, FetchMethod::Flaresolverr], true)) {
-            return $options;
-        }
-
         $http = $options?->http;
         $timeout = $budget->timeoutSeconds($method);
         if ($http?->timeout !== null) {
             $timeout = min($timeout, $http->timeout);
         }
 
-        return new CrawlOptionsDto(
-            http: new HttpOptionsDto(
+        $httpOptions = in_array($method, [FetchMethod::Http, FetchMethod::CurlImpersonate, FetchMethod::Flaresolverr], true)
+            ? new HttpOptionsDto(
                 timeout: $timeout,
                 verifySsl: $http?->verifySsl,
                 headers: $http?->headers,
-            ),
+            )
+            : $http;
+
+        return new CrawlOptionsDto(
+            http: $httpOptions,
             fetch: $options?->fetch,
+            methodTimeoutSeconds: $budget->timeoutSeconds($method),
         );
     }
 }

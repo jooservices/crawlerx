@@ -8,8 +8,8 @@ The strategy is configured by each adapter manifest under `runtime.fetch`.
 | Profile | First method | Fallback behavior |
 |---|---|---|
 | `http_only` | HTTP | No browser fallback |
-| `adaptive` | HTTP | Playwright, Puppeteer stealth, then FlareSolverr only after a detected challenge |
-| `browser_likely` | Playwright | Puppeteer stealth, then FlareSolverr only after a detected challenge |
+| `adaptive` | HTTP | Optional curl-impersonate, then Playwright, then FlareSolverr only after a detected challenge |
+| `browser_likely` | Playwright | FlareSolverr only after a detected challenge |
 
 The legacy `playwrightFetchEnabled: true` setting maps to `browser_likely`. An
 explicit `runtime.fetch.profile` takes precedence. The five browser-likely
@@ -23,7 +23,9 @@ is tried. The markers are deliberately adapter-specific and come from the
 adapter's existing parser selectors.
 
 `runtime.fetch.soft404Markers` contains text or CSS-like markers for pages that
-return HTTP 200 while reporting that the requested page does not exist.
+report that the requested page does not exist. Text markers are matched against
+the title and visible document text; script, style and template contents are
+ignored.
 
 The consumer receives these terminal error codes and retry hints:
 
@@ -43,8 +45,9 @@ the preceding response was classified as a challenge.
 
 The default total budget is 150 seconds. Individual method caps are 20 seconds
 for HTTP, 45 seconds for browser methods and 60 seconds for FlareSolverr.
-`FetchOptionsDto::deadlineSeconds` can set a shorter consumer deadline; no
-method starts after that deadline.
+`FetchOptionsDto::deadlineSeconds` can set a shorter consumer deadline; the
+browser and FlareSolverr process timeouts are bounded by the remaining method
+budget, and no method starts after that deadline.
 
 ## Local Fetch Lab
 

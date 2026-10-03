@@ -72,6 +72,23 @@ final class FetchStrategyContractTest extends TestCase
         self::assertSame(CrawlErrorCode::NotFound, $terminal->code);
     }
 
+    public function test_tc_fs_06_soft404_marker_ignores_script_content(): void
+    {
+        $terminal = TerminalStatus::fromResult(
+            new FetchResultDto(
+                ok: true,
+                body: '<html><script>const text = "page not found";</script></html>',
+                status: 200,
+                methodUsed: FetchMethod::Http,
+                elapsedMs: 1,
+                challengeDetected: false,
+            ),
+            ['page not found'],
+        );
+
+        self::assertNull($terminal);
+    }
+
     public function test_tc_fs_02_ready_marker_missing_forces_the_next_handler(): void
     {
         $calls = new \stdClass();
