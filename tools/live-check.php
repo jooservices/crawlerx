@@ -18,6 +18,7 @@ use JOOservices\CrawlerX\Fetch\FetchFallbackChain;
 use JOOservices\CrawlerX\Fetch\FetchRuntimeConfig;
 use JOOservices\CrawlerX\Fetch\Handlers\CurlImpersonateFetchHandler;
 use JOOservices\CrawlerX\Fetch\Handlers\FlaresolverrFetchHandler;
+use JOOservices\CrawlerX\Fetch\Handlers\HttpFetchHandler;
 use JOOservices\CrawlerX\Fetch\Handlers\PlaywrightFamilyFetchHandler;
 use JOOservices\CrawlerX\Fetch\Handlers\PuppeteerStealthFetchHandler;
 use JOOservices\CrawlerX\Fetch\ProcOpenProcessRunner;
@@ -31,8 +32,8 @@ use JOOservices\CrawlerX\Tools\Canary\RequiredFields;
 require __DIR__ . '/canary/Env.php';
 require __DIR__ . '/canary/Redactor.php';
 require __DIR__ . '/canary/required-fields.php';
-require __DIR__ . '/canary/FetchTrace.php';
 require dirname(__DIR__) . '/vendor/autoload.php';
+require __DIR__ . '/canary/FetchTrace.php';
 
 $arguments = array_slice($argv, 1);
 $canaryMode = in_array('--canary', $arguments, true);
