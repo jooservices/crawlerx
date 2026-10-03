@@ -336,6 +336,18 @@ The PHP container owns CrawlerX execution and parsing. The `node` and
 `flaresolverr` services are long-running fetch helpers used only when the
 selected strategy requires a browser or challenge solver.
 
+The fetch services publish loopback host ports by default. Set
+`CRAWLERX_NODE_HOST_PORT` (default `3000`), `FIXTURE_SITE_HOST_PORT` (default
+`8080`), or `FLARESOLVERR_HOST_PORT` (default `8191`) to avoid a port already
+used by another stack. To disable host publishing, use the tracked
+`docker-compose.no-ports.yml` override when starting the lab, or pass it through
+`COMPOSE_FILE` when using a Make target:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.no-ports.yml --profile fetch up -d --wait fixture-site node flaresolverr
+COMPOSE_FILE=docker-compose.yml:docker-compose.no-ports.yml make fetch-up
+```
+
 ## Runtime configuration
 
 The Docker Compose file configures the sidecar URLs automatically. Direct host

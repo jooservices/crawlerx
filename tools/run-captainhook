@@ -2,4 +2,10 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
-exec docker compose run --rm --no-deps php vendor/bin/captainhook "$@"
+GIT_COMMON_DIR="$(git rev-parse --git-common-dir)"
+if [[ "$GIT_COMMON_DIR" != /* ]]; then
+    GIT_COMMON_DIR="$(cd "$GIT_COMMON_DIR" && pwd)"
+fi
+exec docker compose run --rm --no-deps \
+    --volume "$GIT_COMMON_DIR:$GIT_COMMON_DIR:rw" \
+    php vendor/bin/captainhook "$@"

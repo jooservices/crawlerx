@@ -125,9 +125,29 @@ final class FetchLabTest extends TestCase
         self::assertTrue($result->challengeDetected);
     }
 
-    public function test_tc_m08_header_propagation_is_owned_by_lane_b(): void
+    public function test_tc_m08_http_propagates_configured_user_agent_and_cookie_headers(): void
     {
-        self::markTestSkipped('Out of scope for Lane C; covered by Lane B ClientFactory tests.');
+        $handler = new HttpFetchHandler(new ClientFactory());
+        $profile = $this->profile(headers: [
+            'User-Agent' => 'CrawlerX-Lab Chrome/1.0',
+            'Cookie' => 'legal_age=1',
+        ]);
+
+        $userAgent = $handler->fetch(
+            $this->fixtureUrl('/ua-check/TC-M08-UA'),
+            $profile,
+            FetchMethod::Http,
+        );
+        $cookie = $handler->fetch(
+            $this->fixtureUrl('/age-gate/TC-M08-Cookie'),
+            $profile,
+            FetchMethod::Http,
+        );
+
+        self::assertTrue($userAgent->ok, (string) $userAgent->error);
+        self::assertStringContainsString('ua accepted', $userAgent->body);
+        self::assertTrue($cookie->ok, (string) $cookie->error);
+        self::assertStringContainsString('age accepted', $cookie->body);
     }
 
     private function fixtureUrl(string $path): string
