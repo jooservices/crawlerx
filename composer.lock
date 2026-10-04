@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "aa63bfe84ec8e4a23b66b985314c9922",
+    "content-hash": "505ea073a9b03b769424c339fd9fb92a",
     "packages": [
         {
             "name": "jooservices/client",
-            "version": "v4.2.0",
+            "version": "v4.4.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/jooservices/client.git",
-                "reference": "e0103a8a74dd17f1f194b208eaf38aaac64cc5fd"
+                "reference": "30d1e5d968446c405bf5f4783cc9f5c62cd0842f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/jooservices/client/zipball/e0103a8a74dd17f1f194b208eaf38aaac64cc5fd",
-                "reference": "e0103a8a74dd17f1f194b208eaf38aaac64cc5fd",
+                "url": "https://api.github.com/repos/jooservices/client/zipball/30d1e5d968446c405bf5f4783cc9f5c62cd0842f",
+                "reference": "30d1e5d968446c405bf5f4783cc9f5c62cd0842f",
                 "shasum": ""
             },
             "require": {
@@ -31,7 +31,9 @@
             },
             "require-dev": {
                 "captainhook/captainhook": "^5.23",
+                "fakerphp/faker": "^1.24",
                 "friendsofphp/php-cs-fixer": "^3.65",
+                "guzzlehttp/guzzle": "^7.9",
                 "laravel/pint": "^1.18",
                 "phpbench/phpbench": "^1.6",
                 "phpmd/phpmd": "^2.15",
@@ -60,9 +62,9 @@
             "description": "PSR-18 HTTP client with JOOservices developer experience.",
             "support": {
                 "issues": "https://github.com/jooservices/client/issues",
-                "source": "https://github.com/jooservices/client/tree/v4.2.0"
+                "source": "https://github.com/jooservices/client/tree/v4.4.1"
             },
-            "time": "2026-08-28T19:59:26+00:00"
+            "time": "2026-10-04T00:16:48+00:00"
         },
         {
             "name": "jooservices/dto",
