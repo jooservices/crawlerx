@@ -1,0 +1,5 @@
+services:
+  node:
+    environment:
+      CRAWLERX_FETCH_LAB: "1"
+      CRAWLERX_BROWSER_ALLOW_PRIVATE_IPS: "1"

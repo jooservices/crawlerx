@@ -197,6 +197,39 @@ final class FetchStrategyContractTest extends TestCase
         self::assertSame(FetchMethod::PlaywrightStealth, $result->methodUsed);
     }
 
+    public function test_tc_ssrf_blocked_is_terminal_and_non_retryable(): void
+    {
+        $calls = new \stdClass();
+        $calls->fallback = 0;
+        $chain = new FetchFallbackChain([
+            FetchMethod::Playwright->value => $this->handler(
+                status: 403,
+                error: 'ssrf_blocked',
+            ),
+            FetchMethod::PuppeteerStealth->value => $this->handler(
+                ok: true,
+                body: '<html>must not be reached</html>',
+                calls: $calls,
+                callProperty: 'fallback',
+            ),
+        ]);
+
+        try {
+            $chain->fetch(
+                'https://example.test',
+                $this->profile(),
+                [FetchMethod::Playwright, FetchMethod::PuppeteerStealth],
+            );
+            self::fail('Expected SSRF protection to stop the fallback chain.');
+        } catch (CrawlFetchException $exception) {
+            self::assertSame('ssrf_blocked', $exception->errorCode->value);
+            self::assertFalse($exception->retryable);
+            self::assertCount(1, $exception->fetch?->attempts ?? []);
+        }
+
+        self::assertSame(0, $calls->fallback);
+    }
+
     public function test_tc_er_01_new_error_codes_have_retry_defaults(): void
     {
         self::assertFalse(CrawlErrorCode::NotFound->defaultRetryable());
@@ -206,6 +239,7 @@ final class FetchStrategyContractTest extends TestCase
         self::assertTrue(CrawlErrorCode::Challenge->defaultRetryable());
         self::assertTrue(CrawlErrorCode::Network->defaultRetryable());
         self::assertFalse(CrawlErrorCode::AuthRequired->defaultRetryable());
+        self::assertFalse(CrawlErrorCode::SsrfBlocked->defaultRetryable());
     }
 
     public function test_tc_er_02_network_failure_is_retryable(): void

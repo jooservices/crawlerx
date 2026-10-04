@@ -120,6 +120,16 @@ final class FetchFallbackChain
             $last = $result->withAttempts($attempts);
             $sawChallenge = $sawChallenge || $result->challengeDetected;
 
+            if ($result->error === CrawlErrorCode::SsrfBlocked->value) {
+                throw new CrawlFetchException(
+                    message: 'Fetch blocked by SSRF policy for URL [' . $url . '].',
+                    errorCode: CrawlErrorCode::SsrfBlocked,
+                    retryable: false,
+                    retryAfterSeconds: null,
+                    fetch: $last->toMeta(),
+                );
+            }
+
             if ($this->isAuthRequired($result)) {
                 throw new CrawlFetchException(
                     message: 'Authentication is required for URL [' . $url . '].',

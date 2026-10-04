@@ -19,6 +19,7 @@ enum CrawlErrorCode: string
     case Challenge = 'challenge';
     case Network = 'network';
     case AuthRequired = 'auth_required';
+    case SsrfBlocked = 'ssrf_blocked';
 
     public function defaultRetryable(): bool
     {

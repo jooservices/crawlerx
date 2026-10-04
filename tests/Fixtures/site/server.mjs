@@ -93,6 +93,29 @@ const server = createServer((request, response) => {
 
     count(url.pathname);
 
+    if (url.pathname === '/redirect/loopback') {
+        const port = Number.parseInt(url.searchParams.get('port') ?? '', 10);
+        if (!Number.isInteger(port) || port < 1 || port > 65535) {
+            send(response, 400, '<h1>Invalid loopback probe port</h1>');
+            return;
+        }
+        response.writeHead(302, { Location: `http://127.0.0.1:${port}/ssrf-probe` });
+        response.end();
+        return;
+    }
+
+    if (url.pathname === '/redirect/metadata') {
+        response.writeHead(302, { Location: 'https://169.254.169.254/latest/meta-data/' });
+        response.end();
+        return;
+    }
+
+    if (url.pathname === '/redirect/external') {
+        response.writeHead(302, { Location: 'https://example.com/' });
+        response.end();
+        return;
+    }
+
     if (url.pathname === '/hang') {
         return;
     }

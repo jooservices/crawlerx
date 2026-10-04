@@ -348,6 +348,17 @@ docker compose -f docker-compose.yml -f docker-compose.no-ports.yml --profile fe
 COMPOSE_FILE=docker-compose.yml:docker-compose.no-ports.yml make fetch-up
 ```
 
+The browser sidecar sends all browser egress through a loopback-only proxy and
+rejects private, loopback, link-local, and metadata addresses, including every
+redirect hop. It resolves and pins the destination address before connecting,
+and fails closed when DNS resolution fails. Set
+`CRAWLERX_BROWSER_ALLOWED_HOSTS` on the `node` service to restrict fetches
+further; use comma-separated exact hosts or `*.example.org` patterns. The
+allowlist does not override address blocking. Private-network access is enabled
+only by the dedicated `docker-compose.fetch-lab.yml` test overlay. Requests
+blocked by this policy return the non-retryable `ssrf_blocked` error and stop
+the fetch fallback chain.
+
 ## Runtime configuration
 
 The Docker Compose file configures the sidecar URLs automatically. Direct host

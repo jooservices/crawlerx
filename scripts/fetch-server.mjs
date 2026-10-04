@@ -7,6 +7,7 @@ import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { chromium } from 'playwright';
 import { fetchWithBrowser } from './playwright-fetch.mjs';
+import { assertSafeBrowserUrl, SsrfBlockedError } from './ssrf-guard.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const port = Number.parseInt(process.env.CRAWLERX_BROWSER_SERVICE_PORT ?? '3000', 10);
@@ -71,6 +72,14 @@ function respond(response, status, body) {
         'Content-Type': 'application/json',
     });
     response.end(JSON.stringify(body));
+}
+
+function respondBlocked(response) {
+    respond(response, 200, {
+        exitCode: 1,
+        stderr: 'ssrf_blocked',
+        stdout: JSON.stringify({ error: 'ssrf_blocked', errorCode: 'ssrf_blocked', status: 403, challenge: false }),
+    });
 }
 
 function logEvent(event, fields = {}) {
@@ -190,7 +199,7 @@ async function launchBrowser(relaunch = false) {
                 ...(process.env.CRAWLERX_BROWSER_EXECUTABLE_PATH
                     ? { executablePath: process.env.CRAWLERX_BROWSER_EXECUTABLE_PATH }
                     : {}),
-                args: ['--disable-blink-features=AutomationControlled'],
+                args: ['--disable-blink-features=AutomationControlled', '--proxy-bypass-list=<-loopback>'],
             });
             browser = launched;
             hasLaunchedBrowser = true;
@@ -447,7 +456,7 @@ async function handleRequest(request, response) {
             respond(response, 413, { error: 'request body too large' });
         }
     });
-    request.on('end', () => {
+    request.on('end', async () => {
         if (oversized) {
             return;
         }
@@ -463,6 +472,15 @@ async function handleRequest(request, response) {
             if (!validUrl || !['playwright', 'puppeteer'].includes(payload.script)) {
                 respond(response, 422, { error: 'invalid browser request' });
                 return;
+            }
+            try {
+                await assertSafeBrowserUrl(targetUrl);
+            } catch (error) {
+                if (error instanceof SsrfBlockedError) {
+                    respondBlocked(response);
+                    return;
+                }
+                throw error;
             }
             enqueue({
                 config: payload.config,

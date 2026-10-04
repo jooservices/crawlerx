@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { spawn } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
+import { createServer } from 'node:http';
 import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
@@ -76,14 +77,30 @@ async function startService(options = {}) {
     };
 }
 
-async function fetchBrowser(service, config) {
+async function fetchBrowser(service, config, script = 'playwright') {
     const response = await fetch(`http://127.0.0.1:${service.port}/fetch`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ script: 'playwright', config }),
+        body: JSON.stringify({ script, config }),
     });
     const payload = await response.json();
     return { response, payload, result: payload.stdout ? JSON.parse(payload.stdout) : null };
+}
+
+async function startLoopbackProbe() {
+    let hits = 0;
+    const server = createServer((_request, response) => {
+        hits += 1;
+        response.writeHead(200, { 'Content-Type': 'text/html' });
+        response.end('<title>SSRF probe</title><p>must not be reached</p>');
+    });
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const address = server.address();
+    return {
+        port: address.port,
+        hits: () => hits,
+        close: () => new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve())),
+    };
 }
 
 async function health(service) {
@@ -283,6 +300,115 @@ test('TC-BR-10 accepts and returns request-scoped storage state', async (t) => {
         assert.equal(result.status, 200);
         assert.match(result.html, /authenticated data/);
         assert.ok(result.storageState.cookies.some((cookie) => cookie.name === 'fixture_session'));
+    } finally {
+        await service.stop();
+    }
+});
+
+test('TC-BR-11 blocks a redirect to loopback in Playwright and Puppeteer', async (t) => {
+    if (await skipWithoutFixture(t)) return;
+    for (const script of ['playwright', 'puppeteer']) {
+        const probe = await startLoopbackProbe();
+        const service = await startService();
+        try {
+            const { response, payload, result } = await fetchBrowser(
+                service,
+                { url: `${fixtureSite}/redirect/loopback?port=${probe.port}` },
+                script,
+            );
+            assert.equal(response.status, 200);
+            assert.equal(payload.exitCode, 1, `${script} response: ${JSON.stringify(payload)}; loopback hits: ${probe.hits()}; service stderr: ${service.stderr.join('')}`);
+            assert.ok(result, `${script} returned no JSON result: ${JSON.stringify(payload)}; service stderr: ${service.stderr.join('')}`);
+            assert.equal(result.errorCode, 'ssrf_blocked', `${script} result: ${JSON.stringify(result)}`);
+            assert.equal(probe.hits(), 0, `${script} must not contact a loopback redirect target`);
+        } finally {
+            await service.stop();
+            await probe.close();
+        }
+    }
+});
+
+test('TC-BR-12 rejects metadata and loopback targets before starting browser work', async () => {
+    const service = await startService();
+    try {
+        for (const url of ['http://169.254.169.254/latest/meta-data/', 'http://127.0.0.1:1/']) {
+            const { response, payload, result } = await fetchBrowser(service, { url });
+            assert.equal(response.status, 200);
+            assert.equal(payload.exitCode, 1);
+            assert.equal(result.errorCode, 'ssrf_blocked');
+        }
+    } finally {
+        await service.stop();
+    }
+});
+
+test('TC-BR-13 applies the sidecar host allowlist to both browser engines and redirects', async (t) => {
+    if (await skipWithoutFixture(t)) return;
+    for (const script of ['playwright', 'puppeteer']) {
+        const service = await startService({ CRAWLERX_BROWSER_ALLOWED_HOSTS: 'fixture-site' });
+        try {
+            const allowed = await fetchBrowser(service, { url: `${fixtureSite}/static/movie/br13` }, script);
+            assert.equal(allowed.payload.exitCode, 0, `${script} allowed response: ${JSON.stringify(allowed.payload)}`);
+            assert.equal(allowed.result.status, 200);
+
+            const rejected = await fetchBrowser(service, { url: 'http://example.com/' }, script);
+            assert.equal(rejected.payload.exitCode, 1);
+            assert.equal(rejected.result.errorCode, 'ssrf_blocked');
+
+            const redirected = await fetchBrowser(service, { url: `${fixtureSite}/redirect/external` }, script);
+            assert.equal(redirected.payload.exitCode, 1, `${script} redirect response: ${JSON.stringify(redirected.payload)}`);
+            assert.equal(redirected.result.errorCode, 'ssrf_blocked');
+        } finally {
+            await service.stop();
+        }
+    }
+});
+
+test('TC-BR-14 blocks an HTTPS redirect to the metadata service in both browser engines', async (t) => {
+    if (await skipWithoutFixture(t)) return;
+    for (const script of ['playwright', 'puppeteer']) {
+        const service = await startService();
+        try {
+            const { response, payload, result } = await fetchBrowser(
+                service,
+                { url: `${fixtureSite}/redirect/metadata` },
+                script,
+            );
+            assert.equal(response.status, 200);
+            assert.equal(payload.exitCode, 1, `${script} response: ${JSON.stringify(payload)}`);
+            assert.ok(result, `${script} returned no JSON result: ${JSON.stringify(payload)}`);
+            assert.equal(result.errorCode, 'ssrf_blocked', `${script} result: ${JSON.stringify(result)}`);
+        } finally {
+            await service.stop();
+        }
+    }
+});
+
+test('TC-BR-15 fetches a regular fixture through the Puppeteer sidecar', async (t) => {
+    if (await skipWithoutFixture(t)) return;
+    const service = await startService();
+    try {
+        const { payload, result } = await fetchBrowser(
+            service,
+            { url: `${fixtureSite}/js/movie/br15`, waitMs: 750 },
+            'puppeteer',
+        );
+        assert.equal(payload.exitCode, 0, `response: ${JSON.stringify(payload)}; service stderr: ${service.stderr.join('')}`);
+        assert.match(result.html, /js movie br15/);
+    } finally {
+        await service.stop();
+    }
+});
+
+test('TC-BR-16 requires the Fetch Lab opt-in before allowing private IPs', async () => {
+    const service = await startService({
+        CRAWLERX_FETCH_LAB: '0',
+        CRAWLERX_BROWSER_ALLOW_PRIVATE_IPS: '1',
+    });
+    try {
+        const { payload, result } = await fetchBrowser(service, { url: 'http://10.0.0.1/' });
+        assert.equal(payload.exitCode, 1);
+        assert.equal(result.errorCode, 'ssrf_blocked');
     } finally {
         await service.stop();
     }

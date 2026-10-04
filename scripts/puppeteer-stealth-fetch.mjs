@@ -2,6 +2,8 @@
 
 import { readFileSync, existsSync } from 'node:fs';
 import { chromium } from 'playwright';
+import { assertSafeBrowserUrl, SsrfBlockedError } from './ssrf-guard.mjs';
+import { createSsrfProxyServer } from './ssrf-proxy.mjs';
 
 const args = process.argv.slice(2);
 let configPath = '';
@@ -39,18 +41,57 @@ if (!url) {
     process.exit(1);
 }
 
-const browser = await puppeteer.launch({
-    headless: config.headless ?? true,
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH ?? chromium.executablePath(),
-    args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-blink-features=AutomationControlled',
-    ],
-});
+try {
+    await assertSafeBrowserUrl(url);
+} catch (error) {
+    if (error instanceof SsrfBlockedError) {
+        console.log(JSON.stringify({ error: 'ssrf_blocked', errorCode: 'ssrf_blocked', status: 403, challenge: false }));
+        process.exit(1);
+    }
+    throw error;
+}
+
+const ssrfProxy = await createSsrfProxyServer();
+let ssrfViolation = false;
+let browser = null;
 
 try {
+    browser = await puppeteer.launch({
+        headless: config.headless ?? true,
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH ?? chromium.executablePath(),
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-blink-features=AutomationControlled',
+            '--proxy-server=' + ssrfProxy.url,
+            '--proxy-bypass-list=<-loopback>',
+        ],
+    });
     const page = await browser.newPage();
+    await page.setBypassServiceWorker(true);
+    await page.setRequestInterception(true);
+    page.on('request', async (request) => {
+        let allowed = false;
+        try {
+            const requestUrl = request.url();
+            const protocol = new URL(requestUrl).protocol;
+            if (['data:', 'blob:', 'about:'].includes(protocol)) {
+                allowed = true;
+            } else {
+                await assertSafeBrowserUrl(requestUrl);
+                allowed = true;
+            }
+        } catch {
+            ssrfViolation = true;
+            if (!request.isInterceptResolutionHandled()) {
+                await request.abort('blockedbyclient').catch(() => {});
+            }
+            return;
+        }
+        if (allowed && !request.isInterceptResolutionHandled()) {
+            await request.continue().catch(() => {});
+        }
+    });
     const hostname = new URL(url).hostname;
     await page.setCookie(
         { name: 'over18', value: '18', domain: hostname, path: '/' },
@@ -65,6 +106,9 @@ try {
         waitUntil: 'domcontentloaded',
         timeout: config.navigationTimeoutMs ?? 90000,
     });
+    if (ssrfViolation) {
+        throw new SsrfBlockedError();
+    }
 
     try {
         const ageForm = await page.$('#ageVerify form#form1');
@@ -116,6 +160,9 @@ try {
     await page.evaluate(() => window.scrollTo(0, Math.max(document.body.scrollHeight / 2, 0)));
     await new Promise((resolve) => setTimeout(resolve, 1000));
     const html = await page.content();
+    if (ssrfViolation) {
+        throw new SsrfBlockedError();
+    }
     const pageTitle = await page.title();
     const normalizedTitle = pageTitle.toLowerCase();
     const challenge =
@@ -137,13 +184,16 @@ try {
         cookies,
     }));
 } catch (error) {
+    const ssrfBlocked = ssrfViolation || error instanceof SsrfBlockedError;
     console.log(JSON.stringify({
-        error: error instanceof Error ? error.message : String(error),
-        status: 1,
+        error: ssrfBlocked ? 'ssrf_blocked' : (error instanceof Error ? error.message : String(error)),
+        ...(ssrfBlocked ? { errorCode: 'ssrf_blocked' } : {}),
+        status: ssrfBlocked ? 403 : 1,
         elapsedMs: Date.now() - started,
         challenge: false,
     }));
-    process.exit(1);
+    process.exitCode = 1;
 } finally {
-    await browser.close();
+    await browser?.close().catch(() => {});
+    await ssrfProxy.close().catch(() => {});
 }
