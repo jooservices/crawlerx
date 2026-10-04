@@ -218,8 +218,11 @@ const server = createServer((request, response) => {
     const uaMatch = url.pathname.match(/^\/ua-check\/([^/]+)$/);
     if (uaMatch) {
         const userAgent = request.headers['user-agent'] ?? '';
-        const browserLike = /Chrome|Firefox|Safari/i.test(userAgent);
-        send(response, browserLike ? 200 : 403, moviePage(decodeURIComponent(uaMatch[1]), '<p id="movie">ua accepted</p>'));
+        const movieId = decodeURIComponent(uaMatch[1]);
+        const accepted = movieId === 'TC-M08-UA'
+            ? userAgent === 'CrawlerX-Lab Chrome/1.0'
+            : /Chrome|Firefox|Safari/i.test(userAgent);
+        send(response, accepted ? 200 : 403, moviePage(movieId, '<p id="movie">ua accepted</p>'));
         return;
     }
 

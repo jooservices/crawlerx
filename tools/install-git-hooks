@@ -3,9 +3,15 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-docker compose run --rm --no-deps php vendor/bin/captainhook install --force --skip-existing
+HOOKS_DIR="$(git rev-parse --git-path hooks)"
+mkdir -p "$HOOKS_DIR"
+if [[ "$HOOKS_DIR" != /* ]]; then
+    HOOKS_DIR="$(cd "$HOOKS_DIR" && pwd)"
+fi
 
-for hook in .git/hooks/*; do
+tools/run-captainhook install --force --skip-existing
+
+for hook in "$HOOKS_DIR"/*; do
     if [ -f "$hook" ] && grep -q 'vendor/bin/captainhook' "$hook" 2>/dev/null; then
         sed -i '' 's|vendor/bin/captainhook|tools/run-captainhook|g' "$hook"
     fi

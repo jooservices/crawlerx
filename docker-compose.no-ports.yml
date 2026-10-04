@@ -1,0 +1,7 @@
+services:
+  node:
+    ports: !reset []
+  fixture-site:
+    ports: !reset []
+  flaresolverr:
+    ports: !reset []
