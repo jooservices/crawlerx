@@ -1,5 +1,15 @@
 # jooservices/crawlerx
 
+[![CI (develop)](https://github.com/jooservices/crawlerx/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/jooservices/crawlerx/actions/workflows/ci.yml)
+[![Coverage (develop)](https://codecov.io/gh/jooservices/crawlerx/branch/develop/graph/badge.svg)](https://codecov.io/gh/jooservices/crawlerx/branch/develop)
+[![Quality Gate (master)](https://sonarcloud.io/api/project_badges/measure?project=jooservices_crawlerx&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=jooservices_crawlerx)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/jooservices/crawlerx/badge)](https://securityscorecards.dev/viewer/?uri=github.com/jooservices/crawlerx)
+[![PHP Version](https://img.shields.io/badge/PHP-8.5%2B-blue.svg)](https://www.php.net/)
+[![Release 1.3.0](https://img.shields.io/badge/release-1.3.0-blue.svg)](CHANGELOG.md)
+[![GitHub Release](https://img.shields.io/github/v/release/jooservices/crawlerx?display_name=tag)](https://github.com/jooservices/crawlerx/releases)
+[![Packagist Version](https://img.shields.io/packagist/v/jooservices/crawlerx)](https://packagist.org/packages/jooservices/crawlerx)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A PHP 8.5+ URL-driven crawl and parse library for JAV catalog sites. Give
 CrawlerX a supported URL and it detects the site and page type, fetches the
 page through the appropriate HTTP or browser strategy, and returns typed DTOs.
@@ -15,8 +25,8 @@ echo $item->meta['movie']['code'];              // YMDS-282
 ```
 
 > [!NOTE]
-> The current Packagist `v1.0.0` is the retired Laravel implementation. This
-> framework-agnostic rebuild is released as `1.2.0` and provides the API
+> Packagist `v1.0.0` is the retired Laravel implementation. This
+> framework-agnostic rebuild is released as `1.3.0` and provides the API
 > documented here.
 
 ## Features
@@ -26,7 +36,7 @@ echo $item->meta['movie']['code'];              // YMDS-282
   (e.g. XCITY) crawl to terminal detail items
 - Automatic site and crawl-type detection from the URL
 - Typed immutable results built on `jooservices/dto` v3
-- HTTP fetching through `jooservices/client` v4
+- HTTP fetching through `jooservices/client` v4.4+
 - Adaptive fallback through curl-impersonate, Playwright, stealth browser modes, Puppeteer, and FlareSolverr
 - Browser cookie handoff, challenge-page detection, and JavBus age-verification handling
 - Manifest-driven capability declaration validated against adapter implementations
@@ -62,10 +72,10 @@ The path installation uses this checkout's actual requirements, including
 
 ### Tagged release
 
-Released as `1.2.0` — install from Packagist:
+Released as `1.3.0` — install from Packagist:
 
 ```bash
-composer require jooservices/crawlerx:^1.2
+composer require jooservices/crawlerx:^1.3
 ```
 
 The retired `v1.0.0` is the previous Laravel implementation and does not
@@ -197,7 +207,20 @@ if ($outcome->failed()) {
 ```
 
 Error codes include `unsupported_url`, `ambiguous_url`, `adapter_not_found`,
-`blocked`, `parse_failed`, and `unknown`.
+`blocked`, `parse_failed`, `unknown`, `not_found`, `gone`, `rate_limited`,
+`timeout`, `challenge`, `network`, `auth_required`, and `ssrf_blocked`.
+
+### Upgrading from 1.2
+
+The `CrawlErrorCode` enum adds `not_found`, `gone`, `rate_limited`, `timeout`,
+`challenge`, `network`, `auth_required`, and `ssrf_blocked`. If your application
+matches on error codes, handle these values explicitly; consumers that map
+unknown values to a generic parser-drift error should update that mapping. In
+jvmeta, unrecognized values currently map to `parse_drift` until its mapping
+adopts these new cases.
+`rate_limited`, `timeout`, `challenge`, and `network` are retryable by default.
+The other new codes are terminal by default; in particular, do not retry
+`ssrf_blocked` without changing the browser target or its allowlist.
 
 ### Fetch options
 
@@ -358,6 +381,18 @@ allowlist does not override address blocking. Private-network access is enabled
 only by the dedicated `docker-compose.fetch-lab.yml` test overlay. Requests
 blocked by this policy return the non-retryable `ssrf_blocked` error and stop
 the fetch fallback chain.
+
+The browser image is built with `CRAWLERX_VERSION` set to the matching
+CrawlerX package release (for example, `1.3.0`); the sidecar reports that value
+in its health response. With Compose, set it when building:
+
+```bash
+CRAWLERX_VERSION=1.3.0 docker compose build node
+```
+
+Compose's local image name remains
+`jooservices/crawlerx:browser`. If you create a versioned local image tag, use
+the same version as the package release.
 
 ## Runtime configuration
 
