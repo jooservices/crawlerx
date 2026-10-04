@@ -58,6 +58,14 @@
         }
     ],
     "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": ["div.a4 > a[href^='/r18/']"],
+                "detail": ["div.a9"]
+            },
+            "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
+        },
         "targetProfiles": {
             "new": {
                 "label": "New",

@@ -1,0 +1,95 @@
+# Fetch strategy
+
+CrawlerX chooses the least expensive fetch method that can return a usable page.
+The strategy is configured by each adapter manifest under `runtime.fetch`.
+
+## Profiles
+
+| Profile | First method | Fallback behavior |
+|---|---|---|
+| `http_only` | HTTP | No browser fallback |
+| `adaptive` | HTTP | Optional curl-impersonate, then Playwright, then FlareSolverr only after a detected challenge |
+| `browser_likely` | Playwright | FlareSolverr only after a detected challenge |
+
+The legacy `playwrightFetchEnabled: true` setting maps to `browser_likely`. An
+explicit `runtime.fetch.profile` takes precedence. The five browser-likely
+adapters are Avfan, Jable, JavBus, Missav and JavLibrary.
+
+## Readiness and terminal results
+
+`runtime.fetch.readyMarkers` contains CSS selectors keyed by crawl page type.
+A successful 2xx response without its marker is unusable and the next method
+is tried. The markers are deliberately adapter-specific and come from the
+adapter's existing parser selectors.
+
+`runtime.fetch.soft404Markers` contains text or CSS-like markers for pages that
+report that the requested page does not exist. Text markers are matched against
+the title and visible document text; script, style and template contents are
+ignored.
+
+The consumer receives these terminal error codes and retry hints:
+
+| Condition | Code | Retryable |
+|---|---|---|
+| HTTP 404 | `not_found` | No |
+| HTTP 410 | `gone` | No |
+| HTTP 429, or 503 with `Retry-After` | `rate_limited` | Yes |
+| Deadline or total budget exhausted | `timeout` | Yes |
+| Challenge after all permitted methods | `challenge` | Yes |
+| Other fetch failure | `network` | Yes |
+
+Terminal results stop the fallback chain. FlareSolverr is never called unless
+the preceding response was classified as a challenge.
+
+## Sessions and login cookies
+
+`SessionStore` keeps solved cookies, the matching user agent, the solving
+method, browser `storageState`, and an expiry per site and node. Consumers can
+share the store through an injected PSR-16 `CacheInterface`; without one,
+CrawlerX uses process-local memory. The key is
+`crawlerx:session:<site>:<node>` and its lifetime is capped at 30 minutes.
+A replayed challenge forgets the session before the next fallback attempt.
+
+Configure consumers with `CrawlerXFactory::configure($cache, $logins)`, where
+`$logins` implements `LoginCookieProvider::cookiesFor(string $site): array`.
+Provider cookies are attached to every request for that site. A persistent
+login wall returns `auth_required` and is not retryable.
+
+`CRAWLERX_NODE` identifies the node and remains the Node.js binary override for
+backward compatibility. When it is unset, the node id is the host name.
+`CRAWLERX_USER_AGENT` sets the fixed per-node user agent. The default is a
+modern Chrome user agent. `CRAWLERX_USER_AGENT_POOL` accepts a comma-separated
+pool; after three consecutive challenges for a site, CrawlerX switches to the
+next user agent and keeps it sticky in that site's session.
+
+## Budgets
+
+The default total budget is 150 seconds. Individual method caps are 20 seconds
+for HTTP, 45 seconds for browser methods and 60 seconds for FlareSolverr.
+`FetchOptionsDto::deadlineSeconds` can set a shorter consumer deadline; the
+browser and FlareSolverr process timeouts are bounded by the remaining method
+budget, and no method starts after that deadline.
+
+## Local Fetch Lab
+
+The Fetch Lab is a Docker-backed integration test against the repository's
+fixture site. It exercises the real HTTP client, browser sidecar and a local
+FlareSolverr-shaped fixture endpoint without contacting a live site.
+
+```sh
+make fetch-up
+CRAWLERX_FETCH_LAB=1 vendor/bin/phpunit tests/Feature/FetchLab
+make fetch-down
+```
+
+If the default host ports are already used by another local project, choose
+unused host ports consistently for `fetch-up` and `fetch-down`, for example:
+
+```sh
+FLARESOLVERR_HOST_PORT=8193 FIXTURE_SITE_HOST_PORT=8082 make fetch-up
+FLARESOLVERR_HOST_PORT=8193 FIXTURE_SITE_HOST_PORT=8082 make fetch-down
+```
+
+The lab is suitable for CI because all requests stay inside Docker and use
+fixtures. Live adapter checks belong to the local canary tooling, not this
+test suite.

@@ -9,6 +9,14 @@
     "base_url": "https://duga.jp",
     "pagination": {"strategy": "query", "param": "page"},
     "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [".sidemenu, .listitem, .contentslist:not(.empty)"],
+                "detail": ["a[href^='/ppv/']"]
+            },
+            "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
+        },
         "targetProfiles": {"duga_main": {"label": "DUGA Accepted Main", "url": "https://duga.jp/main/"}},
         "fixtureSamples": [
             {"url": "https://duga.jp/main/", "name": "listing.html", "type": "listing"},

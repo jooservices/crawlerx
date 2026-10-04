@@ -2,4 +2,15 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
-exec docker compose run --rm --no-deps php vendor/bin/captainhook "$@"
+GIT_COMMON_DIR="$(git rev-parse --git-common-dir)"
+if [[ "$GIT_COMMON_DIR" != /* ]]; then
+    GIT_COMMON_DIR="$(cd "$GIT_COMMON_DIR" && pwd)"
+fi
+GIT_HOOKS_DIR="$(git rev-parse --git-path hooks)"
+if [[ "$GIT_HOOKS_DIR" != /* ]]; then
+    GIT_HOOKS_DIR="$(cd "$GIT_HOOKS_DIR" && pwd)"
+fi
+exec docker compose run --rm --no-deps \
+    --volume "$GIT_COMMON_DIR:$GIT_COMMON_DIR:rw" \
+    --volume "$GIT_HOOKS_DIR:$GIT_HOOKS_DIR:rw" \
+    php vendor/bin/captainhook "$@"

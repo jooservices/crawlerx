@@ -22,11 +22,12 @@ final class FetchPlanResolverTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_http_only_site_uses_http_chain(): void
+    public function test_legacy_false_site_defaults_to_adaptive_chain(): void
     {
         $plan = (new FetchPlanResolver())->resolve($this->profile(false));
 
-        self::assertSame([FetchMethod::Http], $plan);
+        self::assertSame(FetchMethod::Http, $plan[0]);
+        self::assertContains(FetchMethod::Playwright, $plan);
     }
 
     public function test_browser_likely_site_starts_at_playwright(): void

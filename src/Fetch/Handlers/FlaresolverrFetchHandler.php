@@ -6,12 +6,14 @@ namespace JOOservices\CrawlerX\Fetch\Handlers;
 
 use JOOservices\Client\Client\ClientBuilder;
 use JOOservices\CrawlerX\Contracts\FetchMethodHandler;
+use JOOservices\CrawlerX\Contracts\LoginCookieProvider;
 use JOOservices\CrawlerX\Dto\CrawlOptionsDto;
 use JOOservices\CrawlerX\Dto\FetchResultDto;
 use JOOservices\CrawlerX\Dto\SiteProfileDto;
 use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Fetch\ChallengeDetector;
 use JOOservices\CrawlerX\Fetch\FetchRuntimeConfig;
+use JOOservices\CrawlerX\Fetch\Session\SessionStore;
 use Nyholm\Psr7\Request;
 use Psr\Http\Client\ClientInterface;
 use Throwable;
@@ -21,6 +23,8 @@ final class FlaresolverrFetchHandler implements FetchMethodHandler
     public function __construct(
         private readonly FetchRuntimeConfig $runtime,
         private readonly ?ClientInterface $client = null,
+        private readonly ?SessionStore $sessions = null,
+        private readonly ?LoginCookieProvider $logins = null,
     ) {
     }
 
@@ -42,19 +46,39 @@ final class FlaresolverrFetchHandler implements FetchMethodHandler
         }
 
         $httpOptions = $options?->http;
-        $timeoutSeconds = $httpOptions !== null && $httpOptions->timeout !== null
+        $timeoutSeconds = $options->methodTimeoutSeconds
+            ?? ($httpOptions !== null && $httpOptions->timeout !== null
             ? $httpOptions->timeout
-            : $profile->http->timeout;
+            : $profile->http->timeout);
+        if ($httpOptions?->timeout !== null) {
+            $timeoutSeconds = min($timeoutSeconds, $httpOptions->timeout);
+        }
         $maxTimeoutMs = max(1, $timeoutSeconds) * 1000;
 
+        $cookies = $this->cookieHeaderToMap($profile->http->headers['Cookie'] ?? null);
+        $cookies = array_merge($cookies, $this->sessions?->cookies(
+            $profile->slug,
+            $this->logins?->cookiesFor($profile->slug) ?? [],
+        ) ?? []);
+        $userAgent = $this->sessions?->userAgent($profile->slug)
+            ?? $this->header($httpOptions?->headers, 'User-Agent')
+            ?? $profile->http->headers['User-Agent']
+            ?? $this->profileUserAgent($profile)
+            ?? $this->runtime->userAgent;
+        $flareCookies = [];
+        foreach ($cookies as $name => $value) {
+            $flareCookies[] = ['name' => $name, 'value' => $value];
+        }
         $payload = json_encode([
             'cmd' => 'request.get',
             'url' => $url,
             'maxTimeout' => $maxTimeoutMs,
+            'cookies' => $flareCookies,
+            'userAgent' => $userAgent,
         ], JSON_THROW_ON_ERROR);
 
         try {
-            $client = $this->client ?? ClientBuilder::create()->withTimeout($timeoutSeconds + 30)->build();
+            $client = $this->client ?? ClientBuilder::create()->withTimeout($timeoutSeconds)->build();
             $response = $client->sendRequest(new Request('POST', $endpoint, [
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
@@ -75,6 +99,10 @@ final class FlaresolverrFetchHandler implements FetchMethodHandler
         $html = is_string($solution['response'] ?? null) ? $solution['response'] : '';
         $httpStatus = is_numeric($solution['status'] ?? null) ? (int) $solution['status'] : 0;
         $cookies = $this->cookies($solution['cookies'] ?? null);
+        $solutionCookies = is_array($solution['cookies'] ?? null) ? $solution['cookies'] : [];
+        /** @var array<string, mixed>|null $storageState */
+        $storageState = $solutionCookies === [] ? null : ['cookies' => $solutionCookies];
+        $userAgent = is_string($solution['userAgent'] ?? null) ? $solution['userAgent'] : null;
         $challenge = $status !== 'ok' || ChallengeDetector::isChallenge($html, $httpStatus);
         $ok = $status === 'ok' && ! $challenge && ChallengeDetector::isUsableBody($html, $httpStatus > 0 ? $httpStatus : 200);
 
@@ -87,6 +115,8 @@ final class FlaresolverrFetchHandler implements FetchMethodHandler
             challengeDetected: $challenge,
             finalUrl: is_string($solution['url'] ?? null) ? $solution['url'] : $url,
             cookies: $cookies,
+            storageState: $storageState,
+            userAgent: $userAgent,
             error: $ok ? null : (is_string($decoded['message'] ?? null) ? $decoded['message'] : 'flaresolverr failed'),
         );
     }
@@ -124,5 +154,50 @@ final class FlaresolverrFetchHandler implements FetchMethodHandler
             finalUrl: $url,
             error: $error,
         );
+    }
+
+    /** @param array<string, string>|null $headers */
+    private function header(?array $headers, string $name): ?string
+    {
+        foreach ($headers ?? [] as $key => $value) {
+            if (strcasecmp($key, $name) === 0) {
+                return $value;
+            }
+        }
+
+        return null;
+    }
+
+    private function profileUserAgent(SiteProfileDto $profile): ?string
+    {
+        if ($profile->playwright === null) {
+            return null;
+        }
+
+        return $profile->playwright->userAgent;
+    }
+
+    /** @return array<string, string> */
+    private function cookieHeaderToMap(?string $header): array
+    {
+        if ($header === null || trim($header) === '') {
+            return [];
+        }
+
+        $cookies = [];
+        foreach (explode(';', $header) as $part) {
+            $separator = strpos($part, '=');
+            if ($separator === false) {
+                continue;
+            }
+
+            $name = trim(substr($part, 0, $separator));
+            $value = trim(substr($part, $separator + 1));
+            if ($name !== '' && $value !== '') {
+                $cookies[$name] = $value;
+            }
+        }
+
+        return $cookies;
     }
 }

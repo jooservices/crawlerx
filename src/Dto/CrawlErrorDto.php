@@ -14,6 +14,8 @@ final class CrawlErrorDto extends Dto
         public readonly string $message,
         public readonly ?string $url = null,
         public readonly ?FetchMetaDto $fetch = null,
+        public readonly bool $retryable = false,
+        public readonly ?int $retryAfterSeconds = null,
     ) {
     }
 }

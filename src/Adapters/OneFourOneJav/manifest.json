@@ -58,6 +58,14 @@
         }
     ],
     "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": ["a[href]"],
+                "detail": ["h5.title a"]
+            },
+            "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
+        },
         "targetProfiles": {
             "new": {
                 "label": "New",
@@ -133,7 +141,7 @@
                 "type": "listing"
             },
             {
-                "url": "https://www.141jav.com/torrent/SMOK039",
+                "url": "https://www.141jav.com/torrent/JUQ521",
                 "name": "detail-sample-1.html",
                 "type": "detail"
             }

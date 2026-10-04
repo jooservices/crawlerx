@@ -13,6 +13,7 @@ import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
+import { cookieForSite, loadDotEnv, sanitizeHtml } from './sanitizer.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const script = join(root, 'scripts/playwright-fetch.mjs');
@@ -26,6 +27,8 @@ let headless = true;
 let flaresolverrUrl = '';
 let targetType = 'listing';
 let fetchMethod = 'auto';
+let site = '';
+let sanitize = true;
 
 for (const arg of args) {
     if (arg.startsWith('--url=')) {
@@ -44,14 +47,40 @@ for (const arg of args) {
         targetType = arg.slice('--type='.length);
     } else if (arg.startsWith('--fetch-method=')) {
         fetchMethod = arg.slice('--fetch-method='.length);
+    } else if (arg.startsWith('--site=')) {
+        site = arg.slice('--site='.length);
+    } else if (arg === '--no-sanitize') {
+        sanitize = false;
     }
+}
+
+const env = loadDotEnv(join(root, '.env'));
+const cookieHeader = site === '' ? null : cookieForSite(site, env);
+let activeCookieHeader = cookieHeader;
+
+function cookiePairs(header) {
+    if (header === null) {
+        return [];
+    }
+
+    return header.split(';').map((part) => {
+        const separator = part.indexOf('=');
+        return separator < 1
+            ? null
+            : { name: part.slice(0, separator).trim(), value: part.slice(separator + 1).trim() };
+    }).filter((pair) => pair !== null && pair.name !== '');
 }
 
 async function runFlaresolverr(targetUrl) {
     const response = await fetch(flaresolverrUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ cmd: 'request.get', url: targetUrl, maxTimeout: 90000 }),
+        body: JSON.stringify({
+            cmd: 'request.get',
+            url: targetUrl,
+            maxTimeout: 90000,
+            cookies: cookiePairs(activeCookieHeader),
+        }),
     });
     const payload = await response.json();
     const solution = payload.solution ?? {};
@@ -81,6 +110,7 @@ async function runHttp(targetUrl) {
         headers: {
             Accept: 'application/json, text/html;q=0.9, */*;q=0.8',
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+            ...(activeCookieHeader === null ? {} : { Cookie: activeCookieHeader }),
         },
         redirect: 'follow',
     });
@@ -109,6 +139,7 @@ function runPlaywright(targetUrl, extraWait = waitMs) {
             locale: 'en-US',
             stealthEnabled: true,
             stealthLevel: 'enhanced',
+            extraHttpHeaders: activeCookieHeader === null ? {} : { Cookie: activeCookieHeader },
         }));
 
         const child = spawn(process.execPath, [script, `--config=${configPath}`], {
@@ -200,6 +231,7 @@ function runPuppeteer(targetUrl, extraWait = waitMs) {
             waitMs: extraWait,
             headless,
             navigationTimeoutMs: 90000,
+            cookieHeader: activeCookieHeader,
         }));
 
         const child = spawn(process.execPath, [join(root, 'scripts/puppeteer-stealth-fetch.mjs'), `--config=${configPath}`], {
@@ -262,16 +294,17 @@ function writeMetadata(outPath, sourceUrl, type, method, result) {
         content_hash: createHash('sha256').update(body).digest('hex'),
         target_type: type,
         fetch_method: method,
-        sanitized: false,
+        sanitized: sanitize,
     };
 
     writeFileSync(`${outPath}.meta.json`, `${JSON.stringify(metadata, null, 2)}\n`, 'utf8');
 }
 
-async function captureOne(targetUrl, relativeOut, type = targetType) {
+async function captureOne(targetUrl, relativeOut, type = targetType, targetSite = site) {
     const outPath = resolve(root, relativeOut);
     fixtureOutputPath(relativeOut);
     mkdirSync(dirname(outPath), { recursive: true });
+    activeCookieHeader = cookieForSite(targetSite, env);
     console.error(`capturing ${targetUrl} -> ${relativeOut}`);
     const attempts = captureMethods(outPath);
     const errors = [];
@@ -280,7 +313,9 @@ async function captureOne(targetUrl, relativeOut, type = targetType) {
         try {
             const result = await fetchWithMethod(method, targetUrl);
             assertUsableCapture(result, outPath);
-            writeFileSync(outPath, result.html, 'utf8');
+            const secrets = [cookieForSite(targetSite, env)].filter((value) => value !== null);
+            const body = sanitize ? sanitizeHtml(result.html, secrets) : result.html;
+            writeFileSync(outPath, body, 'utf8');
             writeMetadata(outPath, targetUrl, type, method, result);
             console.error(`ok ${relativeOut} via ${method} (${result.htmlBytes} bytes, ${result.elapsedMs}ms)`);
             return result;
@@ -309,14 +344,18 @@ if (manifestMode) {
                 url: sample.url,
                 out: `tests/Fixtures/${fixtureFolder(slug)}/${sample.name}`,
                 type: sample.type,
+                site: slug,
             });
         }
     }
 
     const failures = [];
     for (const job of jobs) {
+        if (site !== '' && site !== job.site) {
+            continue;
+        }
         try {
-            await captureOne(job.url, job.out, job.type);
+            await captureOne(job.url, job.out, job.type, job.site);
         } catch (error) {
             failures.push(`${job.url}: ${error instanceof Error ? error.message : error}`);
             console.error(`FAIL ${job.url}`);
@@ -331,8 +370,8 @@ if (manifestMode) {
 }
 
 if (url === '' || out === '') {
-    console.error('Usage: node tools/fixtures/capture.mjs --url=URL --out=tests/Fixtures/site/file.html --type=listing [--fetch-method=auto|http|playwright|puppeteer|flaresolverr]');
+    console.error('Usage: node tools/fixtures/capture.mjs --url=URL --out=tests/Fixtures/site/file.html --type=listing [--site=slug] [--fetch-method=auto|http|playwright|puppeteer|flaresolverr]');
     process.exit(1);
 }
 
-await captureOne(url, out, targetType);
+await captureOne(url, out, targetType, site);

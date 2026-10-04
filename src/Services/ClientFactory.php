@@ -29,15 +29,15 @@ final class ClientFactory
         $builder = ClientBuilder::create();
 
         if (isset($options['base_uri']) && is_string($options['base_uri'])) {
-            $builder->withBaseUri($options['base_uri']);
+            $builder = $builder->withBaseUri($options['base_uri']);
         }
 
-        if (isset($options['timeout']) && is_int($options['timeout'])) {
-            $builder->withTimeout($options['timeout']);
+        if (! ClientBuilder::isFaked() && isset($options['timeout']) && (is_int($options['timeout']) || is_float($options['timeout']))) {
+            $builder = $builder->withTimeout((float) $options['timeout']);
         }
 
-        if (isset($options['verify_ssl']) && is_bool($options['verify_ssl'])) {
-            $builder->withVerifySsl($options['verify_ssl']);
+        if (! ClientBuilder::isFaked() && isset($options['verify_ssl']) && is_bool($options['verify_ssl'])) {
+            $builder = $builder->withVerifySsl($options['verify_ssl']);
         }
 
         if (isset($options['headers']) && is_array($options['headers'])) {
@@ -46,7 +46,7 @@ final class ClientFactory
                     continue;
                 }
 
-                $builder->withHeader((string) $name, (string) $value);
+                $builder = $builder->withHeader((string) $name, (string) $value);
             }
         }
 

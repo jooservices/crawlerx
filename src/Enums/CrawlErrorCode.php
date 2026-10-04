@@ -12,4 +12,20 @@ enum CrawlErrorCode: string
     case Blocked = 'blocked';
     case ParseFailed = 'parse_failed';
     case Unknown = 'unknown';
+    case NotFound = 'not_found';
+    case Gone = 'gone';
+    case RateLimited = 'rate_limited';
+    case Timeout = 'timeout';
+    case Challenge = 'challenge';
+    case Network = 'network';
+    case AuthRequired = 'auth_required';
+    case SsrfBlocked = 'ssrf_blocked';
+
+    public function defaultRetryable(): bool
+    {
+        return match ($this) {
+            self::RateLimited, self::Timeout, self::Challenge, self::Network => true,
+            default => false,
+        };
+    }
 }

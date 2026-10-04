@@ -65,6 +65,14 @@
         }
     ],
     "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "performer_listing": ["a.cut-text"],
+                "performer_detail": ["h1.idol-name"]
+            },
+            "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
+        },
         "targetProfiles": {
             "javdatabase_idol_index": {
                 "label": "JAV Database Idol Index",

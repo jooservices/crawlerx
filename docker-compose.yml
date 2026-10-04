@@ -16,22 +16,48 @@ services:
     tty: true
 
   node:
-    image: mcr.microsoft.com/playwright:v1.62.1-noble
+    build:
+      context: .
+      dockerfile: Dockerfile.browser
+      args:
+        CRAWLERX_VERSION: ${CRAWLERX_VERSION:-dev}
+    image: jooservices/crawlerx:browser
     working_dir: /app
-    volumes:
-      - .:/app
     environment:
       CRAWLERX_NODE: node
       CRAWLERX_PLAYWRIGHT_SCRIPT: /app/scripts/playwright-fetch.mjs
       CRAWLERX_BROWSER_SERVICE_PORT: 3000
+      CRAWLERX_BROWSER_ALLOWED_HOSTS: ${CRAWLERX_BROWSER_ALLOWED_HOSTS:-}
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
     profiles: ["fetch"]
     init: true
-    command: ["sh", "-lc", "npm ci --ignore-scripts && node scripts/fetch-server.mjs"]
+    command: ["node", "scripts/fetch-server.mjs"]
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:${CRAWLERX_NODE_HOST_PORT:-3000}:3000"
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    depends_on:
+      fixture-site:
+        condition: service_healthy
+
+  fixture-site:
+    image: node:22-bookworm-slim@sha256:43ac6c60b8f89723f746e8a92ce91abd5017e627ce1ddfe4238355d3a30b772c
+    working_dir: /app
+    volumes:
+      - ./tests/Fixtures/site:/app/tests/Fixtures/site:ro
+    environment:
+      PORT: 8080
+    profiles: ["fetch"]
+    command: ["node", "tests/Fixtures/site/server.mjs"]
+    expose:
+      - "8080"
+    ports:
+      - "127.0.0.1:${FIXTURE_SITE_HOST_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/__hits').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 10s
       timeout: 5s
       retries: 12
@@ -42,8 +68,15 @@ services:
     environment:
       LOG_LEVEL: info
     ports:
-      - "127.0.0.1:8191:8191"
+      - "127.0.0.1:${FLARESOLVERR_HOST_PORT:-8191}:8191"
     restart: unless-stopped
 
 volumes:
   crawlerx_node_modules:
+
+networks:
+  default:
+    name: ${CRAWLERX_NETWORK_NAME:-crawlerx-network}
+    ipam:
+      config:
+        - subnet: ${CRAWLERX_NETWORK_SUBNET:-10.253.0.0/24}

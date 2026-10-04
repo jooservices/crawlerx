@@ -66,6 +66,15 @@
         }
     ],
     "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "performer_listing": [".listing-pornostars figcaption a"],
+                "performer_detail": ["#pornostar-profil"],
+                "gallery": ["#fiche-galerie-listing-photos a[href*='/large/']"]
+            },
+            "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
+        },
         "targetProfiles": {
             "warashi_female_index": {
                 "label": "Warashi Female Performer Index",

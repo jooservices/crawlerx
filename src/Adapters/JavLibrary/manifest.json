@@ -66,6 +66,16 @@
         }
     ],
     "runtime": {
+        "fetch": {
+            "profile": "browser_likely",
+            "readyMarkers": {
+                "listing": ["div.videos > div.video", ".starbox"],
+                "detail": ["#video_title h3 a"],
+                "performer_listing": [".starbox"],
+                "performer_detail": ["h1.star_name, #star_name, .boxtitle"]
+            },
+            "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
+        },
         "targetProfiles": {
             "javlibrary_new_release": {
                 "label": "JAVLibrary New Release",

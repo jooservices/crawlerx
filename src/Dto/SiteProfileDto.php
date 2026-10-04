@@ -6,6 +6,7 @@ namespace JOOservices\CrawlerX\Dto;
 
 use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Enums\FetchProfile;
+use JOOservices\CrawlerX\Enums\CrawlType;
 use JOOservices\Dto\Core\Dto;
 
 final class SiteProfileDto extends Dto
@@ -22,14 +23,17 @@ final class SiteProfileDto extends Dto
         public readonly HttpProfileDto $http,
         public readonly ?PlaywrightProfileDto $playwright = null,
         public readonly bool $cookieHandoffAfterBrowser = false,
+        /** @var array<string, list<string>> */
+        public readonly array $readyMarkers = [],
+        /** @var list<string> */
+        public readonly array $soft404Markers = [],
     ) {
     }
 
     public static function fromManifest(AdapterManifestDto $manifest): self
     {
-        $fetchProfile = $manifest->playwrightFetchEnabled
-            ? FetchProfile::BrowserLikely
-            : FetchProfile::HttpOnly;
+        $fetchProfile = $manifest->fetchProfile
+            ?? ($manifest->playwrightFetchEnabled ? FetchProfile::BrowserLikely : FetchProfile::Adaptive);
 
         $headers = $manifest->browserHeaders ?? [];
         $timeout = $manifest->defaultCrawlConfig['timeout'] ?? 30;
@@ -52,6 +56,22 @@ final class SiteProfileDto extends Dto
                     userAgent: $headers['User-Agent'] ?? null,
                 ),
             cookieHandoffAfterBrowser: $fetchProfile === FetchProfile::BrowserLikely,
+            readyMarkers: $manifest->readyMarkers,
+            soft404Markers: $manifest->soft404Markers,
         );
+    }
+
+    /** @return list<string> */
+    public function readyMarkersFor(?CrawlType $type): array
+    {
+        if ($type === null) {
+            if ($this->readyMarkers === []) {
+                return [];
+            }
+
+            return array_values(array_unique(array_merge(...array_values($this->readyMarkers))));
+        }
+
+        return $this->readyMarkers[$type->value] ?? [];
     }
 }

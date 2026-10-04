@@ -87,6 +87,10 @@ final class CrawlerXFacadeTest extends CrawlerXTestCase
         $outcome = CrawlerX::url($url)->tryCrawl();
 
         self::assertTrue($outcome->failed());
-        self::assertContains($outcome->error?->code, [CrawlErrorCode::Blocked, CrawlErrorCode::ParseFailed]);
+        self::assertContains($outcome->error?->code, [
+            CrawlErrorCode::Blocked,
+            CrawlErrorCode::Challenge,
+            CrawlErrorCode::ParseFailed,
+        ]);
     }
 }

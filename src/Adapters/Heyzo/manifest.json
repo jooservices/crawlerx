@@ -9,6 +9,14 @@
     "base_url": "https://en.heyzo.com",
     "pagination": {"strategy": "path", "param": "page"},
     "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [".movie"],
+                "detail": ["a[href*='/moviepages/']"]
+            },
+            "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
+        },
         "targetProfiles": {"heyzo_all": {"label": "HEYZO All Movies", "url": "https://en.heyzo.com/listpages/all_1.html"}},
         "fixtureSamples": [
             {"url": "https://en.heyzo.com/listpages/all_1.html", "name": "listing.html", "type": "listing"},

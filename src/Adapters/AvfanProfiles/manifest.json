@@ -51,6 +51,14 @@
         }
     ],
     "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "performer_listing": ["li a.actress-list-title[href*='/actress/']"],
+                "performer_detail": [".a-name"]
+            },
+            "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
+        },
         "targetProfiles": {
             "avfan_profiles_cup_a_listing": {
                 "label": "Avfan Profiles A-Cup Actress Listing",

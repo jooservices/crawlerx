@@ -11,18 +11,14 @@ final class FetchMethodTest extends TestCase
 {
     public function test_default_chains_preserve_cheap_then_browser_fallback_order(): void
     {
+        putenv('CRAWLERX_CURL_IMPERSONATE=');
         self::assertSame([
             FetchMethod::Http,
-            FetchMethod::CurlImpersonate,
             FetchMethod::Playwright,
-            FetchMethod::PlaywrightStealth,
-            FetchMethod::PuppeteerStealth,
             FetchMethod::Flaresolverr,
         ], FetchMethod::defaultChain());
         self::assertSame([
             FetchMethod::Playwright,
-            FetchMethod::PlaywrightStealth,
-            FetchMethod::PuppeteerStealth,
             FetchMethod::Flaresolverr,
         ], FetchMethod::browserChain());
         self::assertSame([FetchMethod::Http], FetchMethod::httpOnlyChain());

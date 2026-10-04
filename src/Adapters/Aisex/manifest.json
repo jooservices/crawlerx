@@ -51,6 +51,14 @@
         }
     ],
     "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "performer_listing": ["a.actress-card-link[href*='/actress/']"],
+                "performer_detail": [".profile-name"]
+            },
+            "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
+        },
         "targetProfiles": {
             "aisex_listing": {
                 "label": "Aisex Actress Listing",

@@ -44,9 +44,13 @@ final class PlaywrightFamilyFetchHandler implements FetchMethodHandler
         }
 
         $playwright = $profile->playwright ?? new PlaywrightProfileDto();
+        $readyMarkers = $options !== null && $options->readyMarkers !== []
+            ? $options->readyMarkers
+            : $profile->readyMarkersFor(null);
         $config = [
             'url' => $url,
-            'waitMs' => $playwright->postWaitMs,
+            'readyTimeoutMs' => $playwright->readyTimeoutMs,
+            'readyMarkers' => $readyMarkers,
             'browser' => $playwright->browser,
             'headless' => $playwright->headless,
             'navigationTimeoutMs' => $playwright->navigationTimeoutMs,
@@ -54,9 +58,11 @@ final class PlaywrightFamilyFetchHandler implements FetchMethodHandler
             'locale' => $playwright->locale,
             'timezoneId' => $playwright->timezoneId,
             'stealthEnabled' => true,
-            'stealthLevel' => $method === FetchMethod::Playwright ? 'minimal' : 'enhanced',
+            'stealthLevel' => 'enhanced',
             'extraHttpHeaders' => $profile->http->headers,
             'storageStatePath' => $playwright->storageStatePath,
+            'storageState' => $options?->storageState,
+            'blockResources' => $playwright->blockResources,
             'userAgent' => $playwright->userAgent,
         ];
 
@@ -68,9 +74,11 @@ final class PlaywrightFamilyFetchHandler implements FetchMethodHandler
         file_put_contents($configPath, json_encode($config, JSON_THROW_ON_ERROR));
 
         try {
+            $processTimeoutSeconds = $options->methodTimeoutSeconds
+                ?? max(1, (int) ceil($playwright->navigationTimeoutMs / 1000));
             $result = $this->runner->run(
                 [$this->runtime->nodeBinary, $script, '--config=' . $configPath],
-                (int) ceil($playwright->navigationTimeoutMs / 1000) + 30,
+                $processTimeoutSeconds,
             );
         } finally {
             if (is_file($configPath)) {
@@ -95,6 +103,8 @@ final class PlaywrightFamilyFetchHandler implements FetchMethodHandler
         $challenge = (bool) ($decoded['challenge'] ?? false) || ChallengeDetector::isChallenge($body, $status);
         $ok = $result->exitCode === 0 && ! $challenge && ChallengeDetector::isUsableBody($body, $status > 0 ? $status : 200);
         $cookies = $this->cookieMap(is_array($decoded['cookies'] ?? null) ? $decoded['cookies'] : []);
+        $storageState = $this->storageState($decoded['storageState'] ?? null);
+        $userAgent = is_string($decoded['userAgent'] ?? null) ? $decoded['userAgent'] : null;
 
         return new FetchResultDto(
             ok: $ok,
@@ -107,6 +117,8 @@ final class PlaywrightFamilyFetchHandler implements FetchMethodHandler
             challengeDetected: $challenge,
             finalUrl: $finalUrl,
             cookies: $cookies,
+            storageState: $storageState,
+            userAgent: $userAgent,
             error: $ok ? null : (is_string($decoded['error'] ?? null) ? $decoded['error'] : 'playwright fetch failed'),
         );
     }
@@ -131,6 +143,17 @@ final class PlaywrightFamilyFetchHandler implements FetchMethodHandler
         }
 
         return $map;
+    }
+
+    /** @return array<string, mixed>|null */
+    private function storageState(mixed $value): ?array
+    {
+        if (! is_array($value)) {
+            return null;
+        }
+
+        /** @var array<string, mixed> $value */
+        return $value;
     }
 
     private function fail(FetchMethod $method, int $started, string $url, string $error): FetchResultDto

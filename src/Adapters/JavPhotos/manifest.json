@@ -51,6 +51,14 @@
         }
     ],
     "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [".pinbox a[href*='/free/']"],
+                "gallery": [".pinbox.pinimg a[href*='/pictures/']"]
+            },
+            "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
+        },
         "targetProfiles": {
             "javphotos_listing": {
                 "label": "JavPhotos Gallery Listing",

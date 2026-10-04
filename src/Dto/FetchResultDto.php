@@ -13,6 +13,7 @@ final class FetchResultDto extends Dto
      * @param  list<array{method: string, elapsed_ms: int, status: int, challenge: bool, ok: bool, error?: string|null}>  $attempts
      * @param  array<string, string>  $cookies
      * @param  array<string, list<string>>  $headers
+     * @param  array<string, mixed>|null  $storageState
      */
     public function __construct(
         public readonly bool $ok,
@@ -26,6 +27,8 @@ final class FetchResultDto extends Dto
         public readonly array $cookies = [],
         public readonly array $headers = [],
         public readonly ?string $error = null,
+        public readonly ?array $storageState = null,
+        public readonly ?string $userAgent = null,
     ) {
     }
 
@@ -55,6 +58,8 @@ final class FetchResultDto extends Dto
             attempts: $attempts,
             cookies: $this->cookies,
             headers: $this->headers,
+            storageState: $this->storageState,
+            userAgent: $this->userAgent,
             error: $this->error,
         );
     }

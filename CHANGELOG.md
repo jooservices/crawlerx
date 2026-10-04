@@ -5,6 +5,48 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-10-04
+
+### Added
+
+- Browser sidecar and isolated fetch lab, with browser dependencies derived
+  from the package lockfile (PR #50).
+- A fetch-strategy contract with structured error values for `not_found`,
+  `gone`, `rate_limited`, `timeout`, `challenge`, `network`, and
+  `auth_required`, plus retryability metadata (PR #51).
+- Benchmark and live-canary tooling for measuring configured fetch strategies
+  and checking representative adapters (PR #52).
+- Reusable browser processes across fetch requests, reducing repeated Chromium
+  startup work (PR #55).
+- Shared session storage, FlareSolverr cookie replay, and a
+  `LoginCookieProvider` for request-scoped authenticated sessions (PR #56).
+
+### Changed
+
+- Require `jooservices/client` `^4.4`; redirect cookies are enabled by the
+  client by default and remain separate from CrawlerX's session store and
+  explicit cookie handoff (PR #59).
+- Enable the fetch lab's TC-M08 header-propagation case and make Compose host
+  ports configurable or fully disableable for isolated runs; make CaptainHook
+  work correctly from Git worktrees (PR #58).
+
+### Fixed
+
+- Apply configured `ClientBuilder` options when `ClientFactory` creates a
+  client (PR #49).
+- Refresh the Jable performer fixtures and readiness expectations (PR #53),
+  and refresh the 141Jav live detail sample (PR #54).
+- Refresh Aisex performer fixtures and update the pagination expectation for
+  page 1214 (PR #57).
+
+### Security
+
+- Block browser-side requests to private, loopback, link-local, CGNAT,
+  unique-local IPv6, unspecified, multicast, and metadata addresses, including
+  redirects; support an optional hostname allowlist and keep private-network
+  access limited to the fetch lab (PR #60). Blocked requests return the
+  non-retryable `ssrf_blocked` error.
+
 ## [1.2.0] - 2026-10-01
 
 ### Added
@@ -86,5 +128,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   implementation (Jable performer listing was an alias to the movie parser).
 - Catalog `external_id` for HEYZO/FC2 included the code prefix inconsistently.
 
+[1.3.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.3.0
 [1.2.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.2.0
 [1.1.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.1.0
+
+[1.3.0...1.2.0]: https://github.com/jooservices/crawlerx/compare/v1.2.0...v1.3.0
