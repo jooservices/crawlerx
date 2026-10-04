@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { request as httpRequest } from 'node:http';
+import { createServer, request as httpRequest } from 'node:http';
 import { createSsrfGuard, SsrfBlockedError } from '../../scripts/ssrf-guard.mjs';
 import { createSsrfProxyServer } from '../../scripts/ssrf-proxy.mjs';
 
@@ -102,5 +102,75 @@ test('SSRF proxy rejects private HTTP targets before opening an outbound connect
         assert.equal(proxy.wasBlocked(), true);
     } finally {
         await proxy.close();
+    }
+});
+
+test('SSRF proxy strips fixed and Connection-nominated hop-by-hop headers', async () => {
+    let upstreamHeaders;
+    const upstream = createServer((request, response) => {
+        upstreamHeaders = request.headers;
+        response.writeHead(200, {
+            connection: 'x-response-hop, keep-alive',
+            'keep-alive': 'timeout=5',
+            'x-response-hop': 'response-secret',
+            'proxy-authenticate': 'Basic realm="test"',
+            'content-length': '2',
+        });
+        response.end('ok');
+    });
+    await new Promise((resolve, reject) => {
+        upstream.once('error', reject);
+        upstream.listen(0, '127.0.0.1', resolve);
+    });
+
+    const upstreamPort = upstream.address().port;
+    const allowLoopbackFixture = Object.assign(async () => {}, {
+        resolve: async (value) => ({
+            target: new URL(value),
+            hostname: new URL(value).hostname,
+            addresses: [{ address: '127.0.0.1' }],
+        }),
+    });
+    const proxy = await createSsrfProxyServer({ assertSafeUrl: allowLoopbackFixture });
+
+    try {
+        const proxyUrl = new URL(proxy.url);
+        const target = new URL(`http://127.0.0.1:${upstreamPort}/hop-by-hop`);
+        const { response, body } = await new Promise((resolve, reject) => {
+            const request = httpRequest({
+                hostname: proxyUrl.hostname,
+                port: Number(proxyUrl.port),
+                method: 'GET',
+                path: target.href,
+                headers: {
+                    host: target.host,
+                    connection: 'x-request-hop, close',
+                    'keep-alive': 'timeout=5',
+                    'x-request-hop': 'request-secret',
+                    'proxy-authorization': 'Basic test-secret',
+                    te: 'trailers',
+                },
+            }, (incoming) => {
+                const chunks = [];
+                incoming.on('data', (chunk) => chunks.push(chunk));
+                incoming.once('end', () => resolve({ response: incoming, body: Buffer.concat(chunks).toString() }));
+            });
+            request.once('error', reject);
+            request.end();
+        });
+
+        assert.equal(body, 'ok');
+        assert.equal(upstreamHeaders.connection, 'close');
+        assert.equal(upstreamHeaders.host, target.host);
+        assert.equal(upstreamHeaders['x-request-hop'], undefined);
+        assert.equal(upstreamHeaders['keep-alive'], undefined);
+        assert.equal(upstreamHeaders['proxy-authorization'], undefined);
+        assert.equal(upstreamHeaders.te, undefined);
+        assert.equal(response.headers['x-response-hop'], undefined);
+        assert.equal(response.headers['keep-alive'], undefined);
+        assert.equal(response.headers['proxy-authenticate'], undefined);
+    } finally {
+        await proxy.close();
+        await new Promise((resolve) => upstream.close(() => resolve()));
     }
 });

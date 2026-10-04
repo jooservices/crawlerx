@@ -3,6 +3,39 @@ import { createServer, request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
 import { assertSafeBrowserUrl, SsrfBlockedError } from './ssrf-guard.mjs';
 
+const hopByHopHeaderNames = new Set([
+    'connection',
+    'keep-alive',
+    'proxy-authenticate',
+    'proxy-authorization',
+    'proxy-connection',
+    'te',
+    'trailer',
+    'transfer-encoding',
+    'upgrade',
+]);
+
+function stripHopByHopHeaders(headers) {
+    const filtered = { ...headers };
+    const connectionValues = Array.isArray(filtered.connection)
+        ? filtered.connection
+        : [filtered.connection];
+
+    for (const value of connectionValues) {
+        if (typeof value !== 'string') continue;
+        for (const token of value.split(',')) {
+            const name = token.trim().toLowerCase();
+            if (name !== '') delete filtered[name];
+        }
+    }
+
+    for (const name of hopByHopHeaderNames) {
+        delete filtered[name];
+    }
+
+    return filtered;
+}
+
 /** Start a loopback-only egress proxy for one browser context/process. */
 export async function createSsrfProxyServer({ assertSafeUrl = assertSafeBrowserUrl } = {}) {
     const sockets = new Set();
@@ -84,9 +117,9 @@ export async function createSsrfProxyServer({ assertSafeUrl = assertSafeBrowserU
             return;
         }
 
-        const headers = { ...request.headers, host: target.host, connection: 'close' };
-        delete headers['proxy-authorization'];
-        delete headers['proxy-connection'];
+        const headers = stripHopByHopHeaders(request.headers);
+        headers.host = target.host;
+        headers.connection = 'close';
         const transport = target.protocol === 'https:' ? httpsRequest : httpRequest;
         const outbound = transport({
             protocol: target.protocol,
@@ -97,7 +130,11 @@ export async function createSsrfProxyServer({ assertSafeUrl = assertSafeBrowserU
             headers,
             lookup: pinnedLookup(resolved.addresses),
         }, (upstream) => {
-            response.writeHead(upstream.statusCode ?? 502, upstream.statusMessage, upstream.headers);
+            response.writeHead(
+                upstream.statusCode ?? 502,
+                upstream.statusMessage,
+                stripHopByHopHeaders(upstream.headers),
+            );
             upstream.on('error', () => response.destroy());
             upstream.pipe(response);
         });
