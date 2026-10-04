@@ -27,6 +27,7 @@ services:
       CRAWLERX_NODE: node
       CRAWLERX_PLAYWRIGHT_SCRIPT: /app/scripts/playwright-fetch.mjs
       CRAWLERX_BROWSER_SERVICE_PORT: 3000
+      CRAWLERX_BROWSER_ALLOWED_HOSTS: ${CRAWLERX_BROWSER_ALLOWED_HOSTS:-}
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
     profiles: ["fetch"]
     init: true

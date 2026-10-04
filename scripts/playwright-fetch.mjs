@@ -4,6 +4,8 @@ import { chromium, firefox, webkit } from 'playwright';
 import { existsSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { assertSafeBrowserUrl, SsrfBlockedError } from './ssrf-guard.mjs';
+import { createSsrfProxyServer } from './ssrf-proxy.mjs';
 
 export const DEFAULT_USER_AGENT =
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
@@ -158,6 +160,8 @@ export async function fetchWithBrowser(config, browser) {
     const userAgent = config.userAgent ?? DEFAULT_USER_AGENT;
     const phases = [];
     let context = null;
+    let ssrfProxy = null;
+    let ssrfViolation = false;
 
     const closePhase = (id, label, startMs, status = 'ok') => {
         phases.push({
@@ -170,11 +174,13 @@ export async function fetchWithBrowser(config, browser) {
     };
 
     try {
+        await assertSafeBrowserUrl(url);
         const contextStarted = Date.now();
         const contextOptions = {
             userAgent,
             locale: config.locale ?? 'en-US',
             viewport,
+            serviceWorkers: 'block',
             extraHTTPHeaders: {
                 'Accept-Language': 'en-US,en;q=0.9',
                 ...(config.extraHttpHeaders ?? {}),
@@ -196,17 +202,31 @@ export async function fetchWithBrowser(config, browser) {
             };
         }
 
+        ssrfProxy = await createSsrfProxyServer();
+        contextOptions.proxy = { server: ssrfProxy.url };
         context = await browser.newContext(contextOptions);
-        if (config.blockResources !== false) {
-            await context.route('**/*', (route) => {
-                const type = route.request().resourceType();
-                if (['image', 'font', 'media'].includes(type)) {
-                    return route.abort();
-                }
-                return route.continue();
-            });
-        }
+        await context.route('**/*', async (route) => {
+            const requestUrl = route.request().url();
+            const protocol = new URL(requestUrl).protocol;
+            if (['data:', 'blob:', 'about:'].includes(protocol)) {
+                await route.continue();
+                return;
+            }
+            try {
+                await assertSafeBrowserUrl(requestUrl);
+            } catch {
+                ssrfViolation = true;
+                await route.abort('blockedbyclient').catch(() => {});
+                return;
+            }
 
+            const type = route.request().resourceType();
+            if (config.blockResources !== false && ['image', 'font', 'media'].includes(type)) {
+                await route.abort();
+                return;
+            }
+            await route.continue();
+        });
         try {
             const hostname = new URL(url).hostname;
             const cookieDomain = hostname.startsWith('www.') ? hostname.slice(3) : hostname;
@@ -234,9 +254,15 @@ export async function fetchWithBrowser(config, browser) {
             waitUntil: 'domcontentloaded',
             timeout: navigationTimeoutMs,
         });
+        if (ssrfViolation || ssrfProxy.wasBlocked()) {
+            throw new SsrfBlockedError();
+        }
         closePhase('navigation', 'Load page (domcontentloaded)', navigationStarted);
 
         await dismissInterstitials(page, context, url);
+        if (ssrfViolation || ssrfProxy.wasBlocked()) {
+            throw new SsrfBlockedError();
+        }
 
         const waitStarted = Date.now();
         const readyMarkers = Array.isArray(config.readyMarkers)
@@ -271,6 +297,9 @@ export async function fetchWithBrowser(config, browser) {
 
         const extractStarted = Date.now();
         const html = await page.content();
+        if (ssrfProxy.wasBlocked()) {
+            throw new SsrfBlockedError();
+        }
         const finalUrl = page.url();
         const pageTitle = await page.title();
         const cookies = await context.cookies();
@@ -314,6 +343,15 @@ export async function fetchWithBrowser(config, browser) {
             phases,
         };
     } catch (error) {
+        if (ssrfViolation || ssrfProxy?.wasBlocked() || error instanceof SsrfBlockedError) {
+            return {
+                error: 'ssrf_blocked',
+                errorCode: 'ssrf_blocked',
+                status: 403,
+                elapsedMs: Date.now() - started,
+                challenge: false,
+            };
+        }
         return {
             error: error instanceof Error ? error.message : String(error),
             status: 1,
@@ -323,6 +361,9 @@ export async function fetchWithBrowser(config, browser) {
     } finally {
         if (context !== null) {
             await context.close().catch(() => {});
+        }
+        if (ssrfProxy !== null) {
+            await ssrfProxy.close().catch(() => {});
         }
     }
 }
@@ -373,7 +414,7 @@ async function main() {
     const launcher = browserType(config.browser ?? 'chromium');
     const browser = await launcher.launch({
         headless: config.headless ?? true,
-        args: ['--disable-blink-features=AutomationControlled'],
+        args: ['--disable-blink-features=AutomationControlled', '--proxy-bypass-list=<-loopback>'],
     });
 
     try {

@@ -8,7 +8,7 @@ const packageJsonPath = join(root, 'package.json');
 const packageLockPath = join(root, 'package-lock.json');
 const allowedManifestNames = new Set(['package.json', 'package-lock.json']);
 const skippedDirectories = new Set(['.git', 'node_modules', 'vendor', 'coverage']);
-const semverPattern = /\bv?\d+\.\d+\.\d+\b/g;
+const semverPattern = /(?<![\w.])v?\d+\.\d+\.\d+(?![\w.])/g;
 
 function packageLockPlaywrightVersion() {
     const lock = JSON.parse(readFileSync(packageLockPath, 'utf8'));
