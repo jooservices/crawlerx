@@ -245,8 +245,11 @@ jobs:
           python3 -m venv /tmp/codecov-venv
           /tmp/codecov-venv/bin/pip install --disable-pip-version-check codecov-cli
 
+      # ingest.codecov.io certificate expired 2026-10-04T23:59:59Z.
+      # The coverage floor above still fails this job. Upload stays attempted.
       - name: Upload to Codecov
         if: github.event.pull_request.user.type != 'Bot'
+        continue-on-error: true
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
