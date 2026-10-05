@@ -16,7 +16,7 @@ final class SessionStoreFeatureTest extends TestCase
     {
         $faker = Factory::create();
         $now = 10_000;
-        $store = new SessionStore(node: 'feature-node', clock: static function () use (&$now): int {
+        $store = new SessionStore(clock: static function () use (&$now): int {
             return $now;
         });
         $token = $faker->sha256();
@@ -45,7 +45,7 @@ final class SessionStoreFeatureTest extends TestCase
     {
         $faker = Factory::create();
         $token = $faker->sha256();
-        $store = new SessionStore(node: 'feature-node');
+        $store = new SessionStore();
         $result = new FetchResultDto(
             ok: true,
             body: '<html><body>fixture</body></html>',

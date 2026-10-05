@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Tests\Unit\Fetch;
 
+use Faker\Factory;
 use JOOservices\CrawlerX\Dto\FetchResultDto;
 use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Fetch\BrowserServiceProcessRunner;
@@ -77,30 +78,63 @@ final class FetchInfrastructureTest extends TestCase
 
     public function test_runtime_config_uses_package_paths_and_environment_overrides(): void
     {
+        $faker = Factory::create();
+        $flareUrl = 'http://' . $faker->domainName() . '/v1';
+        $playwrightUrl = 'http://' . $faker->domainName() . ':3000';
+        $presetFlareUrl = 'http://' . $faker->domainName() . '/preset';
+        $presetPlaywrightUrl = 'http://' . $faker->domainName() . ':3001';
+        $environmentBeforePreset = [
+            'FLARESOLVERR_URL' => getenv('FLARESOLVERR_URL'),
+            'PLAYWRIGHT_URL' => getenv('PLAYWRIGHT_URL'),
+        ];
+        putenv('FLARESOLVERR_URL=' . $presetFlareUrl);
+        putenv('PLAYWRIGHT_URL=' . $presetPlaywrightUrl);
         $variables = [
             'CRAWLERX_NODE' => 'node-custom',
             'CRAWLERX_PLAYWRIGHT_SCRIPT' => '/tmp/playwright-custom.mjs',
             'CRAWLERX_PUPPETEER_SCRIPT' => '/tmp/puppeteer-custom.mjs',
             'CRAWLERX_CURL_IMPERSONATE' => '/tmp/curl-custom',
-            'CRAWLERX_FLARESOLVERR_URL' => 'http://flare.test/v1',
-            'CRAWLERX_BROWSER_SERVICE_URL' => 'http://browser.test:3000',
+            'CRAWLERX_FLARESOLVERR_URL' => 'http://legacy-flare.test/v1',
+            'CRAWLERX_BROWSER_SERVICE_URL' => 'http://legacy-browser.test:3000',
+            'FLARESOLVERR_URL' => $flareUrl,
+            'PLAYWRIGHT_URL' => $playwrightUrl,
         ];
+        $originalEnvironment = [];
+        foreach (array_keys($variables) as $name) {
+            $originalEnvironment[$name] = getenv($name);
+        }
 
         try {
             foreach ($variables as $name => $value) {
                 putenv($name . '=' . $value);
             }
             $config = FetchRuntimeConfig::fromEnvironment('/package');
-            self::assertSame('node-custom', $config->nodeBinary);
+            self::assertSame('node', $config->nodeBinary);
             self::assertSame('/tmp/playwright-custom.mjs', $config->playwrightScript);
             self::assertSame('/tmp/puppeteer-custom.mjs', $config->puppeteerScript);
             self::assertSame('/tmp/curl-custom', $config->curlImpersonateBinary);
-            self::assertSame('http://flare.test/v1', $config->flaresolverrUrl);
-            self::assertSame('http://browser.test:3000', $config->browserServiceUrl);
+            self::assertSame($flareUrl, $config->flaresolverrUrl);
+            self::assertSame($playwrightUrl, $config->playwrightUrl);
         } finally {
-            foreach (array_keys($variables) as $name) {
-                putenv($name);
+            foreach ($originalEnvironment as $name => $value) {
+                if ($value === false) {
+                    putenv($name);
+                    continue;
+                }
+
+                putenv($name . '=' . $value);
             }
+        }
+
+        self::assertSame($presetFlareUrl, getenv('FLARESOLVERR_URL'));
+        self::assertSame($presetPlaywrightUrl, getenv('PLAYWRIGHT_URL'));
+        foreach ($environmentBeforePreset as $name => $value) {
+            if ($value === false) {
+                putenv($name);
+                continue;
+            }
+
+            putenv($name . '=' . $value);
         }
 
         $defaults = FetchRuntimeConfig::fromEnvironment('/package');

@@ -4,34 +4,33 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Tests\Unit\Fetch\Session;
 
-use DateInterval;
 use Faker\Factory;
 use JOOservices\CrawlerX\Dto\FetchResultDto;
 use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Fetch\Session\SessionStore;
 use PHPUnit\Framework\TestCase;
-use Psr\SimpleCache\CacheInterface;
 
 final class SessionStoreTest extends TestCase
 {
-    public function test_tc_se_03_shared_psr16_cache_reuses_a_session(): void
+    public function test_tc_se_03_sessions_stay_inside_one_store(): void
     {
         $faker = Factory::create();
-        $cache = new ArrayCache();
-        $first = new SessionStore($cache, 'node-a');
-        $second = new SessionStore($cache, 'node-a');
+        $first = new SessionStore();
+        $second = new SessionStore();
         $token = $faker->sha256();
 
         $first->put('demo', ['cf_clearance' => $token], 'ua-1', 'flaresolverr');
 
-        self::assertSame($token, $second->get('demo')['cookies']['cf_clearance']);
-        self::assertSame('ua-1', $second->userAgent('demo'));
+        self::assertSame($token, $first->get('demo')['cookies']['cf_clearance']);
+        self::assertSame('ua-1', $first->userAgent('demo'));
+        self::assertNull($second->get('demo'));
+        self::assertSame('crawlerx:session:demo', $first->key('demo'));
     }
 
     public function test_tc_se_04_ttl_is_capped_and_expires_with_a_fake_clock(): void
     {
         $now = 10_000;
-        $store = new SessionStore(node: 'node-a', clock: static function () use (&$now): int {
+        $store = new SessionStore(clock: static function () use (&$now): int {
             return $now;
         });
 
@@ -42,22 +41,18 @@ final class SessionStoreTest extends TestCase
         self::assertNull($store->get('demo'));
     }
 
-    public function test_tc_se_05_node_is_part_of_the_session_key(): void
+    public function test_tc_se_05_session_key_has_no_node_segment(): void
     {
-        $cache = new ArrayCache();
-        $nodeA = new SessionStore($cache, 'node-a');
-        $nodeB = new SessionStore($cache, 'node-b');
+        $store = new SessionStore();
+        $store->put('Demo', ['session' => 'a'], 'ua-a', 'http');
 
-        $nodeA->put('demo', ['session' => 'a'], 'ua-a', 'http');
-
-        self::assertSame('a', $nodeA->get('demo')['cookies']['session']);
-        self::assertNull($nodeB->get('demo'));
-        self::assertSame('crawlerx:session:demo:node-a', $nodeA->key('demo'));
+        self::assertSame('a', $store->get('demo')['cookies']['session']);
+        self::assertSame('crawlerx:session:demo', $store->key('Demo'));
     }
 
     public function test_tc_se_08_switches_to_the_next_sticky_user_agent_after_three_challenges(): void
     {
-        $store = new SessionStore(node: 'node-a');
+        $store = new SessionStore();
         $pool = ['ua-1', 'ua-2'];
 
         $store->recordChallenge('demo', 'ua-1', $pool);
@@ -71,7 +66,7 @@ final class SessionStoreTest extends TestCase
     {
         $faker = Factory::create();
         $secret = $faker->sha256();
-        $store = new SessionStore(node: 'node-a');
+        $store = new SessionStore();
         $store->put('demo', ['remember_token' => $secret], 'ua-1', 'login');
         $result = new FetchResultDto(
             ok: false,
@@ -99,76 +94,11 @@ final class SessionStoreTest extends TestCase
 
     public function test_tc_se_10_without_a_cache_uses_in_memory_storage(): void
     {
-        $store = new SessionStore(node: 'node-a');
+        $store = new SessionStore();
         $store->put('demo', ['session' => 'value'], null, 'http');
 
         self::assertSame('value', $store->get('demo')['cookies']['session']);
         $store->forget('demo');
         self::assertNull($store->get('demo'));
-    }
-}
-
-final class ArrayCache implements CacheInterface
-{
-    /** @var array<string, mixed> */
-    private array $values = [];
-
-    public function get(string $key, mixed $default = null): mixed
-    {
-        return $this->values[$key] ?? $default;
-    }
-
-    public function set(string $key, mixed $value, int|DateInterval|null $ttl = null): bool
-    {
-        $this->values[$key] = $value;
-
-        return true;
-    }
-
-    public function delete(string $key): bool
-    {
-        unset($this->values[$key]);
-
-        return true;
-    }
-
-    public function clear(): bool
-    {
-        $this->values = [];
-
-        return true;
-    }
-
-    public function getMultiple(iterable $keys, mixed $default = null): iterable
-    {
-        $values = [];
-        foreach ($keys as $key) {
-            $values[$key] = $this->get($key, $default);
-        }
-
-        return $values;
-    }
-
-    public function setMultiple(iterable $values, int|DateInterval|null $ttl = null): bool
-    {
-        foreach ($values as $key => $value) {
-            $this->set($key, $value, $ttl);
-        }
-
-        return true;
-    }
-
-    public function deleteMultiple(iterable $keys): bool
-    {
-        foreach ($keys as $key) {
-            $this->delete($key);
-        }
-
-        return true;
-    }
-
-    public function has(string $key): bool
-    {
-        return array_key_exists($key, $this->values);
     }
 }

@@ -360,7 +360,7 @@ The PHP container owns CrawlerX execution and parsing. The `node` and
 selected strategy requires a browser or challenge solver.
 
 The fetch services publish loopback host ports by default. Set
-`CRAWLERX_NODE_HOST_PORT` (default `3000`), `FIXTURE_SITE_HOST_PORT` (default
+`PLAYWRIGHT_HOST_PORT` (default `3000`), `FIXTURE_SITE_HOST_PORT` (default
 `8080`), or `FLARESOLVERR_HOST_PORT` (default `8191`) to avoid a port already
 used by another stack. To disable host publishing, use the tracked
 `docker-compose.no-ports.yml` override when starting the lab, or pass it through
@@ -401,12 +401,11 @@ or custom-container integrations can use these environment variables:
 
 | Variable | Purpose |
 | --- | --- |
-| `CRAWLERX_NODE` | Node.js executable; defaults to `node` |
+| `PLAYWRIGHT_URL` | One Playwright container for this node |
+| `FLARESOLVERR_URL` | One FlareSolverr container for this node |
 | `CRAWLERX_PLAYWRIGHT_SCRIPT` | Path to `playwright-fetch.mjs` |
 | `CRAWLERX_PUPPETEER_SCRIPT` | Path to `puppeteer-stealth-fetch.mjs` |
 | `CRAWLERX_CURL_IMPERSONATE` | curl-impersonate executable |
-| `CRAWLERX_BROWSER_SERVICE_URL` | Remote Node browser service base URL |
-| `CRAWLERX_FLARESOLVERR_URL` | FlareSolverr API endpoint |
 
 ## Testing with Docker
 

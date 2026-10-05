@@ -50,8 +50,8 @@ jobs:
           docker compose -f docker-compose.yml -f docker-compose.fetch-lab.yml -f docker-compose.no-ports.yml --profile fetch run --rm
           --env CRAWLERX_FETCH_LAB=1
           --env CRAWLERX_FIXTURE_SITE_URL=http://fixture-site:8080
-          --env CRAWLERX_BROWSER_SERVICE_URL=http://node:3000
-          --env CRAWLERX_FLARESOLVERR_URL=http://flaresolverr:8191/v1
+          --env PLAYWRIGHT_URL=http://node:3000
+          --env FLARESOLVERR_URL=http://flaresolverr:8191/v1
           php ./vendor/bin/phpunit tests/Feature/FetchLab
 
       - name: Run Playwright version guard
