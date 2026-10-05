@@ -10,8 +10,8 @@ services:
       - crawlerx_node_modules:/app/node_modules
     environment:
       COMPOSER_CACHE_DIR: /tmp/composer-cache
-      CRAWLERX_FLARESOLVERR_URL: http://flaresolverr:8191/v1
-      CRAWLERX_BROWSER_SERVICE_URL: http://node:3000
+      FLARESOLVERR_URL: http://flaresolverr:8191/v1
+      PLAYWRIGHT_URL: http://node:3000
     user: "${DOCKER_UID:-0}:${DOCKER_GID:-0}"
     tty: true
 
@@ -24,16 +24,15 @@ services:
     image: jooservices/crawlerx:browser
     working_dir: /app
     environment:
-      CRAWLERX_NODE: node
       CRAWLERX_PLAYWRIGHT_SCRIPT: /app/scripts/playwright-fetch.mjs
-      CRAWLERX_BROWSER_SERVICE_PORT: 3000
+      PLAYWRIGHT_PORT: 3000
       CRAWLERX_BROWSER_ALLOWED_HOSTS: ${CRAWLERX_BROWSER_ALLOWED_HOSTS:-}
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
     profiles: ["fetch"]
     init: true
     command: ["node", "scripts/fetch-server.mjs"]
     ports:
-      - "127.0.0.1:${CRAWLERX_NODE_HOST_PORT:-3000}:3000"
+      - "127.0.0.1:${PLAYWRIGHT_HOST_PORT:-3000}:3000"
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 10s

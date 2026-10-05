@@ -25,15 +25,12 @@ use JOOservices\CrawlerX\Services\ClientFactory;
 use JOOservices\CrawlerX\Services\CrawlOrchestrator;
 use JOOservices\CrawlerX\Services\CrawlerXService;
 use JOOservices\CrawlerX\Services\UrlClassifier;
-use Psr\SimpleCache\CacheInterface;
 
 final class CrawlerXFactory
 {
     private static ?CrawlOrchestrator $orchestrator = null;
 
     private static ?FetchFallbackChain $fetchChain = null;
-
-    private static ?CacheInterface $sessionCache = null;
 
     private static ?LoginCookieProvider $loginCookieProvider = null;
 
@@ -65,11 +62,8 @@ final class CrawlerXFactory
         self::$orchestrator = null;
     }
 
-    public static function configure(
-        ?CacheInterface $cache = null,
-        ?LoginCookieProvider $logins = null,
-    ): void {
-        self::$sessionCache = $cache;
+    public static function configure(?LoginCookieProvider $logins = null): void
+    {
         self::$loginCookieProvider = $logins;
         self::$fetchChain = null;
         self::$orchestrator = null;
@@ -79,7 +73,6 @@ final class CrawlerXFactory
     {
         self::$orchestrator = null;
         self::$fetchChain = null;
-        self::$sessionCache = null;
         self::$loginCookieProvider = null;
     }
 
@@ -87,11 +80,11 @@ final class CrawlerXFactory
     {
         $runtime = FetchRuntimeConfig::fromEnvironment();
         $runner = new ProcOpenProcessRunner();
-        $browserRunner = $runtime->browserServiceUrl === null
+        $browserRunner = $runtime->playwrightUrl === null
             ? $runner
-            : new BrowserServiceProcessRunner($runtime->browserServiceUrl);
+            : new BrowserServiceProcessRunner($runtime->playwrightUrl);
         $cookies = new CookieHandoffStore();
-        $sessions = new SessionStore(self::$sessionCache, $runtime->nodeId);
+        $sessions = new SessionStore();
         $clientFactory = new ClientFactory();
 
         $playwright = new PlaywrightFamilyFetchHandler($runtime, $browserRunner);

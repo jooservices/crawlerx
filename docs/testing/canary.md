@@ -6,9 +6,8 @@ only be run with the owner's local `.env` present.
 Create the local file from `.env.example` and add only the owner-provided
 cookie values. `.env` is ignored by Git. The canary loads those values through
 the `LoginCookieProvider` contract; cookie values are not printed or stored in
-reports, snapshots, exceptions, or test output. Optional node identity and
-user-agent settings are read from `CRAWLERX_NODE`, `CRAWLERX_USER_AGENT`, and
-`CRAWLERX_USER_AGENT_POOL`.
+reports, snapshots, exceptions, or test output. User-agent settings are read
+from `CRAWLERX_USER_AGENT` and `CRAWLERX_USER_AGENT_POOL`.
 
 Run the complete canary with:
 
