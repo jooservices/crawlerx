@@ -81,6 +81,14 @@ final class FetchInfrastructureTest extends TestCase
         $faker = Factory::create();
         $flareUrl = 'http://' . $faker->domainName() . '/v1';
         $playwrightUrl = 'http://' . $faker->domainName() . ':3000';
+        $presetFlareUrl = 'http://' . $faker->domainName() . '/preset';
+        $presetPlaywrightUrl = 'http://' . $faker->domainName() . ':3001';
+        $environmentBeforePreset = [
+            'FLARESOLVERR_URL' => getenv('FLARESOLVERR_URL'),
+            'PLAYWRIGHT_URL' => getenv('PLAYWRIGHT_URL'),
+        ];
+        putenv('FLARESOLVERR_URL=' . $presetFlareUrl);
+        putenv('PLAYWRIGHT_URL=' . $presetPlaywrightUrl);
         $variables = [
             'CRAWLERX_NODE' => 'node-custom',
             'CRAWLERX_PLAYWRIGHT_SCRIPT' => '/tmp/playwright-custom.mjs',
@@ -91,6 +99,10 @@ final class FetchInfrastructureTest extends TestCase
             'FLARESOLVERR_URL' => $flareUrl,
             'PLAYWRIGHT_URL' => $playwrightUrl,
         ];
+        $originalEnvironment = [];
+        foreach (array_keys($variables) as $name) {
+            $originalEnvironment[$name] = getenv($name);
+        }
 
         try {
             foreach ($variables as $name => $value) {
@@ -104,9 +116,25 @@ final class FetchInfrastructureTest extends TestCase
             self::assertSame($flareUrl, $config->flaresolverrUrl);
             self::assertSame($playwrightUrl, $config->playwrightUrl);
         } finally {
-            foreach (array_keys($variables) as $name) {
-                putenv($name);
+            foreach ($originalEnvironment as $name => $value) {
+                if ($value === false) {
+                    putenv($name);
+                    continue;
+                }
+
+                putenv($name . '=' . $value);
             }
+        }
+
+        self::assertSame($presetFlareUrl, getenv('FLARESOLVERR_URL'));
+        self::assertSame($presetPlaywrightUrl, getenv('PLAYWRIGHT_URL'));
+        foreach ($environmentBeforePreset as $name => $value) {
+            if ($value === false) {
+                putenv($name);
+                continue;
+            }
+
+            putenv($name . '=' . $value);
         }
 
         $defaults = FetchRuntimeConfig::fromEnvironment('/package');
