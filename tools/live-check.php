@@ -485,11 +485,11 @@ function buildCanaryFetchChain(FetchTrace $trace, EnvLoginCookieProvider $loginP
 {
     $runtime = FetchRuntimeConfig::fromEnvironment();
     $runner = new ProcOpenProcessRunner();
-    $browserRunner = $runtime->browserServiceUrl === null
+    $browserRunner = $runtime->playwrightUrl === null
         ? $runner
-        : new BrowserServiceProcessRunner($runtime->browserServiceUrl);
+        : new BrowserServiceProcessRunner($runtime->playwrightUrl);
     $cookies = new CookieHandoffStore();
-    $sessions = new SessionStore(node: $runtime->nodeId);
+    $sessions = new SessionStore();
     $playwright = new PlaywrightFamilyFetchHandler($runtime, $browserRunner);
 
     $handlers = [

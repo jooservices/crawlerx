@@ -182,8 +182,8 @@ const child = spawn(process.env.PHP_BIN ?? 'php', phpArguments, {
     cwd: root,
     env: {
         ...process.env,
-        CRAWLERX_BROWSER_SERVICE_URL: process.env.CRAWLERX_BROWSER_SERVICE_URL ?? 'http://127.0.0.1:3000',
-        CRAWLERX_FLARESOLVERR_URL: process.env.CRAWLERX_FLARESOLVERR_URL ?? 'http://127.0.0.1:8191/v1',
+        PLAYWRIGHT_URL: process.env.PLAYWRIGHT_URL ?? 'http://127.0.0.1:3000',
+        FLARESOLVERR_URL: process.env.FLARESOLVERR_URL ?? 'http://127.0.0.1:8191/v1',
     },
     stdio: ['ignore', 'pipe', 'inherit'],
 });
