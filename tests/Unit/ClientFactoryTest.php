@@ -44,6 +44,38 @@ final class ClientFactoryTest extends TestCase
         self::assertSame(0.25, $config->timeout);
     }
 
+    public function test_configures_connect_timeout_and_compression_by_default(): void
+    {
+        $config = $this->clientConfig([]);
+
+        self::assertSame(5.0, $config->connectTimeout);
+        self::assertTrue($config->compression);
+    }
+
+    public function test_keeps_request_headers_out_of_client_configuration(): void
+    {
+        $config = $this->clientConfig([
+            'headers' => ['Cookie' => 'session=private'],
+        ]);
+
+        self::assertSame([], $config->headers);
+    }
+
+    public function test_reuses_clients_for_matching_site_and_base_uri_options(): void
+    {
+        $factory = new ClientFactory();
+        $baseOptions = ['base_uri' => 'https://example.test/api/'];
+        $first = $this->httpClient($factory->factory($baseOptions, 'example-site'));
+        $sameOptions = $this->httpClient($factory->factory($baseOptions, 'example-site'));
+        $differentBaseUri = $this->httpClient($factory->factory(
+            ['base_uri' => 'https://example.test/v2/'],
+            'example-site',
+        ));
+
+        self::assertSame($first, $sameOptions);
+        self::assertNotSame($first, $differentBaseUri);
+    }
+
     public function test_enforces_timeout_against_a_slow_local_endpoint(): void
     {
         $directory = sys_get_temp_dir() . '/crawlerx-client-timeout-' . bin2hex(random_bytes(6));
@@ -161,13 +193,22 @@ final class ClientFactoryTest extends TestCase
         $client = (new ClientFactory())->factory($options);
         self::assertInstanceOf(ClientCrawlHttpClient::class, $client);
 
-        $httpClient = (new \ReflectionProperty(ClientCrawlHttpClient::class, 'httpClient'))->getValue($client);
-        self::assertInstanceOf(HttpClient::class, $httpClient);
+        $httpClient = $this->httpClient($client);
 
         $config = (new \ReflectionProperty(HttpClient::class, 'config'))->getValue($httpClient);
         self::assertInstanceOf(ClientConfig::class, $config);
 
         return $config;
+    }
+
+    private function httpClient(\JOOservices\CrawlerX\Contracts\CrawlHttpClient $client): HttpClient
+    {
+        self::assertInstanceOf(ClientCrawlHttpClient::class, $client);
+
+        $httpClient = (new \ReflectionProperty(ClientCrawlHttpClient::class, 'httpClient'))->getValue($client);
+        self::assertInstanceOf(HttpClient::class, $httpClient);
+
+        return $httpClient;
     }
 
     private function freePort(): int

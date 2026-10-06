@@ -1,16 +1,20 @@
 #!/usr/bin/env node
 
 import { createServer } from 'node:http';
+import { gzipSync } from 'node:zlib';
 
 const port = Number.parseInt(process.env.PORT ?? '8080', 10);
 const hits = new Map();
+const connections = new Map();
+const socketIds = new WeakMap();
+let nextSocketId = 1;
 
 function routeKey(pathname) {
     if (/^\/static\/movie\/[^/]+$/.test(pathname)) return '/static/movie/:id';
     if (/^\/js\/movie\/[^/]+$/.test(pathname)) return '/js/movie/:id';
     if (/^\/js-slow\/movie\/[^/]+$/.test(pathname)) return '/js-slow/movie/:id';
     if (/^\/soft404\/[^/]+$/.test(pathname)) return '/soft404/:id';
-    if (/^\/(?:ready|shell|drift|images|cf-bound|login-wall|flaky)\/movie?\/?[^/]*$/.test(pathname)) return pathname.split('/').slice(0, 3).join('/') + '/:id';
+    if (/^\/(?:ready|shell|drift|images|cf-bound|login-wall|flaky|gzip)\/movie?\/?[^/]*$/.test(pathname)) return pathname.split('/').slice(0, 3).join('/') + '/:id';
     if (/^\/flaky\/[^/]+$/.test(pathname)) return '/flaky/:id';
     if (/^\/status\/\d+$/.test(pathname)) return '/status/:code';
     if (/^\/ua-check\/[^/]+$/.test(pathname)) return '/ua-check/:id';
@@ -18,9 +22,22 @@ function routeKey(pathname) {
     return pathname;
 }
 
-function count(pathname) {
+function connectionId(socket) {
+    let id = socketIds.get(socket);
+    if (id === undefined) {
+        id = nextSocketId++;
+        socketIds.set(socket, id);
+    }
+
+    return id;
+}
+
+function count(pathname, socketId) {
     const key = routeKey(pathname);
     hits.set(key, (hits.get(key) ?? 0) + 1);
+    const routeConnections = connections.get(key) ?? new Set();
+    routeConnections.add(socketId);
+    connections.set(key, routeConnections);
 }
 
 function send(response, status, body, headers = {}) {
@@ -48,12 +65,19 @@ const server = createServer((request, response) => {
 
     if (request.method === 'POST' && url.pathname === '/__reset') {
         hits.clear();
+        connections.clear();
         send(response, 200, JSON.stringify({ ok: true }), { 'Content-Type': 'application/json' });
         return;
     }
 
     if (request.method === 'GET' && url.pathname === '/__hits') {
-        send(response, 200, JSON.stringify(Object.fromEntries(hits)), { 'Content-Type': 'application/json' });
+        const result = url.searchParams.has('connections')
+            ? {
+                hits: Object.fromEntries(hits),
+                connections: Object.fromEntries([...connections].map(([path, ids]) => [path, [...ids]])),
+            }
+            : Object.fromEntries(hits);
+        send(response, 200, JSON.stringify(result), { 'Content-Type': 'application/json' });
         return;
     }
 
@@ -91,7 +115,7 @@ const server = createServer((request, response) => {
         return;
     }
 
-    count(url.pathname);
+    count(url.pathname, connectionId(request.socket));
 
     if (url.pathname === '/redirect/loopback') {
         const port = Number.parseInt(url.searchParams.get('port') ?? '', 10);
@@ -142,6 +166,17 @@ const server = createServer((request, response) => {
     const staticMatch = url.pathname.match(/^\/static\/movie\/([^/]+)$/);
     if (staticMatch) {
         send(response, 200, moviePage(decodeURIComponent(staticMatch[1]), '<p id="movie">static movie</p>'));
+        return;
+    }
+
+    const gzipMatch = url.pathname.match(/^\/gzip\/movie\/([^/]+)$/);
+    if (gzipMatch) {
+        const body = Buffer.from(moviePage(gzipMatch[1], `<p id="movie">gzip movie ${gzipMatch[1]}</p>`));
+        const compressed = gzipSync(body);
+        send(response, 200, compressed, {
+            'Content-Encoding': 'gzip',
+            'Content-Length': String(compressed.byteLength),
+        });
         return;
     }
 
