@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Tests\Feature;
 
+use Closure;
 use JOOservices\CrawlerX\Contracts\FetchMethodHandler;
 use JOOservices\CrawlerX\CrawlerX;
 use JOOservices\CrawlerX\CrawlerXFactory;
@@ -150,6 +151,32 @@ final class FetchFallbackCrawlTest extends TestCase
         self::assertSame([FetchMethod::Http], $handler->attempts);
     }
 
+    public function test_http_transient_retry_stops_when_backoff_exhausts_the_remaining_budget(): void
+    {
+        $handler = $this->handler(static fn(FetchMethod $method, string $url): FetchResultDto => new FetchResultDto(
+            ok: false,
+            body: '',
+            status: 502,
+            methodUsed: $method,
+            elapsedMs: 1,
+            challengeDetected: false,
+            finalUrl: $url,
+            error: 'unusable HTTP body',
+        ));
+        $this->useHandler($handler, [FetchMethod::Http], static function (int $microseconds): void {
+            usleep($microseconds + 1_600_000);
+        });
+
+        $outcome = CrawlerX::url('https://onejav.com/torrent/ymds282')->options(new CrawlOptionsDto(
+            fetch: new FetchOptionsDto(chain: new FetchChainDto([FetchMethod::Http]), deadlineSeconds: 3),
+        ))->tryCrawl();
+
+        self::assertTrue($outcome->failed());
+        self::assertSame(CrawlErrorCode::Network, $outcome->error?->code);
+        self::assertCount(1, $outcome->error?->fetch?->attempts ?? []);
+        self::assertSame([FetchMethod::Http], $handler->attempts);
+    }
+
     public function test_http_handler_exception_falls_back_to_the_next_method(): void
     {
         $body = $this->loadFixture('jable/detail-fjin-091.html');
@@ -187,6 +214,39 @@ final class FetchFallbackCrawlTest extends TestCase
         self::assertCount(1, $attempts);
         self::assertSame('fetch_error', $attempts[0]['error'] ?? null);
         self::assertStringNotContainsString('private transport diagnostic', serialize($attempts));
+        self::assertStringNotContainsString('synthetic', serialize($attempts));
+    }
+
+    public function test_retry_exception_text_is_redacted_from_fetch_attempts(): void
+    {
+        $calls = 0;
+        $handler = $this->handler(static function (FetchMethod $method, string $url) use (&$calls): FetchResultDto {
+            if (++$calls > 1) {
+                throw new \RuntimeException('private retry diagnostic token=synthetic');
+            }
+
+            return new FetchResultDto(
+                ok: false,
+                body: '',
+                status: 502,
+                methodUsed: $method,
+                elapsedMs: 1,
+                challengeDetected: false,
+                finalUrl: $url,
+                error: 'unusable HTTP body',
+            );
+        });
+        $this->useHandler($handler, [FetchMethod::Http]);
+
+        $outcome = CrawlerX::url('https://onejav.com/torrent/ymds282')->options(new CrawlOptionsDto(
+            fetch: new FetchOptionsDto(chain: new FetchChainDto([FetchMethod::Http])),
+        ))->tryCrawl();
+
+        self::assertTrue($outcome->failed());
+        $attempts = $outcome->error?->fetch?->attempts ?? [];
+        self::assertCount(2, $attempts);
+        self::assertSame('fetch_error', $attempts[1]['error'] ?? null);
+        self::assertStringNotContainsString('private retry diagnostic', serialize($attempts));
         self::assertStringNotContainsString('synthetic', serialize($attempts));
     }
 
@@ -253,13 +313,13 @@ final class FetchFallbackCrawlTest extends TestCase
     }
 
     /** @param list<FetchMethod> $methods */
-    private function useHandler(FetchMethodHandler $handler, array $methods): void
+    private function useHandler(FetchMethodHandler $handler, array $methods, ?Closure $retrySleeper = null): void
     {
         $handlers = [];
         foreach ($methods as $method) {
             $handlers[$method->value] = $handler;
         }
-        CrawlerXFactory::useFetchChain(new FetchFallbackChain($handlers));
+        CrawlerXFactory::useFetchChain(new FetchFallbackChain($handlers, retrySleeper: $retrySleeper));
     }
 
     private static function success(FetchMethod $method, string $body, string $url): FetchResultDto

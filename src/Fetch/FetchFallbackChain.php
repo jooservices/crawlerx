@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Fetch;
 
+use Closure;
 use JOOservices\CrawlerX\Contracts\FetchMethodHandler;
 use JOOservices\CrawlerX\Contracts\LoginCookieProvider;
 use JOOservices\CrawlerX\Dto\CrawlOptionsDto;
@@ -30,8 +31,12 @@ final class FetchFallbackChain
 
     private readonly ?FetchRuntimeConfig $runtime;
 
+    /** @var Closure(int): void */
+    private readonly Closure $retrySleeper;
+
     /**
      * @param  array<string, FetchMethodHandler>  $handlers
+     * @param  Closure(int): void|null  $retrySleeper
      */
     public function __construct(
         private readonly array $handlers,
@@ -39,10 +44,14 @@ final class FetchFallbackChain
         ?SessionStore $sessions = null,
         ?LoginCookieProvider $logins = null,
         ?FetchRuntimeConfig $runtime = null,
+        ?Closure $retrySleeper = null,
     ) {
         $this->sessions = $sessions ?? new SessionStore();
         $this->logins = $logins;
         $this->runtime = $runtime;
+        $this->retrySleeper = $retrySleeper ?? static function (int $microseconds): void {
+            usleep($microseconds);
+        };
     }
 
     /**
@@ -129,7 +138,7 @@ final class FetchFallbackChain
                     break;
                 }
 
-                usleep((int) round($delay * 1_000_000));
+                ($this->retrySleeper)((int) round($delay * 1_000_000));
                 if (! $budget->canStart($method)) {
                     break;
                 }
