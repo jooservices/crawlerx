@@ -45,7 +45,7 @@ final class FetchLabTest extends TestCase
     {
         $result = (new PlaywrightFamilyFetchHandler(
             $this->runtime(),
-            new BrowserServiceProcessRunner($this->browserServiceUrl()),
+            new BrowserServiceProcessRunner($this->playwrightUrl()),
         ))->fetch(
             $this->fixtureUrl('/js/movie/TC-M02'),
             $this->profile(playwright: new PlaywrightProfileDto(postWaitMs: 750)),
@@ -60,7 +60,7 @@ final class FetchLabTest extends TestCase
     {
         $result = (new PlaywrightFamilyFetchHandler(
             $this->runtime(),
-            new BrowserServiceProcessRunner($this->browserServiceUrl()),
+            new BrowserServiceProcessRunner($this->playwrightUrl()),
         ))->fetch(
             $this->fixtureUrl('/ua-check/TC-M03'),
             $this->profile(),
@@ -75,7 +75,7 @@ final class FetchLabTest extends TestCase
     {
         $result = (new PuppeteerStealthFetchHandler(
             $this->runtime(),
-            new BrowserServiceProcessRunner($this->browserServiceUrl()),
+            new BrowserServiceProcessRunner($this->playwrightUrl()),
         ))->fetch(
             $this->fixtureUrl('/js/movie/TC-M04'),
             $this->profile(playwright: new PlaywrightProfileDto(postWaitMs: 750)),
@@ -114,7 +114,7 @@ final class FetchLabTest extends TestCase
     {
         $result = (new PlaywrightFamilyFetchHandler(
             $this->runtime(),
-            new BrowserServiceProcessRunner($this->browserServiceUrl()),
+            new BrowserServiceProcessRunner($this->playwrightUrl()),
         ))->fetch(
             $this->fixtureUrl('/challenge'),
             $this->profile(),
@@ -156,9 +156,9 @@ final class FetchLabTest extends TestCase
         return rtrim((string) (getenv('CRAWLERX_FIXTURE_SITE_URL') ?: $default), '/') . $path;
     }
 
-    private function browserServiceUrl(): string
+    private function playwrightUrl(): string
     {
-        return (string) (getenv('CRAWLERX_BROWSER_SERVICE_URL') ?: 'http://127.0.0.1:3000');
+        return (string) (getenv('PLAYWRIGHT_URL') ?: 'http://127.0.0.1:3000');
     }
 
     private function runtime(): FetchRuntimeConfig
@@ -166,11 +166,10 @@ final class FetchLabTest extends TestCase
         $root = dirname(__DIR__, 3);
 
         return new FetchRuntimeConfig(
-            nodeBinary: (string) (getenv('CRAWLERX_NODE') ?: 'node'),
             playwrightScript: (string) (getenv('CRAWLERX_PLAYWRIGHT_SCRIPT') ?: $root . '/scripts/playwright-fetch.mjs'),
             puppeteerScript: (string) (getenv('CRAWLERX_PUPPETEER_SCRIPT') ?: $root . '/scripts/puppeteer-stealth-fetch.mjs'),
-            flaresolverrUrl: (string) (getenv('CRAWLERX_FLARESOLVERR_URL') ?: 'http://127.0.0.1:8191/v1'),
-            browserServiceUrl: $this->browserServiceUrl(),
+            flaresolverrUrl: (string) (getenv('FLARESOLVERR_URL') ?: 'http://127.0.0.1:8191/v1'),
+            playwrightUrl: $this->playwrightUrl(),
         );
     }
 

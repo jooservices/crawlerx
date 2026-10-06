@@ -6,7 +6,6 @@ namespace JOOservices\CrawlerX\Fetch\Session;
 
 use Closure;
 use JOOservices\CrawlerX\Dto\FetchResultDto;
-use Psr\SimpleCache\CacheInterface;
 
 final class SessionStore
 {
@@ -19,38 +18,24 @@ final class SessionStore
     private readonly Closure $clock;
 
     /** @param Closure(): int|null $clock */
-    public function __construct(
-        private readonly ?CacheInterface $cache = null,
-        ?string $node = null,
-        ?Closure $clock = null,
-    ) {
-        if ($node !== null && trim($node) !== '') {
-            $this->node = trim($node);
-        } else {
-            $hostname = gethostname();
-            $this->node = is_string($hostname) && $hostname !== '' ? $hostname : 'unknown';
-        }
+    public function __construct(?Closure $clock = null)
+    {
         $this->clock = $clock ?? static fn(): int => time();
     }
 
-    private readonly string $node;
-
     public function key(string $site): string
     {
-        return 'crawlerx:session:' . strtolower(trim($site)) . ':' . $this->node;
+        return 'crawlerx:session:' . strtolower(trim($site));
     }
 
     /** @return array{cookies: array<string, string>, userAgent: ?string, source: string, expiresAt: int, storageState: array<string, mixed>|null, challengeCount: int}|null */
     public function get(string $site): ?array
     {
         $key = $this->key($site);
-        $value = $this->cache?->get($key);
-        if ($this->cache === null) {
-            $value = $this->memory[$key]['record'] ?? null;
-            if ($value !== null && $this->memory[$key]['expires_at'] <= $this->now()) {
-                unset($this->memory[$key]);
-                $value = null;
-            }
+        $value = $this->memory[$key]['record'] ?? null;
+        if ($value !== null && $this->memory[$key]['expires_at'] <= $this->now()) {
+            unset($this->memory[$key]);
+            $value = null;
         }
 
         if (! is_array($value) || ! is_array($value['cookies'] ?? null) || ! is_string($value['source'] ?? null)) {
@@ -114,13 +99,7 @@ final class SessionStore
             'storageState' => $storageState,
             'challengeCount' => max(0, $challengeCount),
         ];
-        $ttl = max(1, $expiresAt - $now);
         $key = $this->key($site);
-
-        if ($this->cache !== null && $this->cache->set($key, $record, $ttl)) {
-            return;
-        }
-
         $this->memory[$key] = ['record' => $record, 'expires_at' => $expiresAt];
     }
 
@@ -154,9 +133,7 @@ final class SessionStore
 
     public function forget(string $site): void
     {
-        $key = $this->key($site);
-        $this->cache?->delete($key);
-        unset($this->memory[$key]);
+        unset($this->memory[$this->key($site)]);
     }
 
     /**

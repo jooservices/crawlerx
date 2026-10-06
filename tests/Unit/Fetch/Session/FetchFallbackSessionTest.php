@@ -53,7 +53,7 @@ final class FetchFallbackSessionTest extends TestCase
         });
         $chain = new FetchFallbackChain(
             [FetchMethod::Http->value => $http, FetchMethod::Flaresolverr->value => $flare],
-            sessions: new SessionStore(node: 'node-a'),
+            sessions: new SessionStore(),
             runtime: new FetchRuntimeConfig(userAgent: 'Base-UA', userAgentPool: ['Base-UA']),
         );
 
@@ -70,7 +70,7 @@ final class FetchFallbackSessionTest extends TestCase
 
     public function test_tc_se_02_wrong_replayed_ua_forgets_the_session_and_resolves_again(): void
     {
-        $store = new SessionStore(node: 'node-a');
+        $store = new SessionStore();
         $store->put('fixture', ['cf_clearance' => 'old-token'], 'Old-UA', 'flaresolverr');
         $http = new RecordingHandler(FetchMethod::Http, function (SiteProfileDto $profile, FetchMethod $method, string $url): FetchResultDto {
             $valid = ($profile->http->headers['Cookie'] ?? '') === 'cf_clearance=new-token'
@@ -148,7 +148,7 @@ final class FetchFallbackSessionTest extends TestCase
 
     public function test_storage_state_is_passed_to_the_browser_step(): void
     {
-        $store = new SessionStore(node: 'node-a');
+        $store = new SessionStore();
         $store->put('fixture', [], 'Fixture-UA', 'playwright', null, [
             'cookies' => [['name' => 'session', 'value' => 'value']],
             'origins' => [],
@@ -212,7 +212,7 @@ final class FetchFallbackSessionTest extends TestCase
 
             $server = $this->startServer($router, $directory, $readinessToken);
             $port = $server['port'];
-            $sessions = new SessionStore(node: 'node-a');
+            $sessions = new SessionStore();
             $sessions->put('fixture', ['session_cookie' => $sessionCookie], 'Session-UA', 'manual');
             $cookieHandoff = new CookieHandoffStore();
             $http = new HttpFetchHandler(new ClientFactory(), $cookieHandoff, $sessions);

@@ -36,9 +36,9 @@ if ($url === '' || $method === null) {
 
 $runtime = FetchRuntimeConfig::fromEnvironment();
 $processRunner = new ProcOpenProcessRunner();
-$browserRunner = $runtime->browserServiceUrl === null
+$browserRunner = $runtime->playwrightUrl === null
     ? $processRunner
-    : new BrowserServiceProcessRunner($runtime->browserServiceUrl);
+    : new BrowserServiceProcessRunner($runtime->playwrightUrl);
 $profile = new SiteProfileDto(
     slug: 'benchmark',
     displayName: 'CrawlerX benchmark',

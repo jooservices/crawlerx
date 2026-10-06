@@ -162,7 +162,7 @@ final class FetchStrategyLabTest extends TestCase
     {
         $runtime = $this->runtime();
         $runner = new ProcOpenProcessRunner();
-        $browserRunner = new BrowserServiceProcessRunner($this->browserServiceUrl());
+        $browserRunner = new BrowserServiceProcessRunner($this->playwrightUrl());
         $cookies = new CookieHandoffStore();
 
         return new FetchFallbackChain([
@@ -203,11 +203,10 @@ final class FetchStrategyLabTest extends TestCase
         $root = dirname(__DIR__, 3);
 
         return new FetchRuntimeConfig(
-            nodeBinary: (string) (getenv('CRAWLERX_NODE') ?: 'node'),
             playwrightScript: (string) (getenv('CRAWLERX_PLAYWRIGHT_SCRIPT') ?: $root . '/scripts/playwright-fetch.mjs'),
             puppeteerScript: (string) (getenv('CRAWLERX_PUPPETEER_SCRIPT') ?: $root . '/scripts/puppeteer-stealth-fetch.mjs'),
-            flaresolverrUrl: (string) (getenv('CRAWLERX_FLARESOLVERR_URL') ?: $this->fixtureUrl('/__flare/v1')),
-            browserServiceUrl: $this->browserServiceUrl(),
+            flaresolverrUrl: (string) (getenv('FLARESOLVERR_URL') ?: $this->fixtureUrl('/__flare/v1')),
+            playwrightUrl: $this->playwrightUrl(),
         );
     }
 
@@ -218,8 +217,8 @@ final class FetchStrategyLabTest extends TestCase
         return rtrim((string) (getenv('CRAWLERX_FIXTURE_SITE_URL') ?: $default), '/') . $path;
     }
 
-    private function browserServiceUrl(): string
+    private function playwrightUrl(): string
     {
-        return (string) (getenv('CRAWLERX_BROWSER_SERVICE_URL') ?: 'http://127.0.0.1:3000');
+        return (string) (getenv('PLAYWRIGHT_URL') ?: 'http://127.0.0.1:3000');
     }
 }

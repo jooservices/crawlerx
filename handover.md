@@ -118,7 +118,7 @@ From `src/Adapters/{Site}/manifest.json` flag `runtime.playwrightFetchEnabled`:
 | `playwright_stealth` | same | `stealthLevel: enhanced` |
 | `chrome_stealth` | same | `headless: false` |
 | `puppeteer_stealth` | `PuppeteerStealthFetchHandler` | `scripts/puppeteer-stealth-fetch.mjs` + puppeteer-extra (optional) |
-| `flaresolverr` | `FlaresolverrFetchHandler` | `CRAWLERX_FLARESOLVERR_URL` POST `/v1` |
+| `flaresolverr` | `FlaresolverrFetchHandler` | `FLARESOLVERR_URL` POST `/v1` |
 
 A method **fails** (next tier) on: HTTP 403/503, CF challenge body/title, empty/unusable body, timeout, missing binary/script, sidecar `challenge: true`.
 
@@ -147,11 +147,11 @@ SeededCrawlHttpClient(inner HTTP, FetchResultDto)
 
 | Env | Meaning |
 |-----|---------|
-| `CRAWLERX_NODE` | Node binary (default `node`) |
+| `PLAYWRIGHT_URL` | One Playwright container. Empty runs `node` on PATH |
+| `FLARESOLVERR_URL` | One FlareSolverr container |
 | `CRAWLERX_PLAYWRIGHT_SCRIPT` | Default `scripts/playwright-fetch.mjs` |
 | `CRAWLERX_PUPPETEER_SCRIPT` | Default `scripts/puppeteer-stealth-fetch.mjs` |
 | `CRAWLERX_CURL_IMPERSONATE` | curl-impersonate binary |
-| `CRAWLERX_FLARESOLVERR_URL` | FlareSolverr endpoint |
 
 ### 3.5 Key classes
 
@@ -334,7 +334,7 @@ Do **not** restore `<directory>tests/Unit</directory>` under Feature. That was t
 ### P2 — Production crawl of browser sites
 
 - Local: `npx playwright install chromium`, then `CrawlerX::url('https://en.jable.tv/videos/fjin-091/')->crawl()` **without** fake
-- Optional: FlareSolverr via compose + `CRAWLERX_FLARESOLVERR_URL`
+- Optional: FlareSolverr via compose + `FLARESOLVERR_URL`
 - Optional: curl-impersonate binary for M1
 - Chrome-stealth needs a display (or Xvfb in the node image)
 

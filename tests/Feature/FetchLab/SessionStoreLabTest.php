@@ -40,7 +40,7 @@ final class SessionStoreLabTest extends TestCase
     public function test_tc_se_01_flare_solution_is_replayed_by_five_http_fetches(): void
     {
         $flareCalls = 0;
-        $chain = $this->chain(new SessionStore(node: 'node-a'), new class ($flareCalls) implements ClientInterface {
+        $chain = $this->chain(new SessionStore(), new class ($flareCalls) implements ClientInterface {
             public function __construct(private int &$calls)
             {
             }
@@ -74,7 +74,7 @@ final class SessionStoreLabTest extends TestCase
 
     public function test_tc_se_02_wrong_session_is_forgotten_before_a_new_flare_solve(): void
     {
-        $sessions = new SessionStore(node: 'node-a');
+        $sessions = new SessionStore();
         $sessions->put('fetch-lab', ['cf_clearance' => 'wrong'], 'Wrong-UA', 'flaresolverr');
         $flareCalls = 0;
         $chain = $this->chain($sessions, new class ($flareCalls) implements ClientInterface {
@@ -117,14 +117,14 @@ final class SessionStoreLabTest extends TestCase
                 return ['remember_token' => $this->token];
             }
         };
-        $chain = $this->chain(new SessionStore(node: 'node-a'), $this->nullClient(), $provider);
+        $chain = $this->chain(new SessionStore(), $this->nullClient(), $provider);
 
         self::assertTrue($chain->fetch($this->fixtureUrl('/login-wall/TC-SE-06'), $this->profile(), [FetchMethod::Http])->ok);
     }
 
     public function test_tc_se_07_missing_provider_cookie_is_auth_required(): void
     {
-        $chain = $this->chain(new SessionStore(node: 'node-a'), $this->nullClient());
+        $chain = $this->chain(new SessionStore(), $this->nullClient());
 
         try {
             $chain->fetch($this->fixtureUrl('/login-wall/TC-SE-07'), $this->profile(), [FetchMethod::Http]);

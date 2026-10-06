@@ -39,7 +39,7 @@ final class FetchFallbackChain
         ?LoginCookieProvider $logins = null,
         ?FetchRuntimeConfig $runtime = null,
     ) {
-        $this->sessions = $sessions ?? new SessionStore(node: $runtime?->nodeId);
+        $this->sessions = $sessions ?? new SessionStore();
         $this->logins = $logins;
         $this->runtime = $runtime;
     }

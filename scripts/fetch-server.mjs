@@ -10,7 +10,7 @@ import { fetchWithBrowser } from './playwright-fetch.mjs';
 import { assertSafeBrowserUrl, SsrfBlockedError } from './ssrf-guard.mjs';
 
 const root = resolve(import.meta.dirname, '..');
-const port = Number.parseInt(process.env.CRAWLERX_BROWSER_SERVICE_PORT ?? '3000', 10);
+const port = Number.parseInt(process.env.PLAYWRIGHT_PORT ?? '3000', 10);
 const maxRequestBytes = 1024 * 1024;
 const maxConcurrency = positiveInteger(process.env.CRAWLERX_BROWSER_MAX_CONCURRENCY, 2);
 const maxQueue = nonNegativeInteger(process.env.CRAWLERX_BROWSER_MAX_QUEUE, 8);

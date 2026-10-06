@@ -42,7 +42,7 @@ final class FlaresolverrFetchHandler implements FetchMethodHandler
         $started = (int) round(microtime(true) * 1000);
         $endpoint = $this->runtime->flaresolverrUrl;
         if ($endpoint === null || $endpoint === '') {
-            return $this->fail($method, $started, $url, 'CRAWLERX_FLARESOLVERR_URL is not set');
+            return $this->fail($method, $started, $url, 'FLARESOLVERR_URL is not set');
         }
 
         $httpOptions = $options?->http;

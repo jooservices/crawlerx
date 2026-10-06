@@ -40,7 +40,7 @@ async function startService(options = {}) {
         cwd: root,
         env: {
             ...process.env,
-            CRAWLERX_BROWSER_SERVICE_PORT: String(port),
+            PLAYWRIGHT_PORT: String(port),
             CRAWLERX_BROWSER_MAX_CONCURRENCY: '1',
             CRAWLERX_BROWSER_MAX_QUEUE: '2',
             ...options,

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Tests\Unit\Tools;
 
 use JOOservices\CrawlerX\Tools\Canary\Env;
+use JOOservices\CrawlerX\Tools\Canary\LoginCookiePolicy;
 use JOOservices\CrawlerX\Tools\Canary\Redactor;
 use JOOservices\CrawlerX\Tools\Canary\RequiredFields;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
@@ -13,6 +14,7 @@ use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
 use PHPUnit\Framework\TestCase;
 
 require_once __DIR__ . '/../../../tools/canary/Env.php';
+require_once __DIR__ . '/../../../tools/canary/LoginCookiePolicy.php';
 require_once __DIR__ . '/../../../tools/canary/Redactor.php';
 require_once __DIR__ . '/../../../tools/canary/RequiredFields.php';
 
@@ -22,6 +24,12 @@ final class CanaryToolsTest extends TestCase
     {
         self::assertNull(Env::cookieForSite('avfan', ['CRAWLERX_COOKIE_AVFAN' => '']));
         self::assertNull(Env::cookieForSite('avfan', []));
+    }
+
+    public function test_avfan_profiles_canary_does_not_require_a_login_cookie(): void
+    {
+        self::assertTrue(LoginCookiePolicy::isRequired('avfan'));
+        self::assertFalse(LoginCookiePolicy::isRequired('avfan_profiles'));
     }
 
     public function test_tc_cn_03_cookie_value_is_redacted(): void
