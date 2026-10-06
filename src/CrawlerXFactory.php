@@ -10,6 +10,7 @@ use JOOservices\CrawlerX\Fetch\BrowserServiceProcessRunner;
 use JOOservices\CrawlerX\Fetch\FetchFallbackChain;
 use JOOservices\CrawlerX\Fetch\FetchPlanResolver;
 use JOOservices\CrawlerX\Fetch\FetchRuntimeConfig;
+use JOOservices\CrawlerX\Fetch\Guard\HostCircuit;
 use JOOservices\CrawlerX\Fetch\Guard\HostThrottle;
 use JOOservices\CrawlerX\Fetch\Handlers\CurlImpersonateFetchHandler;
 use JOOservices\CrawlerX\Fetch\Handlers\FlaresolverrFetchHandler;
@@ -104,6 +105,9 @@ final class CrawlerXFactory
             FetchMethod::PuppeteerStealth->value => new PuppeteerStealthFetchHandler($runtime, $browserRunner),
             FetchMethod::Flaresolverr->value => new FlaresolverrFetchHandler($runtime, null, $sessions, self::$loginCookieProvider),
         ], $cookies, $sessions, self::$loginCookieProvider, $runtime, hostThrottle: new HostThrottle(
+            cache: self::$throttleCache,
+            nodeId: $runtime->nodeId,
+        ), hostCircuit: new HostCircuit(
             cache: self::$throttleCache,
             nodeId: $runtime->nodeId,
         ));

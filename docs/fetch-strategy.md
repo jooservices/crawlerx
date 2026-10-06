@@ -78,6 +78,13 @@ namespaced hash so they stay within PSR-16's portable key rules. PSR-16 has no
 atomic reservation operation, so closely concurrent workers may occasionally
 start within the same interval. See the [PSR-16 key and method requirements](https://www.php-fig.org/psr/psr-16/).
 
+The same configuration shares the per-host circuit state across workers on a
+node. Ten consecutive non-terminal fetch failures open the circuit for five
+minutes. The first request after that interval is a half-open probe; an
+additional request waits for its 30-second probe lease. An open circuit returns
+retryable `rate_limited` with the remaining time in `Retry-After`. Circuit cache
+failures fall back to worker-local state.
+
 ## Budgets
 
 The default total budget is 150 seconds. Individual method caps are 20 seconds
