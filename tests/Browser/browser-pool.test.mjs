@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { spawn } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { promisify } from 'node:util';
 
@@ -30,6 +30,40 @@ async function waitFor(predicate, timeoutMs = 10000) {
         await new Promise((resolve) => setTimeout(resolve, 50));
     }
     throw new Error('Timed out waiting for browser service');
+}
+
+async function findBrowserChildPid(parentPid) {
+    const marker = '--disable-blink-features=AutomationControlled';
+    if (existsSync('/proc')) {
+        for (const entry of readdirSync('/proc')) {
+            if (!/^\d+$/.test(entry)) continue;
+            try {
+                const stat = readFileSync(`/proc/${entry}/stat`, 'utf8');
+                const fields = stat.slice(stat.lastIndexOf(')') + 2).split(/\s+/);
+                const command = readFileSync(`/proc/${entry}/cmdline`, 'utf8');
+                if (Number(fields[1]) === parentPid && command.includes(marker)) {
+                    return Number(entry);
+                }
+            } catch {
+                // The process can exit between reading /proc entries.
+            }
+        }
+        return null;
+    }
+
+    try {
+        const { stdout } = await execFileAsync('ps', ['-axo', 'pid=,ppid=,command=']);
+        for (const line of stdout.split('\n')) {
+            const match = line.trim().match(/^(\d+)\s+(\d+)\s+(.*)$/);
+            if (match && Number(match[2]) === parentPid && match[3].includes(marker)) {
+                return Number(match[1]);
+            }
+        }
+    } catch (error) {
+        if (error?.code !== 'ENOENT') throw error;
+    }
+
+    return null;
 }
 
 async function startService(options = {}) {
@@ -169,24 +203,12 @@ test('TC-BR-03 relaunches when Chromium disconnects', async (t) => {
     const service = await startService({ CRAWLERX_BROWSER_MAX_REQUESTS: '50' });
     try {
         assert.equal((await fetchBrowser(service, { url: `${fixtureSite}/static/movie/br03-a` })).payload.exitCode, 0);
-        let stdout;
-        try {
-            ({ stdout } = await execFileAsync('ps', ['-axo', 'pid=,ppid=,command=']));
-        } catch (error) {
-            if (error?.code === 'ENOENT') {
-                t.skip('ps is not installed in this browser test image');
-                return;
-            }
-            throw error;
-        }
-        const browserProcess = stdout.split('\n').map((line) => line.trim()).find((line) => (
-            line.includes('--disable-blink-features=AutomationControlled') && line.split(/\s+/)[1] === String(service.child.pid)
-        ));
-        if (!browserProcess) {
+        const browserPid = await findBrowserChildPid(service.child.pid);
+        if (browserPid === null) {
             t.skip('Chromium child process was not visible to the test process');
             return;
         }
-        process.kill(Number.parseInt(browserProcess.split(/\s+/)[0], 10), 'SIGKILL');
+        process.kill(browserPid, 'SIGKILL');
         await waitFor(() => service.stdout.join('').includes('"event":"browser_crash"'));
         const { payload } = await fetchBrowser(service, { url: `${fixtureSite}/static/movie/br03-b` });
         assert.equal(payload.exitCode, 0);

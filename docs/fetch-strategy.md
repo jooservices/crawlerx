@@ -62,6 +62,29 @@ agent. `CRAWLERX_USER_AGENT_POOL` accepts a comma-separated pool; after three
 consecutive challenges for a site, CrawlerX switches to the next user agent and
 keeps it sticky in that site's session.
 
+## Host throttling
+
+Adapters may set `runtime.defaultThrottle` with `default_gap_seconds`,
+`min_gap_seconds` and `max_gap_seconds`. CrawlerX clamps the configured gap to
+those bounds and spaces requests by host and node. `CRAWLERX_NODE` identifies a
+node; when unset, the hostname is used. A wait that cannot fit within the
+remaining fetch budget returns retryable `rate_limited` with `Retry-After`
+instead of sending a request.
+
+The default throttle state is held by the worker process. To share it across
+workers on one node, pass a PSR-16 cache as the second argument to
+`CrawlerXFactory::configure($logins, $throttleCache)`. Cache keys use a
+namespaced hash so they stay within PSR-16's portable key rules. PSR-16 has no
+atomic reservation operation, so closely concurrent workers may occasionally
+start within the same interval. See the [PSR-16 key and method requirements](https://www.php-fig.org/psr/psr-16/).
+
+The same configuration shares the per-host circuit state across workers on a
+node. Ten consecutive non-terminal fetch failures open the circuit for five
+minutes. The first request after that interval is a half-open probe; an
+additional request waits for its 30-second probe lease. An open circuit returns
+retryable `rate_limited` with the remaining time in `Retry-After`. Circuit cache
+failures fall back to worker-local state.
+
 ## Budgets
 
 The default total budget is 150 seconds. Individual method caps are 20 seconds

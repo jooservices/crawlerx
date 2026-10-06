@@ -10,6 +10,8 @@ use JOOservices\CrawlerX\Fetch\BrowserServiceProcessRunner;
 use JOOservices\CrawlerX\Fetch\FetchFallbackChain;
 use JOOservices\CrawlerX\Fetch\FetchPlanResolver;
 use JOOservices\CrawlerX\Fetch\FetchRuntimeConfig;
+use JOOservices\CrawlerX\Fetch\Guard\HostCircuit;
+use JOOservices\CrawlerX\Fetch\Guard\HostThrottle;
 use JOOservices\CrawlerX\Fetch\Handlers\CurlImpersonateFetchHandler;
 use JOOservices\CrawlerX\Fetch\Handlers\FlaresolverrFetchHandler;
 use JOOservices\CrawlerX\Fetch\Handlers\HttpFetchHandler;
@@ -25,6 +27,7 @@ use JOOservices\CrawlerX\Services\ClientFactory;
 use JOOservices\CrawlerX\Services\CrawlOrchestrator;
 use JOOservices\CrawlerX\Services\CrawlerXService;
 use JOOservices\CrawlerX\Services\UrlClassifier;
+use Psr\SimpleCache\CacheInterface;
 
 final class CrawlerXFactory
 {
@@ -33,6 +36,8 @@ final class CrawlerXFactory
     private static ?FetchFallbackChain $fetchChain = null;
 
     private static ?LoginCookieProvider $loginCookieProvider = null;
+
+    private static ?CacheInterface $throttleCache = null;
 
     public static function create(): CrawlOrchestrator
     {
@@ -62,9 +67,10 @@ final class CrawlerXFactory
         self::$orchestrator = null;
     }
 
-    public static function configure(?LoginCookieProvider $logins = null): void
+    public static function configure(?LoginCookieProvider $logins = null, ?CacheInterface $throttleCache = null): void
     {
         self::$loginCookieProvider = $logins;
+        self::$throttleCache = $throttleCache;
         self::$fetchChain = null;
         self::$orchestrator = null;
     }
@@ -74,6 +80,7 @@ final class CrawlerXFactory
         self::$orchestrator = null;
         self::$fetchChain = null;
         self::$loginCookieProvider = null;
+        self::$throttleCache = null;
     }
 
     private static function defaultFetchChain(): FetchFallbackChain
@@ -97,6 +104,12 @@ final class CrawlerXFactory
             FetchMethod::ChromeStealth->value => $playwright,
             FetchMethod::PuppeteerStealth->value => new PuppeteerStealthFetchHandler($runtime, $browserRunner),
             FetchMethod::Flaresolverr->value => new FlaresolverrFetchHandler($runtime, null, $sessions, self::$loginCookieProvider),
-        ], $cookies, $sessions, self::$loginCookieProvider, $runtime);
+        ], $cookies, $sessions, self::$loginCookieProvider, $runtime, hostThrottle: new HostThrottle(
+            cache: self::$throttleCache,
+            nodeId: $runtime->nodeId,
+        ), hostCircuit: new HostCircuit(
+            cache: self::$throttleCache,
+            nodeId: $runtime->nodeId,
+        ));
     }
 }

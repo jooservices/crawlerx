@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Tests\Feature;
 
 use Closure;
+use Faker\Factory;
 use JOOservices\CrawlerX\Contracts\FetchMethodHandler;
 use JOOservices\CrawlerX\CrawlerX;
 use JOOservices\CrawlerX\CrawlerXFactory;
@@ -19,6 +20,9 @@ use JOOservices\CrawlerX\Enums\CrawlErrorCode;
 use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Enums\FetchProfile;
 use JOOservices\CrawlerX\Fetch\FetchFallbackChain;
+use JOOservices\CrawlerX\Fetch\Guard\HostCircuit;
+use JOOservices\CrawlerX\Fetch\Guard\HostThrottle;
+use JOOservices\CrawlerX\Tests\Support\ArrayCache;
 use JOOservices\CrawlerX\Tests\TestCase;
 
 final class FetchFallbackCrawlTest extends TestCase
@@ -121,6 +125,77 @@ final class FetchFallbackCrawlTest extends TestCase
             [FetchMethod::Http, FetchMethod::Http, FetchMethod::Http],
             $handler->attempts,
         );
+    }
+
+    public function test_manifest_throttle_returns_retry_after_when_wait_exceeds_fetch_budget(): void
+    {
+        $body = $this->loadFixture('onejav/listing-page-1.html');
+        $handler = $this->handler(static fn(FetchMethod $method, string $url): FetchResultDto => self::success($method, $body, $url));
+        $this->useHandler(
+            $handler,
+            [FetchMethod::Http],
+            hostThrottle: new HostThrottle(
+                cache: new ArrayCache(),
+                nodeId: 'test-node',
+                clock: static fn(): float => 100.0,
+            ),
+        );
+        $url = 'https://onejav.com/new';
+        $chain = new FetchChainDto([FetchMethod::Http]);
+
+        $first = CrawlerX::url($url)->options(new CrawlOptionsDto(
+            fetch: new FetchOptionsDto(chain: $chain),
+        ))->crawl();
+        self::assertInstanceOf(CrawlListResultDto::class, $first);
+
+        $second = CrawlerX::url($url)->options(new CrawlOptionsDto(
+            fetch: new FetchOptionsDto(chain: $chain, deadlineSeconds: 2),
+        ))->tryCrawl();
+
+        self::assertTrue($second->failed());
+        self::assertSame(CrawlErrorCode::RateLimited, $second->error?->code);
+        self::assertSame(2, $second->error?->retryAfterSeconds);
+        self::assertSame([FetchMethod::Http], $handler->attempts);
+    }
+
+    public function test_host_circuit_returns_rate_limited_after_ten_failed_fetches(): void
+    {
+        $now = 100.0;
+        $url = 'https://onejav.com/new?circuit-probe=' . Factory::create()->uuid();
+        $circuit = new HostCircuit(
+            cache: new ArrayCache(),
+            nodeId: 'test-node',
+            clock: static function () use (&$now): float {
+                return $now;
+            },
+        );
+        $handler = $this->handler(static fn(FetchMethod $method, string $url): FetchResultDto => new FetchResultDto(
+            ok: false,
+            body: '',
+            status: 502,
+            methodUsed: $method,
+            elapsedMs: 1,
+            challengeDetected: false,
+            finalUrl: $url,
+            error: 'synthetic upstream failure',
+        ));
+        $this->useHandler($handler, [FetchMethod::Http], static function (): void {
+        }, hostCircuit: $circuit);
+        $options = new CrawlOptionsDto(fetch: new FetchOptionsDto(
+            chain: new FetchChainDto([FetchMethod::Http]),
+        ));
+
+        for ($request = 0; $request < 10; $request++) {
+            $outcome = CrawlerX::url($url)->site('onejav')->options($options)->tryCrawl();
+            self::assertSame(CrawlErrorCode::Network, $outcome->error?->code);
+        }
+
+        $attemptsBeforeOpenCircuit = count($handler->attempts);
+        $blocked = CrawlerX::url($url)->site('onejav')->options($options)->tryCrawl();
+
+        self::assertSame(CrawlErrorCode::RateLimited, $blocked->error?->code);
+        self::assertSame(300, $blocked->error?->retryAfterSeconds);
+        self::assertSame($attemptsBeforeOpenCircuit, count($handler->attempts));
     }
 
     public function test_http_transient_retry_stops_when_budget_cannot_cover_backoff_and_attempt(): void
@@ -313,13 +388,23 @@ final class FetchFallbackCrawlTest extends TestCase
     }
 
     /** @param list<FetchMethod> $methods */
-    private function useHandler(FetchMethodHandler $handler, array $methods, ?Closure $retrySleeper = null): void
-    {
+    private function useHandler(
+        FetchMethodHandler $handler,
+        array $methods,
+        ?Closure $retrySleeper = null,
+        ?HostThrottle $hostThrottle = null,
+        ?HostCircuit $hostCircuit = null,
+    ): void {
         $handlers = [];
         foreach ($methods as $method) {
             $handlers[$method->value] = $handler;
         }
-        CrawlerXFactory::useFetchChain(new FetchFallbackChain($handlers, retrySleeper: $retrySleeper));
+        CrawlerXFactory::useFetchChain(new FetchFallbackChain(
+            $handlers,
+            retrySleeper: $retrySleeper,
+            hostThrottle: $hostThrottle,
+            hostCircuit: $hostCircuit,
+        ));
     }
 
     private static function success(FetchMethod $method, string $body, string $url): FetchResultDto
