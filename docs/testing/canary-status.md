@@ -1,22 +1,25 @@
 # CrawlerX canary status
 
-This table records the first full canary from `1.2.0-develop` (`b91b7ce`, generated 2026-10-03). The machine-readable and Markdown reports remain in the local `build/canary` directory. `OWNER-COOKIE` rows require owner-provided cookies; all other non-`ok` rows are XP follow-ups.
+Latest full live canary: 63/63 samples passed (8263e4893e13, 2026-10-06T05:08:34.642Z).
+Wall time p50/p95: 930/3499 ms. Methods: playwright 16, http 46, flaresolverr 1.
+The run used the owner-provided Avfan cookie; AvfanProfiles (`av-fan.tokyo`) was checked without a cookie.
+Machine-readable report: `build/canary/8263e4893e135eac31d3f726b54d97d429ef1254-20261006T050547Z.json` (local ignored artifact).
 
 | Adapter | Page type | Status | Missing fields | XP item |
 | --- | --- | --- | --- | --- |
-| aisex | performer_listing | parse_failed | — | XP-aisex-performer_listing |
-| aisex | performer_detail | parse_failed | — | XP-aisex-performer_detail |
+| aisex | performer_listing | ok | — | — |
+| aisex | performer_detail | ok | — | — |
 | avfan | listing | ok | — | — |
 | avfan | detail | ok | — | — |
-| avfan_profiles | performer_listing | skipped_no_cookie | — | OWNER-COOKIE |
-| avfan_profiles | performer_detail | skipped_no_cookie | — | OWNER-COOKIE |
-| avjoho | performer_listing | parse_failed | — | XP-avjoho-performer_listing |
-| avjoho | performer_detail | parse_failed | — | XP-avjoho-performer_detail |
+| avfan_profiles | performer_listing | ok | — | — |
+| avfan_profiles | performer_detail | ok | — | — |
+| avjoho | performer_listing | ok | — | — |
+| avjoho | performer_detail | ok | — | — |
 | caribbeancom | listing | ok | — | — |
 | caribbeancom | detail | ok | — | — |
 | duga | listing | ok | — | — |
 | duga | detail | ok | — | — |
-| eporner | gallery | parse_failed | — | XP-eporner-gallery |
+| eporner | gallery | ok | — | — |
 | fc2 | listing | ok | — | — |
 | fc2 | detail | ok | — | — |
 | ffjav | listing | ok | — | — |
@@ -39,8 +42,8 @@ This table records the first full canary from `1.2.0-develop` (`b91b7ce`, genera
 | javlibrary | detail | ok | — | — |
 | javlibrary | performer_listing | ok | — | — |
 | javlibrary | performer_detail | ok | — | — |
-| javphotos | listing | parse_failed | — | XP-javphotos-listing |
-| javphotos | gallery | parse_failed | — | XP-javphotos-gallery |
+| javphotos | listing | ok | — | — |
+| javphotos | gallery | ok | — | — |
 | javbtc | listing | ok | — | — |
 | javbtc | detail | ok | — | — |
 | minnanoav | performer_listing | ok | — | — |
@@ -55,6 +58,7 @@ This table records the first full canary from `1.2.0-develop` (`b91b7ce`, genera
 | onepondo | detail | ok | — | — |
 | onejav | listing | ok | — | — |
 | onejav | detail | ok | — | — |
+| onejav | listing | ok | — | — |
 | tokyohot | listing | ok | — | — |
 | tokyohot | detail | ok | — | — |
 | warashi | gallery | ok | — | — |
@@ -63,7 +67,11 @@ This table records the first full canary from `1.2.0-develop` (`b91b7ce`, genera
 | xcity | listing | ok | — | — |
 | xcity | detail | ok | — | — |
 | xcity | performer_listing | ok | — | — |
+| xcity | performer_listing | ok | — | — |
+| xcity | performer_listing | ok | — | — |
 | xcity | performer_detail | ok | — | — |
+
+## Historical checkpoints
 
 Jable was reverified on 2026-10-03 at `609983fb` after the performer-specific readiness markers and sanitized snapshots were refreshed: 4/4 `ok`, p50/p95 wall time 9718/9969 ms.
 
