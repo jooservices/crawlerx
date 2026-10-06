@@ -5,7 +5,7 @@
 [![Quality Gate (master)](https://sonarcloud.io/api/project_badges/measure?project=jooservices_crawlerx&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=jooservices_crawlerx)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/jooservices/crawlerx/badge)](https://securityscorecards.dev/viewer/?uri=github.com/jooservices/crawlerx)
 [![PHP Version](https://img.shields.io/badge/PHP-8.5%2B-blue.svg)](https://www.php.net/)
-[![Release 1.3.0](https://img.shields.io/badge/release-1.3.0-blue.svg)](CHANGELOG.md)
+[![Release 1.3.1](https://img.shields.io/badge/release-1.3.1-blue.svg)](CHANGELOG.md)
 [![GitHub Release](https://img.shields.io/github/v/release/jooservices/crawlerx?display_name=tag)](https://github.com/jooservices/crawlerx/releases)
 [![Packagist Version](https://img.shields.io/packagist/v/jooservices/crawlerx)](https://packagist.org/packages/jooservices/crawlerx)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -26,7 +26,7 @@ echo $item->meta['movie']['code'];              // YMDS-282
 
 > [!NOTE]
 > Packagist `v1.0.0` is the retired Laravel implementation. This
-> framework-agnostic rebuild is released as `1.3.0` and provides the API
+> framework-agnostic rebuild is released as `1.3.1` and provides the API
 > documented here.
 
 ## Features
@@ -36,7 +36,7 @@ echo $item->meta['movie']['code'];              // YMDS-282
   (e.g. XCITY) crawl to terminal detail items
 - Automatic site and crawl-type detection from the URL
 - Typed immutable results built on `jooservices/dto` v3
-- HTTP fetching through `jooservices/client` v4.4+
+- HTTP fetching through `jooservices/client` v4.4.1+
 - Adaptive fallback through curl-impersonate, Playwright, stealth browser modes, Puppeteer, and FlareSolverr
 - Browser cookie handoff, challenge-page detection, and JavBus age-verification handling
 - Manifest-driven capability declaration validated against adapter implementations
@@ -72,7 +72,7 @@ The path installation uses this checkout's actual requirements, including
 
 ### Tagged release
 
-Released as `1.3.0` — install from Packagist:
+Released as `1.3.1` — install from Packagist:
 
 ```bash
 composer require jooservices/crawlerx:^1.3
@@ -383,11 +383,11 @@ blocked by this policy return the non-retryable `ssrf_blocked` error and stop
 the fetch fallback chain.
 
 The browser image is built with `CRAWLERX_VERSION` set to the matching
-CrawlerX package release (for example, `1.3.0`); the sidecar reports that value
+CrawlerX package release (for example, `1.3.1`); the sidecar reports that value
 in its health response. With Compose, set it when building:
 
 ```bash
-CRAWLERX_VERSION=1.3.0 docker compose build node
+CRAWLERX_VERSION=1.3.1 docker compose build node
 ```
 
 Compose's local image name remains
