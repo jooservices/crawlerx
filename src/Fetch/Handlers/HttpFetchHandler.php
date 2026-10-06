@@ -66,7 +66,7 @@ final class HttpFetchHandler implements FetchMethodHandler
         ];
 
         try {
-            $response = $this->clientFactory->factory($clientOptions)->get($url);
+            $response = $this->clientFactory->factory($clientOptions, $profile->slug)->get($url);
             $psr = $response->toPsrResponse();
             $body = (string) $psr->getBody();
             $status = $psr->getStatusCode();

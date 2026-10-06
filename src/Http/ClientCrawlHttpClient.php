@@ -10,13 +10,20 @@ use JOOservices\CrawlerX\Contracts\CrawlHttpResponse;
 
 final readonly class ClientCrawlHttpClient implements CrawlHttpClient
 {
-    public function __construct(private HttpClient $httpClient)
+    /**
+     * @param  array<string, string>  $headers
+     */
+    public function __construct(private HttpClient $httpClient, private array $headers = [])
     {
     }
 
     public function get(string $url): CrawlHttpResponse
     {
-        $request = $this->httpClient->requestBuilder()->get($url)->build();
+        $builder = $this->httpClient->requestBuilder()->get($url);
+        if ($this->headers !== []) {
+            $builder = $builder->withHeaders($this->headers);
+        }
+        $request = $builder->build();
 
         return new PsrCrawlHttpResponse($this->httpClient->sendRequest($request->toPsr()));
     }
