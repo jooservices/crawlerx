@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Fetch;
 
+use Closure;
 use JOOservices\CrawlerX\Contracts\FetchMethodHandler;
 use JOOservices\CrawlerX\Contracts\LoginCookieProvider;
 use JOOservices\CrawlerX\Dto\CrawlOptionsDto;
@@ -17,6 +18,7 @@ use JOOservices\CrawlerX\Enums\CrawlType;
 use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Exceptions\CrawlFetchException;
 use JOOservices\CrawlerX\Fetch\Budget\FetchBudget;
+use JOOservices\CrawlerX\Fetch\Guard\TransientRetry;
 use JOOservices\CrawlerX\Fetch\Session\CookieHandoffStore;
 use JOOservices\CrawlerX\Fetch\Session\SessionStore;
 use Throwable;
@@ -29,8 +31,12 @@ final class FetchFallbackChain
 
     private readonly ?FetchRuntimeConfig $runtime;
 
+    /** @var Closure(int): void */
+    private readonly Closure $retrySleeper;
+
     /**
      * @param  array<string, FetchMethodHandler>  $handlers
+     * @param  Closure(int): void|null  $retrySleeper
      */
     public function __construct(
         private readonly array $handlers,
@@ -38,10 +44,14 @@ final class FetchFallbackChain
         ?SessionStore $sessions = null,
         ?LoginCookieProvider $logins = null,
         ?FetchRuntimeConfig $runtime = null,
+        ?Closure $retrySleeper = null,
     ) {
         $this->sessions = $sessions ?? new SessionStore();
         $this->logins = $logins;
         $this->runtime = $runtime;
+        $this->retrySleeper = $retrySleeper ?? static function (int $microseconds): void {
+            usleep($microseconds);
+        };
     }
 
     /**
@@ -58,6 +68,7 @@ final class FetchFallbackChain
         $last = null;
         $sawChallenge = false;
         $budget = FetchBudget::start($options?->fetch);
+        $transientRetry = new TransientRetry();
         $readyMarkers = $profile->readyMarkersFor($type);
         $session = $this->sessions->get($profile->slug);
         $loginCookies = $this->logins?->cookiesFor($profile->slug) ?? [];
@@ -86,37 +97,75 @@ final class FetchFallbackChain
             $started = (int) round(microtime(true) * 1000);
 
             try {
-                $result = $handler->fetch(
+                $result = $this->fetchWithHandler(
+                    $handler,
                     $url,
-                    $this->boundedProfile(
-                        $this->profileWithSession($profile, $options, $session, $loginCookies, $requestUserAgent),
-                        $method,
-                        $budget,
-                    ),
+                    $profile,
+                    $options,
                     $method,
-                    $this->boundedOptions(
+                    $budget,
+                    $readyMarkers,
+                    $session,
+                    $loginCookies,
+                    $requestUserAgent,
+                );
+            } catch (Throwable $exception) {
+                $elapsed = (int) round(microtime(true) * 1000) - $started;
+                $attempts[] = $this->attempt($method, $elapsed, 0, false, false, TransientRetry::errorCode($exception));
+                continue;
+            }
+
+            $retries = 0;
+            while (true) {
+                $attempts[] = $this->attempt(
+                    $method,
+                    $result->elapsedMs,
+                    $result->status,
+                    $result->challengeDetected,
+                    $result->ok,
+                    $result->error,
+                );
+
+                if (
+                    $method !== FetchMethod::Http
+                    || ! $transientRetry->canRetry($result, $retries)
+                ) {
+                    break;
+                }
+
+                $delay = $transientRetry->delaySeconds($retries + 1);
+                if (! $transientRetry->canAfford($budget->remainingSeconds(), $delay)) {
+                    break;
+                }
+
+                ($this->retrySleeper)((int) round($delay * 1_000_000));
+                if (! $budget->canStart($method)) {
+                    break;
+                }
+
+                $started = (int) round(microtime(true) * 1000);
+                try {
+                    $result = $this->fetchWithHandler(
+                        $handler,
+                        $url,
+                        $profile,
                         $options,
                         $method,
                         $budget,
                         $readyMarkers,
-                        $session['storageState'] ?? null,
-                    ),
-                );
-                $result = $this->applyReadyMarker($result, $readyMarkers);
-            } catch (Throwable $exception) {
-                $elapsed = (int) round(microtime(true) * 1000) - $started;
-                $attempts[] = $this->attempt($method, $elapsed, 0, false, false, $exception->getMessage());
-                continue;
+                        $session,
+                        $loginCookies,
+                        $requestUserAgent,
+                    );
+                } catch (Throwable $exception) {
+                    $elapsed = (int) round(microtime(true) * 1000) - $started;
+                    $attempts[] = $this->attempt($method, $elapsed, 0, false, false, TransientRetry::errorCode($exception));
+                    break;
+                }
+
+                $retries++;
             }
 
-            $attempts[] = $this->attempt(
-                $method,
-                $result->elapsedMs,
-                $result->status,
-                $result->challengeDetected,
-                $result->ok,
-                $result->error,
-            );
             $last = $result->withAttempts($attempts);
             $sawChallenge = $sawChallenge || $result->challengeDetected;
 
@@ -238,6 +287,43 @@ final class FetchFallbackChain
         }
 
         return $row;
+    }
+
+    /**
+     * @param  array{cookies: array<string, string>, userAgent: ?string, source: string, expiresAt: int, storageState: array<string, mixed>|null, challengeCount: int}|null  $session
+     * @param  array<string, string>  $loginCookies
+     * @param  list<string>  $readyMarkers
+     */
+    private function fetchWithHandler(
+        FetchMethodHandler $handler,
+        string $url,
+        SiteProfileDto $profile,
+        ?CrawlOptionsDto $options,
+        FetchMethod $method,
+        FetchBudget $budget,
+        array $readyMarkers,
+        ?array $session,
+        array $loginCookies,
+        ?string $requestUserAgent,
+    ): FetchResultDto {
+        $result = $handler->fetch(
+            $url,
+            $this->boundedProfile(
+                $this->profileWithSession($profile, $options, $session, $loginCookies, $requestUserAgent),
+                $method,
+                $budget,
+            ),
+            $method,
+            $this->boundedOptions(
+                $options,
+                $method,
+                $budget,
+                $readyMarkers,
+                $session['storageState'] ?? null,
+            ),
+        );
+
+        return $this->applyReadyMarker($result, $readyMarkers);
     }
 
     private function boundedProfile(SiteProfileDto $profile, FetchMethod $method, FetchBudget $budget): SiteProfileDto
