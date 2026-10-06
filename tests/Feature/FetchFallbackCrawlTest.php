@@ -122,6 +122,74 @@ final class FetchFallbackCrawlTest extends TestCase
         );
     }
 
+    public function test_http_transient_retry_stops_when_budget_cannot_cover_backoff_and_attempt(): void
+    {
+        $handler = $this->handler(static function (FetchMethod $method, string $url): FetchResultDto {
+            usleep(600_000);
+
+            return new FetchResultDto(
+                ok: false,
+                body: '',
+                status: 502,
+                methodUsed: $method,
+                elapsedMs: 600,
+                challengeDetected: false,
+                finalUrl: $url,
+                error: 'unusable HTTP body',
+            );
+        });
+        $this->useHandler($handler, [FetchMethod::Http]);
+
+        $outcome = CrawlerX::url('https://onejav.com/torrent/ymds282')->options(new CrawlOptionsDto(
+            fetch: new FetchOptionsDto(chain: new FetchChainDto([FetchMethod::Http]), deadlineSeconds: 2),
+        ))->tryCrawl();
+
+        self::assertTrue($outcome->failed());
+        self::assertSame(CrawlErrorCode::Network, $outcome->error?->code);
+        self::assertCount(1, $outcome->error?->fetch?->attempts ?? []);
+        self::assertSame([FetchMethod::Http], $handler->attempts);
+    }
+
+    public function test_http_handler_exception_falls_back_to_the_next_method(): void
+    {
+        $body = $this->loadFixture('jable/detail-fjin-091.html');
+        $handler = $this->handler(static function (FetchMethod $method, string $url) use ($body): FetchResultDto {
+            if ($method === FetchMethod::Http) {
+                throw new \RuntimeException('synthetic transport failure');
+            }
+
+            return self::success($method, $body, $url);
+        });
+        $methods = [FetchMethod::Http, FetchMethod::Playwright];
+        $this->useHandler($handler, $methods);
+
+        $result = CrawlerX::url('https://en.jable.tv/videos/fjin-091/')->options(new CrawlOptionsDto(
+            fetch: new FetchOptionsDto(chain: new FetchChainDto($methods)),
+        ))->crawl();
+
+        self::assertInstanceOf(CrawlItemResultDto::class, $result);
+        self::assertSame($methods, $handler->attempts);
+    }
+
+    public function test_handler_exception_text_is_redacted_from_fetch_attempts(): void
+    {
+        $handler = $this->handler(static function (): never {
+            throw new \RuntimeException('private transport diagnostic token=synthetic');
+        });
+        $this->useHandler($handler, [FetchMethod::Http]);
+
+        $outcome = CrawlerX::url('https://onejav.com/torrent/ymds282')->options(new CrawlOptionsDto(
+            fetch: new FetchOptionsDto(chain: new FetchChainDto([FetchMethod::Http])),
+        ))->tryCrawl();
+
+        self::assertTrue($outcome->failed());
+        $attempts = $outcome->error?->fetch?->attempts ?? [];
+        self::assertCount(1, $attempts);
+        self::assertSame('fetch_error', $attempts[0]['error'] ?? null);
+        self::assertStringNotContainsString('private transport diagnostic', serialize($attempts));
+        self::assertStringNotContainsString('synthetic', serialize($attempts));
+    }
+
     public function test_named_profile_and_method_start_inside_profile_chain_through_facade(): void
     {
         $body = $this->loadFixture('jable/detail-fjin-091.html');

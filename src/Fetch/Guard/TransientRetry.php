@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Fetch\Guard;
 
+use JOOservices\Client\Exceptions\NetworkConnectionException;
+use JOOservices\Client\Exceptions\TimeoutException;
 use JOOservices\CrawlerX\Dto\FetchResultDto;
+use Throwable;
 
 final class TransientRetry
 {
@@ -13,6 +16,8 @@ final class TransientRetry
     public const NETWORK_ERROR = 'network_error';
 
     public const NETWORK_TIMEOUT = 'network_timeout';
+
+    public const FETCH_ERROR = 'fetch_error';
 
     public function isEligible(FetchResultDto $result): bool
     {
@@ -26,6 +31,17 @@ final class TransientRetry
 
         return $result->status === 0
             && $result->error === self::NETWORK_ERROR;
+    }
+
+    public static function errorCode(Throwable $exception): string
+    {
+        if (! $exception instanceof NetworkConnectionException) {
+            return self::FETCH_ERROR;
+        }
+
+        return $exception instanceof TimeoutException
+            ? self::NETWORK_TIMEOUT
+            : self::NETWORK_ERROR;
     }
 
     public function canRetry(FetchResultDto $result, int $retriesSoFar): bool

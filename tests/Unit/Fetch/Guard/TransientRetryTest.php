@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Tests\Unit\Fetch\Guard;
 
+use JOOservices\Client\Exceptions\NetworkConnectionException;
+use JOOservices\Client\Exceptions\TimeoutException;
 use JOOservices\CrawlerX\Dto\FetchResultDto;
 use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Fetch\Guard\TransientRetry;
+use Nyholm\Psr7\Request;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 final class TransientRetryTest extends TestCase
 {
@@ -31,6 +35,15 @@ final class TransientRetryTest extends TestCase
     {
         $retry = new TransientRetry();
 
+        self::assertSame(
+            TransientRetry::NETWORK_ERROR,
+            TransientRetry::errorCode(new NetworkConnectionException(new Request('GET', 'https://example.test'), 'synthetic diagnostic')),
+        );
+        self::assertSame(
+            TransientRetry::NETWORK_TIMEOUT,
+            TransientRetry::errorCode(new TimeoutException(new Request('GET', 'https://example.test'), 'synthetic diagnostic')),
+        );
+        self::assertSame(TransientRetry::FETCH_ERROR, TransientRetry::errorCode(new RuntimeException('private diagnostic')));
         self::assertTrue($retry->isEligible($this->createResult(0, error: TransientRetry::NETWORK_ERROR)));
         self::assertFalse($retry->isEligible($this->createResult(0, error: TransientRetry::NETWORK_TIMEOUT)));
         self::assertFalse($retry->isEligible($this->createResult(0, error: 'ssrf_blocked')));
