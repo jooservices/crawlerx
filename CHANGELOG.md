@@ -5,6 +5,23 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-10-06
+
+### Changed
+
+- Require `jooservices/client` `^4.4.1`; this includes the redirect-cookie
+  domain scoping fix and excludes the affected `4.4.0` release.
+- Keep fetch sessions in the worker process and configure the Playwright and
+  FlareSolverr services with `PLAYWRIGHT_URL` and `FLARESOLVERR_URL`.
+- Treat Avfan Profiles (`av-fan.tokyo`) as public for the covered views and
+  refresh the 63-sample live canary status.
+
+### Migration
+
+- Remove the `cache:` argument from `CrawlerXFactory::configure()`. Set
+  `PLAYWRIGHT_URL` and `FLARESOLVERR_URL` for service containers; `CRAWLERX_NODE`
+  is removed, and an empty `PLAYWRIGHT_URL` runs the `node` binary on `PATH`.
+
 ## [1.3.0] - 2026-10-04
 
 ### Added
@@ -128,8 +145,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   implementation (Jable performer listing was an alias to the movie parser).
 - Catalog `external_id` for HEYZO/FC2 included the code prefix inconsistently.
 
+[1.3.1]: https://github.com/jooservices/crawlerx/releases/tag/v1.3.1
 [1.3.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.3.0
 [1.2.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.2.0
 [1.1.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.1.0
 
+[1.3.1...1.3.0]: https://github.com/jooservices/crawlerx/compare/v1.3.0...v1.3.1
 [1.3.0...1.2.0]: https://github.com/jooservices/crawlerx/compare/v1.2.0...v1.3.0
