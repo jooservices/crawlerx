@@ -9,6 +9,9 @@ the `LoginCookieProvider` contract; cookie values are not printed or stored in
 reports, snapshots, exceptions, or test output. User-agent settings are read
 from `CRAWLERX_USER_AGENT` and `CRAWLERX_USER_AGENT_POOL`.
 
+The Avfan adapter requires its owner-provided cookie. AvfanProfiles
+(`av-fan.tokyo`) is checked without a cookie.
+
 Run the complete canary with:
 
 ```sh

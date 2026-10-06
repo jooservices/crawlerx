@@ -28,12 +28,14 @@ use JOOservices\CrawlerX\Registry\FileAdapterManifestRegistry;
 use JOOservices\CrawlerX\Tools\Canary\Env;
 use JOOservices\CrawlerX\Tools\Canary\EnvLoginCookieProvider;
 use JOOservices\CrawlerX\Tools\Canary\FetchTrace;
+use JOOservices\CrawlerX\Tools\Canary\LoginCookiePolicy;
 use JOOservices\CrawlerX\Tools\Canary\Redactor;
 use JOOservices\CrawlerX\Tools\Canary\RequiredFields;
 
 require __DIR__ . '/canary/Env.php';
 require __DIR__ . '/canary/Redactor.php';
 require __DIR__ . '/canary/required-fields.php';
+require __DIR__ . '/canary/LoginCookiePolicy.php';
 require dirname(__DIR__) . '/vendor/autoload.php';
 require __DIR__ . '/canary/EnvLoginCookieProvider.php';
 require __DIR__ . '/canary/FetchTrace.php';
@@ -412,7 +414,7 @@ function runCanary(array $arguments): never
             'php_peak_rss_bytes' => 0,
         ];
 
-        if (in_array($slug, ['avfan', 'avfan_profiles'], true) && $loginCookies === []) {
+        if (LoginCookiePolicy::isRequired($slug) && $loginCookies === []) {
             $record['status'] = 'skipped_no_cookie';
         } else {
             try {
