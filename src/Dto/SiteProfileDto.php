@@ -60,8 +60,28 @@ final class SiteProfileDto extends Dto
             cookieHandoffAfterBrowser: $fetchProfile === FetchProfile::BrowserLikely,
             readyMarkers: $manifest->readyMarkers,
             soft404Markers: $manifest->soft404Markers,
-            defaultThrottle: $manifest->defaultThrottle,
+            defaultThrottle: self::normalizeThrottle($manifest->defaultThrottle),
         );
+    }
+
+    /** @param array<string, mixed>|null $settings
+     *  @return array<string, float>|null
+     */
+    private static function normalizeThrottle(?array $settings): ?array
+    {
+        if ($settings === null) {
+            return null;
+        }
+
+        $normalized = [];
+        foreach (['default_gap_seconds', 'min_gap_seconds', 'max_gap_seconds'] as $key) {
+            $value = $settings[$key] ?? null;
+            if ((is_int($value) || is_float($value)) && is_finite((float) $value)) {
+                $normalized[$key] = (float) $value;
+            }
+        }
+
+        return $normalized === [] ? null : $normalized;
     }
 
     /** @return list<string> */
