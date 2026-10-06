@@ -17,6 +17,7 @@ use JOOservices\CrawlerX\Enums\CrawlType;
 use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Exceptions\CrawlFetchException;
 use JOOservices\CrawlerX\Fetch\Budget\FetchBudget;
+use JOOservices\CrawlerX\Fetch\Guard\TransientRetry;
 use JOOservices\CrawlerX\Fetch\Session\CookieHandoffStore;
 use JOOservices\CrawlerX\Fetch\Session\SessionStore;
 use Throwable;
@@ -58,6 +59,7 @@ final class FetchFallbackChain
         $last = null;
         $sawChallenge = false;
         $budget = FetchBudget::start($options?->fetch);
+        $transientRetry = new TransientRetry();
         $readyMarkers = $profile->readyMarkersFor($type);
         $session = $this->sessions->get($profile->slug);
         $loginCookies = $this->logins?->cookiesFor($profile->slug) ?? [];
@@ -83,93 +85,115 @@ final class FetchFallbackChain
                 continue;
             }
 
-            $started = (int) round(microtime(true) * 1000);
+            $retries = 0;
+            while (true) {
+                $started = (int) round(microtime(true) * 1000);
 
-            try {
-                $result = $handler->fetch(
-                    $url,
-                    $this->boundedProfile(
-                        $this->profileWithSession($profile, $options, $session, $loginCookies, $requestUserAgent),
+                try {
+                    $result = $handler->fetch(
+                        $url,
+                        $this->boundedProfile(
+                            $this->profileWithSession($profile, $options, $session, $loginCookies, $requestUserAgent),
+                            $method,
+                            $budget,
+                        ),
                         $method,
-                        $budget,
-                    ),
-                    $method,
-                    $this->boundedOptions(
-                        $options,
-                        $method,
-                        $budget,
-                        $readyMarkers,
-                        $session['storageState'] ?? null,
-                    ),
-                );
-                $result = $this->applyReadyMarker($result, $readyMarkers);
-            } catch (Throwable $exception) {
-                $elapsed = (int) round(microtime(true) * 1000) - $started;
-                $attempts[] = $this->attempt($method, $elapsed, 0, false, false, $exception->getMessage());
-                continue;
-            }
-
-            $attempts[] = $this->attempt(
-                $method,
-                $result->elapsedMs,
-                $result->status,
-                $result->challengeDetected,
-                $result->ok,
-                $result->error,
-            );
-            $last = $result->withAttempts($attempts);
-            $sawChallenge = $sawChallenge || $result->challengeDetected;
-
-            if ($result->error === CrawlErrorCode::SsrfBlocked->value) {
-                throw new CrawlFetchException(
-                    message: 'Fetch blocked by SSRF policy for URL [' . $url . '].',
-                    errorCode: CrawlErrorCode::SsrfBlocked,
-                    retryable: false,
-                    retryAfterSeconds: null,
-                    fetch: $last->toMeta(),
-                );
-            }
-
-            if ($this->isAuthRequired($result)) {
-                throw new CrawlFetchException(
-                    message: 'Authentication is required for URL [' . $url . '].',
-                    errorCode: CrawlErrorCode::AuthRequired,
-                    retryable: false,
-                    retryAfterSeconds: null,
-                    fetch: $last->toMeta(),
-                );
-            }
-
-            if ($result->challengeDetected && $session !== null) {
-                $this->sessions->forget($profile->slug);
-                $session = null;
-                $requestUserAgent = $this->runtimeUserAgent()
-                    ?? $this->profileUserAgent($profile)
-                    ?? $profile->http->headers['User-Agent']
-                    ?? null;
-            }
-
-            $terminal = TerminalStatus::fromResult($result, $profile->soft404Markers);
-            if ($terminal !== null) {
-                throw new CrawlFetchException(
-                    message: 'Terminal fetch status for URL [' . $url . '].',
-                    errorCode: $terminal->code,
-                    retryable: $terminal->retryable,
-                    retryAfterSeconds: $terminal->retryAfterSeconds,
-                    fetch: $last->toMeta(),
-                );
-            }
-
-            if ($result->ok) {
-                $this->sessions->putResult($profile->slug, $result);
-                if ($profile->cookieHandoffAfterBrowser && $result->cookies !== []) {
-                    $host = parse_url($result->finalUrl ?? $url, PHP_URL_HOST);
-                    if (is_string($host) && $host !== '') {
-                        $this->cookies->put($host, $result->cookies);
-                    }
+                        $this->boundedOptions(
+                            $options,
+                            $method,
+                            $budget,
+                            $readyMarkers,
+                            $session['storageState'] ?? null,
+                        ),
+                    );
+                    $result = $this->applyReadyMarker($result, $readyMarkers);
+                } catch (Throwable $exception) {
+                    $elapsed = (int) round(microtime(true) * 1000) - $started;
+                    $attempts[] = $this->attempt($method, $elapsed, 0, false, false, $exception->getMessage());
+                    break;
                 }
 
-                return $last;
+                $attempts[] = $this->attempt(
+                    $method,
+                    $result->elapsedMs,
+                    $result->status,
+                    $result->challengeDetected,
+                    $result->ok,
+                    $result->error,
+                );
+                $last = $result->withAttempts($attempts);
+                $sawChallenge = $sawChallenge || $result->challengeDetected;
+
+                if ($result->error === CrawlErrorCode::SsrfBlocked->value) {
+                    throw new CrawlFetchException(
+                        message: 'Fetch blocked by SSRF policy for URL [' . $url . '].',
+                        errorCode: CrawlErrorCode::SsrfBlocked,
+                        retryable: false,
+                        retryAfterSeconds: null,
+                        fetch: $last->toMeta(),
+                    );
+                }
+
+                if ($this->isAuthRequired($result)) {
+                    throw new CrawlFetchException(
+                        message: 'Authentication is required for URL [' . $url . '].',
+                        errorCode: CrawlErrorCode::AuthRequired,
+                        retryable: false,
+                        retryAfterSeconds: null,
+                        fetch: $last->toMeta(),
+                    );
+                }
+
+                if ($result->challengeDetected && $session !== null) {
+                    $this->sessions->forget($profile->slug);
+                    $session = null;
+                    $requestUserAgent = $this->runtimeUserAgent()
+                        ?? $this->profileUserAgent($profile)
+                        ?? $profile->http->headers['User-Agent']
+                        ?? null;
+                }
+
+                $terminal = TerminalStatus::fromResult($result, $profile->soft404Markers);
+                if ($terminal !== null) {
+                    throw new CrawlFetchException(
+                        message: 'Terminal fetch status for URL [' . $url . '].',
+                        errorCode: $terminal->code,
+                        retryable: $terminal->retryable,
+                        retryAfterSeconds: $terminal->retryAfterSeconds,
+                        fetch: $last->toMeta(),
+                    );
+                }
+
+                if ($result->ok) {
+                    $this->sessions->putResult($profile->slug, $result);
+                    if ($profile->cookieHandoffAfterBrowser && $result->cookies !== []) {
+                        $host = parse_url($result->finalUrl ?? $url, PHP_URL_HOST);
+                        if (is_string($host) && $host !== '') {
+                            $this->cookies->put($host, $result->cookies);
+                        }
+                    }
+
+                    return $last;
+                }
+
+                if (
+                    $method !== FetchMethod::Http
+                    || ! $transientRetry->canRetry($result, $retries)
+                ) {
+                    break;
+                }
+
+                $delay = $transientRetry->delaySeconds($retries + 1);
+                if (! $transientRetry->canAfford($budget->remainingSeconds(), $delay)) {
+                    break;
+                }
+
+                usleep((int) round($delay * 1_000_000));
+                if (! $budget->canStart($method)) {
+                    break;
+                }
+
+                $retries++;
             }
         }
 

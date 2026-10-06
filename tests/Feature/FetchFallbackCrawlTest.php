@@ -95,6 +95,33 @@ final class FetchFallbackCrawlTest extends TestCase
         self::assertCount(2, $outcome->error->fetch->attempts);
     }
 
+    public function test_http_transient_retry_stops_after_two_retries(): void
+    {
+        $handler = $this->handler(static fn(FetchMethod $method, string $url): FetchResultDto => new FetchResultDto(
+            ok: false,
+            body: '',
+            status: 502,
+            methodUsed: $method,
+            elapsedMs: 1,
+            challengeDetected: false,
+            finalUrl: $url,
+            error: 'unusable HTTP body',
+        ));
+        $this->useHandler($handler, [FetchMethod::Http]);
+
+        $outcome = CrawlerX::url('https://onejav.com/torrent/ymds282')->options(new CrawlOptionsDto(
+            fetch: new FetchOptionsDto(chain: new FetchChainDto([FetchMethod::Http])),
+        ))->tryCrawl();
+
+        self::assertTrue($outcome->failed());
+        self::assertSame(CrawlErrorCode::Network, $outcome->error?->code);
+        self::assertCount(3, $outcome->error?->fetch?->attempts ?? []);
+        self::assertSame(
+            [FetchMethod::Http, FetchMethod::Http, FetchMethod::Http],
+            $handler->attempts,
+        );
+    }
+
     public function test_named_profile_and_method_start_inside_profile_chain_through_facade(): void
     {
         $body = $this->loadFixture('jable/detail-fjin-091.html');

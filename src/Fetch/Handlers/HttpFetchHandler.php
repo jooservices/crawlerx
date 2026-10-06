@@ -13,7 +13,10 @@ use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Fetch\ChallengeDetector;
 use JOOservices\CrawlerX\Fetch\Session\CookieHandoffStore;
 use JOOservices\CrawlerX\Fetch\Session\SessionStore;
+use JOOservices\CrawlerX\Fetch\Guard\TransientRetry;
 use JOOservices\CrawlerX\Services\ClientFactory;
+use JOOservices\Client\Exceptions\NetworkConnectionException;
+use JOOservices\Client\Exceptions\TimeoutException;
 use Throwable;
 
 final class HttpFetchHandler implements FetchMethodHandler
@@ -76,6 +79,13 @@ final class HttpFetchHandler implements FetchMethodHandler
                 $headerMap[(string) $name] = array_values($values);
             }
         } catch (Throwable $exception) {
+            $error = $exception->getMessage();
+            if ($exception instanceof NetworkConnectionException) {
+                $error = $exception instanceof TimeoutException
+                    ? TransientRetry::NETWORK_TIMEOUT
+                    : TransientRetry::NETWORK_ERROR;
+            }
+
             return new FetchResultDto(
                 ok: false,
                 body: '',
@@ -84,7 +94,7 @@ final class HttpFetchHandler implements FetchMethodHandler
                 elapsedMs: (int) round(microtime(true) * 1000) - $started,
                 challengeDetected: false,
                 finalUrl: $url,
-                error: $exception->getMessage(),
+                error: $error,
             );
         }
 
