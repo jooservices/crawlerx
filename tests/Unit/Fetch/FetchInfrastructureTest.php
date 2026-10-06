@@ -115,6 +115,7 @@ final class FetchInfrastructureTest extends TestCase
             self::assertSame('/tmp/curl-custom', $config->curlImpersonateBinary);
             self::assertSame($flareUrl, $config->flaresolverrUrl);
             self::assertSame($playwrightUrl, $config->playwrightUrl);
+            self::assertSame('node-custom', $config->nodeId);
         } finally {
             foreach ($originalEnvironment as $name => $value) {
                 if ($value === false) {

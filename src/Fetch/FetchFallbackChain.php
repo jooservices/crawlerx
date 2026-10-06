@@ -18,6 +18,7 @@ use JOOservices\CrawlerX\Enums\CrawlType;
 use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Exceptions\CrawlFetchException;
 use JOOservices\CrawlerX\Fetch\Budget\FetchBudget;
+use JOOservices\CrawlerX\Fetch\Guard\HostThrottle;
 use JOOservices\CrawlerX\Fetch\Guard\TransientRetry;
 use JOOservices\CrawlerX\Fetch\Session\CookieHandoffStore;
 use JOOservices\CrawlerX\Fetch\Session\SessionStore;
@@ -34,6 +35,8 @@ final class FetchFallbackChain
     /** @var Closure(int): void */
     private readonly Closure $retrySleeper;
 
+    private readonly ?HostThrottle $hostThrottle;
+
     /**
      * @param  array<string, FetchMethodHandler>  $handlers
      * @param  Closure(int): void|null  $retrySleeper
@@ -45,6 +48,7 @@ final class FetchFallbackChain
         ?LoginCookieProvider $logins = null,
         ?FetchRuntimeConfig $runtime = null,
         ?Closure $retrySleeper = null,
+        ?HostThrottle $hostThrottle = null,
     ) {
         $this->sessions = $sessions ?? new SessionStore();
         $this->logins = $logins;
@@ -52,6 +56,7 @@ final class FetchFallbackChain
         $this->retrySleeper = $retrySleeper ?? static function (int $microseconds): void {
             usleep($microseconds);
         };
+        $this->hostThrottle = $hostThrottle;
     }
 
     /**
@@ -306,6 +311,29 @@ final class FetchFallbackChain
         array $loginCookies,
         ?string $requestUserAgent,
     ): FetchResultDto {
+        $host = parse_url($url, PHP_URL_HOST);
+        if ($this->hostThrottle !== null && is_string($host) && $host !== '') {
+            $retryAfter = $this->hostThrottle->waitBeforeFetch(
+                $host,
+                $profile->defaultThrottle,
+                $budget,
+                $method,
+            );
+            if ($retryAfter !== null) {
+                return new FetchResultDto(
+                    ok: false,
+                    body: '',
+                    status: 429,
+                    methodUsed: $method,
+                    elapsedMs: 0,
+                    challengeDetected: false,
+                    finalUrl: $url,
+                    headers: ['Retry-After' => [(string) $retryAfter]],
+                    error: CrawlErrorCode::RateLimited->value,
+                );
+            }
+        }
+
         $result = $handler->fetch(
             $url,
             $this->boundedProfile(
@@ -371,6 +399,7 @@ final class FetchFallbackChain
             cookieHandoffAfterBrowser: $profile->cookieHandoffAfterBrowser,
             readyMarkers: $profile->readyMarkers,
             soft404Markers: $profile->soft404Markers,
+            defaultThrottle: $profile->defaultThrottle,
         );
     }
 
@@ -493,6 +522,7 @@ final class FetchFallbackChain
             cookieHandoffAfterBrowser: $profile->cookieHandoffAfterBrowser,
             readyMarkers: $profile->readyMarkers,
             soft404Markers: $profile->soft404Markers,
+            defaultThrottle: $profile->defaultThrottle,
         );
     }
 

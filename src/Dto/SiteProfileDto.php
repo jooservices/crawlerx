@@ -27,6 +27,8 @@ final class SiteProfileDto extends Dto
         public readonly array $readyMarkers = [],
         /** @var list<string> */
         public readonly array $soft404Markers = [],
+        /** @var array<string, float>|null */
+        public readonly ?array $defaultThrottle = null,
     ) {
     }
 
@@ -58,6 +60,7 @@ final class SiteProfileDto extends Dto
             cookieHandoffAfterBrowser: $fetchProfile === FetchProfile::BrowserLikely,
             readyMarkers: $manifest->readyMarkers,
             soft404Markers: $manifest->soft404Markers,
+            defaultThrottle: $manifest->defaultThrottle,
         );
     }
 
