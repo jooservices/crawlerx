@@ -137,16 +137,16 @@
         },
         {
             "name": "jooservices/exceptions",
-            "version": "v4.0.0",
+            "version": "v4.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/jooservices/exceptions.git",
-                "reference": "f564eb80632fa9f8159262c084c67237bc8d2b21"
+                "reference": "fd89592683b420ea416ab0ab8f7b4846da90e574"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/jooservices/exceptions/zipball/f564eb80632fa9f8159262c084c67237bc8d2b21",
-                "reference": "f564eb80632fa9f8159262c084c67237bc8d2b21",
+                "url": "https://api.github.com/repos/jooservices/exceptions/zipball/fd89592683b420ea416ab0ab8f7b4846da90e574",
+                "reference": "fd89592683b420ea416ab0ab8f7b4846da90e574",
                 "shasum": ""
             },
             "require": {
@@ -192,7 +192,7 @@
                 "issues": "https://github.com/jooservices/exceptions/issues",
                 "source": "https://github.com/jooservices/exceptions"
             },
-            "time": "2026-08-30T01:28:14+00:00"
+            "time": "2026-09-07T17:32:21+00:00"
         },
         {
             "name": "nyholm/psr7",
