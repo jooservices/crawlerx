@@ -64,6 +64,8 @@ final class PerformerDetailTest extends TestCase
     {
         yield 'measurements and cup' => ['Measurements: JP 80-55-82', 'Cup size: C', 'B80(C) W55 H82'];
         yield 'measurements without cup' => ['Measurements: JP 80 - 55 - 82', null, 'B80 W55 H82'];
+        yield 'en dash measurements without cup' => ["Measurements: JP 80 \u{2013} 55 \u{2013} 82", null, 'B80 W55 H82'];
+        yield 'en dash measurements and cup' => ["Measurements: JP 80 \u{2013} 55 \u{2013} 82", 'Cup size: C', 'B80(C) W55 H82'];
         yield 'free text measurements are kept' => ['Measurements: 90-60-90', null, '90-60-90'];
         yield 'cup only' => [null, 'Cup size: E', 'B00(E)'];
         yield 'nothing known' => [null, null, null];

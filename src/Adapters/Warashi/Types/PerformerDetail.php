@@ -225,7 +225,7 @@ final class PerformerDetail extends AbstractType implements TypeInterface
             return $cup !== null ? "B00({$cup})" : null;
         }
 
-        if (preg_match('/JP\s*(\d{2,3})\s*[-–]\s*(\d{2,3})\s*[-–]\s*(\d{2,3})/i', $measurementsRaw, $match) === 1) {
+        if (preg_match('/JP\s*(\d{2,3})\s*[-–]\s*(\d{2,3})\s*[-–]\s*(\d{2,3})/iu', $measurementsRaw, $match) === 1) {
             $bust = $match[1];
             $waist = $match[2];
             $hip = $match[3];
