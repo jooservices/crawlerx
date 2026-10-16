@@ -50,6 +50,14 @@ function statements(string $path): array
 $unit = statements($unitPath);
 $feature = statements($featurePath);
 
+foreach (['Unit' => $unit, 'Feature' => $feature] as $suite => $suiteStatements) {
+    if ($suiteStatements === []) {
+        // A suite that reports nothing did not run; its absence must not be hidden by the other suite.
+        fwrite(STDERR, "The {$suite} clover report has no executable statements; refusing to pass.\n");
+        exit(1);
+    }
+}
+
 $all = $unit + $feature;
 $covered = 0;
 foreach (array_keys($all) as $id) {

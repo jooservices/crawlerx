@@ -66,7 +66,21 @@ final class CoverageUnionTest extends TestCase
         [$exit, $out] = $this->runScript($empty, $empty, '90');
 
         self::assertSame(1, $exit);
-        self::assertStringContainsString('No executable statements', $out);
+        self::assertStringContainsString('has no executable statements', $out);
+    }
+
+    public function test_a_single_empty_report_fails_even_when_the_other_suite_is_fully_covered(): void
+    {
+        $empty = $this->dir . '/empty.xml';
+        file_put_contents($empty, '<?xml version="1.0"?><coverage><project/></coverage>');
+        $full = $this->clover('A.php', [1 => 1, 2 => 1]);
+
+        [$exitUnit, $outUnit] = $this->runScript($empty, $full, '90');
+        [$exitFeature] = $this->runScript($full, $empty, '90');
+
+        self::assertSame(1, $exitUnit);
+        self::assertStringContainsString('The Unit clover report has no executable statements', $outUnit);
+        self::assertSame(1, $exitFeature);
     }
 
     public function test_a_missing_report_is_an_error(): void

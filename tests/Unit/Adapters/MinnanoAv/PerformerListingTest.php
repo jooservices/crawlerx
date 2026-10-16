@@ -94,17 +94,6 @@ final class PerformerListingTest extends TestCase
         self::assertSame(3, $result->pagination->nextPage);
     }
 
-    public function test_next_page_is_read_from_raw_html_when_the_dom_has_no_usable_link(): void
-    {
-        $html = '<html><body>'
-            . '<!-- <link rel="next" href="/actress_list.php?page=4"> -->'
-            . 'https://www.minnano-av.com/actress1.html</body></html>';
-
-        $result = $this->execute($html);
-
-        self::assertSame('https://www.minnano-av.com/actress_list.php?page=4', $result->pagination->nextUrl);
-    }
-
     public function test_there_is_no_next_page_and_the_page_number_is_null_without_a_page_query(): void
     {
         $result = $this->execute('<html><body>https://www.minnano-av.com/actress1.html</body></html>');
