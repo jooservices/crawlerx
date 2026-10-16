@@ -528,12 +528,17 @@ final class SourceMatrixTest extends TestCase
         } finally {
             putenv('CRAWLERX_MATRIX_ENDED_AT_UTC');
             putenv('CRAWLERX_MATRIX_HOST_LOAD_END');
-            unlink($root . '/build/source-matrix.json');
-            unlink($root . '/artifacts/reports/source-matrix.md');
-            rmdir($root . '/build');
-            rmdir($root . '/artifacts/reports');
-            rmdir($root . '/artifacts');
-            rmdir($root);
+            // finalizeReport() may return before writing a file; cleanup must not raise warnings that hide the real failure.
+            foreach (['/build/source-matrix.json', '/artifacts/reports/source-matrix.md'] as $file) {
+                if (is_file($root . $file)) {
+                    unlink($root . $file);
+                }
+            }
+            foreach (['/build', '/artifacts/reports', '/artifacts', ''] as $directory) {
+                if (is_dir($root . $directory)) {
+                    @rmdir($root . $directory);
+                }
+            }
         }
     }
 

@@ -23,3 +23,5 @@ Requests run sequentially. The tool caps fetch attempts at three per source and 
 The report header records the UTC start/end times, tool git SHA, host CPU count, three host load averages at start/end, and enabled fetch methods. The Make target captures these values on the host and finalizes the report after the matrix process exits. A start load above the CPU count is reported as a console and report warning.
 
 `working` means the fetch succeeded and all required fields were present. `degraded` means fields were missing or another mapped error occurred. `blocked` means a login requirement, HTTP 401/403, a challenge that the configured fetch chain did not pass, or an explicit blocked response. Adapter changes remain separate work.
+
+Run it one at a time per worktree. The report files under `build/` are overwritten by each run, and concurrent live runs would also break the per-host politeness limits (at most 3 requests per site and capability, 5 seconds between requests to a host).
