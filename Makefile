@@ -54,13 +54,34 @@ source-matrix: source-matrix-image
 	BUILDX_CONFIG="$(CURDIR)/.tmp/buildx-$$$$"; \
 	export COMPOSE_PROJECT_NAME CRAWLERX_NETWORK_NAME CRAWLERX_NETWORK_SUBNET BUILDX_CONFIG PLAYWRIGHT_HOST_PORT=0 FLARESOLVERR_HOST_PORT=0; \
 	mkdir -p "$$BUILDX_CONFIG"; \
-	trap '$(DOCKER_COMPOSE) --env-file /dev/null --profile fetch down --remove-orphans; rm -rf "$$BUILDX_CONFIG"' EXIT; \
+	trap '$(DOCKER_COMPOSE) --env-file /dev/null --profile fetch down --remove-orphans; rm -rf "$$BUILDX_CONFIG"; rmdir "$(CURDIR)/.tmp" 2>/dev/null || true' EXIT; \
 	$(DOCKER_COMPOSE) --env-file /dev/null --profile fetch up -d --build --no-deps --wait node flaresolverr; \
+	MATRIX_HOST_CPU_COUNT="$$(getconf _NPROCESSORS_ONLN)"; \
+	while :; do \
+	  MATRIX_HOST_LOAD_START="$$(uptime | sed -E 's/^.*load averages?: //; s/,/ /g; s/^[[:space:]]+//; s/[[:space:]]+$$//')"; \
+	  MATRIX_ONE_MINUTE_LOAD="$$(printf '%s\n' "$$MATRIX_HOST_LOAD_START" | awk '{print $$1}')"; \
+	  if awk -v load="$$MATRIX_ONE_MINUTE_LOAD" -v cpus="$$MATRIX_HOST_CPU_COUNT" 'BEGIN { if (load !~ /^[0-9]+([.][0-9]+)?$$/ || cpus !~ /^[0-9]+$$/) exit 1; exit !(load < cpus) }'; then break; fi; \
+	  printf 'Waiting: 1-minute load %s is not below CPU count %s.\n' "$$MATRIX_ONE_MINUTE_LOAD" "$$MATRIX_HOST_CPU_COUNT" >&2; \
+	  sleep 30; \
+	done; \
+	MATRIX_STARTED_AT_UTC="$$(date -u +%Y-%m-%dT%H:%M:%SZ)"; \
+	MATRIX_TOOL_GIT_SHA="$$(git rev-parse HEAD)"; \
 	docker run --rm --network "$$CRAWLERX_NETWORK_NAME" \
 	  --volume "$(CURDIR):/app" --workdir /app \
+	  --env "CRAWLERX_MATRIX_STARTED_AT_UTC=$$MATRIX_STARTED_AT_UTC" \
+	  --env "CRAWLERX_MATRIX_TOOL_GIT_SHA=$$MATRIX_TOOL_GIT_SHA" \
+	  --env "CRAWLERX_MATRIX_HOST_CPU_COUNT=$$MATRIX_HOST_CPU_COUNT" \
+	  --env "CRAWLERX_MATRIX_HOST_LOAD_START=$$MATRIX_HOST_LOAD_START" \
 	  --env FLARESOLVERR_URL=http://flaresolverr:8191/v1 \
 	  --env PLAYWRIGHT_URL=http://node:3000 \
-	  $(SOURCE_MATRIX_IMAGE) php tools/source-matrix.php $(if $(SITE),--site=$(SITE),)
+	  $(SOURCE_MATRIX_IMAGE) php tools/source-matrix.php $(if $(SITE),--site=$(SITE),); \
+	MATRIX_ENDED_AT_UTC="$$(date -u +%Y-%m-%dT%H:%M:%SZ)"; \
+	MATRIX_HOST_LOAD_END="$$(uptime | sed -E 's/^.*load averages?: //; s/,/ /g; s/^[[:space:]]+//; s/[[:space:]]+$$//')"; \
+	docker run --rm --network "$$CRAWLERX_NETWORK_NAME" \
+	  --volume "$(CURDIR):/app" --workdir /app \
+	  --env "CRAWLERX_MATRIX_ENDED_AT_UTC=$$MATRIX_ENDED_AT_UTC" \
+	  --env "CRAWLERX_MATRIX_HOST_LOAD_END=$$MATRIX_HOST_LOAD_END" \
+	  $(SOURCE_MATRIX_IMAGE) php tools/source-matrix.php --finalize-report
 
 bench: fetch-up
 	node tools/benchmark/run.mjs $(if $(METHODS),--methods=$(METHODS),) $(if $(COUNT),--count=$(COUNT),)

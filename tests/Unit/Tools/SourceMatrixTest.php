@@ -24,6 +24,7 @@ use JOOservices\CrawlerX\Tools\SourceMatrix\PolitenessGuard;
 use JOOservices\CrawlerX\Tools\SourceMatrix\RequestPacer;
 use JOOservices\CrawlerX\Tools\SourceMatrix\SourceMatrixReport;
 use JOOservices\CrawlerX\Tools\SourceMatrix\SourceMatrixCommand;
+use JOOservices\CrawlerX\Tools\SourceMatrix\SourceMatrixRunMetadata;
 use JOOservices\CrawlerX\Tools\SourceMatrix\SourceMatrixRunner;
 use JOOservices\CrawlerX\Tools\SourceMatrix\Verdict;
 use PHPUnit\Framework\TestCase;
@@ -50,23 +51,47 @@ final class SourceMatrixTest extends TestCase
         );
     }
 
-    public function test_challenges_timeouts_and_forbidden_statuses_are_blocked(): void
+    public function test_authentication_denials_challenges_and_explicit_blocks_are_blocked(): void
     {
         self::assertSame(
             [Verdict::Blocked, 'challenge'],
             MatrixClassifier::classify($this->fetchResult(status: 200, challenge: true), null, 2, 2),
         );
         self::assertSame(
-            [Verdict::Blocked, 'timeout'],
-            MatrixClassifier::classify($this->fetchResult(status: 0, error: 'request timed out'), null, 0, 2),
+            [Verdict::Blocked, 'http_401'],
+            MatrixClassifier::classify($this->fetchResult(status: 401), null, 0, 2),
         );
         self::assertSame(
             [Verdict::Blocked, 'http_403'],
-            MatrixClassifier::classify($this->fetchResult(status: 403), CrawlErrorCode::Blocked, 0, 2),
+            MatrixClassifier::classify($this->fetchResult(status: 403), null, 0, 2),
         );
         self::assertSame(
-            [Verdict::Blocked, 'timeout'],
+            [Verdict::Blocked, 'auth_required'],
+            MatrixClassifier::classify(null, CrawlErrorCode::AuthRequired, 0, 2),
+        );
+        self::assertSame(
+            [Verdict::Blocked, 'blocked'],
+            MatrixClassifier::classify(null, CrawlErrorCode::Blocked, 0, 2),
+        );
+    }
+
+    public function test_timeouts_and_network_errors_are_degraded(): void
+    {
+        self::assertSame(
+            [Verdict::Degraded, 'timeout'],
+            MatrixClassifier::classify($this->fetchResult(status: 0, error: 'request timed out'), null, 0, 2),
+        );
+        self::assertSame(
+            [Verdict::Degraded, 'timeout'],
             MatrixClassifier::classify(null, CrawlErrorCode::Timeout, 0, 2),
+        );
+        self::assertSame(
+            [Verdict::Degraded, 'network'],
+            MatrixClassifier::classify(null, CrawlErrorCode::Network, 0, 2),
+        );
+        self::assertSame(
+            [Verdict::Degraded, 'network'],
+            MatrixClassifier::classify($this->fetchResult(status: 0, error: 'connection reset'), null, 0, 2),
         );
     }
 
@@ -234,6 +259,85 @@ final class SourceMatrixTest extends TestCase
         self::assertStringContainsString('"error_code": null', $json);
     }
 
+    public function test_runner_retries_a_timeout_once_after_fifteen_seconds_within_request_budget(): void
+    {
+        $now = 0.0;
+        $requests = 0;
+        $guard = new PolitenessGuard(new RequestPacer(
+            clock: static fn(): float => $now,
+            sleeper: static function (int $microseconds) use (&$now): void {
+                $now += $microseconds / 1_000_000;
+            },
+        ));
+        $runner = new SourceMatrixRunner(
+            function (AdapterManifestDto $manifest, FixtureSampleDto $sample, CrawlType $type) use ($guard, &$requests): MatrixObservation {
+                self::assertTrue($guard->beforeRequest($manifest->slug, 'detail', $sample->url, null));
+                ++$requests;
+
+                return new MatrixObservation(CrawlOutcomeDto::failure(new CrawlErrorDto(CrawlErrorCode::Timeout, 'timeout')), null);
+            },
+            guard: $guard,
+            retrySleeper: static function (int $microseconds) use (&$now): void {
+                $now += $microseconds / 1_000_000;
+            },
+        );
+
+        $rows = $runner->run(['alpha' => $this->manifest(
+            'alpha',
+            'detail',
+            new FixtureSampleDto('https://example.test/detail/1', 'sample', 'detail'),
+        )]);
+
+        self::assertSame(2, $requests);
+        self::assertSame(2, $guard->requestCount('alpha', 'detail'));
+        self::assertGreaterThanOrEqual(15.0, $now);
+        self::assertSame(Verdict::Degraded, $rows[0]->verdict);
+        self::assertSame('timeout', $rows[0]->reason);
+    }
+
+    public function test_runner_retries_network_once_and_preserves_a_successful_retry(): void
+    {
+        $now = 0.0;
+        $requests = 0;
+        $guard = new PolitenessGuard(new RequestPacer(
+            clock: static fn(): float => $now,
+            sleeper: static function (int $microseconds) use (&$now): void {
+                $now += $microseconds / 1_000_000;
+            },
+        ));
+        $runner = new SourceMatrixRunner(
+            function (AdapterManifestDto $manifest, FixtureSampleDto $sample, CrawlType $type) use ($guard, &$requests): MatrixObservation {
+                self::assertTrue($guard->beforeRequest($manifest->slug, 'detail', $sample->url, null));
+                ++$requests;
+                if ($requests === 1) {
+                    return new MatrixObservation(CrawlOutcomeDto::failure(new CrawlErrorDto(CrawlErrorCode::Network, 'network error')), null);
+                }
+
+                return new MatrixObservation(CrawlOutcomeDto::success(new CrawlItemResultDto(
+                    url: $sample->url,
+                    entityType: 'movie',
+                    meta: ['movie' => ['title' => 'Title', 'external_id' => '1']],
+                )), $this->fetchResult(status: 200));
+            },
+            guard: $guard,
+            retrySleeper: static function (int $microseconds) use (&$now): void {
+                $now += $microseconds / 1_000_000;
+            },
+        );
+
+        $rows = $runner->run(['alpha' => $this->manifest(
+            'alpha',
+            'detail',
+            new FixtureSampleDto('https://example.test/detail/1', 'sample', 'detail'),
+        )]);
+
+        self::assertSame(2, $requests);
+        self::assertSame(2, $guard->requestCount('alpha', 'detail'));
+        self::assertGreaterThanOrEqual(15.0, $now);
+        self::assertSame(Verdict::Working, $rows[0]->verdict);
+        self::assertNull($rows[0]->reason);
+    }
+
     public function test_runner_reports_required_login_as_blocked_without_fetching(): void
     {
         $called = false;
@@ -328,6 +432,7 @@ final class SourceMatrixTest extends TestCase
     {
         $files = [];
         $messages = [];
+        $warnings = [];
         $probe = fn(AdapterManifestDto $source, FixtureSampleDto $sample, CrawlType $type): MatrixObservation => new MatrixObservation(
             CrawlOutcomeDto::success(new CrawlItemResultDto(
                 url: 'https://example.test/detail/1',
@@ -353,8 +458,18 @@ final class SourceMatrixTest extends TestCase
             output: static function (string $message) use (&$messages): void {
                 $messages[] = $message;
             },
-            errorOutput: static function (): void {
+            errorOutput: static function (string $message) use (&$warnings): void {
+                $warnings[] = $message;
             },
+            runMetadata: [
+                'started_at_utc' => '2026-10-16T00:00:00Z',
+                'ended_at_utc' => null,
+                'tool_git_sha' => 'abc123',
+                'host_cpu_count' => 8,
+                'host_load_average_start' => '9.00 8.50 8.00',
+                'host_load_average_end' => null,
+                'fetch_methods_enabled' => ['http', 'playwright'],
+            ],
         );
 
         self::assertSame(0, $command->run(['--site=alpha']));
@@ -362,7 +477,79 @@ final class SourceMatrixTest extends TestCase
         self::assertArrayHasKey('/workspace/artifacts/reports/source-matrix.md', $files);
         self::assertStringContainsString('"source_coverage": "1/1"', $files['/workspace/build/source-matrix.json']);
         self::assertStringContainsString('Source coverage: **1/1**', $files['/workspace/artifacts/reports/source-matrix.md']);
+        self::assertStringContainsString('Started (UTC): 2026-10-16T00:00:00Z', $files['/workspace/artifacts/reports/source-matrix.md']);
+        self::assertStringContainsString('Host load average at start (1/5/15 min): 9.00 8.50 8.00', $files['/workspace/artifacts/reports/source-matrix.md']);
+        self::assertStringContainsString('Warning: Host 1-minute load average 9.00 exceeded the CPU count 8 at matrix start.', $files['/workspace/artifacts/reports/source-matrix.md']);
+        self::assertStringContainsString('Fetch methods enabled: `http`, `playwright`', $files['/workspace/artifacts/reports/source-matrix.md']);
+        self::assertStringContainsString('"run_metadata"', $files['/workspace/build/source-matrix.json']);
+        self::assertSame(['WARNING: Host 1-minute load average 9.00 exceeded the CPU count 8 at matrix start.'], $warnings);
         self::assertSame(['Source matrix: 1/1 sources, 1 rows; 1 working, 0 degraded, 0 blocked.'], $messages);
+    }
+
+    public function test_report_finalizer_adds_host_end_conditions_to_json_and_markdown(): void
+    {
+        $root = sys_get_temp_dir() . '/crawlerx-source-matrix-' . bin2hex(random_bytes(5));
+        mkdir($root . '/build', 0775, true);
+        mkdir($root . '/artifacts/reports', 0775, true);
+        $rows = [new \JOOservices\CrawlerX\Tools\SourceMatrix\MatrixRow(
+            'alpha',
+            'detail',
+            'https://example.test/detail/1',
+            'http',
+            200,
+            false,
+            2,
+            2,
+            Verdict::Working,
+            null,
+        )];
+        $summary = SourceMatrixReport::summary($rows, 1);
+        $metadata = [
+            'started_at_utc' => '2026-10-16T00:00:00Z',
+            'ended_at_utc' => null,
+            'tool_git_sha' => 'abc123',
+            'host_cpu_count' => 8,
+            'host_load_average_start' => '1.00 0.50 0.25',
+            'host_load_average_end' => null,
+            'fetch_methods_enabled' => ['http'],
+        ];
+        file_put_contents($root . '/build/source-matrix.json', SourceMatrixReport::json($rows, $summary, $metadata));
+
+        putenv('CRAWLERX_MATRIX_ENDED_AT_UTC=2026-10-16T00:05:00Z');
+        putenv('CRAWLERX_MATRIX_HOST_LOAD_END=2.00 1.00 0.50');
+        try {
+            $command = new SourceMatrixCommand([], static fn(): MatrixObservation => throw new \LogicException(), $root);
+            self::assertSame(0, $command->run(['--finalize-report']));
+            $data = json_decode((string) file_get_contents($root . '/build/source-matrix.json'), true, flags: JSON_THROW_ON_ERROR);
+            $report = (string) file_get_contents($root . '/artifacts/reports/source-matrix.md');
+            self::assertSame('2026-10-16T00:05:00Z', $data['run_metadata']['ended_at_utc']);
+            self::assertSame('2.00 1.00 0.50', $data['run_metadata']['host_load_average_end']);
+            self::assertStringContainsString('Host load average at end (1/5/15 min): 2.00 1.00 0.50', $report);
+        } finally {
+            putenv('CRAWLERX_MATRIX_ENDED_AT_UTC');
+            putenv('CRAWLERX_MATRIX_HOST_LOAD_END');
+            unlink($root . '/build/source-matrix.json');
+            unlink($root . '/artifacts/reports/source-matrix.md');
+            rmdir($root . '/build');
+            rmdir($root . '/artifacts/reports');
+            rmdir($root . '/artifacts');
+            rmdir($root);
+        }
+    }
+
+    public function test_start_load_warning_is_added_only_above_cpu_count(): void
+    {
+        self::assertSame(
+            'Host 1-minute load average 5.25 exceeded the CPU count 4 at matrix start.',
+            SourceMatrixRunMetadata::loadWarning([
+                'host_cpu_count' => 4,
+                'host_load_average_start' => '5.25 4.00 3.00',
+            ]),
+        );
+        self::assertNull(SourceMatrixRunMetadata::loadWarning([
+            'host_cpu_count' => 4,
+            'host_load_average_start' => '4.00 4.00 3.00',
+        ]));
     }
 
     public function test_command_handles_help_invalid_options_unknown_sites_and_write_errors(): void
@@ -386,7 +573,7 @@ final class SourceMatrixTest extends TestCase
         self::assertSame(2, $command->run(['--unknown']));
         self::assertSame(2, $command->run(['--site=']));
         self::assertSame(2, $command->run(['--site=missing']));
-        self::assertSame(['Usage: php tools/source-matrix.php [--site=SLUG]'], $output);
+        self::assertSame(['Usage: php tools/source-matrix.php [--site=SLUG] | --finalize-report'], $output);
         self::assertSame([
             'Unknown option: --unknown',
             '--site requires a slug.',

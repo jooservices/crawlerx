@@ -160,6 +160,9 @@ final class PolitenessGuard
     /** @var array<string, int> */
     private array $requests = [];
 
+    /** @var array<string, int> */
+    private array $requestLimits = [];
+
     public function __construct(
         private readonly RequestPacer $pacer,
         private readonly int $maxRequestsPerCapability = 3,
@@ -170,7 +173,7 @@ final class PolitenessGuard
     public function beforeRequest(string $site, string $capability, string $url, ?array $settings): bool
     {
         $key = $site . "\0" . $capability;
-        if (($this->requests[$key] ?? 0) >= $this->maxRequestsPerCapability) {
+        if (($this->requests[$key] ?? 0) >= ($this->requestLimits[$key] ?? $this->maxRequestsPerCapability)) {
             return false;
         }
 
@@ -181,6 +184,23 @@ final class PolitenessGuard
 
         $this->pacer->wait($host, $settings);
         $this->requests[$key] = ($this->requests[$key] ?? 0) + 1;
+
+        return true;
+    }
+
+    public function reserveRetryRequest(string $site, string $capability): void
+    {
+        $this->requestLimits[$site . "\0" . $capability] = max(0, $this->maxRequestsPerCapability - 1);
+    }
+
+    public function allowRetryRequest(string $site, string $capability): bool
+    {
+        $key = $site . "\0" . $capability;
+        if (($this->requests[$key] ?? 0) >= $this->maxRequestsPerCapability) {
+            return false;
+        }
+
+        $this->requestLimits[$key] = $this->maxRequestsPerCapability;
 
         return true;
     }
@@ -265,16 +285,28 @@ final class MatrixClassifier
             return [Verdict::Blocked, 'challenge'];
         }
 
+        if ($errorCode === CrawlErrorCode::AuthRequired) {
+            return [Verdict::Blocked, 'auth_required'];
+        }
+
+        if ($fetch?->status === 401) {
+            return [Verdict::Blocked, 'http_401'];
+        }
+
         if ($fetch?->status === 403) {
             return [Verdict::Blocked, 'http_403'];
         }
 
-        if ($errorCode === CrawlErrorCode::Timeout || self::isTimeout($fetch?->error)) {
-            return [Verdict::Blocked, 'timeout'];
+        if ($errorCode === CrawlErrorCode::Blocked) {
+            return [Verdict::Blocked, $errorCode->value];
         }
 
-        if (in_array($errorCode, [CrawlErrorCode::Blocked, CrawlErrorCode::AuthRequired], true)) {
-            return [Verdict::Blocked, $errorCode->value];
+        if ($errorCode === CrawlErrorCode::Timeout || self::isTimeout($fetch?->error)) {
+            return [Verdict::Degraded, 'timeout'];
+        }
+
+        if ($errorCode === CrawlErrorCode::Network || self::isNetworkError($fetch?->error)) {
+            return [Verdict::Degraded, 'network'];
         }
 
         if ($errorCode !== null) {
@@ -292,6 +324,23 @@ final class MatrixClassifier
         return [Verdict::Working, null];
     }
 
+    public static function shouldRetry(?FetchResultDto $fetch, ?CrawlErrorCode $errorCode): bool
+    {
+        if (
+            $errorCode === CrawlErrorCode::Challenge
+            || $errorCode === CrawlErrorCode::AuthRequired
+            || $errorCode === CrawlErrorCode::Blocked
+            || $fetch?->challengeDetected === true
+            || in_array($fetch?->status, [401, 403], true)
+        ) {
+            return false;
+        }
+
+        return in_array($errorCode, [CrawlErrorCode::Timeout, CrawlErrorCode::Network], true)
+            || self::isTimeout($fetch?->error)
+            || self::isNetworkError($fetch?->error);
+    }
+
     private static function isTimeout(?string $error): bool
     {
         if ($error === null) {
@@ -302,6 +351,29 @@ final class MatrixClassifier
 
         return str_contains($error, 'timeout') || str_contains($error, 'timed out');
     }
+
+    private static function isNetworkError(?string $error): bool
+    {
+        if ($error === null) {
+            return false;
+        }
+
+        $error = strtolower($error);
+        foreach ([
+            'network',
+            'connection refused',
+            'connection reset',
+            'could not resolve',
+            'name or service not known',
+            'temporary failure',
+        ] as $marker) {
+            if (str_contains($error, $marker)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
 
 final class SourceMatrixRunner
@@ -309,10 +381,22 @@ final class SourceMatrixRunner
     /** @var Closure(AdapterManifestDto, FixtureSampleDto, CrawlType): MatrixObservation */
     private readonly Closure $probe;
 
-    /** @param callable(AdapterManifestDto, FixtureSampleDto, CrawlType): MatrixObservation $probe */
-    public function __construct(callable $probe)
+    private readonly ?PolitenessGuard $guard;
+
+    /** @var Closure(int): void */
+    private readonly Closure $retrySleeper;
+
+    /**
+     * @param callable(AdapterManifestDto, FixtureSampleDto, CrawlType): MatrixObservation $probe
+     * @param callable(int): void|null $retrySleeper
+     */
+    public function __construct(callable $probe, ?PolitenessGuard $guard = null, ?callable $retrySleeper = null)
     {
         $this->probe = Closure::fromCallable($probe);
+        $this->guard = $guard;
+        $this->retrySleeper = Closure::fromCallable($retrySleeper ?? static function (int $microseconds): void {
+            usleep($microseconds);
+        });
     }
 
     /**
@@ -361,7 +445,17 @@ final class SourceMatrixRunner
                     continue;
                 }
 
+                $this->guard?->reserveRetryRequest($manifest->slug, $capability);
                 $observation = ($this->probe)($manifest, $sample, $type);
+                $errorCode = $observation->outcome->error?->code;
+                if (
+                    MatrixClassifier::shouldRetry($observation->fetch, $errorCode)
+                    && ($this->guard?->allowRetryRequest($manifest->slug, $capability) ?? true)
+                ) {
+                    ($this->retrySleeper)(15_000_000);
+                    $observation = ($this->probe)($manifest, $sample, $type);
+                }
+
                 $result = $observation->outcome->list ?? $observation->outcome->item;
                 $coverage = $result instanceof CrawlListResultDto || $result instanceof CrawlItemResultDto
                     ? RequiredFields::check($result, $capability)
@@ -481,11 +575,32 @@ final class SourceMatrixReport
     /** @param list<MatrixRow> $rows
      *  @param array<string, mixed> $summary
      */
-    public static function markdown(array $rows, array $summary): string
+    public static function markdown(array $rows, array $summary, ?array $runMetadata = null): string
     {
         $lines = [
             '# Source matrix',
             '',
+        ];
+
+        if ($runMetadata !== null) {
+            $lines[] = '## Run conditions';
+            $lines[] = '';
+            $lines[] = '- Started (UTC): ' . ($runMetadata['started_at_utc'] ?? 'unavailable');
+            $lines[] = '- Ended (UTC): ' . ($runMetadata['ended_at_utc'] ?? 'pending post-run capture');
+            $lines[] = '- Tool git SHA: `' . ($runMetadata['tool_git_sha'] ?? 'unavailable') . '`';
+            $lines[] = '- Host CPU count: ' . ($runMetadata['host_cpu_count'] ?? 'unavailable');
+            $lines[] = '- Host load average at start (1/5/15 min): ' . ($runMetadata['host_load_average_start'] ?? 'unavailable');
+            $lines[] = '- Host load average at end (1/5/15 min): ' . ($runMetadata['host_load_average_end'] ?? 'pending post-run capture');
+            $methods = $runMetadata['fetch_methods_enabled'] ?? [];
+            $lines[] = '- Fetch methods enabled: ' . ($methods === [] ? 'none reported' : '`' . implode('`, `', $methods) . '`');
+            if (is_string($runMetadata['warning'] ?? null)) {
+                $lines[] = '- Warning: ' . $runMetadata['warning'];
+            }
+            $lines[] = '';
+        }
+
+        array_push(
+            $lines,
             sprintf(
                 'Source coverage: **%s** (%d matrix rows).',
                 $summary['source_coverage'],
@@ -496,7 +611,7 @@ final class SourceMatrixReport
             '',
             '| Verdict | Count |',
             '| --- | ---: |',
-        ];
+        );
 
         foreach ($summary['by_verdict'] as $verdict => $count) {
             $lines[] = sprintf('| %s | %d |', $verdict, $count);
@@ -538,13 +653,36 @@ final class SourceMatrixReport
     /** @param list<MatrixRow> $rows
      *  @param array<string, mixed> $summary
      */
-    public static function json(array $rows, array $summary): string
+    public static function json(array $rows, array $summary, ?array $runMetadata = null): string
     {
-        return json_encode([
+        $data = [
             'schema' => 'crawlerx.source-matrix.v1',
             'summary' => $summary,
             'rows' => array_map(static fn(MatrixRow $row): array => $row->toArray(), $rows),
-        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n";
+        ];
+        if ($runMetadata !== null) {
+            $data['run_metadata'] = $runMetadata;
+        }
+
+        return json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n";
+    }
+
+    /** @param list<array<string, mixed>> $rows @return list<MatrixRow> */
+    public static function rowsFromArray(array $rows): array
+    {
+        return array_map(static fn(array $row): MatrixRow => new MatrixRow(
+            site: (string) $row['site'],
+            capability: (string) $row['capability'],
+            url: (string) $row['url'],
+            method: is_string($row['method'] ?? null) ? $row['method'] : null,
+            status: is_int($row['status'] ?? null) ? $row['status'] : null,
+            challenge: (bool) ($row['challenge'] ?? false),
+            fieldsParsed: (int) ($row['fields_parsed'] ?? 0),
+            fieldsRequired: (int) ($row['fields_required'] ?? 0),
+            verdict: Verdict::from((string) $row['verdict']),
+            reason: is_string($row['reason'] ?? null) ? $row['reason'] : null,
+            errorCode: is_string($row['error_code'] ?? null) ? CrawlErrorCode::tryFrom($row['error_code']) : null,
+        ), $rows);
     }
 
     private static function cell(string $value): string
@@ -553,11 +691,90 @@ final class SourceMatrixReport
     }
 }
 
+final class SourceMatrixRunMetadata
+{
+    /** @param list<string> $fetchMethodsEnabled @return array<string, mixed> */
+    public static function fromEnvironment(array $fetchMethodsEnabled): array
+    {
+        $metadata = [
+            'started_at_utc' => self::environmentValue('CRAWLERX_MATRIX_STARTED_AT_UTC') ?? gmdate('Y-m-d\TH:i:s\Z'),
+            'ended_at_utc' => null,
+            'tool_git_sha' => self::environmentValue('CRAWLERX_MATRIX_TOOL_GIT_SHA') ?? 'unavailable',
+            'host_cpu_count' => self::cpuCount(self::environmentValue('CRAWLERX_MATRIX_HOST_CPU_COUNT')),
+            'host_load_average_start' => self::environmentValue('CRAWLERX_MATRIX_HOST_LOAD_START') ?? 'unavailable',
+            'host_load_average_end' => null,
+            'fetch_methods_enabled' => $fetchMethodsEnabled,
+        ];
+        $warning = self::loadWarning($metadata);
+        if ($warning !== null) {
+            $metadata['warning'] = $warning;
+        }
+
+        return $metadata;
+    }
+
+    public static function environmentValue(string $name): ?string
+    {
+        $value = getenv($name);
+
+        return is_string($value) && trim($value) !== '' ? trim($value) : null;
+    }
+
+    /** @param array<string, mixed> $metadata */
+    public static function loadWarning(array $metadata): ?string
+    {
+        $cpuCount = $metadata['host_cpu_count'] ?? null;
+        $loadAverages = preg_split('/[\s,]+/', trim((string) ($metadata['host_load_average_start'] ?? ''))) ?: [];
+        if (! is_int($cpuCount) || ! is_numeric($loadAverages[0] ?? null)) {
+            return null;
+        }
+
+        $oneMinuteLoad = (float) $loadAverages[0];
+        if ($oneMinuteLoad <= $cpuCount) {
+            return null;
+        }
+
+        return sprintf('Host 1-minute load average %.2f exceeded the CPU count %d at matrix start.', $oneMinuteLoad, $cpuCount);
+    }
+
+    private static function cpuCount(?string $value): ?int
+    {
+        return $value !== null && ctype_digit($value) ? (int) $value : null;
+    }
+}
+
 /** @codeCoverageIgnore HTTP/browser integration boundary; its guarded handlers are unit-tested. */
 final class LiveMatrixProbe
 {
     public function __construct(private readonly PolitenessGuard $guard)
     {
+    }
+
+    /** @return list<string> */
+    public function enabledFetchMethods(): array
+    {
+        $runtime = FetchRuntimeConfig::fromEnvironment();
+        $methods = [FetchMethod::Http->value];
+
+        if ($runtime->curlImpersonateBinary !== null) {
+            $methods[] = FetchMethod::CurlImpersonate->value;
+        }
+        if ($runtime->playwrightUrl !== null || is_file($runtime->playwrightScript)) {
+            array_push(
+                $methods,
+                FetchMethod::Playwright->value,
+                FetchMethod::PlaywrightStealth->value,
+                FetchMethod::ChromeStealth->value,
+            );
+        }
+        if (is_file($runtime->puppeteerScript)) {
+            $methods[] = FetchMethod::PuppeteerStealth->value;
+        }
+        if ($runtime->flaresolverrUrl !== null) {
+            $methods[] = FetchMethod::Flaresolverr->value;
+        }
+
+        return $methods;
     }
 
     public function __invoke(
@@ -641,6 +858,7 @@ final class LiveMatrixProbe
             runtime: $runtime,
             hostThrottle: new HostThrottle(nodeId: $runtime->nodeId),
             hostCircuit: new HostCircuit(nodeId: $runtime->nodeId),
+            maxTransientRetries: 0,
         );
     }
 }
@@ -662,6 +880,7 @@ final class SourceMatrixCommand
      * @param callable(string, string): bool|null $writer
      * @param callable(string): void|null $output
      * @param callable(string): void|null $errorOutput
+     * @param array<string, mixed>|null $runMetadata
      */
     public function __construct(
         private readonly array $manifests,
@@ -670,6 +889,8 @@ final class SourceMatrixCommand
         ?callable $writer = null,
         ?callable $output = null,
         ?callable $errorOutput = null,
+        private readonly ?PolitenessGuard $guard = null,
+        private readonly ?array $runMetadata = null,
     ) {
         $this->probe = Closure::fromCallable($probe);
         $this->writer = $writer === null ? Closure::fromCallable(self::writeFile(...)) : Closure::fromCallable($writer);
@@ -687,10 +908,14 @@ final class SourceMatrixCommand
     /** @param list<string> $arguments */
     public function run(array $arguments): int
     {
+        if ($arguments === ['--finalize-report']) {
+            return $this->finalizeReport();
+        }
+
         $siteFilter = null;
         foreach ($arguments as $argument) {
             if ($argument === '--help' || $argument === '-h') {
-                ($this->output)('Usage: php tools/source-matrix.php [--site=SLUG]');
+                ($this->output)('Usage: php tools/source-matrix.php [--site=SLUG] | --finalize-report');
                 return 0;
             }
 
@@ -712,16 +937,27 @@ final class SourceMatrixCommand
         }
 
         $selected = $siteFilter === null ? $this->manifests : [$siteFilter => $this->manifests[$siteFilter]];
-        $rows = (new SourceMatrixRunner($this->probe))->run($selected, $siteFilter);
+        $runMetadata = $this->runMetadata ?? SourceMatrixRunMetadata::fromEnvironment([]);
+        if (! is_string($runMetadata['warning'] ?? null)) {
+            $warning = SourceMatrixRunMetadata::loadWarning($runMetadata);
+            if ($warning !== null) {
+                $runMetadata['warning'] = $warning;
+            }
+        }
+        if (is_string($runMetadata['warning'] ?? null)) {
+            ($this->errorOutput)('WARNING: ' . $runMetadata['warning']);
+        }
+
+        $rows = (new SourceMatrixRunner($this->probe, $this->guard))->run($selected, $siteFilter);
         $summary = SourceMatrixReport::summary($rows, count($selected));
         $jsonPath = $this->projectRoot . '/build/source-matrix.json';
         $reportPath = $this->projectRoot . '/artifacts/reports/source-matrix.md';
 
-        if (! ($this->writer)($jsonPath, SourceMatrixReport::json($rows, $summary))) {
+        if (! ($this->writer)($jsonPath, SourceMatrixReport::json($rows, $summary, $runMetadata))) {
             ($this->errorOutput)('Unable to write source matrix outputs.');
             return 1;
         }
-        if (! ($this->writer)($reportPath, SourceMatrixReport::markdown($rows, $summary))) {
+        if (! ($this->writer)($reportPath, SourceMatrixReport::markdown($rows, $summary, $runMetadata))) {
             ($this->errorOutput)('Unable to write source matrix outputs.');
             return 1;
         }
@@ -734,6 +970,40 @@ final class SourceMatrixCommand
             $summary['by_verdict'][Verdict::Degraded->value],
             $summary['by_verdict'][Verdict::Blocked->value],
         ));
+
+        return 0;
+    }
+
+    private function finalizeReport(): int
+    {
+        $jsonPath = $this->projectRoot . '/build/source-matrix.json';
+        $json = is_file($jsonPath) ? file_get_contents($jsonPath) : false;
+        $data = is_string($json) ? json_decode($json, true) : null;
+        if (! is_array($data) || ! is_array($data['rows'] ?? null) || ! is_array($data['summary'] ?? null)) {
+            ($this->errorOutput)('Unable to read source matrix data for report finalization.');
+            return 1;
+        }
+
+        $runMetadata = is_array($data['run_metadata'] ?? null) ? $data['run_metadata'] : [];
+        $runMetadata['ended_at_utc'] = SourceMatrixRunMetadata::environmentValue('CRAWLERX_MATRIX_ENDED_AT_UTC') ?? gmdate('Y-m-d\TH:i:s\Z');
+        $runMetadata['host_load_average_end'] = SourceMatrixRunMetadata::environmentValue('CRAWLERX_MATRIX_HOST_LOAD_END') ?? 'unavailable';
+        $data['run_metadata'] = $runMetadata;
+
+        if (! ($this->writer)($jsonPath, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n")) {
+            ($this->errorOutput)('Unable to write finalized source matrix data.');
+            return 1;
+        }
+
+        $reportPath = $this->projectRoot . '/artifacts/reports/source-matrix.md';
+        $report = SourceMatrixReport::markdown(
+            SourceMatrixReport::rowsFromArray($data['rows']),
+            $data['summary'],
+            $runMetadata,
+        );
+        if (! ($this->writer)($reportPath, $report)) {
+            ($this->errorOutput)('Unable to write finalized source matrix report.');
+            return 1;
+        }
 
         return 0;
     }
@@ -755,7 +1025,14 @@ function runSourceMatrixCommand(array $arguments, string $projectRoot): int
 {
     $manifests = (new FileAdapterManifestRegistry())->all();
     $guard = new PolitenessGuard(new RequestPacer());
-    $command = new SourceMatrixCommand($manifests, new LiveMatrixProbe($guard), $projectRoot);
+    $probe = new LiveMatrixProbe($guard);
+    $command = new SourceMatrixCommand(
+        $manifests,
+        $probe,
+        $projectRoot,
+        guard: $guard,
+        runMetadata: SourceMatrixRunMetadata::fromEnvironment($probe->enabledFetchMethods()),
+    );
 
     return $command->run($arguments);
 }
