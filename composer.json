@@ -46,6 +46,7 @@
         "coverage:check": [
             "php tools/coverage-enforce.php build/coverage/clover-Unit.xml",
             "php tools/coverage-enforce.php build/coverage/clover-Feature.xml",
+            "php tools/coverage-union.php build/coverage/clover-Unit.xml build/coverage/clover-Feature.xml 90",
             "php tools/coverage-merge.php"
         ],
         "lint:pint": "pint --test",
