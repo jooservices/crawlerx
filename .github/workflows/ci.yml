@@ -233,6 +233,9 @@ jobs:
         run: |
           tools/ci/docker-compose run --rm php php tools/coverage-enforce.php build/coverage/matrix/clover-Unit.xml
           tools/ci/docker-compose run --rm php php tools/coverage-enforce.php build/coverage/matrix/clover-Feature.xml
+          tools/ci/docker-compose run --rm php php tools/coverage-union.php \
+            build/coverage/matrix/clover-Unit.xml \
+            build/coverage/matrix/clover-Feature.xml 90
           tools/ci/docker-compose run --rm php php tools/coverage-merge.php \
             build/coverage/matrix/clover-Unit.xml \
             build/coverage/matrix/clover-Feature.xml \
