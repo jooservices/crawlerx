@@ -53,6 +53,7 @@ final class FetchFallbackChain
         ?Closure $retrySleeper = null,
         ?HostThrottle $hostThrottle = null,
         ?HostCircuit $hostCircuit = null,
+        private readonly int $maxTransientRetries = TransientRetry::MAX_RETRIES,
     ) {
         $this->sessions = $sessions ?? new SessionStore();
         $this->logins = $logins;
@@ -143,6 +144,7 @@ final class FetchFallbackChain
 
                 if (
                     $method !== FetchMethod::Http
+                    || $retries >= $this->maxTransientRetries
                     || ! $transientRetry->canRetry($result, $retries)
                 ) {
                     break;

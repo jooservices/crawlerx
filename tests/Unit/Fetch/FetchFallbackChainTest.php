@@ -13,7 +13,10 @@ use JOOservices\CrawlerX\Enums\FetchProfile;
 use JOOservices\CrawlerX\Exceptions\CrawlBlockedException;
 use JOOservices\CrawlerX\Fetch\FetchFallbackChain;
 use JOOservices\CrawlerX\Dto\HttpProfileDto;
+use JOOservices\CrawlerX\Enums\CrawlErrorCode;
 use PHPUnit\Framework\TestCase;
+use JOOservices\CrawlerX\Exceptions\CrawlFetchException;
+use JOOservices\CrawlerX\Fetch\Guard\TransientRetry;
 
 final class FetchFallbackChainTest extends TestCase
 {
@@ -45,6 +48,55 @@ final class FetchFallbackChainTest extends TestCase
         $this->expectException(CrawlBlockedException::class);
 
         $chain->fetch('https://example.test', $this->profile(), [FetchMethod::Http]);
+    }
+
+    public function test_transient_retries_can_be_disabled_for_the_matrix_cooldown_retry(): void
+    {
+        $handler = new class implements FetchMethodHandler {
+            public int $calls = 0;
+
+            public function supports(FetchMethod $method): bool
+            {
+                return $method === FetchMethod::Http;
+            }
+
+            public function fetch(
+                string $url,
+                SiteProfileDto $profile,
+                FetchMethod $method,
+                ?CrawlOptionsDto $options = null,
+            ): FetchResultDto {
+                ++$this->calls;
+
+                return new FetchResultDto(
+                    ok: false,
+                    body: '',
+                    status: 0,
+                    methodUsed: $method,
+                    elapsedMs: 1,
+                    challengeDetected: false,
+                    error: TransientRetry::NETWORK_ERROR,
+                );
+            }
+        };
+        $sleeps = 0;
+        $chain = new FetchFallbackChain(
+            [FetchMethod::Http->value => $handler],
+            retrySleeper: static function (int $microseconds) use (&$sleeps): void {
+                ++$sleeps;
+            },
+            maxTransientRetries: 0,
+        );
+
+        try {
+            $chain->fetch('https://example.test', $this->profile(), [FetchMethod::Http]);
+            self::fail('Expected the final network failure.');
+        } catch (CrawlFetchException $exception) {
+            self::assertSame(CrawlErrorCode::Network, $exception->errorCode);
+        }
+
+        self::assertSame(1, $handler->calls);
+        self::assertSame(0, $sleeps);
     }
 
     private function handler(FetchMethod $supports, bool $ok, string $body = ''): FetchMethodHandler
