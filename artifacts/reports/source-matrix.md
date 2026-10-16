@@ -1,22 +1,33 @@
 # Source matrix
 
+## Run conditions
+
+- Started (UTC): 2026-10-16T10:07:07Z
+- Ended (UTC): 2026-10-16T10:21:02Z
+- Tool git SHA: `83c293db9271ba2d104b0b2d76a36d665b963200`
+- Host CPU count: 12
+- Host load average at start (1/5/15 min): 4.62 5.81 9.11
+- Host load average at end (1/5/15 min): 16.79 14.10 12.13
+- Fetch methods enabled: `http`, `playwright`, `playwright_stealth`, `chrome_stealth`, `puppeteer_stealth`, `flaresolverr`
+
 Source coverage: **25/25** (60 matrix rows).
 
 ## Verdict counts
 
 | Verdict | Count |
 | --- | ---: |
-| working | 43 |
-| degraded | 5 |
-| blocked | 12 |
+| working | 51 |
+| degraded | 6 |
+| blocked | 3 |
 
 ## Error code counts
 
 | Error code | Count |
 | --- | ---: |
 | auth_required | 2 |
-| network | 15 |
-| none | 43 |
+| blocked | 1 |
+| network | 6 |
+| none | 51 |
 
 ## Source results
 
@@ -28,8 +39,8 @@ Source coverage: **25/25** (60 matrix rows).
 | aisex | performer_listing | https://www.aisex.jp/actress/ | http | 200 | no | 3/3 | working | — |
 | avfan | detail | https://avfan.com/en/movies/ewTlM3Fj | — | — | no | 0/2 | blocked | auth_required |
 | avfan | listing | https://avfan.com/en | — | — | no | 0/3 | blocked | auth_required |
-| avfan_profiles | performer_detail | https://av-fan.tokyo/actress/%E6%9C%89%E6%A0%96%E8%88%9E%E8%A1%A3.html | playwright | 0 | no | 0/3 | blocked | timeout |
-| avfan_profiles | performer_listing | https://av-fan.tokyo/actress/cup/A.html | playwright | 0 | no | 0/3 | blocked | timeout |
+| avfan_profiles | performer_detail | https://av-fan.tokyo/actress/%E6%9C%89%E6%A0%96%E8%88%9E%E8%A1%A3.html | http | 200 | no | 3/3 | working | — |
+| avfan_profiles | performer_listing | https://av-fan.tokyo/actress/cup/A.html | http | 200 | no | 3/3 | working | — |
 | avjoho | performer_detail | https://db.avjoho.com/%e5%b8%82%e7%80%ac%e3%81%82%e3%81%84%e3%82%8a/ | http | 200 | no | 3/3 | working | — |
 | avjoho | performer_listing | https://db.avjoho.com/category/%e3%83%87%e3%83%93%e3%83%a5%e3%83%bc%ef%bc%882025%e5%b9%b4-%ef%bc%89/ | http | 200 | no | 3/3 | working | — |
 | caribbeancom | detail | https://en.caribbeancom.com/eng/moviepages/080826-001/index.html | http | 200 | no | 2/2 | working | — |
@@ -43,14 +54,14 @@ Source coverage: **25/25** (60 matrix rows).
 | ffjav | listing | https://ffjav.com/javtorrent | http | 200 | no | 3/3 | working | — |
 | heyzo | detail | https://en.heyzo.com/moviepages/3927/index.html | http | 200 | no | 2/2 | working | — |
 | heyzo | listing | https://en.heyzo.com/listpages/all_1.html | http | 200 | no | 3/3 | working | — |
-| jable | detail | https://en.jable.tv/videos/fjin-091/ | playwright | 0 | no | 0/2 | blocked | timeout |
-| jable | listing | https://en.jable.tv/new-release/ | playwright | 0 | no | 0/3 | blocked | timeout |
+| jable | detail | https://en.jable.tv/videos/fjin-091/ | playwright | 200 | no | 2/2 | working | — |
+| jable | listing | https://en.jable.tv/new-release/ | playwright | 200 | no | 3/3 | working | — |
 | jable | performer_detail | https://en.jable.tv/models/bfaca44240620be2f3092c294fb22fbe/ | playwright | 200 | no | 3/3 | working | — |
 | jable | performer_listing | https://en.jable.tv/models/ | playwright | 200 | no | 3/3 | working | — |
 | javbtc | detail | https://javbtc.com/r18/s1no1style-yua-mikami-sougouwiki-celebrity | playwright | 200 | no | 2/2 | working | — |
 | javbtc | listing | https://javbtc.com/ | playwright | 200 | no | 3/3 | working | — |
 | javbus | detail | https://www.javbus.com/en/NAMH-074 | playwright | 200 | no | 2/2 | working | — |
-| javbus | listing | https://www.javbus.com/en/ | playwright | 200 | no | 3/3 | working | — |
+| javbus | listing | https://www.javbus.com/en/ | playwright | 0 | no | 0/3 | degraded | timeout |
 | javbus | performer_detail | https://www.javbus.com/en/star/11p7 | playwright | 200 | no | 3/3 | working | — |
 | javbus | performer_listing | https://www.javbus.com/en/actresses | playwright | 200 | no | 3/3 | working | — |
 | javdatabase | performer_detail | https://www.javdatabase.com/idols/yua-mikami/ | http | 200 | no | 3/3 | working | — |
@@ -61,14 +72,14 @@ Source coverage: **25/25** (60 matrix rows).
 | javlibrary | listing | https://www.javlibrary.com/en/vl_newrelease.php | — | — | no | 0/3 | degraded | network |
 | javlibrary | performer_detail | https://www.javlibrary.com/en/vl_star.php?s=ayubu | — | — | no | 0/3 | degraded | network |
 | javlibrary | performer_listing | https://www.javlibrary.com/en/star_list.php?prefix=A | — | — | no | 0/3 | degraded | network |
-| javphotos | gallery | https://jav.photos/free/1pondo-hana-aoyama-sexist-mobile-pics | playwright | 0 | no | 0/2 | blocked | timeout |
-| javphotos | listing | https://jav.photos/free/ | playwright | 0 | no | 0/3 | blocked | timeout |
-| minnanoav | detail | https://www.minnano-av.com/av159081.html | playwright | 1 | no | 0/2 | degraded | network |
-| minnanoav | listing | https://www.minnano-av.com/actress.php?actress_id=945093 | playwright | 0 | no | 0/3 | blocked | timeout |
-| minnanoav | performer_detail | https://www.minnano-av.com/actress945093.html | playwright | 0 | no | 0/3 | blocked | timeout |
+| javphotos | gallery | https://jav.photos/free/1pondo-hana-aoyama-sexist-mobile-pics | http | 200 | no | 2/2 | working | — |
+| javphotos | listing | https://jav.photos/free/ | http | 200 | no | 3/3 | working | — |
+| minnanoav | detail | https://www.minnano-av.com/av159081.html | playwright | 0 | no | 0/2 | degraded | timeout |
+| minnanoav | listing | https://www.minnano-av.com/actress.php?actress_id=945093 | playwright | 200 | no | 0/3 | blocked | blocked |
+| minnanoav | performer_detail | https://www.minnano-av.com/actress945093.html | playwright | 200 | no | 3/3 | working | — |
 | minnanoav | performer_listing | https://www.minnano-av.com/actress_list.php | playwright | 200 | no | 3/3 | working | — |
 | missav | detail | https://missav.ws/en/fns-247 | playwright | 200 | no | 2/2 | working | — |
-| missav | listing | https://missav.ws/en/new | playwright | 0 | no | 0/3 | blocked | timeout |
+| missav | listing | https://missav.ws/en/new | playwright | 200 | no | 3/3 | working | — |
 | onejav | detail | https://onejav.com/torrent/ymds282 | http | 200 | no | 2/2 | working | — |
 | onejav | listing | https://onejav.com/new | http | 200 | no | 3/3 | working | — |
 | onepondo | detail | https://en.1pondo.tv/dyn/phpauto/movie_details/movie_id/060426_001.json | http | 200 | no | 2/2 | working | — |
@@ -79,6 +90,6 @@ Source coverage: **25/25** (60 matrix rows).
 | warashi | performer_detail | https://warashi-asian-pornstars.fr/en/s-2-0/yua-mikami/asian-female-pornstar/1234 | http | 200 | no | 3/3 | working | — |
 | warashi | performer_listing | https://warashi-asian-pornstars.fr/en/s-2-2/female-pornstars/toutes/all/page/1 | http | 200 | no | 3/3 | working | — |
 | xcity | detail | https://xxx.xcity.jp/avod/detail/?id=186022 | http | 200 | no | 2/2 | working | — |
-| xcity | listing | https://xxx.xcity.jp/avod/list/ | playwright | 0 | no | 0/3 | blocked | timeout |
+| xcity | listing | https://xxx.xcity.jp/avod/list/ | http | 200 | no | 3/3 | working | — |
 | xcity | performer_detail | https://xxx.xcity.jp/idol/detail/5517/ | http | 200 | no | 3/3 | working | — |
 | xcity | performer_listing | https://xxx.xcity.jp/idol/ | http | 200 | no | 3/3 | working | — |
