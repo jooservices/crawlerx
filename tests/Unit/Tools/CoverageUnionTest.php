@@ -58,6 +58,17 @@ final class CoverageUnionTest extends TestCase
         self::assertStringContainsString('union: 66.67% (2/3)', $out);
     }
 
+    public function test_reports_without_any_statement_fail_instead_of_passing_as_one_hundred_percent(): void
+    {
+        $empty = $this->dir . '/empty.xml';
+        file_put_contents($empty, '<?xml version="1.0"?><coverage><project/></coverage>');
+
+        [$exit, $out] = $this->runScript($empty, $empty, '90');
+
+        self::assertSame(1, $exit);
+        self::assertStringContainsString('No executable statements', $out);
+    }
+
     public function test_a_missing_report_is_an_error(): void
     {
         [$exit, $out] = $this->runScript($this->dir . '/missing.xml', $this->dir . '/missing2.xml', '90');

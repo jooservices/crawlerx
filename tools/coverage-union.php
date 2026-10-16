@@ -59,7 +59,13 @@ foreach (array_keys($all) as $id) {
 }
 
 $total = count($all);
-$percent = $total === 0 ? 100.0 : ($covered / $total) * 100.0;
+if ($total === 0) {
+    // An empty report means coverage was not measured; never treat it as 100%.
+    fwrite(STDERR, "No executable statements found in the clover reports; refusing to pass an empty report.\n");
+    exit(1);
+}
+
+$percent = ($covered / $total) * 100.0;
 
 echo 'union: ' . number_format($percent, 2) . "% ({$covered}/{$total}), minimum " . number_format($threshold, 2) . "%\n";
 
