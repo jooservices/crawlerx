@@ -103,6 +103,17 @@ final class PerformerListingTest extends TestCase
         self::assertNull($result->pagination->nextPage);
     }
 
+    public function test_commented_out_next_link_does_not_create_a_next_page(): void
+    {
+        $html = '<html><body><!-- <link rel="next" href="/actress_list.php?page=4"> --></body></html>';
+
+        $result = $this->execute($html);
+
+        self::assertFalse($result->pagination->hasNextPage);
+        self::assertNull($result->pagination->nextUrl);
+        self::assertNull($result->pagination->nextPage);
+    }
+
     public function test_next_url_without_a_query_string_gives_a_null_page_number(): void
     {
         $html = '<html><head><link rel="next" href="/actress_list.php"></head><body>'
