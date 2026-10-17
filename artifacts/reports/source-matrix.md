@@ -12,12 +12,14 @@
 
 Source coverage: **25/25** (60 matrix rows).
 
+Note (JOOCX-18, 2026-10-17): the four javlibrary rows were re-run with the shared FlareSolverr after the fetch-chain fix; all other rows are from the 2026-10-16 run.
+
 ## Verdict counts
 
 | Verdict | Count |
 | --- | ---: |
-| working | 51 |
-| degraded | 6 |
+| working | 55 |
+| degraded | 2 |
 | blocked | 3 |
 
 ## Error code counts
@@ -26,8 +28,8 @@ Source coverage: **25/25** (60 matrix rows).
 | --- | ---: |
 | auth_required | 2 |
 | blocked | 1 |
-| network | 6 |
-| none | 51 |
+| network | 2 |
+| none | 55 |
 
 ## Source results
 
@@ -68,10 +70,10 @@ Source coverage: **25/25** (60 matrix rows).
 | javdatabase | performer_listing | https://www.javdatabase.com/idols/ | http | 200 | no | 3/3 | working | — |
 | javdb | detail | https://javdb.com/v/a8yV0p | http | 200 | no | 2/2 | working | — |
 | javdb | listing | https://javdb.com/ | http | 200 | no | 3/3 | working | — |
-| javlibrary | detail | https://www.javlibrary.com/en/javme3rasy.html | — | — | no | 0/2 | degraded | network |
-| javlibrary | listing | https://www.javlibrary.com/en/vl_newrelease.php | — | — | no | 0/3 | degraded | network |
-| javlibrary | performer_detail | https://www.javlibrary.com/en/vl_star.php?s=ayubu | — | — | no | 0/3 | degraded | network |
-| javlibrary | performer_listing | https://www.javlibrary.com/en/star_list.php?prefix=A | — | — | no | 0/3 | degraded | network |
+| javlibrary | detail | https://www.javlibrary.com/en/javme3rasy.html | flaresolverr | 200 | no | 2/2 | working | — |
+| javlibrary | listing | https://www.javlibrary.com/en/vl_newrelease.php | flaresolverr | 200 | no | 3/3 | working | — |
+| javlibrary | performer_detail | https://www.javlibrary.com/en/vl_star.php?s=ayubu | flaresolverr | 200 | no | 3/3 | working | — |
+| javlibrary | performer_listing | https://www.javlibrary.com/en/star_list.php?prefix=A | flaresolverr | 200 | no | 3/3 | working | — |
 | javphotos | gallery | https://jav.photos/free/1pondo-hana-aoyama-sexist-mobile-pics | http | 200 | no | 2/2 | working | — |
 | javphotos | listing | https://jav.photos/free/ | http | 200 | no | 3/3 | working | — |
 | minnanoav | detail | https://www.minnano-av.com/av159081.html | playwright | 0 | no | 0/2 | degraded | timeout |
