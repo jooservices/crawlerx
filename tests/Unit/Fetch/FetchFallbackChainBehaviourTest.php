@@ -50,6 +50,42 @@ final class FetchFallbackChainBehaviourTest extends TestCase
         }
     }
 
+    public function test_flaresolverr_runs_when_it_is_the_only_requested_method(): void
+    {
+        $chain = new FetchFallbackChain([
+            FetchMethod::Flaresolverr->value => $this->handler(FetchMethod::Flaresolverr, 200, '<html>solved</html>'),
+        ]);
+
+        $result = $chain->fetch(self::URL, $this->profile(), [FetchMethod::Flaresolverr]);
+
+        self::assertSame(FetchMethod::Flaresolverr, $result->methodUsed);
+        self::assertTrue($result->ok);
+    }
+
+    public function test_flaresolverr_runs_when_no_earlier_method_could_execute(): void
+    {
+        $chain = new FetchFallbackChain([
+            FetchMethod::Flaresolverr->value => $this->handler(FetchMethod::Flaresolverr, 200, '<html>solved</html>'),
+        ]);
+
+        $result = $chain->fetch(self::URL, $this->profile(), [FetchMethod::Playwright, FetchMethod::Flaresolverr]);
+
+        self::assertSame(FetchMethod::Flaresolverr, $result->methodUsed);
+        self::assertSame('handler not registered', $result->attempts[0]['error']);
+    }
+
+    public function test_flaresolverr_is_still_skipped_after_a_real_answer_without_a_challenge(): void
+    {
+        $chain = new FetchFallbackChain([
+            FetchMethod::Http->value => $this->handler(FetchMethod::Http, 200, '<html>fine</html>'),
+            FetchMethod::Flaresolverr->value => $this->handler(FetchMethod::Flaresolverr, 200, '<html>solved</html>'),
+        ]);
+
+        $result = $chain->fetch(self::URL, $this->profile(), [FetchMethod::Http, FetchMethod::Flaresolverr]);
+
+        self::assertSame(FetchMethod::Http, $result->methodUsed);
+    }
+
     /**
      * @return iterable<string, array{int, string, ?string}>
      */
