@@ -146,6 +146,8 @@ final class FetchFallbackChain
                     $result->ok,
                     $result->error,
                 );
+                // Every answer counts, also one a later retry replaces (a 503 followed by a network error).
+                $answered = $answered || ($result->status > 0 && ! $result->challengeDetected);
 
                 if (
                     $method !== FetchMethod::Http
@@ -192,7 +194,6 @@ final class FetchFallbackChain
 
             $last = $result->withAttempts($attempts);
             $sawChallenge = $sawChallenge || $result->challengeDetected;
-            $answered = $answered || ($result->status > 0 && ! $result->challengeDetected);
 
             if ($result->error === CrawlErrorCode::SsrfBlocked->value) {
                 throw new CrawlFetchException(

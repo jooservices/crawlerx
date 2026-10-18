@@ -8,8 +8,8 @@ The strategy is configured by each adapter manifest under `runtime.fetch`.
 | Profile | First method | Fallback behavior |
 |---|---|---|
 | `http_only` | HTTP | No browser fallback |
-| `adaptive` | HTTP | Optional curl-impersonate, then Playwright, then FlareSolverr only after a detected challenge |
-| `browser_likely` | Playwright | FlareSolverr only after a detected challenge |
+| `adaptive` | HTTP | Optional curl-impersonate, then Playwright, then FlareSolverr after a detected challenge or when no earlier method got an answer |
+| `browser_likely` | Playwright | FlareSolverr after a detected challenge or when no earlier method got an answer |
 
 The legacy `playwrightFetchEnabled: true` setting maps to `browser_likely`. An
 explicit `runtime.fetch.profile` takes precedence. The five browser-likely

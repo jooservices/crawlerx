@@ -104,6 +104,48 @@ final class FetchFallbackChainBehaviourTest extends TestCase
         }
     }
 
+    public function test_flaresolverr_is_skipped_when_a_retried_http_answer_was_replaced_by_a_network_error(): void
+    {
+        $http = new class implements FetchMethodHandler {
+            private int $calls = 0;
+
+            public function supports(FetchMethod $method): bool
+            {
+                return $method === FetchMethod::Http;
+            }
+
+            public function fetch(string $url, SiteProfileDto $profile, FetchMethod $method, ?CrawlOptionsDto $options = null): FetchResultDto
+            {
+                $this->calls++;
+
+                return new FetchResultDto(
+                    ok: false,
+                    body: '',
+                    status: $this->calls === 1 ? 503 : 0,
+                    methodUsed: $method,
+                    elapsedMs: 1,
+                    challengeDetected: false,
+                    finalUrl: $url,
+                    error: $this->calls === 1 ? null : 'network_error',
+                );
+            }
+        };
+        $chain = new FetchFallbackChain([
+            FetchMethod::Http->value => $http,
+            FetchMethod::Flaresolverr->value => $this->handler(FetchMethod::Flaresolverr, 200, '<html>solved</html>'),
+        ], retrySleeper: static function (int $microseconds): void {
+        });
+
+        try {
+            $chain->fetch(self::URL, $this->profile(), [FetchMethod::Http, FetchMethod::Flaresolverr]);
+            self::fail('A CrawlFetchException was expected.');
+        } catch (CrawlFetchException $exception) {
+            $methods = array_column($exception->fetch?->attempts ?? [], 'method');
+            self::assertContains('http', $methods);
+            self::assertNotContains('flaresolverr', $methods);
+        }
+    }
+
     public function test_flaresolverr_is_still_skipped_after_a_real_answer_without_a_challenge(): void
     {
         $chain = new FetchFallbackChain([
