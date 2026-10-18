@@ -16,6 +16,23 @@ final class FileAdapterManifestRegistry implements AdapterManifestRegistry
     /** @var array<string, AdapterManifestDto>|null */
     private ?array $manifests = null;
 
+    /**
+     * Site slugs switched off through CRAWLERX_DISABLED_SITES (comma separated). They are absent from the registry.
+     *
+     * @return list<string>
+     */
+    public static function disabledSlugs(): array
+    {
+        $value = getenv('CRAWLERX_DISABLED_SITES');
+        if (! is_string($value) || trim($value) === '') {
+            return [];
+        }
+
+        $slugs = array_map(static fn(string $slug): string => strtolower(trim($slug)), explode(',', $value));
+
+        return array_values(array_unique(array_filter($slugs, static fn(string $slug): bool => $slug !== '')));
+    }
+
     /** @return array<string, AdapterManifestDto> */
     public function all(): array
     {
@@ -88,6 +105,10 @@ final class FileAdapterManifestRegistry implements AdapterManifestRegistry
             }
 
             $manifests[$manifest->slug] = $manifest;
+        }
+
+        foreach (self::disabledSlugs() as $slug) {
+            unset($manifests[$slug]);
         }
 
         $this->manifests = $manifests;
