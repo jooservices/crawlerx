@@ -595,6 +595,9 @@ final class SourceMatrixReport
             $lines[] = '- Host load average at end (1/5/15 min): ' . ($runMetadata['host_load_average_end'] ?? 'pending post-run capture');
             $methods = $runMetadata['fetch_methods_enabled'] ?? [];
             $lines[] = '- Fetch methods enabled: ' . ($methods === [] ? 'none reported' : '`' . implode('`, `', $methods) . '`');
+            if (is_array($runMetadata['disabled_sites'] ?? null) && $runMetadata['disabled_sites'] !== []) {
+                $lines[] = '- Disabled by CRAWLERX_DISABLED_SITES (not tested): `' . implode('`, `', $runMetadata['disabled_sites']) . '`';
+            }
             if (is_string($runMetadata['warning'] ?? null)) {
                 $lines[] = '- Warning: ' . $runMetadata['warning'];
             }
@@ -707,6 +710,10 @@ final class SourceMatrixRunMetadata
             'host_load_average_end' => null,
             'fetch_methods_enabled' => $fetchMethodsEnabled,
         ];
+        $disabled = FileAdapterManifestRegistry::disabledSlugs();
+        if ($disabled !== []) {
+            $metadata['disabled_sites'] = $disabled;
+        }
         $warning = self::loadWarning($metadata);
         if ($warning !== null) {
             $metadata['warning'] = $warning;
