@@ -30,6 +30,7 @@ class FieldsTest extends TestCase
         self::assertSame('2026-08-28', $meta['posted_date']);
         self::assertSame('https://ffjav.com/download/2026/202608/ffjav.com_mida768.torrent', $meta['download_url']);
         self::assertSame('torrent', $meta['downloads'][0]['type']);
+        self::assertSame('HD', $meta['downloads'][0]['quality']);
         self::assertSame('5.9 GB', $meta['downloads'][0]['size_label']);
         self::assertSame(6335076762, $meta['downloads'][0]['size_bytes']);
         self::assertArrayNotHasKey('fields', $meta);
@@ -46,6 +47,7 @@ class FieldsTest extends TestCase
     {
         $html = '<html><body><h5 class="title"><a href="/torrent/x">ABC-123 Name</a></h5>'
             . '<p class="subtitle"><a>2026-01-02</a></p>'
+            . '<div class="tags"><a class="tag is-light" href="/torrent/tag/abc">ABC</a></div> 出演者: ABC, <br>'
             . '<table><tr><td class="header">シリーズ:</td><td class="text">One &nbsp;</td></tr></table>'
             . '<a href="https://ffjav.com/x.torrent">HD 1.5&nbsp;GB</a></body></html>';
 
@@ -53,6 +55,7 @@ class FieldsTest extends TestCase
 
         self::assertSame('2026-01-02', $movie['date']);
         self::assertSame(['シリーズ' => 'One'], $movie['metadata']['fields']);
+        self::assertSame('https://ffjav.com/torrent/tag/abc', $movie['performers'][0]['url']);
     }
 
     /** @return array<string, mixed> */

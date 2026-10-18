@@ -8,6 +8,7 @@ use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Adapters\AbstractType;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
 use JOOservices\CrawlerX\Adapters\FfJav\Selectors;
+use JOOservices\CrawlerX\Adapters\FfJav\UrlNormalizer;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\Entity\MovieDto;
@@ -21,8 +22,10 @@ final class Detail extends AbstractType implements TypeInterface
 {
     use ParsesHtml;
 
-    public function __construct(private readonly CrawlHttpClient $client)
-    {
+    public function __construct(
+        private readonly CrawlHttpClient $client,
+        private readonly UrlNormalizer $normalizer = new UrlNormalizer(),
+    ) {
     }
 
     public function execute(CrawlRequestDto $request): CrawlItemResultDto
@@ -55,7 +58,7 @@ final class Detail extends AbstractType implements TypeInterface
                 'tags' => $this->texts($crawler, Selectors::DETAIL_TAGS),
                 'date' => MovieMeta::isoDate($release) ?? $this->date($crawler),
                 'duration' => MovieMeta::durationMinutes($rows['収録時間'] ?? null),
-                'performers' => $this->performers($html, $crawler),
+                'performers' => $this->performers($html, $crawler, $url),
                 'metadata' => MovieMeta::filter([
                     MovieMeta::DIRECTOR => $rows['監督'] ?? null,
                     MovieMeta::MAKER => $rows['メーカー'] ?? null,
@@ -67,6 +70,7 @@ final class Detail extends AbstractType implements TypeInterface
                         'type' => 'torrent',
                         'url' => $download,
                         'name' => $button,
+                        'quality' => $this->quality($button),
                         'size_label' => $this->sizeLabel($button),
                         'size_bytes' => SizeParser::bytes($button),
                     ], static fn(mixed $value): bool => $value !== null)],
@@ -120,18 +124,18 @@ final class Detail extends AbstractType implements TypeInterface
      *
      * @return list<array{external_id: ?string, name: string, url: ?string}>
      */
-    private function performers(string $html, Crawler $crawler): array
+    private function performers(string $html, Crawler $crawler, string $baseUrl): array
     {
         if (preg_match('/出演者:\s*([^<]+)/u', $html, $match) !== 1) {
             return [];
         }
 
         $tagUrls = [];
-        $crawler->filter(Selectors::DETAIL_TAGS)->each(function (Crawler $tag) use (&$tagUrls): void {
+        $crawler->filter(Selectors::DETAIL_TAGS)->each(function (Crawler $tag) use (&$tagUrls, $baseUrl): void {
             $name = $this->normalizeText($tag->text(''));
             $href = $tag->attr('href');
             if ($name !== null && is_string($href) && $href !== '') {
-                $tagUrls[$name] ??= $href;
+                $tagUrls[$name] ??= $this->normalizer->absolute($baseUrl, $href);
             }
         });
 
@@ -163,6 +167,16 @@ final class Detail extends AbstractType implements TypeInterface
         return $crawler->filter(Selectors::DETAIL_DOWNLOAD)->count() > 0
             ? $this->normalizeText(str_replace("\u{a0}", ' ', $crawler->filter(Selectors::DETAIL_DOWNLOAD)->first()->text('')))
             : null;
+    }
+
+    /** "HD 5.9 GB" => "HD": the text in front of the size. */
+    private function quality(?string $button): ?string
+    {
+        if ($button === null || preg_match('/^(.*?)\s*\d+(?:[.,]\d+)?\s*(?:KB|MB|GB|TB)/i', $button, $match) !== 1) {
+            return null;
+        }
+
+        return trim($match[1]) === '' ? null : trim($match[1]);
     }
 
     private function sizeLabel(?string $button): ?string
