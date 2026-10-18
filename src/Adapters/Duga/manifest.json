@@ -17,9 +17,9 @@
             },
             "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
         },
-        "targetProfiles": {"duga_main": {"label": "DUGA Accepted Main", "url": "https://duga.jp/main/"}},
+        "targetProfiles": {"duga_ranking": {"label": "DUGA Ranking TOP100", "url": "https://duga.jp/ranking/"}},
         "fixtureSamples": [
-            {"url": "https://duga.jp/main/", "name": "listing.html", "type": "listing"},
+            {"url": "https://duga.jp/ranking/", "name": "listing-ranking.html", "type": "listing"},
             {"url": "https://duga.jp/ppv/vrpandemic-0023/", "name": "detail.html", "type": "detail"}
         ],
         "defaultCrawlConfig": {"timeout": 45},
