@@ -24,6 +24,9 @@
         ],
         "defaultCrawlConfig": {"timeout": 45},
         "defaultThrottle": {"default_gap_seconds": 20, "min_gap_seconds": 20, "max_gap_seconds": 60},
+        "browserHeaders": {
+            "Accept-Language": "en-US,en;q=0.9"
+        },
         "playwrightFetchEnabled": false
     },
     "type": "site"
