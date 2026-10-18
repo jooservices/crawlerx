@@ -98,6 +98,11 @@
                 "type": "detail"
             },
             {
+                "url": "https://en.jable.tv/videos/jur-832/",
+                "name": "detail-jur-832.html",
+                "type": "detail"
+            },
+            {
                 "url": "https://en.jable.tv/models/",
                 "name": "models-listing.html",
                 "type": "performer_listing"

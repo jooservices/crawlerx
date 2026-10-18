@@ -15,6 +15,7 @@ use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Support\CodeNormalizer;
 use JOOservices\CrawlerX\Support\JableStreamParser;
+use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class Detail extends AbstractType implements TypeInterface
@@ -39,20 +40,29 @@ final class Detail extends AbstractType implements TypeInterface
         $code = CodeNormalizer::canonical($rawTitle, $externalId, $request->url) ?? strtoupper($externalId ?? '');
         $keywords = $this->keywords($crawler);
         $stream = JableStreamParser::parse($html);
+        $released = $this->firstText($crawler, '.header-right .inactive-color');
 
         $item = MovieDto::item(
             url: $request->url,
             externalId: $externalId,
             title: $this->titleWithoutCode($rawTitle, $code),
-            data: [
+            data: MovieMeta::filter([
                 'code' => $code,
                 'cover_url' => $this->coverUrl($crawler, $request->url),
                 'description' => $this->firstText($crawler, Selectors::DETAIL_DESCRIPTION),
-                'performers' => $this->performers($crawler, $keywords),
+                'date' => MovieMeta::isoDate($released),
+                'performers' => $this->performers($crawler, $keywords, $request->url),
                 'tags' => $this->genres($crawler, $keywords),
-                'metadata' => $this->metadata($crawler),
+                'metadata' => MovieMeta::filter([
+                    ...$this->metadata($crawler),
+                    MovieMeta::RELEASE_DATE_RAW => $released === null ? null : trim((string) preg_replace('/^Released at\s*/i', '', $released)),
+                    'quality_label' => $this->qualityLabel($crawler),
+                    MovieMeta::FAVORITE_COUNT => $this->count($this->firstText($crawler, '.btn.fav .count')),
+                    MovieMeta::COMMENT_COUNT => $this->count($this->firstText($crawler, '.comment-list .sub-title')),
+                    'categories' => $this->texts($crawler, Selectors::DETAIL_TAG_CATEGORIES),
+                ]),
                 'stream' => $stream,
-            ],
+            ]),
         );
 
         $this->assertUsableDetail($item, 'Jable');
@@ -107,117 +117,84 @@ final class Detail extends AbstractType implements TypeInterface
      */
     private function genres(Crawler $crawler, array $keywords): array
     {
-        if ($keywords !== []) {
-            return $keywords;
-        }
-
-        return array_values(array_unique(array_filter(
+        $links = array_values(array_unique(array_filter(
             [
                 ...$this->texts($crawler, Selectors::DETAIL_TAG_CATEGORIES),
                 ...$this->texts($crawler, Selectors::DETAIL_TAG_LINKS),
             ],
             static fn(string $tag): bool => $tag !== '',
         )));
+
+        return $links !== [] ? $links : $keywords;
     }
 
     /**
+     * The name is the avatar tooltip (`title`) so models with a hashed url slug are not dropped; the slug is the id.
+     *
      * @param  list<string>  $keywords
-     * @return list<string>
+     * @return list<array{external_id: ?string, name: string, url: ?string}>
      */
-    private function performers(Crawler $crawler, array $keywords): array
+    private function performers(Crawler $crawler, array $keywords, string $baseUrl): array
     {
         $performers = [];
 
-        $crawler->filter(Selectors::DETAIL_MODELS)->each(function (Crawler $node) use (&$performers): void {
+        $crawler->filter(Selectors::DETAIL_MODELS)->each(function (Crawler $node) use (&$performers, $baseUrl): void {
             $href = $node->attr('href');
-            if (! is_string($href) || trim($href) === '') {
+            $path = is_string($href) ? parse_url($href, PHP_URL_PATH) : null;
+            $slug = is_string($path) ? trim(basename($path), '/') : '';
+            if ($slug === '') {
                 return;
             }
 
-            $path = parse_url($href, PHP_URL_PATH);
-            if (! is_string($path)) {
-                return;
+            $holder = $node->filter('[title], [data-original-title]');
+            $tooltip = $holder->count() > 0 ? ($holder->first()->attr('data-original-title') ?? $holder->first()->attr('title')) : null;
+            $name = $tooltip === null ? null : $this->normalizeText($tooltip);
+            $name ??= $this->isRomanModelSlug($slug) ? $this->slugToRomanName($slug) : null;
+            if ($name !== null && $name !== '') {
+                $performers[$slug] ??= MovieMeta::performer($name, $slug, $this->normalizer->absolute($baseUrl, $href));
             }
-
-            $slug = trim(basename($path), '/');
-            if ($slug === '' || ! $this->isRomanModelSlug($slug)) {
-                return;
-            }
-
-            $performers[] = $this->slugToRomanName($slug);
         });
 
         if ($performers === [] && $keywords !== []) {
             $last = $keywords[array_key_last($keywords)] ?? '';
             if ($this->isCjkName($last)) {
-                $performers[] = $last;
+                $performers[] = MovieMeta::performer($last);
             }
         }
 
-        return array_values(array_unique(array_filter($performers, static fn(string $name): bool => $name !== '')));
+        return array_values($performers);
+    }
+
+    private function qualityLabel(Crawler $crawler): ?string
+    {
+        $label = $this->firstText($crawler, '.header-right h6');
+
+        return $label === null ? null : $this->normalizeText((string) preg_replace('/^[^\p{L}\p{N}]+/u', '', $label));
+    }
+
+    private function count(?string $text): ?int
+    {
+        return $text !== null && preg_match('/(\d[\d,. ]*)/', $text, $match) === 1 ? $this->integerStat($match[1]) : null;
     }
 
     /**
+     * The header line is "<clock> 3 years ago <eye> 563 578" followed by the model avatars, so the age and the views
+     * are read from their own spans (the avatar placeholder letter is not part of the stats).
+     *
      * @return array<string, mixed>
      */
     private function metadata(Crawler $crawler): array
     {
-        $metadata = [];
-        $stats = $this->firstText($crawler, Selectors::DETAIL_HEADER_STATS);
-        if ($stats === null) {
-            return $metadata;
-        }
+        $spans = $crawler->filter('.video-info .info-header .header-left h6 > span.mr-3')->each(
+            fn(Crawler $span): ?string => $this->normalizeText($span->text('')),
+        );
+        $age = $spans[0] ?? null;
+        $views = $spans[1] ?? null;
 
-        $metadata['age_label'] = $stats;
-        $parsed = $this->parseCounterStats($this->extractCounterText($stats), lastTokenIsLikes: false);
-
-        if ($parsed['views'] !== null) {
-            $metadata['views'] = $parsed['views'];
-        }
-
-        if ($parsed['likes'] !== null) {
-            $metadata['likes'] = $parsed['likes'];
-        }
-
-        return $metadata;
-    }
-
-    private function extractCounterText(string $stats): string
-    {
-        if (preg_match('/ago\s+(.*)$/i', $stats, $matches) === 1) {
-            return trim($matches[1]);
-        }
-
-        return $stats;
-    }
-
-    /**
-     * @return array{views: ?int, likes: ?int}
-     */
-    private function parseCounterStats(string $text, bool $lastTokenIsLikes = true): array
-    {
-        $tokens = preg_split('/\s+/', trim($text));
-        $tokens = $tokens === false ? [] : $tokens;
-        $numeric = array_values(array_filter(
-            $tokens,
-            fn(string $token): bool => preg_match('/^\d[\d,]*$/', $token) === 1,
-        ));
-
-        if ($numeric === []) {
-            return ['views' => null, 'likes' => null];
-        }
-
-        if (! $lastTokenIsLikes || count($numeric) === 1) {
-            return [
-                'views' => $this->integerStat(implode('', $numeric)),
-                'likes' => null,
-            ];
-        }
-
-        $likes = $this->integerStat(array_pop($numeric));
-        $views = $this->integerStat(implode('', $numeric));
-
-        return ['views' => $views, 'likes' => $likes];
+        return [
+            'age_label' => $age,
+            MovieMeta::VIEWS => $views !== null && preg_match('/^\d[\d,\s.]*$/', $views) === 1 ? $this->integerStat($views) : null,
+        ];
     }
 
     private function integerStat(string $value): int

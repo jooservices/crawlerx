@@ -2,34 +2,37 @@
 
 ## Run conditions
 
-- Started (UTC): 2026-10-18T20:34:31Z
-- Ended (UTC): 2026-10-18T20:34:43Z
-- Tool git SHA: `ddb5f96bf457e8b084c6d16230e719aca016139e`
+- Started (UTC): 2026-10-18T21:16:01Z
+- Ended (UTC): 2026-10-18T21:17:48Z
+- Tool git SHA: `9d4c0e9d5b255fdc6964e48b4b57d2837f1e530e`
 - Host CPU count: 8
-- Host load average at start (1/5/15 min): 0.82 1.04 1.04
-- Host load average at end (1/5/15 min): 1.23 1.12 1.07
+- Host load average at start (1/5/15 min): 0.94 0.94 0.93
+- Host load average at end (1/5/15 min): 0.34 0.73 0.85
 - Fetch methods enabled: `http`, `playwright`, `playwright_stealth`, `chrome_stealth`, `puppeteer_stealth`, `flaresolverr`
 - Disabled by CRAWLERX_DISABLED_SITES (not tested): `avfan`
 
-Source coverage: **1/1** (2 matrix rows).
+Source coverage: **1/1** (4 matrix rows).
 
 ## Verdict counts
 
 | Verdict | Count |
 | --- | ---: |
-| working | 2 |
+| working | 3 |
 | degraded | 0 |
-| blocked | 0 |
+| blocked | 1 |
 
 ## Error code counts
 
 | Error code | Count |
 | --- | ---: |
-| none | 2 |
+| challenge | 1 |
+| none | 3 |
 
 ## Source results
 
 | Source | Capability | URL | Method | HTTP | Challenge | Fields | Verdict | Reason |
 | --- | --- | --- | --- | ---: | --- | ---: | --- | --- |
-| tokyohot | detail | https://my.tokyo-hot.com/product/n1700/ | http | 200 | no | 2/2 | working | — |
-| tokyohot | listing | https://my.tokyo-hot.com/index | http | 200 | no | 3/3 | working | — |
+| jable | detail | https://en.jable.tv/videos/fjin-091/ | flaresolverr | 0 | yes | 0/2 | blocked | challenge |
+| jable | listing | https://en.jable.tv/new-release/ | playwright | 200 | no | 3/3 | working | — |
+| jable | performer_detail | https://en.jable.tv/models/bfaca44240620be2f3092c294fb22fbe/ | playwright | 200 | no | 3/3 | working | — |
+| jable | performer_listing | https://en.jable.tv/models/ | playwright | 200 | no | 3/3 | working | — |
