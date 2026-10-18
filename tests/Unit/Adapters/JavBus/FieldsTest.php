@@ -160,6 +160,23 @@ class FieldsTest extends TestCase
             ->meta['movie'];
     }
 
+    public function test_the_performer_page_yields_profile_counts_filmography_and_next_page(): void
+    {
+        $p = (new \JOOservices\CrawlerX\Adapters\JavBus\Types\PerformerDetail($this->clientWithFixture('javbus/performer-detail-okq-live.html')))
+            ->execute(new CrawlRequestDto(url: 'https://www.javbus.com/en/star/okq', type: CrawlType::PerformerDetail))->meta['performer'];
+
+        self::assertSame('1993-08-16', $p['birth_date_raw']);
+        self::assertSame('159cm', $p['height_raw']);
+        self::assertSame('B84(F) W58 H88', $p['size_raw']);
+
+        $meta = $p['metadata'];
+        self::assertSame(417, $meta['movie_count']);
+        self::assertSame(195, $meta['magnet_available_count']);
+        self::assertSame('https://www.javbus.com/en/star/okq/2', $meta['filmography_next_url']);
+        self::assertSame('OFJE-667', $meta['filmography'][0]['code']);
+        self::assertSame(['HD'], $meta['filmography'][0]['flags']);
+    }
+
     /** @return array<string, mixed> */
     private function performer(string $fixture, string $id): array
     {

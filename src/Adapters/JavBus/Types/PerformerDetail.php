@@ -68,6 +68,9 @@ final class PerformerDetail extends AbstractType implements TypeInterface
             'birthplace' => $fields['birthplace'] ?? null,
             'fields' => $otherRows,
             'filmography' => $this->filmography($crawler, $request->url),
+            'movie_count' => $this->countAfter($crawler, 'Show All'),
+            'magnet_available_count' => $this->countAfter($crawler, 'Available'),
+            'filmography_next_url' => $this->nextPageUrl($crawler, $request->url),
             'raw_profile' => $this->rawProfile($crawler),
         ]);
 
@@ -141,6 +144,21 @@ final class PerformerDetail extends AbstractType implements TypeInterface
         });
 
         return array_values($movies);
+    }
+
+    /** "Show All 417" / "Available 195" in the alert above the movie grid. */
+    private function countAfter(Crawler $crawler, string $label): ?int
+    {
+        $text = $this->normalizeText($crawler->filter('.alert-common')->count() > 0 ? $crawler->filter('.alert-common')->first()->text('') : '') ?? '';
+
+        return preg_match('/' . preg_quote($label, '/') . '\s+(\d+)/u', str_replace("\xc2\xa0", ' ', $text), $match) === 1 ? (int) $match[1] : null;
+    }
+
+    private function nextPageUrl(Crawler $crawler, string $baseUrl): ?string
+    {
+        $href = $this->firstAttribute($crawler, 'a#next[href]', 'href');
+
+        return $href === null ? null : $this->normalizer->absoluteAndCanonical($baseUrl, $href);
     }
 
     /**
