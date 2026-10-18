@@ -13,6 +13,8 @@ use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Support\CodeNormalizer;
+use JOOservices\CrawlerX\Support\MovieMeta;
+use JOOservices\CrawlerX\Support\SizeParser;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class Detail extends AbstractType implements TypeInterface
@@ -37,19 +39,40 @@ final class Detail extends AbstractType implements TypeInterface
         $title = $this->firstText($crawler, Selectors::DETAIL_TITLE);
         $externalId = $this->externalId($url);
 
+        $rows = $this->rows($crawler);
+        $release = $rows['発売日'] ?? null;
+        $download = $this->downloadUrl($crawler);
+        $button = $this->downloadLabel($crawler);
+
         $item = MovieDto::item(
             url: $url,
             externalId: $externalId,
             title: $title,
-            data: [
+            data: MovieMeta::filter([
                 'cover_url' => $this->firstAttribute($crawler, Selectors::DETAIL_COVER, 'src'),
                 'description' => $this->description($html),
                 'code' => CodeNormalizer::canonical($title, $externalId, $url),
                 'tags' => $this->texts($crawler, Selectors::DETAIL_TAGS),
-                'date' => $this->date($crawler),
-                'performers' => $this->performers($html),
-                'download_url' => $this->downloadUrl($crawler),
-            ],
+                'date' => MovieMeta::isoDate($release) ?? $this->date($crawler),
+                'duration' => MovieMeta::durationMinutes($rows['収録時間'] ?? null),
+                'performers' => $this->performers($html, $crawler),
+                'metadata' => MovieMeta::filter([
+                    MovieMeta::DIRECTOR => $rows['監督'] ?? null,
+                    MovieMeta::MAKER => $rows['メーカー'] ?? null,
+                    MovieMeta::LABEL => $rows['レーベル'] ?? null,
+                    MovieMeta::RELEASE_DATE_RAW => $release,
+                    MovieMeta::POSTED_DATE => $this->date($crawler),
+                    'download_url' => $download,
+                    MovieMeta::DOWNLOADS => $download === null ? [] : [array_filter([
+                        'type' => 'torrent',
+                        'url' => $download,
+                        'name' => $button,
+                        'size_label' => $this->sizeLabel($button),
+                        'size_bytes' => SizeParser::bytes($button),
+                    ], static fn(mixed $value): bool => $value !== null)],
+                    MovieMeta::FIELDS => array_diff_key($rows, array_flip(['発売日', '収録時間', '監督', 'メーカー', 'レーベル'])),
+                ]),
+            ]),
         );
 
         $this->assertUsableDetail($item, 'ffjav');
@@ -93,18 +116,58 @@ final class Detail extends AbstractType implements TypeInterface
     }
 
     /**
-     * @return list<string>
+     * "出演者:" is a plain text list; an actress who is also a tag gets that tag page as her url.
+     *
+     * @return list<array{external_id: ?string, name: string, url: ?string}>
      */
-    private function performers(string $html): array
+    private function performers(string $html, Crawler $crawler): array
     {
         if (preg_match('/出演者:\s*([^<]+)/u', $html, $match) !== 1) {
             return [];
         }
 
-        return array_values(array_unique(array_filter(
+        $tagUrls = [];
+        $crawler->filter(Selectors::DETAIL_TAGS)->each(function (Crawler $tag) use (&$tagUrls): void {
+            $name = $this->normalizeText($tag->text(''));
+            $href = $tag->attr('href');
+            if ($name !== null && is_string($href) && $href !== '') {
+                $tagUrls[$name] ??= $href;
+            }
+        });
+
+        $names = array_values(array_unique(array_filter(
             array_map(fn(string $name): string => $this->normalizeText($name) ?? '', explode(',', html_entity_decode($match[1]))),
             fn(string $name): bool => $name !== '',
         )));
+
+        return array_map(static fn(string $name): array => MovieMeta::performer($name, null, $tagUrls[$name] ?? null), $names);
+    }
+
+    /** @return array<string, string> table label (without colon) => value, from the `td.header` / value pairs */
+    private function rows(Crawler $crawler): array
+    {
+        $rows = [];
+        $crawler->filter('td.header')->each(function (Crawler $header) use (&$rows): void {
+            $label = $this->normalizeText((string) preg_replace('/[:：\\s\\x{a0}]+$/u', '', $header->text('')));
+            $value = $header->nextAll()->count() > 0 ? $this->normalizeText(str_replace("\u{a0}", ' ', $header->nextAll()->first()->text(''))) : null;
+            if ($label !== null && $label !== '' && $value !== null && $value !== '') {
+                $rows[$label] ??= $value;
+            }
+        });
+
+        return $rows;
+    }
+
+    private function downloadLabel(Crawler $crawler): ?string
+    {
+        return $crawler->filter(Selectors::DETAIL_DOWNLOAD)->count() > 0
+            ? $this->normalizeText(str_replace("\u{a0}", ' ', $crawler->filter(Selectors::DETAIL_DOWNLOAD)->first()->text('')))
+            : null;
+    }
+
+    private function sizeLabel(?string $button): ?string
+    {
+        return $button !== null && preg_match('/\d+(?:[.,]\d+)?\s*(?:KB|MB|GB|TB)/i', $button, $match) === 1 ? $match[0] : null;
     }
 
     private function downloadUrl(Crawler $crawler): ?string
