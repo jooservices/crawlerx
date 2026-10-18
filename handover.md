@@ -147,8 +147,8 @@ SeededCrawlHttpClient(inner HTTP, FetchResultDto)
 
 | Env | Meaning |
 |-----|---------|
-| `PLAYWRIGHT_URL` | One Playwright container. Empty runs `node` on PATH |
-| `FLARESOLVERR_URL` | One FlareSolverr container |
+| `PLAYWRIGHT_URL` | One browser service (any host). Empty runs `node` on PATH and reports "Browser service is not configured" when Playwright is missing |
+| `FLARESOLVERR_URL` | One FlareSolverr service (any host) |
 | `CRAWLERX_PLAYWRIGHT_SCRIPT` | Default `scripts/playwright-fetch.mjs` |
 | `CRAWLERX_PUPPETEER_SCRIPT` | Default `scripts/puppeteer-stealth-fetch.mjs` |
 | `CRAWLERX_CURL_IMPERSONATE` | curl-impersonate binary |
@@ -181,7 +181,7 @@ Inject a fake chain in tests: `CrawlerXFactory::useFetchChain($chain)` then `Cra
 
 ### 4.1 Product
 
-- PHP `^8.5`, Docker-only PHP (`php:8.5-cli-bookworm`)
+- PHP `^8.5`; PHP runs in the runner named by `CRAWLERX_PHP` in `.env`, or in this project's Docker (`php:8.5-cli-bookworm`) by default. Services are configured only through `.env` (see `.env.example`).
 - `jooservices/client` `^4.0`, `jooservices/dto` `^3.0`
 - Symfony DomCrawler + css-selector
 - 14 site adapters from XCrawlerII: onejav, onefouronejav, ffjav, xcity, warashi, onepondo, javbtc, javlibrary, javdatabase, javbus, jable, missav, minnanoav, avfan

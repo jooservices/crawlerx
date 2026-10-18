@@ -40,6 +40,9 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 require __DIR__ . '/canary/EnvLoginCookieProvider.php';
 require __DIR__ . '/canary/FetchTrace.php';
 
+// Service addresses (PLAYWRIGHT_URL, FLARESOLVERR_URL, ...) come from the project .env; real environment variables win.
+Env::applyToProcess(dirname(__DIR__) . '/.env');
+
 $arguments = array_slice($argv, 1);
 $canaryMode = in_array('--canary', $arguments, true);
 if (in_array('--help', $arguments, true) || in_array('-h', $arguments, true)) {

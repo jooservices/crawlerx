@@ -11,6 +11,7 @@ use JOOservices\CrawlerX\Dto\FetchResultDto;
 use JOOservices\CrawlerX\Dto\PlaywrightProfileDto;
 use JOOservices\CrawlerX\Dto\SiteProfileDto;
 use JOOservices\CrawlerX\Enums\FetchMethod;
+use JOOservices\CrawlerX\Fetch\BrowserServiceHint;
 use JOOservices\CrawlerX\Fetch\ChallengeDetector;
 use JOOservices\CrawlerX\Fetch\FetchRuntimeConfig;
 
@@ -69,7 +70,7 @@ final class PuppeteerStealthFetchHandler implements FetchMethodHandler
         /** @var array<string, mixed>|null $decoded */
         $decoded = json_decode($result->stdout, true);
         if (! is_array($decoded)) {
-            return $this->fail($method, $started, $url, $result->stderr !== '' ? $result->stderr : 'invalid puppeteer JSON');
+            return $this->fail($method, $started, $url, BrowserServiceHint::describe($result->stderr, 'invalid puppeteer JSON'));
         }
 
         $body = is_string($decoded['html'] ?? null) ? $decoded['html'] : '';

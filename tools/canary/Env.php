@@ -56,6 +56,27 @@ final class Env
         return $values;
     }
 
+    /**
+     * Makes the values of a project `.env` visible to getenv() without overriding variables the caller already set.
+     *
+     * @return list<string> names that were applied
+     */
+    public static function applyToProcess(string $path): array
+    {
+        $applied = [];
+        foreach (self::load($path) as $name => $value) {
+            // Login cookies stay out of the process environment: child processes (browsers) would inherit them.
+            if ($value === '' || str_starts_with($name, 'CRAWLERX_COOKIE_') || getenv($name) !== false) {
+                continue;
+            }
+
+            putenv($name . '=' . $value);
+            $applied[] = $name;
+        }
+
+        return $applied;
+    }
+
     /** @param array<string, string> $values */
     public static function cookieForSite(string $site, array $values): ?string
     {

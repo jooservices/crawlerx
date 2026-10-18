@@ -36,10 +36,12 @@ use JOOservices\CrawlerX\Registry\FileAdapterManifestRegistry;
 use JOOservices\CrawlerX\Services\ClientFactory;
 use JOOservices\CrawlerX\CrawlerX;
 use JOOservices\CrawlerX\CrawlerXFactory;
+use JOOservices\CrawlerX\Tools\Canary\Env;
 use JOOservices\CrawlerX\Tools\Canary\LoginCookiePolicy;
 use JOOservices\CrawlerX\Tools\Canary\RequiredFields;
 
 require_once dirname(__DIR__) . '/vendor/autoload.php';
+require_once __DIR__ . '/canary/Env.php';
 require_once __DIR__ . '/canary/LoginCookiePolicy.php';
 require_once __DIR__ . '/canary/RequiredFields.php';
 
@@ -1023,6 +1025,13 @@ final class SourceMatrixCommand
 /** @codeCoverageIgnore Live registry and external fetch setup. */
 function runSourceMatrixCommand(array $arguments, string $projectRoot): int
 {
+    // Service addresses come from the project .env; real environment variables win.
+    Env::applyToProcess($projectRoot . '/.env');
+    $inProcessRun = $arguments !== ['--finalize-report'] && ! in_array('--help', $arguments, true) && ! in_array('-h', $arguments, true);
+    if ($inProcessRun) {
+        primeMatrixRunEnvironment($projectRoot);
+    }
+
     $manifests = (new FileAdapterManifestRegistry())->all();
     $guard = new PolitenessGuard(new RequestPacer());
     $probe = new LiveMatrixProbe($guard);
@@ -1034,7 +1043,51 @@ function runSourceMatrixCommand(array $arguments, string $projectRoot): int
         runMetadata: SourceMatrixRunMetadata::fromEnvironment($probe->enabledFetchMethods()),
     );
 
-    return $command->run($arguments);
+    $exitCode = $command->run($arguments);
+    if ($inProcessRun && $exitCode === 0) {
+        // Finish the report in the same process so no wrapper has to carry the end-of-run values.
+        putenv('CRAWLERX_MATRIX_ENDED_AT_UTC=' . gmdate('Y-m-d\TH:i:s\Z'));
+        putenv('CRAWLERX_MATRIX_HOST_LOAD_END=' . matrixLoadAverage());
+        $exitCode = $command->run(['--finalize-report']);
+    }
+
+    return $exitCode;
+}
+
+/** @codeCoverageIgnore Reads the local machine; the metadata consumers are unit-tested. */
+function matrixLoadAverage(): string
+{
+    $load = function_exists('sys_getloadavg') ? sys_getloadavg() : false;
+
+    return is_array($load) ? sprintf('%.2f %.2f %.2f', $load[0], $load[1], $load[2]) : 'unavailable';
+}
+
+/**
+ * Fills the run metadata the report needs when the caller did not provide it (a plain `php tools/source-matrix.php`
+ * in any runtime). Values already set in the environment always win.
+ *
+ * @codeCoverageIgnore Reads the local machine; the metadata consumers are unit-tested.
+ */
+function primeMatrixRunEnvironment(string $projectRoot): void
+{
+    $defaults = [
+        'CRAWLERX_MATRIX_STARTED_AT_UTC' => gmdate('Y-m-d\TH:i:s\Z'),
+        'CRAWLERX_MATRIX_HOST_LOAD_START' => matrixLoadAverage(),
+    ];
+    $sha = @shell_exec('git -C ' . escapeshellarg($projectRoot) . ' rev-parse HEAD 2>/dev/null');
+    if (is_string($sha) && preg_match('/^[0-9a-f]{40}$/', trim($sha)) === 1) {
+        $defaults['CRAWLERX_MATRIX_TOOL_GIT_SHA'] = trim($sha);
+    }
+    $cpus = @shell_exec('nproc 2>/dev/null');
+    if (is_string($cpus) && ctype_digit(trim($cpus))) {
+        $defaults['CRAWLERX_MATRIX_HOST_CPU_COUNT'] = trim($cpus);
+    }
+
+    foreach ($defaults as $name => $value) {
+        if (getenv($name) === false) {
+            putenv($name . '=' . $value);
+        }
+    }
 }
 
 if (isset($_SERVER['SCRIPT_FILENAME']) && realpath($_SERVER['SCRIPT_FILENAME']) === __FILE__) {
