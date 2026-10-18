@@ -4,12 +4,27 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\Fc2;
 
+use JOOservices\CrawlerX\Adapters\Fc2\Types\Detail;
+use JOOservices\CrawlerX\Adapters\Fc2\Types\Listing;
 use JOOservices\CrawlerX\Adapters\Shared\Catalog\AbstractCatalogCrawler;
 use JOOservices\CrawlerX\Adapters\Shared\Catalog\CatalogDefinition;
+use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
+use JOOservices\CrawlerX\Dto\CrawlListResultDto;
+use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 
 final class Fc2Crawler extends AbstractCatalogCrawler
 {
     protected array $options = ['base_uri' => 'https://adult.contents.fc2.com'];
+
+    public function listing(CrawlRequestDto $request): CrawlListResultDto
+    {
+        return (new Listing($this->client))->execute($request);
+    }
+
+    public function detail(CrawlRequestDto $request): CrawlItemResultDto
+    {
+        return (new Detail($this->client))->execute($request);
+    }
 
     protected function definition(): CatalogDefinition
     {

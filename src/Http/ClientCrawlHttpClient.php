@@ -17,11 +17,12 @@ final readonly class ClientCrawlHttpClient implements CrawlHttpClient
     {
     }
 
-    public function get(string $url): CrawlHttpResponse
+    public function get(string $url, array $headers = []): CrawlHttpResponse
     {
         $builder = $this->httpClient->requestBuilder()->get($url);
-        if ($this->headers !== []) {
-            $builder = $builder->withHeaders($this->headers);
+        $merged = array_merge($this->headers, $headers);
+        if ($merged !== []) {
+            $builder = $builder->withHeaders($merged);
         }
         $request = $builder->build();
 

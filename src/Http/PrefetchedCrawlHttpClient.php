@@ -21,7 +21,7 @@ final readonly class PrefetchedCrawlHttpClient implements CrawlHttpClient
     ) {
     }
 
-    public function get(string $url): CrawlHttpResponse
+    public function get(string $url, array $headers = []): CrawlHttpResponse
     {
         return new PsrCrawlHttpResponse(new Response(
             $this->status,
