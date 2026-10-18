@@ -74,6 +74,36 @@ final class FetchFallbackChainBehaviourTest extends TestCase
         self::assertSame('handler not registered', $result->attempts[0]['error']);
     }
 
+    public function test_flaresolverr_runs_after_a_browser_that_never_got_an_answer(): void
+    {
+        $chain = new FetchFallbackChain([
+            FetchMethod::Playwright->value => $this->handler(FetchMethod::Playwright, 0, ''),
+            FetchMethod::Flaresolverr->value => $this->handler(FetchMethod::Flaresolverr, 200, '<html>solved</html>'),
+        ]);
+
+        $result = $chain->fetch(self::URL, $this->profile(), [FetchMethod::Playwright, FetchMethod::Flaresolverr]);
+
+        self::assertSame(FetchMethod::Flaresolverr, $result->methodUsed);
+        self::assertSame(FetchMethod::Playwright->value, $result->attempts[0]['method']);
+        self::assertSame(0, $result->attempts[0]['status']);
+    }
+
+    public function test_a_silent_browser_and_a_failing_flaresolverr_still_end_as_a_network_failure(): void
+    {
+        $chain = new FetchFallbackChain([
+            FetchMethod::Playwright->value => $this->handler(FetchMethod::Playwright, 0, ''),
+            FetchMethod::Flaresolverr->value => $this->handler(FetchMethod::Flaresolverr, 0, ''),
+        ]);
+
+        try {
+            $chain->fetch(self::URL, $this->profile(), [FetchMethod::Playwright, FetchMethod::Flaresolverr]);
+            self::fail('A CrawlFetchException was expected.');
+        } catch (CrawlFetchException $exception) {
+            self::assertSame(CrawlErrorCode::Network, $exception->errorCode);
+            self::assertCount(2, $exception->fetch?->attempts ?? []);
+        }
+    }
+
     public function test_flaresolverr_is_still_skipped_after_a_real_answer_without_a_challenge(): void
     {
         $chain = new FetchFallbackChain([
