@@ -11,7 +11,7 @@ use JOOservices\CrawlerX\Tests\TestCase;
 
 class FieldsTest extends TestCase
 {
-    private const FIXTURES = __DIR__ . '/../../../Fixtures/javlibrary/';
+    private const FIXTURES = __DIR__ . '/../../../Fixtures/JavLibrary/';
 
     public function test_a_rated_video_yields_rating_member_counts_and_linked_people(): void
     {
