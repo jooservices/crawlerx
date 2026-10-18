@@ -49,7 +49,7 @@ final class CatalogAdapterCrawlTest extends CrawlerXTestCase
     public static function ageGateProvider(): iterable
     {
         yield 'javbus' => ['https://www.javbus.com/', 'https://www.javbus.com/en/', 'javbus/listing-live.html'];
-        yield 'duga' => ['https://duga.jp/', 'https://duga.jp/main/', 'duga/listing.html'];
+        yield 'duga' => ['https://duga.jp/', 'https://duga.jp/ranking/', 'duga/listing-ranking.html'];
         yield 'tokyohot' => ['https://my.tokyo-hot.com/', 'https://my.tokyo-hot.com/index?lang=en', 'tokyohot/listing.html'];
         yield 'caribbeancom' => ['https://en.caribbeancom.com/', 'https://en.caribbeancom.com/eng/index2.htm', 'caribbeancom/listing.html'];
         yield 'heyzo' => ['https://en.heyzo.com/', 'https://en.heyzo.com/listpages/all_1.html', 'heyzo/listing.html'];
