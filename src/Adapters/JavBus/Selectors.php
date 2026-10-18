@@ -12,7 +12,7 @@ final class Selectors
 
     public const PAGINATION_LINKS = 'ul.pagination a';
 
-    public const DETAIL_TITLE = '#video_title h3, h3#video_title';
+    public const DETAIL_TITLE = '#video_title h3, h3#video_title, .container > h3';
 
     public const DETAIL_COVER = 'a.bigImage img, .bigImage img';
 

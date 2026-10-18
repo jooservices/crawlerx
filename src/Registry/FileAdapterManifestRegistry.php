@@ -147,6 +147,7 @@ final class FileAdapterManifestRegistry implements AdapterManifestRegistry
             ?? ($playwrightFetchEnabled ? FetchProfile::BrowserLikely : FetchProfile::Adaptive);
         $readyMarkers = $this->normalizeMarkers($fetch['readyMarkers'] ?? []);
         $soft404Markers = $this->normalizeStringList($fetch['soft404Markers'] ?? []);
+        $settleAfterReadyMs = is_numeric($fetch['settleAfterReadyMs'] ?? null) ? max(0, (int) $fetch['settleAfterReadyMs']) : 0;
 
         if ($slug === '' || $name === '' || $baseUrl === '' || $adapterClass === '') {
             throw new InvalidArgumentException("Manifest [{$path}] is missing required slug, name, base_url, or adapter.class.");
@@ -178,6 +179,7 @@ final class FileAdapterManifestRegistry implements AdapterManifestRegistry
             fetchProfile: $fetchProfile,
             readyMarkers: $readyMarkers,
             soft404Markers: $soft404Markers,
+            settleAfterReadyMs: $settleAfterReadyMs,
         );
     }
 

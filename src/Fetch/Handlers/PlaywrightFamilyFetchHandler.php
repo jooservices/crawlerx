@@ -51,6 +51,7 @@ final class PlaywrightFamilyFetchHandler implements FetchMethodHandler
         $config = [
             'url' => $url,
             'readyTimeoutMs' => $playwright->readyTimeoutMs,
+            'settleAfterReadyMs' => $playwright->settleAfterReadyMs,
             'readyMarkers' => $readyMarkers,
             'browser' => $playwright->browser,
             'headless' => $playwright->headless,

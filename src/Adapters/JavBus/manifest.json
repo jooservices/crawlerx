@@ -68,6 +68,7 @@
     "runtime": {
         "fetch": {
             "profile": "browser_likely",
+            "settleAfterReadyMs": 4000,
             "readyMarkers": {
                 "listing": ["#waterfall .movie-box"],
                 "detail": ["h3"],
@@ -105,6 +106,11 @@
             {
                 "url": "https://www.javbus.com/en/star/11p7",
                 "name": "performer-detail-11p7-live.html",
+                "type": "performer_detail"
+            },
+            {
+                "url": "https://www.javbus.com/en/star/okq",
+                "name": "performer-detail-okq-live.html",
                 "type": "performer_detail"
             }
         ],

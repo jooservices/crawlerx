@@ -56,6 +56,7 @@ final class SiteProfileDto extends Dto
                 ? null
                 : new PlaywrightProfileDto(
                     userAgent: $headers['User-Agent'] ?? null,
+                    settleAfterReadyMs: $manifest->settleAfterReadyMs,
                 ),
             cookieHandoffAfterBrowser: $fetchProfile === FetchProfile::BrowserLikely,
             readyMarkers: $manifest->readyMarkers,
