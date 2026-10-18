@@ -15,7 +15,7 @@ use JOOservices\CrawlerX\Http\PsrCrawlHttpResponse;
 use JOOservices\CrawlerX\Tests\TestCase;
 use Nyholm\Psr7\Response;
 
-final class FieldsTest extends TestCase
+class FieldsTest extends TestCase
 {
     private const FIXTURES = __DIR__ . '/../../../Fixtures/fc2/';
 

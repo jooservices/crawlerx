@@ -10,7 +10,7 @@ use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Enums\CrawlType;
 use JOOservices\CrawlerX\Tests\TestCase;
 
-final class FieldsTest extends TestCase
+class FieldsTest extends TestCase
 {
     private const URL = 'https://missav.ws/en/fns-247';
 

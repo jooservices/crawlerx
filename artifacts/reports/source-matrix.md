@@ -2,12 +2,12 @@
 
 ## Run conditions
 
-- Started (UTC): 2026-10-18T20:39:09Z
-- Ended (UTC): 2026-10-18T20:40:54Z
+- Started (UTC): 2026-10-18T20:34:31Z
+- Ended (UTC): 2026-10-18T20:34:43Z
 - Tool git SHA: `ddb5f96bf457e8b084c6d16230e719aca016139e`
 - Host CPU count: 8
-- Host load average at start (1/5/15 min): 0.52 0.98 1.03
-- Host load average at end (1/5/15 min): 0.36 0.78 0.95
+- Host load average at start (1/5/15 min): 0.82 1.04 1.04
+- Host load average at end (1/5/15 min): 1.23 1.12 1.07
 - Fetch methods enabled: `http`, `playwright`, `playwright_stealth`, `chrome_stealth`, `puppeteer_stealth`, `flaresolverr`
 - Disabled by CRAWLERX_DISABLED_SITES (not tested): `avfan`
 
@@ -31,5 +31,5 @@ Source coverage: **1/1** (2 matrix rows).
 
 | Source | Capability | URL | Method | HTTP | Challenge | Fields | Verdict | Reason |
 | --- | --- | --- | --- | ---: | --- | ---: | --- | --- |
-| missav | detail | https://missav.ws/en/fns-247 | flaresolverr | 200 | no | 2/2 | working | — |
-| missav | listing | https://missav.ws/en/new | flaresolverr | 200 | no | 3/3 | working | — |
+| tokyohot | detail | https://my.tokyo-hot.com/product/n1700/ | http | 200 | no | 2/2 | working | — |
+| tokyohot | listing | https://my.tokyo-hot.com/index | http | 200 | no | 3/3 | working | — |
