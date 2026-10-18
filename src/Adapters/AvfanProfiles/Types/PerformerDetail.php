@@ -14,6 +14,7 @@ use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
+use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class PerformerDetail extends AbstractType implements TypeInterface
@@ -52,7 +53,8 @@ final class PerformerDetail extends AbstractType implements TypeInterface
             'name' => $name,
             'name_japanese' => $name,
             'name_kana' => $this->firstText($crawler, Selectors::PERFORMER_NAME_KANA),
-            'birth_date_raw' => $bio['誕生日'] ?? null,
+            'birth_date_raw' => isset($bio['誕生日']) ? trim((string) preg_replace('/同じ誕生日.*$/u', '', $bio['誕生日'])) : null,
+            'height_raw' => isset($bio['スリーサイズ']) && preg_match('/T\s*(\d{3})/', $bio['スリーサイズ'], $height) === 1 ? $height[1] . 'cm' : null,
             'size_raw' => $bio['スリーサイズ'] ?? null,
             'cup_size' => $this->cupFromSize($bio['スリーサイズ'] ?? null),
             'birthplace' => $bio['出身地'] ?? null,
@@ -63,7 +65,11 @@ final class PerformerDetail extends AbstractType implements TypeInterface
             'official_url' => $bio['公式サイト・ブログ'] ?? null,
             'sns' => $sns !== [] ? $sns : null,
             'profile_image_url' => $this->profileImage($crawler, $request->url),
-        ], fn(mixed $value): bool => $value !== null && $value !== '');
+            'ranking' => $this->ranking($crawler),
+            'favorite_count' => $this->intText($this->firstText($crawler, '.actess-ranking .la-heart + .cnt')),
+            'store_counts' => $this->storeCounts($crawler),
+            'works' => $this->works($crawler, $request->url),
+        ], fn(mixed $value): bool => $value !== null && $value !== '' && $value !== []);
 
         $item = PerformerDto::item(
             url: $request->url,
@@ -75,6 +81,80 @@ final class PerformerDetail extends AbstractType implements TypeInterface
         $this->assertUsablePerformerDetail($item, 'avfan_profiles');
 
         return $item;
+    }
+
+    private function intText(?string $text): ?int
+    {
+        return $text !== null && preg_match('/\d[\d,]*/', $text, $match) === 1 ? (int) str_replace(',', '', $match[0]) : null;
+    }
+
+    /** @return array{category: ?string, period: ?string, rank: ?int}|null "シロウトTV 年間 687位" */
+    private function ranking(Crawler $crawler): ?array
+    {
+        $label = $crawler->filter('.actess-ranking .trophy span');
+        $rank = $this->intText($this->firstText($crawler, '.actess-ranking .la-award + .cnt a'));
+        if ($rank === null) {
+            return null;
+        }
+
+        $labelHtml = $label->count() > 0 ? strip_tags(str_replace(['<br>', '<br/>', '<br />'], ' ', $label->first()->html())) : '';
+        $parts = preg_split('/\s+/u', trim($labelHtml));
+        $parts = $parts === false ? [] : $parts;
+
+        return ['category' => $parts[0] ?? null, 'period' => $parts[1] ?? null, 'rank' => $rank];
+    }
+
+    /** @return array<string, int> works per store: FANZA 331, VR 15, ... */
+    private function storeCounts(Crawler $crawler): array
+    {
+        $counts = [];
+        $crawler->filter('.tab-container .tab')->each(function (Crawler $tab) use (&$counts): void {
+            $count = $this->intText($this->firstText($tab, '.tab_douga_cnt'));
+            $label = $this->normalizeText(str_replace((string) $this->firstText($tab, '.tab_douga_cnt'), '', $tab->text('')));
+            if ($count !== null && $label !== null && $label !== '') {
+                $counts[$label] = $count;
+            }
+        });
+
+        return $counts;
+    }
+
+    /**
+     * Works listed on this page (first store tab): title, cover, actresses, series, maker, release date.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function works(Crawler $crawler, string $baseUrl): array
+    {
+        $works = [];
+        $crawler->filter('.content-container .content.show .grid-box')->each(function (Crawler $box) use (&$works, $baseUrl): void {
+            $link = $box->filter('.title a[href]');
+            if ($link->count() === 0) {
+                return;
+            }
+
+            $url = $this->absolute($baseUrl, (string) $link->first()->attr('href'));
+            $image = $box->filter('.img img');
+            $actresses = array_values(array_filter(
+                $box->filter('.actress a')->each(fn(Crawler $a): string => $this->normalizeText($a->text('')) ?? ''),
+                static fn(string $name): bool => $name !== '',
+            ));
+            $series = $this->firstText($box, '.series a[href*="/series/"]');
+            $maker = $this->firstText($box, '.series a[href*="/maker/"]');
+            $date = $this->firstText($box, '.hatubaibi a');
+            $works[$url] ??= array_filter([
+                'title' => $this->normalizeText($link->first()->text('')),
+                'url' => $url,
+                'store' => $this->firstText($box, '.asp'),
+                'cover_url' => $image->count() > 0 ? $image->first()->attr('src') : null,
+                'performers' => $actresses,
+                'series' => $series,
+                'maker' => $maker,
+                'date' => MovieMeta::isoDate($date),
+            ], static fn(mixed $value): bool => $value !== null && $value !== '' && $value !== []);
+        });
+
+        return array_values($works);
     }
 
     /**
