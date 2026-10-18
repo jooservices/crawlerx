@@ -2,24 +2,22 @@
 
 ## Run conditions
 
-- Started (UTC): 2026-10-16T10:07:07Z
-- Ended (UTC): 2026-10-16T10:21:02Z
-- Tool git SHA: `83c293db9271ba2d104b0b2d76a36d665b963200`
-- Host CPU count: 12
-- Host load average at start (1/5/15 min): 4.62 5.81 9.11
-- Host load average at end (1/5/15 min): 16.79 14.10 12.13
+- Started (UTC): 2026-10-18T17:32:48Z
+- Ended (UTC): 2026-10-18T17:44:07Z
+- Tool git SHA: `04e1cecfaeea6e94040511bf9df822a83250196b`
+- Host CPU count: 8
+- Host load average at start (1/5/15 min): 1.10 0.90 0.83
+- Host load average at end (1/5/15 min): 0.43 0.55 0.68
 - Fetch methods enabled: `http`, `playwright`, `playwright_stealth`, `chrome_stealth`, `puppeteer_stealth`, `flaresolverr`
 
 Source coverage: **25/25** (60 matrix rows).
-
-Note (JOOCX-18, 2026-10-17): the four javlibrary rows were re-run with the shared FlareSolverr after the fetch-chain fix; all other rows are from the 2026-10-16 run.
 
 ## Verdict counts
 
 | Verdict | Count |
 | --- | ---: |
-| working | 55 |
-| degraded | 2 |
+| working | 57 |
+| degraded | 0 |
 | blocked | 3 |
 
 ## Error code counts
@@ -28,8 +26,7 @@ Note (JOOCX-18, 2026-10-17): the four javlibrary rows were re-run with the share
 | --- | ---: |
 | auth_required | 2 |
 | blocked | 1 |
-| network | 2 |
-| none | 55 |
+| none | 57 |
 
 ## Source results
 
@@ -56,14 +53,14 @@ Note (JOOCX-18, 2026-10-17): the four javlibrary rows were re-run with the share
 | ffjav | listing | https://ffjav.com/javtorrent | http | 200 | no | 3/3 | working | — |
 | heyzo | detail | https://en.heyzo.com/moviepages/3927/index.html | http | 200 | no | 2/2 | working | — |
 | heyzo | listing | https://en.heyzo.com/listpages/all_1.html | http | 200 | no | 3/3 | working | — |
-| jable | detail | https://en.jable.tv/videos/fjin-091/ | playwright | 200 | no | 2/2 | working | — |
+| jable | detail | https://en.jable.tv/videos/fjin-091/ | flaresolverr | 200 | no | 2/2 | working | — |
 | jable | listing | https://en.jable.tv/new-release/ | playwright | 200 | no | 3/3 | working | — |
-| jable | performer_detail | https://en.jable.tv/models/bfaca44240620be2f3092c294fb22fbe/ | playwright | 200 | no | 3/3 | working | — |
+| jable | performer_detail | https://en.jable.tv/models/bfaca44240620be2f3092c294fb22fbe/ | flaresolverr | 200 | no | 3/3 | working | — |
 | jable | performer_listing | https://en.jable.tv/models/ | playwright | 200 | no | 3/3 | working | — |
 | javbtc | detail | https://javbtc.com/r18/s1no1style-yua-mikami-sougouwiki-celebrity | playwright | 200 | no | 2/2 | working | — |
 | javbtc | listing | https://javbtc.com/ | playwright | 200 | no | 3/3 | working | — |
 | javbus | detail | https://www.javbus.com/en/NAMH-074 | playwright | 200 | no | 2/2 | working | — |
-| javbus | listing | https://www.javbus.com/en/ | playwright | 0 | no | 0/3 | degraded | timeout |
+| javbus | listing | https://www.javbus.com/en/ | playwright | 200 | no | 3/3 | working | — |
 | javbus | performer_detail | https://www.javbus.com/en/star/11p7 | playwright | 200 | no | 3/3 | working | — |
 | javbus | performer_listing | https://www.javbus.com/en/actresses | playwright | 200 | no | 3/3 | working | — |
 | javdatabase | performer_detail | https://www.javdatabase.com/idols/yua-mikami/ | http | 200 | no | 3/3 | working | — |
@@ -76,12 +73,12 @@ Note (JOOCX-18, 2026-10-17): the four javlibrary rows were re-run with the share
 | javlibrary | performer_listing | https://www.javlibrary.com/en/star_list.php?prefix=A | flaresolverr | 200 | no | 3/3 | working | — |
 | javphotos | gallery | https://jav.photos/free/1pondo-hana-aoyama-sexist-mobile-pics | http | 200 | no | 2/2 | working | — |
 | javphotos | listing | https://jav.photos/free/ | http | 200 | no | 3/3 | working | — |
-| minnanoav | detail | https://www.minnano-av.com/av159081.html | playwright | 0 | no | 0/2 | degraded | timeout |
+| minnanoav | detail | https://www.minnano-av.com/av159081.html | playwright | 200 | no | 2/2 | working | — |
 | minnanoav | listing | https://www.minnano-av.com/actress.php?actress_id=945093 | playwright | 200 | no | 0/3 | blocked | blocked |
 | minnanoav | performer_detail | https://www.minnano-av.com/actress945093.html | playwright | 200 | no | 3/3 | working | — |
 | minnanoav | performer_listing | https://www.minnano-av.com/actress_list.php | playwright | 200 | no | 3/3 | working | — |
 | missav | detail | https://missav.ws/en/fns-247 | playwright | 200 | no | 2/2 | working | — |
-| missav | listing | https://missav.ws/en/new | playwright | 200 | no | 3/3 | working | — |
+| missav | listing | https://missav.ws/en/new | flaresolverr | 200 | no | 3/3 | working | — |
 | onejav | detail | https://onejav.com/torrent/ymds282 | http | 200 | no | 2/2 | working | — |
 | onejav | listing | https://onejav.com/new | http | 200 | no | 3/3 | working | — |
 | onepondo | detail | https://en.1pondo.tv/dyn/phpauto/movie_details/movie_id/060426_001.json | http | 200 | no | 2/2 | working | — |
