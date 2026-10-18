@@ -71,6 +71,10 @@ final class Detail extends AbstractHtmlType implements TypeInterface
                     'series' => $this->fieldText($fields, ['シリーズ']),
                     'director' => $this->fieldText($fields, ['監督']),
                     'release_date_raw' => $this->fieldText($fields, ['発売日']),
+                    'maker_url' => $this->cellLink($fields['メーカー/レーベル'] ?? $fields['メーカー'] ?? null, 'a[href*="maker="]', $request->url),
+                    'label_url' => $this->cellLink($fields['メーカー/レーベル'] ?? $fields['メーカー'] ?? null, 'a[href*="label="]', $request->url),
+                    'fanza_url' => $this->fanzaUrl($crawler),
+                    'fanza_content_id' => $this->fanzaContentId($crawler),
                     'minnano_code' => $externalId !== null ? strtoupper(preg_replace('/^av/i', 'AV-', $externalId) ?? '') : null,
                 ], static fn(mixed $value): bool => $value !== null && $value !== ''),
             ], static fn(mixed $value): bool => $value !== null && $value !== '' && $value !== []),
@@ -149,6 +153,30 @@ final class Detail extends AbstractHtmlType implements TypeInterface
             $this->firstText($cell, 'a[href*="maker="]'),
             $this->firstText($cell, 'a[href*="label="]'),
         ];
+    }
+
+    private function cellLink(?Crawler $cell, string $selector, string $baseUrl): ?string
+    {
+        $href = $cell === null || $cell->filter($selector)->count() === 0 ? null : $cell->filter($selector)->first()->attr('href');
+
+        return is_string($href) && $href !== '' ? $this->normalizer->absolute($baseUrl, $href) : null;
+    }
+
+    /** The shop link is an affiliate redirect; `lurl` holds the real product page. */
+    private function fanzaUrl(Crawler $crawler): ?string
+    {
+        $link = $crawler->filter('a.dmm-link, a.jacket-link[href*="lurl="]');
+        $query = $link->count() > 0 ? parse_url(html_entity_decode((string) $link->first()->attr('href')), PHP_URL_QUERY) : null;
+        parse_str(is_string($query) ? $query : '', $params);
+
+        return is_string($params['lurl'] ?? null) && $params['lurl'] !== '' ? $params['lurl'] : null;
+    }
+
+    private function fanzaContentId(Crawler $crawler): ?string
+    {
+        $url = $this->fanzaUrl($crawler);
+
+        return $url !== null && preg_match('/[?&]id=([^&]+)/', $url, $match) === 1 ? $match[1] : null;
     }
 
     private function coverUrl(Crawler $crawler, string $baseUrl): ?string
