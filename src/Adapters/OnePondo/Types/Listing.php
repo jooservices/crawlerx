@@ -7,6 +7,7 @@ namespace JOOservices\CrawlerX\Adapters\OnePondo\Types;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Adapters\AbstractType;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesJson;
+use JOOservices\CrawlerX\Adapters\OnePondo\MovieRowFields;
 use JOOservices\CrawlerX\Adapters\OnePondo\UrlNormalizer;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
@@ -24,6 +25,7 @@ final class Listing extends AbstractType implements TypeInterface
     public function __construct(
         private readonly CrawlHttpClient $client,
         private readonly UrlNormalizer $normalizer = new UrlNormalizer(),
+        private readonly MovieRowFields $fields = new MovieRowFields(),
     ) {
     }
 
@@ -107,18 +109,11 @@ final class Listing extends AbstractType implements TypeInterface
                     $typedRow[$key] = $value;
                 }
             }
-            $title = $this->title($typedRow);
-            $coverUrl = $this->coverUrl($typedRow);
-
             $items[$url] = MovieDto::item(
                 url: $url,
                 externalId: $movieId,
-                title: $title,
-                data: array_filter([
-                    'code' => $movieId,
-                    'cover_url' => $coverUrl,
-                    'date' => $this->releaseDate($typedRow),
-                ], fn(mixed $value): bool => $value !== null && $value !== ''),
+                title: $this->fields->title($typedRow),
+                data: $this->fields->read($typedRow),
             );
         }
 
@@ -170,50 +165,8 @@ final class Listing extends AbstractType implements TypeInterface
         return $parts['scheme'] . '://' . $parts['host'] . $path . '?' . http_build_query($query);
     }
 
-    /**
-     * @param  array<string, mixed>  $row
-     */
-    private function title(array $row): ?string
-    {
-        foreach (['TitleEn', 'Title'] as $key) {
-            $value = $row[$key] ?? null;
-            if (is_string($value) && trim($value) !== '') {
-                return trim($value);
-            }
-        }
 
-        return null;
-    }
 
-    /**
-     * @param  array<string, mixed>  $row
-     */
-    private function coverUrl(array $row): ?string
-    {
-        foreach (['ThumbHigh', 'MovieThumb', 'ThumbMed'] as $key) {
-            $value = $row[$key] ?? null;
-            if (is_string($value) && trim($value) !== '') {
-                return trim($value);
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * @param  array<string, mixed>  $row
-     */
-    private function releaseDate(array $row): ?string
-    {
-        $value = $row['Release'] ?? null;
-        if (! is_string($value) || trim($value) === '') {
-            return null;
-        }
-
-        $date = date_create_immutable(trim($value));
-
-        return $date === false ? null : $date->format('Y-m-d');
-    }
 
     /**
      * @param  array<string, mixed>  $payload
