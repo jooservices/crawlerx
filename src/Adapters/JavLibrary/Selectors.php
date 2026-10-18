@@ -32,7 +32,7 @@ final class Selectors
 
     public const DETAIL_LABEL = '#video_label td.text a';
 
-    public const DETAIL_CAST = '#video_cast td.text a';
+    public const DETAIL_CAST = '#video_cast td.text a[href*="vl_star"]';
 
     public const DETAIL_GENRES = '#video_genres td.text a';
 
