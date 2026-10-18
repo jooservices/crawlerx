@@ -11,6 +11,7 @@ use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
+use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\DomCrawler\UriResolver;
 
@@ -35,10 +36,16 @@ final class PerformerDetail extends AbstractType implements TypeInterface
         $name = $this->firstHeading($crawler) ?? $fields['name'] ?? null;
         $imageUrl = $this->firstAttribute($crawler, '.photo img.actressThumb, p.tn img.actressThumb, img.actressThumb', 'src');
 
+        $parts = $this->nameParts(is_string($name) ? $this->cleanName($name) : '');
         $data = array_filter([
             'external_id' => $this->externalId($request->url),
             'external_url' => $request->url,
-            'name' => is_string($name) ? $this->cleanName($name) : null,
+            'name' => $parts['name'] !== '' ? $parts['name'] : null,
+            'name_kana' => $parts['kana'],
+            'aliases' => $parts['aliases'],
+            'birth_date' => MovieMeta::isoDate($fields['date_of_birth'] ?? null),
+            'filmography' => $this->filmography($crawler, $request->url),
+            'filmography_next_url' => $this->nextPage($crawler, $request->url),
             'profile_image_url' => is_string($imageUrl) ? UriResolver::resolve($imageUrl, $request->url) : null,
             'birth_date_raw' => $fields['date_of_birth'] ?? null,
             'blood_type' => $fields['blood_type'] ?? null,
@@ -50,7 +57,7 @@ final class PerformerDetail extends AbstractType implements TypeInterface
             'other' => $fields['other'] ?? null,
             'favorite_count_raw' => $fields['favorite_count'] ?? null,
             'raw_profile' => $text,
-        ], fn(mixed $value): bool => $value !== null && $value !== '');
+        ], fn(mixed $value): bool => $value !== null && $value !== '' && $value !== []);
 
         $item = PerformerDto::item(
             url: $request->url,
@@ -88,7 +95,7 @@ final class PerformerDetail extends AbstractType implements TypeInterface
                 $value = preg_match('/\b(AB|A|B|O)\b/iu', $value, $bloodMatch) === 1 ? strtoupper($bloodMatch[1]) : $value;
             }
 
-            if ($value !== '') {
+            if ($value !== '' && preg_match('/^-+\p{L}?$/u', $value) !== 1) {
                 $fields[$key] = $value;
             }
         });
@@ -125,18 +132,73 @@ final class PerformerDetail extends AbstractType implements TypeInterface
         return is_string($value) && trim($value) !== '' ? trim($value) : null;
     }
 
+    /**
+     * "笹倉杏(ささくらあん)[緒川はる]" = name (reading) [other names].
+     *
+     * @return array{name: string, kana: ?string, aliases: list<string>}
+     */
+    private function nameParts(string $heading): array
+    {
+        $aliases = [];
+        if (preg_match('/\[([^\]]+)\]\s*$/u', $heading, $match) === 1) {
+            $aliases = array_values(array_filter(array_map('trim', (preg_split('/[,、\/]/u', $match[1]) === false ? [] : preg_split('/[,、\/]/u', $match[1]))), static fn(string $alias): bool => $alias !== ''));
+            $heading = trim((string) preg_replace('/\[[^\]]+\]\s*$/u', '', $heading));
+        }
+
+        $kana = null;
+        if (preg_match('/[\(（]([^\)）]+)[\)）]\s*$/u', $heading, $match) === 1) {
+            $kana = trim($match[1]);
+            $heading = trim((string) preg_replace('/[\(（][^\)）]+[\)）]\s*$/u', '', $heading));
+        }
+
+        return ['name' => $heading, 'kana' => $kana, 'aliases' => $aliases];
+    }
+
+    /** @return list<array{external_id: string, title: ?string, url: string, cover_url: ?string, maker: ?string}> the works listed on this page of the profile */
+    private function filmography(Crawler $crawler, string $baseUrl): array
+    {
+        $works = [];
+        $crawler->filter('.x-itemBox')->each(function (Crawler $card) use (&$works, $baseUrl): void {
+            $link = $card->filter('.x-itemBox-title a[href*="/avod/detail/"]');
+            $href = $link->count() > 0 ? (string) $link->first()->attr('href') : '';
+            if (preg_match('/[?&]id=(\d+)/', $href, $id) !== 1) {
+                return;
+            }
+
+            $thumb = $card->filter('img.packageThumb');
+            $maker = $card->filter('.x-itemBox-maker a');
+            $title = $this->cleanText((string) $link->first()->attr('title'));
+            $works[$id[1]] ??= [
+                'external_id' => $id[1],
+                'title' => $title !== '' ? $title : null,
+                'url' => UriResolver::resolve($href, $baseUrl),
+                'cover_url' => $thumb->count() > 0 ? UriResolver::resolve((string) $thumb->first()->attr('src'), $baseUrl) : null,
+                'maker' => $maker->count() > 0 ? $this->cleanText($maker->first()->text('')) : null,
+            ];
+        });
+
+        return array_values($works);
+    }
+
+    private function nextPage(Crawler $crawler, string $baseUrl): ?string
+    {
+        $next = $crawler->filter('.pageScrl li.next a[href]');
+
+        return $next->count() > 0 ? UriResolver::resolve((string) $next->first()->attr('href'), $baseUrl) : null;
+    }
+
     private function profileKey(string $label): ?string
     {
         return match ($this->cleanText($label)) {
-            '★Favorite', 'Favorite' => 'favorite_count',
-            'Date of birth' => 'date_of_birth',
-            'Blood Type' => 'blood_type',
-            'City of Born' => 'city_of_born',
-            'Height' => 'height',
-            'Size' => 'size',
-            'Hobby' => 'hobby',
-            'Special Skill' => 'special_skill',
-            'Other' => 'other',
+            '★Favorite', 'Favorite', '★お気に入り登録数' => 'favorite_count',
+            'Date of birth', '生年月日' => 'date_of_birth',
+            'Blood Type', '血液型' => 'blood_type',
+            'City of Born', '出身地' => 'city_of_born',
+            'Height', '身長' => 'height',
+            'Size', 'サイズ' => 'size',
+            'Hobby', '趣味' => 'hobby',
+            'Special Skill', '特技' => 'special_skill',
+            'Other', 'その他' => 'other',
             default => null,
         };
     }
