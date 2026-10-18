@@ -81,6 +81,7 @@ final class FetchFallbackChain
         $circuitChecked = false;
         $nonTerminalFailure = false;
         $sawChallenge = false;
+        $executedAnyMethod = false;
         $budget = FetchBudget::start($options?->fetch);
         $transientRetry = new TransientRetry();
         $readyMarkers = $profile->readyMarkersFor($type);
@@ -93,7 +94,10 @@ final class FetchFallbackChain
             ?? null;
 
         foreach ($plan as $method) {
-            if ($method === FetchMethod::Flaresolverr && ! $sawChallenge) {
+            // FlareSolverr is the expensive last resort: only after a real attempt was answered without a
+            // challenge is it skipped. When no earlier method could run (not registered, or an explicit
+            // single-method plan) it must still be tried, otherwise Cloudflare sites report a false network error.
+            if ($method === FetchMethod::Flaresolverr && ! $sawChallenge && $executedAnyMethod) {
                 continue;
             }
 
@@ -109,6 +113,7 @@ final class FetchFallbackChain
             }
 
             $started = (int) round(microtime(true) * 1000);
+            $executedAnyMethod = true;
 
             try {
                 $result = $this->fetchWithHandler(
