@@ -14,6 +14,7 @@ use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Support\CodeNormalizer;
+use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class Detail extends AbstractType implements TypeInterface
@@ -43,6 +44,7 @@ final class Detail extends AbstractType implements TypeInterface
         $title = $this->title($crawler, $codeRaw) ?? $code ?? $externalId;
         $streamUrl = $this->streamUrl($crawler, $url);
         $coverUrl = $this->coverUrl($crawler, $url);
+        $clipLabel = $this->clipDurationLabel($crawler, $url);
 
         $item = MovieDto::item(
             url: $url,
@@ -52,8 +54,11 @@ final class Detail extends AbstractType implements TypeInterface
                 'code' => $code,
                 'cover_url' => $coverUrl,
                 'description' => $this->description($crawler, $codeRaw),
-                'performers' => $this->breadcrumbLinks($crawler, 'fa-female'),
+                'performers' => $this->performerEntries($crawler, $url),
+                'duration' => MovieMeta::durationMinutes($clipLabel),
                 'maker' => $this->breadcrumbLink($crawler, 'fa-video'),
+                'maker_url' => $this->breadcrumbEntry($crawler, 'fa-video', $url)['url'] ?? null,
+                'sample_video_url' => $streamUrl,
                 'tags' => $this->tags($crawler),
                 'download_url' => $streamUrl,
                 'downloads' => $streamUrl === null ? [] : [[
@@ -65,7 +70,7 @@ final class Detail extends AbstractType implements TypeInterface
                 'metadata' => array_filter([
                     'product_code_raw' => $codeRaw,
                     'cdn_mirror' => $this->cdnMirror($streamUrl ?? $coverUrl),
-                    'clip_duration_label' => $this->clipDurationLabel($crawler, $url),
+                    'clip_duration_label' => $clipLabel,
                 ], fn(mixed $value): bool => $value !== null && $value !== ''),
             ],
         );
@@ -180,29 +185,47 @@ final class Detail extends AbstractType implements TypeInterface
     /**
      * @return list<string>
      */
-    private function breadcrumbLinks(Crawler $crawler, string $iconClass): array
+    /** @return list<array{external_id: ?string, name: string, url: ?string}> */
+    private function performerEntries(Crawler $crawler, string $baseUrl): array
     {
-        $value = $this->breadcrumbLink($crawler, $iconClass);
+        $entry = $this->breadcrumbEntry($crawler, 'fa-female', $baseUrl);
 
-        return $value === null ? [] : [$value];
+        return $entry === null ? [] : [MovieMeta::performer($entry['name'], $this->slug($entry['url']), $entry['url'])];
+    }
+
+    private function slug(?string $url): ?string
+    {
+        $slug = basename((string) parse_url((string) $url, PHP_URL_PATH));
+
+        return $slug === '' ? null : $slug;
     }
 
     private function breadcrumbLink(Crawler $crawler, string $iconClass): ?string
+    {
+        return $this->breadcrumbEntry($crawler, $iconClass, '')['name'] ?? null;
+    }
+
+    /** @return array{name: string, url: ?string}|null */
+    private function breadcrumbEntry(Crawler $crawler, string $iconClass, string $baseUrl): ?array
     {
         if ($crawler->filter(Selectors::DETAIL_BREADCRUMB)->count() === 0) {
             return null;
         }
 
-        $link = null;
-        $crawler->filter(Selectors::DETAIL_BREADCRUMB)->first()->filter('a')->each(function (Crawler $node) use (&$link, $iconClass): void {
-            if ($link !== null || $node->filter('.' . $iconClass)->count() === 0) {
+        $entry = null;
+        $crawler->filter(Selectors::DETAIL_BREADCRUMB)->first()->filter('a')->each(function (Crawler $node) use (&$entry, $iconClass, $baseUrl): void {
+            if ($entry !== null || $node->filter('.' . $iconClass)->count() === 0) {
                 return;
             }
 
-            $link = $this->normalizeText($node->text(''));
+            $name = $this->normalizeText($node->text(''));
+            $href = $node->attr('href');
+            if ($name !== null) {
+                $entry = ['name' => $name, 'url' => is_string($href) && $href !== '' && $baseUrl !== '' ? $this->normalizer->absolute($baseUrl, $href) : null];
+            }
         });
 
-        return $link;
+        return $entry;
     }
 
     private function coverUrl(Crawler $crawler, string $baseUrl): ?string
