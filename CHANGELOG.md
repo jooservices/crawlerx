@@ -5,6 +5,17 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Configure the browser and FlareSolverr services, and the PHP runner for `make`, only through `.env`
+  (`.env.example`); Docker is optional and keeps its current addresses as defaults.
+- `make live-check`, `source-matrix`, `bench` and `canary` no longer start Docker services; the source matrix
+  fills and finalizes its run metadata itself and creates no containers or networks.
+- Add `PLAYWRIGHT_HOST` to the browser service so it can bind the loopback behind a tunnel.
+- Report a missing browser setup as "Browser service is not configured" instead of a Node stack trace.
+
 ## [1.3.1] - 2026-10-06
 
 ### Changed

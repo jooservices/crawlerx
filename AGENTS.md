@@ -4,7 +4,11 @@ Follow workspace [`AGENTS.md`](../AGENTS.md). Canonical policy is at the JOOserv
 
 PHP `^8.5` crawl/parse library for JAV catalog sites. Uses `jooservices/client` v4 and `jooservices/dto` v3.
 
-## Docker workflow
+## Configuration and runtime
+
+Everything is configured through `.env` (see `.env.example`): `PLAYWRIGHT_URL`, `FLARESOLVERR_URL`, `CRAWLERX_PHP`, `CRAWLERX_*`. Nothing is hard-wired to Docker. In Workspaces the defaults are the shared PHP runtime (`CRAWLERX_PHP=../../../scripts/docker/runtime php@8.5`) and the Dev VM services (`scripts/docker/playwright-fetch-vm up`, `scripts/docker/flaresolverr-vm up`); do not start this project's own Docker services unless `.env` points at them.
+
+## Docker workflow (optional)
 
 ```bash
 make build
@@ -14,7 +18,7 @@ make test
 make ci
 ```
 
-All PHP commands run inside Docker (`php:8.5-cli-bookworm`).
+Without `CRAWLERX_PHP`, PHP commands run inside this project's Docker (`php:8.5-cli-bookworm`).
 
 ## Public API
 

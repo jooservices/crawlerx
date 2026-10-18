@@ -49,11 +49,10 @@ echo $item->meta['movie']['code'];              // YMDS-282
 - PHP `^8.5`
 - PHP extensions: `dom`, `libxml`
 - Composer
-- Docker with Docker Compose for the recommended development and live-check workflow
+- A way to run PHP: your own PHP 8.5, the project's Docker (`docker compose`), or a shared runtime configured with `CRAWLERX_PHP`
+- A Playwright browser service and a FlareSolverr service reachable by URL when you crawl browser-likely sites (see Runtime configuration)
 
-Node.js is only required when running browser fetches directly on the host.
-The Docker workflow supplies Node.js, Playwright Chromium, and FlareSolverr as
-sidecar services.
+Nothing is hard-wired to Docker: every service address and the PHP runner come from `.env`. Docker is one optional way to provide them.
 
 ## Installation
 
@@ -288,9 +287,9 @@ Live sites change independently of this package. A supported adapter means the
 URL shape and parser are implemented; availability can still be affected by
 site downtime, blocking, region restrictions, or DOM changes.
 
-## Live crawl from the host through Docker
+## Live crawl
 
-Start the browser helpers once:
+The live tools read `PLAYWRIGHT_URL` and `FLARESOLVERR_URL` from `.env` (copy `.env.example`; real environment variables win) and start nothing themselves. Point `.env` at any running services. To use this project's own Docker services instead, start them and use the Docker values listed in `.env.example`:
 
 ```bash
 docker compose --profile fetch up -d --wait node flaresolverr
@@ -396,8 +395,7 @@ the same version as the package release.
 
 ## Runtime configuration
 
-The Docker Compose file configures the sidecar URLs automatically. Direct host
-or custom-container integrations can use these environment variables:
+Everything is configured through environment variables. Copy `.env.example` to `.env` and set them; the live tools (`tools/live-check.php`, `tools/source-matrix.php`, `make live-check`, `make source-matrix`) load that file, and real environment variables win. The Docker Compose file reads the same variables and keeps the Docker sidecar addresses only as defaults. A missing browser service is reported as "Browser service is not configured".
 
 | Variable | Purpose |
 | --- | --- |
@@ -407,9 +405,9 @@ or custom-container integrations can use these environment variables:
 | `CRAWLERX_PUPPETEER_SCRIPT` | Path to `puppeteer-stealth-fetch.mjs` |
 | `CRAWLERX_CURL_IMPERSONATE` | curl-impersonate executable |
 
-## Testing with Docker
+## Testing
 
-All PHP tooling runs in `php:8.5-cli-bookworm` through Docker Compose.
+`make` runs PHP with `CRAWLERX_PHP` from `.env` when it is set (for example a shared runtime), otherwise in `php:8.5-cli-bookworm` through this project's Docker Compose.
 
 ```bash
 make build

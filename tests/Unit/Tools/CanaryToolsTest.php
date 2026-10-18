@@ -20,6 +20,29 @@ require_once __DIR__ . '/../../../tools/canary/RequiredFields.php';
 
 final class CanaryToolsTest extends TestCase
 {
+    public function test_env_file_values_reach_the_process_without_overriding_or_exposing_cookies(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'crawlerx-env-');
+        self::assertNotFalse($path);
+        file_put_contents($path, "CRAWLERX_TEST_FROM_FILE=http://example.test:3000\nCRAWLERX_TEST_ALREADY_SET=from-file\nCRAWLERX_COOKIE_TESTSITE=secret\nCRAWLERX_TEST_EMPTY=\n");
+        putenv('CRAWLERX_TEST_ALREADY_SET=from-environment');
+
+        try {
+            $applied = Env::applyToProcess($path);
+
+            self::assertSame(['CRAWLERX_TEST_FROM_FILE'], $applied);
+            self::assertSame('http://example.test:3000', getenv('CRAWLERX_TEST_FROM_FILE'));
+            self::assertSame('from-environment', getenv('CRAWLERX_TEST_ALREADY_SET'));
+            self::assertFalse(getenv('CRAWLERX_COOKIE_TESTSITE'));
+            self::assertFalse(getenv('CRAWLERX_TEST_EMPTY'));
+            self::assertSame([], Env::applyToProcess($path . '.missing'));
+        } finally {
+            unlink($path);
+            putenv('CRAWLERX_TEST_FROM_FILE');
+            putenv('CRAWLERX_TEST_ALREADY_SET');
+        }
+    }
+
     public function test_tc_cn_02_missing_cookie_is_not_a_pass(): void
     {
         self::assertNull(Env::cookieForSite('avfan', ['CRAWLERX_COOKIE_AVFAN' => '']));

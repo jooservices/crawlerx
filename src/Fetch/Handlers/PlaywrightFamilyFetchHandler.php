@@ -11,6 +11,7 @@ use JOOservices\CrawlerX\Dto\FetchResultDto;
 use JOOservices\CrawlerX\Dto\PlaywrightProfileDto;
 use JOOservices\CrawlerX\Dto\SiteProfileDto;
 use JOOservices\CrawlerX\Enums\FetchMethod;
+use JOOservices\CrawlerX\Fetch\BrowserServiceHint;
 use JOOservices\CrawlerX\Fetch\ChallengeDetector;
 use JOOservices\CrawlerX\Fetch\FetchRuntimeConfig;
 
@@ -93,7 +94,7 @@ final class PlaywrightFamilyFetchHandler implements FetchMethodHandler
                 $method,
                 $started,
                 $url,
-                $result->stderr !== '' ? $result->stderr : 'Playwright sidecar returned invalid JSON',
+                BrowserServiceHint::describe($result->stderr, 'Playwright sidecar returned invalid JSON'),
             );
         }
 
