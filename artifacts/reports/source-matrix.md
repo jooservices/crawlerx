@@ -2,31 +2,30 @@
 
 ## Run conditions
 
-- Started (UTC): 2026-10-18T17:32:48Z
-- Ended (UTC): 2026-10-18T17:44:07Z
-- Tool git SHA: `04e1cecfaeea6e94040511bf9df822a83250196b`
+- Started (UTC): 2026-10-18T18:21:18Z
+- Ended (UTC): 2026-10-18T18:30:05Z
+- Tool git SHA: `ffa0cc8331c762dd672704584822e3023f8c1b56`
 - Host CPU count: 8
-- Host load average at start (1/5/15 min): 1.10 0.90 0.83
-- Host load average at end (1/5/15 min): 0.43 0.55 0.68
+- Host load average at start (1/5/15 min): 0.33 0.59 0.70
+- Host load average at end (1/5/15 min): 1.16 0.85 0.77
 - Fetch methods enabled: `http`, `playwright`, `playwright_stealth`, `chrome_stealth`, `puppeteer_stealth`, `flaresolverr`
+- Disabled by CRAWLERX_DISABLED_SITES (not tested): `avfan`
 
-Source coverage: **25/25** (60 matrix rows).
+Source coverage: **24/24** (58 matrix rows).
 
 ## Verdict counts
 
 | Verdict | Count |
 | --- | ---: |
-| working | 57 |
+| working | 58 |
 | degraded | 0 |
-| blocked | 3 |
+| blocked | 0 |
 
 ## Error code counts
 
 | Error code | Count |
 | --- | ---: |
-| auth_required | 2 |
-| blocked | 1 |
-| none | 57 |
+| none | 58 |
 
 ## Source results
 
@@ -36,8 +35,6 @@ Source coverage: **25/25** (60 matrix rows).
 | 141jav | listing | https://www.141jav.com/new?page=1 | http | 200 | no | 3/3 | working | — |
 | aisex | performer_detail | https://www.aisex.jp/actress/1004850/ | http | 200 | no | 3/3 | working | — |
 | aisex | performer_listing | https://www.aisex.jp/actress/ | http | 200 | no | 3/3 | working | — |
-| avfan | detail | https://avfan.com/en/movies/ewTlM3Fj | — | — | no | 0/2 | blocked | auth_required |
-| avfan | listing | https://avfan.com/en | — | — | no | 0/3 | blocked | auth_required |
 | avfan_profiles | performer_detail | https://av-fan.tokyo/actress/%E6%9C%89%E6%A0%96%E8%88%9E%E8%A1%A3.html | http | 200 | no | 3/3 | working | — |
 | avfan_profiles | performer_listing | https://av-fan.tokyo/actress/cup/A.html | http | 200 | no | 3/3 | working | — |
 | avjoho | performer_detail | https://db.avjoho.com/%e5%b8%82%e7%80%ac%e3%81%82%e3%81%84%e3%82%8a/ | http | 200 | no | 3/3 | working | — |
@@ -53,9 +50,9 @@ Source coverage: **25/25** (60 matrix rows).
 | ffjav | listing | https://ffjav.com/javtorrent | http | 200 | no | 3/3 | working | — |
 | heyzo | detail | https://en.heyzo.com/moviepages/3927/index.html | http | 200 | no | 2/2 | working | — |
 | heyzo | listing | https://en.heyzo.com/listpages/all_1.html | http | 200 | no | 3/3 | working | — |
-| jable | detail | https://en.jable.tv/videos/fjin-091/ | flaresolverr | 200 | no | 2/2 | working | — |
+| jable | detail | https://en.jable.tv/videos/fjin-091/ | playwright | 200 | no | 2/2 | working | — |
 | jable | listing | https://en.jable.tv/new-release/ | playwright | 200 | no | 3/3 | working | — |
-| jable | performer_detail | https://en.jable.tv/models/bfaca44240620be2f3092c294fb22fbe/ | flaresolverr | 200 | no | 3/3 | working | — |
+| jable | performer_detail | https://en.jable.tv/models/bfaca44240620be2f3092c294fb22fbe/ | playwright | 200 | no | 3/3 | working | — |
 | jable | performer_listing | https://en.jable.tv/models/ | playwright | 200 | no | 3/3 | working | — |
 | javbtc | detail | https://javbtc.com/r18/s1no1style-yua-mikami-sougouwiki-celebrity | playwright | 200 | no | 2/2 | working | — |
 | javbtc | listing | https://javbtc.com/ | playwright | 200 | no | 3/3 | working | — |
@@ -74,7 +71,7 @@ Source coverage: **25/25** (60 matrix rows).
 | javphotos | gallery | https://jav.photos/free/1pondo-hana-aoyama-sexist-mobile-pics | http | 200 | no | 2/2 | working | — |
 | javphotos | listing | https://jav.photos/free/ | http | 200 | no | 3/3 | working | — |
 | minnanoav | detail | https://www.minnano-av.com/av159081.html | playwright | 200 | no | 2/2 | working | — |
-| minnanoav | listing | https://www.minnano-av.com/actress.php?actress_id=945093 | playwright | 200 | no | 0/3 | blocked | blocked |
+| minnanoav | listing | https://www.minnano-av.com/actress.php?actress_id=945093 | playwright | 200 | no | 3/3 | working | — |
 | minnanoav | performer_detail | https://www.minnano-av.com/actress945093.html | playwright | 200 | no | 3/3 | working | — |
 | minnanoav | performer_listing | https://www.minnano-av.com/actress_list.php | playwright | 200 | no | 3/3 | working | — |
 | missav | detail | https://missav.ws/en/fns-247 | playwright | 200 | no | 2/2 | working | — |
