@@ -11,6 +11,7 @@ use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
+use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class Detail extends AbstractType implements TypeInterface
@@ -27,7 +28,7 @@ final class Detail extends AbstractType implements TypeInterface
         $html = $this->htmlFromResponse($response->toPsrResponse(), 'XCity', 'detail');
 
         $crawler = new Crawler($html, $request->url);
-        $fields = $this->profileFields($crawler);
+        $fields = $this->canonicalFields($this->profileFields($crawler));
         $externalId = $this->externalId($request->url);
         $title = $this->firstText($crawler, '#program_detail_title') ?? $this->firstText($crawler, 'h1') ?? $externalId;
         $coverUrl = $this->coverUrl($crawler, $request->url);
@@ -36,33 +37,93 @@ final class Detail extends AbstractType implements TypeInterface
             url: $this->canonicalUrl($crawler, $request->url),
             externalId: $externalId,
             title: $title,
-            data: [
-                'code' => $fields['Maker Code'] ?? $fields['XCITY Code'] ?? $externalId,
+            data: MovieMeta::filter([
+                'code' => ($fields['Maker Code'] ?? $fields['XCITY Code'] ?? $externalId),
                 'cover_url' => $coverUrl,
                 'description' => $this->firstText($crawler, 'p.lead'),
-                'date' => $fields['Release Date'] ?? $fields['Sales Date'] ?? null,
-                'duration' => $this->durationMinutes($fields['Duration'] ?? $fields['Running Time'] ?? null),
-                'performers' => $this->texts($crawler, 'li.credit-links a[href*="/idol/detail/"]'),
+                'date' => MovieMeta::isoDate($fields['Release Date'] ?? $fields['Sales Date'] ?? null),
+                'duration' => MovieMeta::durationMinutes($fields['Duration'] ?? $fields['Running Time'] ?? null),
+                'performers' => $this->performers($crawler, $request->url),
                 'tags' => $this->texts($crawler, 'a.genre'),
                 'download_size_labels' => $this->downloadSizeLabels($crawler),
                 'sample_video_url' => $this->sampleVideoUrl($crawler),
                 'screenshots' => $this->screenshots($crawler, $request->url),
-                'metadata' => [
-                    'favorite_count' => $this->intValue($fields['★Favorite'] ?? null),
-                    'sales_date' => $fields['Sales Date'] ?? null,
+                'metadata' => MovieMeta::filter([
+                    MovieMeta::MAKER => $this->firstText($crawler, '#program_detail_maker_name') ?? $this->makerFromLabelMaker($fields['Label/Maker'] ?? null, 0),
+                    MovieMeta::LABEL => $this->firstText($crawler, '#program_detail_label_name') ?? $this->makerFromLabelMaker($fields['Label/Maker'] ?? null, 1),
+                    'maker_url' => $this->linkOf($crawler, '#program_detail_maker_name', $request->url),
+                    'label_url' => $this->linkOf($crawler, '#program_detail_label_name', $request->url),
+                    MovieMeta::SERIES => $fields['Series'] ?? null,
+                    MovieMeta::DIRECTOR => $fields['Director'] ?? $this->firstText($crawler, '#program_detail_director'),
+                    MovieMeta::FAVORITE_COUNT => $this->intValue($fields['Favorite'] ?? null),
+                    'sales_date' => MovieMeta::isoDate($fields['Sales Date'] ?? null),
+                    MovieMeta::RELEASE_DATE_RAW => $fields['Release Date'] ?? null,
                     'maker_code' => $fields['Maker Code'] ?? null,
                     'xcity_code' => $fields['XCITY Code'] ?? null,
-                    'maker_label' => $fields['Label/Maker'] ?? null,
-                    'series' => $fields['Series'] ?? null,
-                    'director' => $fields['Director'] ?? null,
                     'cast_links' => $this->castLinks($crawler, $request->url),
-                ],
-            ],
+                ]),
+            ]),
         );
 
         $this->assertUsableDetail($item, 'XCity');
 
         return $item;
+    }
+
+    /** The page comes in English or Japanese; both label sets map to the same keys. */
+    private const LABEL_ALIASES = [
+        '発売日' => 'Release Date', '配信日' => 'Sales Date', '収録時間' => 'Duration', 'メーカー品番' => 'Maker Code',
+        'XCITY品番' => 'XCITY Code', 'メーカー・レーベル' => 'Label/Maker', 'シリーズ' => 'Series', '監督' => 'Director',
+        '★お気に入り登録数' => 'Favorite', '★Favorite' => 'Favorite', 'ジャンル' => 'Genre', '出演' => 'Cast',
+    ];
+
+    /**
+     * @param  array<string, string>  $fields
+     * @return array<string, string>
+     */
+    private function canonicalFields(array $fields): array
+    {
+        $canonical = [];
+        foreach ($fields as $label => $value) {
+            $canonical[self::LABEL_ALIASES[$label] ?? $label] = $value;
+        }
+
+        return $canonical;
+    }
+
+    private function makerFromLabelMaker(?string $value, int $index): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $parts = array_map('trim', explode('/', $value));
+
+        return ($parts[$index] ?? '') !== '' ? $parts[$index] : null;
+    }
+
+    /** The link that wraps the element, for example the maker name span inside its `<a>`. */
+    private function linkOf(Crawler $crawler, string $selector, string $baseUrl): ?string
+    {
+        $node = $crawler->filter($selector)->first();
+        $dom = $node->count() > 0 ? $node->getNode(0)?->parentNode : null;
+        while ($dom instanceof \DOMElement) {
+            if ($dom->nodeName === 'a' && trim($dom->getAttribute('href')) !== '') {
+                return $this->normalizer->absolute($baseUrl, trim($dom->getAttribute('href')));
+            }
+            $dom = $dom->parentNode;
+        }
+
+        return null;
+    }
+
+    /** @return list<array{external_id: ?string, name: string, url: ?string}> */
+    private function performers(Crawler $crawler, string $baseUrl): array
+    {
+        return array_map(
+            static fn(array $link): array => MovieMeta::performer($link['name'], preg_match('~/idol/detail/(\d+)~', $link['url'], $m) === 1 ? $m[1] : null, $link['url']),
+            $this->castLinks($crawler, $baseUrl),
+        );
     }
 
     /**
@@ -235,14 +296,6 @@ final class Detail extends AbstractType implements TypeInterface
         return $text !== '' ? $text : null;
     }
 
-    private function durationMinutes(?string $value): ?int
-    {
-        if ($value === null || trim($value) === '') {
-            return null;
-        }
-
-        return preg_match('/(\d{1,4})\s*min/i', $value, $match) === 1 ? (int) $match[1] : null;
-    }
 
     private function intValue(?string $value): ?int
     {
