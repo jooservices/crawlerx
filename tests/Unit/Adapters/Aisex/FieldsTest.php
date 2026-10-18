@@ -60,7 +60,7 @@ class FieldsTest extends TestCase
     /** @return array<string, mixed> */
     private function performer(): array
     {
-        return (new PerformerDetail($this->clientWithFixture('aisex/detail-aiuti-siori.html')))
+        return (new PerformerDetail($this->clientWithFixture('Aisex/detail-aiuti-siori.html')))
             ->execute(new CrawlRequestDto(url: 'https://www.aisex.jp/actress/1004850/', type: CrawlType::PerformerDetail))
             ->meta['performer'];
     }
