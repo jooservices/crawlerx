@@ -27,4 +27,18 @@ final class Selectors
     public const FILMOGRAPHY_MOVIE_LINKS = 'a[href*="av"][href$=".html"]';
 
     public const AV_DETAIL_TITLE = 'h1, .av-title, title';
+
+    public const FILMOGRAPHY_ROWS = 'table.tbllist.av tr';
+
+    public const AV_DETAIL_HEADING = 'h1.title';
+
+    public const AV_INFO_ROWS = 'table.prof-table tr';
+
+    public const AV_PRODUCT_CODE = '.product-code-copy[data-code]';
+
+    public const AV_COVER = 'img.jacket-image';
+
+    public const AV_PERFORMER_LINKS = '.actress-block a.actress-link, table.prof-table a[href*="actress"][href$=".html"]';
+
+    public const AV_SAMPLE_VIDEO = 'section.video-jacket iframe[src]';
 }
