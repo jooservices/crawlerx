@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Caribbeancom returns every field of the movie page (starring with ids, all tags, release date, duration, poster, sample video, every download size per resolution, the whole photo gallery with a sample flag) and of the listing cards (title, cover, date, performers); the performer no longer comes from a menu link.
 - JavDB returns every field of the movie page (date, duration, director, maker, series, rating and votes, tags, performers with ids and gender, preview images, all magnets, want/seen counters) and of the listing cards (rating, date, flags), without navigation items; pages are requested in English (Chinese labels are still understood).
 - Configure the browser and FlareSolverr services, and the PHP runner for `make`, only through `.env`
   (`.env.example`); Docker is optional and keeps its current addresses as defaults.
