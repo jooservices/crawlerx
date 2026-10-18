@@ -7,6 +7,7 @@ namespace JOOservices\CrawlerX\Tests\Unit;
 use JOOservices\CrawlerX\Adapters\AbstractHtmlType;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Enums\CrawlType;
+use JOOservices\CrawlerX\Exceptions\CrawlBlockedException;
 use JOOservices\CrawlerX\Tests\TestCase;
 use RuntimeException;
 use Symfony\Component\DomCrawler\Crawler;
@@ -23,6 +24,28 @@ final class AbstractHtmlTypeTest extends TestCase
         $crawler = $type->fetchForTest(new CrawlRequestDto(url: $url, type: CrawlType::Listing));
 
         self::assertSame('Sample', trim($crawler->filter('a')->text('')));
+    }
+
+    public function test_a_normal_page_that_mentions_cloudflare_turnstile_is_not_blocked(): void
+    {
+        $html = '<html><head><title>Profile</title><script src="https://challenges.cloudflare.com/turnstile/v0/api.js"></script></head>'
+            . '<body><a href="/item">Sample</a></body></html>';
+        $type = new ExampleHtmlType($this->clientWithHtml($html));
+
+        $crawler = $type->fetchForTest(new CrawlRequestDto(url: 'https://example.com/list', type: CrawlType::Listing));
+
+        self::assertSame('Sample', trim($crawler->filter('a')->text('')));
+    }
+
+    public function test_a_cloudflare_interstitial_is_blocked(): void
+    {
+        $html = '<html><head><title>Just a moment...</title></head><body>'
+            . '<script src="https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/orchestrate"></script></body></html>';
+        $type = new ExampleHtmlType($this->clientWithHtml($html));
+
+        $this->expectException(CrawlBlockedException::class);
+
+        $type->fetchForTest(new CrawlRequestDto(url: 'https://example.com/list', type: CrawlType::Listing));
     }
 
     public function test_fetch_crawler_throws_on_empty_html(): void
