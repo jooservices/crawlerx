@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- JavDB returns every field of the movie page (date, duration, director, maker, series, rating and votes, tags, performers with ids and gender, preview images, all magnets, want/seen counters) and of the listing cards (rating, date, flags), without navigation items; pages are requested in English (Chinese labels are still understood).
 - Configure the browser and FlareSolverr services, and the PHP runner for `make`, only through `.env`
   (`.env.example`); Docker is optional and keeps its current addresses as defaults.
 - `make live-check`, `source-matrix`, `bench` and `canary` no longer start Docker services; the source matrix
