@@ -12,6 +12,7 @@ use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Support\CodeNormalizer;
+use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class Listing extends AbstractHtmlType implements TypeInterface
@@ -66,11 +67,19 @@ final class Listing extends AbstractHtmlType implements TypeInterface
             }
 
             $title = $this->itemTitle($node);
+            $card = $this->card($node);
+            $cover = $card === null ? null : $this->firstAttribute($card, 'img', 'src');
+            $preview = $card === null ? null : $this->firstAttribute($card, 'video[data-src]', 'data-src');
             $items[$absolute] = MovieDto::item(
                 url: $absolute,
                 externalId: $externalId,
                 title: $title,
-                data: ['code' => CodeNormalizer::canonical($title, $externalId)],
+                data: MovieMeta::filter([
+                    'code' => CodeNormalizer::canonical($title, $externalId),
+                    'cover_url' => $cover === null ? null : $this->absolute($request->url, $cover),
+                    'duration' => $card === null ? null : $this->cardDuration($card),
+                    'metadata' => MovieMeta::filter(['preview_video_url' => $preview === null ? null : $this->absolute($request->url, $preview)]),
+                ]),
             );
         });
 
@@ -81,6 +90,31 @@ final class Listing extends AbstractHtmlType implements TypeInterface
             items: array_values($items),
             pagination: $this->parsePagination($crawler, $request->url, $request->page),
         );
+    }
+
+    /** The `.thumbnail` box that holds this link's cover, duration badge and hover preview. */
+    private function card(Crawler $node): ?Crawler
+    {
+        $dom = $node->getNode(0)?->parentNode;
+        while ($dom instanceof \DOMElement) {
+            if (in_array('thumbnail', explode(' ', preg_replace('/\s+/', ' ', $dom->getAttribute('class')) ?? ''), true)) {
+                return new Crawler($dom);
+            }
+            $dom = $dom->parentNode;
+        }
+
+        return null;
+    }
+
+    private function cardDuration(Crawler $card): ?int
+    {
+        foreach ($card->filter('span')->each(fn(Crawler $span): ?string => $this->normalizeText($span->text(''))) as $text) {
+            if ($text !== null && preg_match('/^\d+:\d{2}(?::\d{2})?$/', $text) === 1) {
+                return MovieMeta::durationMinutes($text);
+            }
+        }
+
+        return null;
     }
 
     private function parsePagination(Crawler $crawler, string $url, int $currentPage): CrawlPaginationDto
