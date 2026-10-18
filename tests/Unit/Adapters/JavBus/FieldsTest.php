@@ -11,7 +11,7 @@ use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Enums\CrawlType;
 use JOOservices\CrawlerX\Tests\TestCase;
 
-final class FieldsTest extends TestCase
+class FieldsTest extends TestCase
 {
     private const FIXTURES = __DIR__ . '/../../../Fixtures/javbus/';
 

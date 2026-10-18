@@ -12,15 +12,17 @@
         "fetch": {
             "profile": "adaptive",
             "readyMarkers": {
-                "listing": [".new li, .grid li"],
+                "listing": [".new li, .grid li, li.detail"],
                 "detail": ["dl.info"]
             },
             "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
         },
         "targetProfiles": {"tokyohot_home": {"label": "Tokyo-Hot Accepted Home", "url": "https://my.tokyo-hot.com/index?lang=en"}},
         "fixtureSamples": [
-            {"url": "https://my.tokyo-hot.com/index?lang=en", "name": "listing.html", "type": "listing"},
-            {"url": "https://my.tokyo-hot.com/product/crazyasia097085/", "name": "detail.html", "type": "detail"}
+            {"url": "https://my.tokyo-hot.com/index", "name": "listing.html", "type": "listing"},
+            {"url": "https://my.tokyo-hot.com/product/", "name": "listing-products.html", "type": "listing"},
+            {"url": "https://my.tokyo-hot.com/product/n1700/", "name": "detail.html", "type": "detail"},
+            {"url": "https://my.tokyo-hot.com/product/adl_301/", "name": "detail-tags.html", "type": "detail"}
         ],
         "defaultCrawlConfig": {"timeout": 45},
         "defaultThrottle": {"default_gap_seconds": 10, "min_gap_seconds": 5, "max_gap_seconds": 60},
