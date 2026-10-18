@@ -17,7 +17,7 @@ final class MapCrawlHttpClient implements CrawlHttpClient
     {
     }
 
-    public function get(string $url): CrawlHttpResponse
+    public function get(string $url, array $headers = []): CrawlHttpResponse
     {
         $html = $this->responses[$url] ?? '';
 
