@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Standard metadata keys and builders for movie data (`Support\MovieMeta`, `docs/dto-conventions.md`).
+
 ### Changed
 
 - Configure the browser and FlareSolverr services, and the PHP runner for `make`, only through `.env`
