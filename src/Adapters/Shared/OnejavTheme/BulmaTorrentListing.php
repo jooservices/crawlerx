@@ -94,10 +94,6 @@ abstract class BulmaTorrentListing extends AbstractHtmlType implements TypeInter
             });
         }
 
-        if ($items !== []) {
-            return $items;
-        }
-
         $crawler->filter($this->profile->listingLinksSelector)->each(function (Crawler $node) use (&$items, $request, $normalize): void {
             $href = $node->attr('href');
             if (! is_string($href)) {
@@ -112,7 +108,7 @@ abstract class BulmaTorrentListing extends AbstractHtmlType implements TypeInter
             $path = parse_url($absolute, PHP_URL_PATH);
             $externalId = is_string($path) ? trim(basename($path), '/') : '';
 
-            $items[$absolute] = MovieDto::item(
+            $items[$absolute] ??= MovieDto::item(
                 url: $absolute,
                 externalId: $externalId,
                 title: trim($node->text('')) !== '' ? trim($node->text('')) : null,
