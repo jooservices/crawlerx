@@ -13,6 +13,7 @@ use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Dto\Entity\GalleryDto;
 use JOOservices\CrawlerX\Dto\Entity\PhotoDto;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
+use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class Gallery extends AbstractHtmlType implements TypeInterface
@@ -51,11 +52,52 @@ final class Gallery extends AbstractHtmlType implements TypeInterface
                 'metadata' => [
                     'source' => $this->firstText($crawler, Selectors::GALLERY_SOURCE_LINK),
                     'performer_url' => $this->firstAttribute($crawler, Selectors::GALLERY_PERFORMER_LINK, 'href'),
+                    'source_url' => $this->firstAttribute($crawler, Selectors::GALLERY_SOURCE_LINK, 'href'),
+                    'related_content' => $this->relatedContent($crawler, $request->url),
                 ],
             ],
         );
 
         return $item;
+    }
+
+    /** @return array{title: ?string, original_title: ?string, code: ?string, date: ?string, studio: ?string, url: ?string, cover_url: ?string}|null the web scene the pictures belong to */
+    private function relatedContent(Crawler $crawler, string $baseUrl): ?array
+    {
+        $box = $crawler->filter('#fiche-galerie-listing-photos-partenaires .contenu_lie');
+        if ($box->count() === 0) {
+            return null;
+        }
+
+        $paragraphs = $box->first()->filter('p')->each(fn(Crawler $p): ?string => $this->normalizeText($p->text('')));
+        $link = $box->first()->filter('a[href]');
+        $image = $box->first()->filter('img');
+
+        return [
+            'title' => $paragraphs[0] ?? null,
+            'original_title' => $paragraphs[1] ?? null,
+            'code' => $paragraphs[2] ?? null,
+            'date' => MovieMeta::isoDate($paragraphs[3] ?? null) ?? $this->englishDate($paragraphs[3] ?? null),
+            'studio' => $paragraphs[4] ?? null,
+            'url' => $link->count() > 0 ? $this->absolute($baseUrl, (string) $link->first()->attr('href')) : null,
+            'cover_url' => $image->count() > 0 ? $this->absolute($baseUrl, (string) $image->first()->attr('src')) : null,
+        ];
+    }
+
+    /** "July 07, 2023"; anything that does not parse exactly (rolled-over days such as Feb 30) is rejected. */
+    private function englishDate(?string $text): ?string
+    {
+        if ($text === null) {
+            return null;
+        }
+
+        $date = \DateTimeImmutable::createFromFormat('!F d, Y', $text);
+        $errors = \DateTimeImmutable::getLastErrors();
+        if ($date === false || ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0))) {
+            return null;
+        }
+
+        return $date->format('Y-m-d');
     }
 
     /**
