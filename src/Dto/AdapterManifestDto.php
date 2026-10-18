@@ -60,6 +60,8 @@ final class AdapterManifestDto extends Dto
         public readonly array $readyMarkers = [],
         /** @var list<string> */
         public readonly array $soft404Markers = [],
+        /** Extra wait for the page to go quiet after a ready marker appeared (pages that load data with AJAX). */
+        public readonly int $settleAfterReadyMs = 0,
     ) {
     }
 

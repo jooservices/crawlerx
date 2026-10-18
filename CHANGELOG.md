@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- JavBus returns every field of the movie page (ID, date, length, director, studio as maker, label, series, genres, performers with ids, sample images, all magnets with size, date and HD/subtitle flags), the listing cards (date, flags), the performer pages (date of birth, age, height, cup, bust, waist, hips, hobby, birthplace, filmography) and the performer listing avatar; English, Chinese and Japanese labels are understood.
+- Add `fetch.settleAfterReadyMs` to the adapter manifest: wait for the network to go quiet after the ready marker (pages that load data with AJAX, such as the JavBus magnet table).
 - Configure the browser and FlareSolverr services, and the PHP runner for `make`, only through `.env`
   (`.env.example`); Docker is optional and keeps its current addresses as defaults.
 - `make live-check`, `source-matrix`, `bench` and `canary` no longer start Docker services; the source matrix
