@@ -341,11 +341,24 @@ final class Detail extends AbstractHtmlType implements TypeInterface
             }
 
             $widget = new Crawler((string) $psr->getBody());
-            // Scripts, styles and the invisible honeypot paragraphs (height:0 / display:none) are not description text.
-            $widget->filter('script, style, [style*="height:0"], [style*="display:none"], [style*="zoom:0"], [style*="font-size:0"]')->each(static function (Crawler $node): void {
+            // Scripts, styles and the invisible honeypot paragraphs are not description text: the site hides random
+            // base64 tokens with several tricks (height:0, opacity:0, display:none, zoom, font-size 0...).
+            $hidden = ['height:0', 'opacity:0', 'display:none', 'visibility:hidden', 'zoom:0', 'font-size:0'];
+            $selector = 'script, style, ' . implode(', ', array_merge(
+                array_map(static fn(string $css): string => '[style*="' . $css . '"]', $hidden),
+                array_map(static fn(string $css): string => '[style*="' . str_replace(':', ': ', $css) . '"]', $hidden),
+            ));
+            $widget->filter($selector)->each(static function (Crawler $node): void {
                 $dom = $node->getNode(0);
                 $parent = $dom?->parentNode;
                 if ($dom !== null && $parent !== null) {
+                    $parent->removeChild($dom);
+                }
+            });
+            $widget->filter('[data-container] p, [data-container] span, [data-container] div')->each(static function (Crawler $node): void {
+                $dom = $node->getNode(0);
+                $parent = $dom?->parentNode;
+                if ($dom !== null && $parent !== null && $node->children()->count() === 0 && preg_match('/^[A-Za-z0-9+\/]{20,}={0,2}$/', trim($node->text(''))) === 1) {
                     $parent->removeChild($dom);
                 }
             });

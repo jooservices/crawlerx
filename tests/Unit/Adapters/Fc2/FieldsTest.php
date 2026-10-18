@@ -115,7 +115,8 @@ final class FieldsTest extends TestCase
     public function test_hidden_honeypot_text_and_scripts_are_not_part_of_the_description(): void
     {
         $widget = '<html><body><script>window["x"]="MC5i";</script><div data-container><p>Real synopsis.</p>'
-            . '<p style="height:0;color:#fff;overflow:hidden;">MC5iYmJkNjJmMS40YmNm</p><p>Second line.</p></div></body></html>';
+            . '<p style="height:0;color:#fff;overflow:hidden;">MC5iYmJkNjJmMS40YmNm</p><p style="opacity: 0;">MC5iYmJkNjJmMS40YmNmY2Yu</p>'
+            . '<p>MC5iYmJkNjJmMS40YmNmY2YuNmFkNTI0YzQ=</p><p>Second line.</p></div></body></html>';
 
         self::assertSame('Real synopsis.Second line.', $this->detail(widget: $widget)['description']);
     }
