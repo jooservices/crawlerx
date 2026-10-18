@@ -62,7 +62,7 @@ final class PerformerTest extends TestCase
         self::assertIsArray($performer);
         self::assertSame('有栖舞衣', $performer['name']);
         self::assertSame('ありすまい', $performer['metadata']['name_kana']);
-        self::assertSame('2003/03/06同じ誕生日', $performer['birth_date_raw']);
+        self::assertSame('2003/03/06', $performer['birth_date_raw']);
         self::assertSame('T161 B83(D) W58 H94', $performer['size_raw']);
         self::assertSame('D', $performer['metadata']['cup_size']);
         self::assertSame('東京都', $performer['metadata']['birthplace']);

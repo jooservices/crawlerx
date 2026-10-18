@@ -51,11 +51,19 @@ final class PerformerDetail extends AbstractType implements TypeInterface
         $maker = $this->tableValue($crawler, Selectors::MAKER_TABLE);
         $sns = $this->tableValue($crawler, Selectors::SNS_TABLE);
 
+        [$plainName, $reading] = $this->nameParts($name);
         $data = array_filter([
             'external_id' => $externalId,
             'external_url' => $request->url,
             'name' => $name,
             'name_japanese' => $name,
+            'name_plain' => $plainName,
+            'name_kana' => $reading,
+            'tags' => $this->texts($crawler, '.cate-link a[rel~="category"], .post-tag a[rel~="tag"]'),
+            'sns_url' => $this->firstAttribute($crawler, '.sns a[href]', 'href'),
+            'notable_works' => $this->notableWorks($crawler),
+            'filmography_url' => $this->shopUrl($this->firstAttribute($crawler, '.text-link-ichiran a[href]', 'href')),
+            'similar_performers' => $this->similarPerformers($crawler),
             'debut_date_raw' => $profile['デビュー'] ?? null,
             'birth_date_raw' => $profile['生年月日'] ?? null,
             'height_raw' => $profile['身長'] ?? null,
@@ -69,7 +77,7 @@ final class PerformerDetail extends AbstractType implements TypeInterface
             'sns' => $sns,
             'raw_profile' => $this->normalizeText($crawler->filter(Selectors::BIO_TEXT)->text('')) ?? null,
             'profile_image_url' => $this->coverUrl($crawler, $request->url),
-        ], fn(mixed $value): bool => $value !== null && $value !== '');
+        ], fn(mixed $value): bool => $value !== null && $value !== '' && $value !== []);
 
         $item = PerformerDto::item(
             url: $request->url,
@@ -81,6 +89,71 @@ final class PerformerDetail extends AbstractType implements TypeInterface
         $this->assertUsablePerformerDetail($item, 'avjoho');
 
         return $item;
+    }
+
+    /** @return array{0: string, 1: ?string} "市瀬あいり（いちせあいり）" => name and reading */
+    private function nameParts(string $heading): array
+    {
+        if (preg_match('/^(.*?)[（(]([^）)]+)[）)]\s*$/u', $heading, $match) === 1) {
+            return [trim($match[1]), trim($match[2])];
+        }
+
+        return [$heading, null];
+    }
+
+    /** The shop links are affiliate redirects; `lurl` holds the real product page. */
+    private function shopUrl(?string $href): ?string
+    {
+        if ($href === null || $href === '') {
+            return null;
+        }
+
+        $query = parse_url(html_entity_decode($href), PHP_URL_QUERY);
+        parse_str(is_string($query) ? $query : '', $params);
+
+        return is_string($params['lurl'] ?? null) && $params['lurl'] !== '' ? $params['lurl'] : null;
+    }
+
+    /** @return list<array{title: string, cover_url: ?string, url: ?string, content_id: ?string}> */
+    private function notableWorks(Crawler $crawler): array
+    {
+        $works = [];
+        $crawler->filter('.gazou-large')->each(function (Crawler $box) use (&$works): void {
+            $link = $box->filter('a[href]');
+            $img = $box->filter('img');
+            $hasImage = $img->count() > 0;
+            $url = $link->count() > 0 ? $this->shopUrl($link->first()->attr('href')) : null;
+            $title = $hasImage ? $this->normalizeText((string) $img->first()->attr('alt')) : null;
+            if ($title !== null && $title !== '') {
+                $works[$url ?? $title] ??= [
+                    'title' => $title,
+                    'cover_url' => $img->first()->attr('src'),
+                    'url' => $url,
+                    'content_id' => $url !== null && preg_match('/[?&]id=([^&]+)/', $url, $m) === 1 ? $m[1] : null,
+                ];
+            }
+        });
+
+        return array_values($works);
+    }
+
+    /** @return list<array{external_id: ?string, name: string, name_kana: ?string, url: string}> */
+    private function similarPerformers(Crawler $crawler): array
+    {
+        $similar = [];
+        $crawler->filter('a.yarpp-thumbnail')->each(function (Crawler $link) use (&$similar): void {
+            $title = $this->normalizeText((string) $link->attr('title')) ?? '';
+            $href = (string) $link->attr('href');
+            if ($title === '' || $href === '') {
+                return;
+            }
+
+            [$name, $reading] = $this->nameParts($title);
+            $slug = trim(basename((string) parse_url($href, PHP_URL_PATH)), '/');
+            $similar[$href] ??= ['external_id' => $slug !== '' ? $slug : null, 'name' => $name, 'name_kana' => $reading, 'url' => $href];
+        });
+
+        return array_values($similar);
     }
 
     /**
