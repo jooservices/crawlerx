@@ -9,9 +9,6 @@ use JOOservices\CrawlerX\Adapters\Concerns\DetectsUrls;
 use JOOservices\CrawlerX\Contracts\DetailCapable;
 use JOOservices\CrawlerX\Contracts\ListingCapable;
 use JOOservices\CrawlerX\Contracts\UrlDetectCapable;
-use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
-use JOOservices\CrawlerX\Dto\CrawlListResultDto;
-use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Dto\ImportMatchRule;
 use JOOservices\CrawlerX\Dto\UrlDetectionResult;
 use JOOservices\CrawlerX\Enums\CrawlType;
@@ -28,16 +25,6 @@ abstract class AbstractCatalogCrawler extends AbstractBaseCrawler implements Det
     public function name(): string
     {
         return $this->definition()->slug;
-    }
-
-    public function listing(CrawlRequestDto $request): CrawlListResultDto
-    {
-        return (new Listing($this->client, $this->definition()))->execute($request);
-    }
-
-    public function detail(CrawlRequestDto $request): CrawlItemResultDto
-    {
-        return (new Detail($this->client, $this->definition()))->execute($request);
     }
 
     public function detectUrl(string $url): UrlDetectionResult
