@@ -12,6 +12,7 @@ use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
+use JOOservices\CrawlerX\Support\CodeNormalizer;
 use Symfony\Component\DomCrawler\Crawler;
 
 abstract class BulmaTorrentListing extends AbstractHtmlType implements TypeInterface
@@ -67,6 +68,35 @@ abstract class BulmaTorrentListing extends AbstractHtmlType implements TypeInter
     {
         $items = [];
         $normalize = $this->normalize;
+
+        $cards = $crawler->filter('div.card.mb-3');
+        if ($cards->count() > 0) {
+            $cards->each(function (Crawler $card) use (&$items, $request, $normalize): void {
+                $link = $card->filter('h5.title a[href]');
+                $href = $link->count() > 0 ? $link->first()->attr('href') : null;
+                if (! is_string($href)) {
+                    return;
+                }
+
+                $absolute = $normalize($request->url, $href);
+                if (preg_match($this->profile->itemUrlPattern, $absolute) !== 1 || isset($items[$absolute])) {
+                    return;
+                }
+
+                $path = parse_url($absolute, PHP_URL_PATH);
+                $title = trim((string) preg_replace('/\s+/u', ' ', $link->first()->text('')));
+                $items[$absolute] = MovieDto::item(
+                    url: $absolute,
+                    externalId: is_string($path) ? trim(basename($path), '/') : '',
+                    title: $title !== '' ? $title : null,
+                    data: [...TorrentCardFields::read($card, $request->url, $normalize), 'code' => CodeNormalizer::canonical($title, trim(basename((string) $path), '/'), $absolute)],
+                );
+            });
+        }
+
+        if ($items !== []) {
+            return $items;
+        }
 
         $crawler->filter($this->profile->listingLinksSelector)->each(function (Crawler $node) use (&$items, $request, $normalize): void {
             $href = $node->attr('href');
