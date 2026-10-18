@@ -8,8 +8,8 @@ The strategy is configured by each adapter manifest under `runtime.fetch`.
 | Profile | First method | Fallback behavior |
 |---|---|---|
 | `http_only` | HTTP | No browser fallback |
-| `adaptive` | HTTP | Optional curl-impersonate, then Playwright, then FlareSolverr only after a detected challenge |
-| `browser_likely` | Playwright | FlareSolverr only after a detected challenge |
+| `adaptive` | HTTP | Optional curl-impersonate, then Playwright, then FlareSolverr after a detected challenge or when no earlier method got an answer |
+| `browser_likely` | Playwright | FlareSolverr after a detected challenge or when no earlier method got an answer |
 
 The legacy `playwrightFetchEnabled: true` setting maps to `browser_likely`. An
 explicit `runtime.fetch.profile` takes precedence. The five browser-likely
@@ -38,8 +38,10 @@ The consumer receives these terminal error codes and retry hints:
 | Challenge after all permitted methods | `challenge` | Yes |
 | Other fetch failure | `network` | Yes |
 
-Terminal results stop the fallback chain. FlareSolverr is never called unless
-the preceding response was classified as a challenge.
+Terminal results stop the fallback chain. FlareSolverr is called after a
+detected challenge, and also when no earlier method got any answer from the site (a method could not run, or a
+browser timed out on a page that never settles, as Cloudflare interstitials do). It is skipped only when an earlier
+method received an HTTP status that was not a challenge.
 
 ## Sessions and login cookies
 

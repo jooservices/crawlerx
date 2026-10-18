@@ -81,7 +81,7 @@ final class FetchFallbackChain
         $circuitChecked = false;
         $nonTerminalFailure = false;
         $sawChallenge = false;
-        $executedAnyMethod = false;
+        $answered = false;
         $budget = FetchBudget::start($options?->fetch);
         $transientRetry = new TransientRetry();
         $readyMarkers = $profile->readyMarkersFor($type);
@@ -94,10 +94,11 @@ final class FetchFallbackChain
             ?? null;
 
         foreach ($plan as $method) {
-            // FlareSolverr is the expensive last resort: only after a real attempt was answered without a
-            // challenge is it skipped. When no earlier method could run (not registered, or an explicit
-            // single-method plan) it must still be tried, otherwise Cloudflare sites report a false network error.
-            if ($method === FetchMethod::Flaresolverr && ! $sawChallenge && $executedAnyMethod) {
+            // FlareSolverr is the expensive last resort. It is skipped only when an earlier method got a real
+            // answer from the site (an HTTP status) that was not a challenge. When nothing answered (a method
+            // could not run, or a browser timed out on a page that never settles, as Cloudflare interstitials
+            // do) it must still be tried, otherwise such sites report a false network error.
+            if ($method === FetchMethod::Flaresolverr && ! $sawChallenge && $answered) {
                 continue;
             }
 
@@ -113,7 +114,6 @@ final class FetchFallbackChain
             }
 
             $started = (int) round(microtime(true) * 1000);
-            $executedAnyMethod = true;
 
             try {
                 $result = $this->fetchWithHandler(
@@ -146,6 +146,8 @@ final class FetchFallbackChain
                     $result->ok,
                     $result->error,
                 );
+                // Every answer counts, also one a later retry replaces (a 503 followed by a network error).
+                $answered = $answered || ($result->status > 0 && ! $result->challengeDetected);
 
                 if (
                     $method !== FetchMethod::Http
