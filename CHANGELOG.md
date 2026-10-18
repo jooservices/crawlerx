@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `make live-check`, `source-matrix`, `bench` and `canary` no longer start Docker services; the source matrix
   fills and finalizes its run metadata itself and creates no containers or networks.
 - Add `PLAYWRIGHT_HOST` to the browser service so it can bind the loopback behind a tunnel.
+- Run FlareSolverr when the browser step gets no answer at all (timeout), not only after a detected challenge.
 - Report a missing browser setup as "Browser service is not configured" instead of a Node stack trace.
 
 ## [1.3.1] - 2026-10-06

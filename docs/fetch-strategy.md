@@ -38,8 +38,10 @@ The consumer receives these terminal error codes and retry hints:
 | Challenge after all permitted methods | `challenge` | Yes |
 | Other fetch failure | `network` | Yes |
 
-Terminal results stop the fallback chain. FlareSolverr is never called unless
-the preceding response was classified as a challenge.
+Terminal results stop the fallback chain. FlareSolverr is called after a
+detected challenge, and also when no earlier method got any answer from the site (a method could not run, or a
+browser timed out on a page that never settles, as Cloudflare interstitials do). It is skipped only when an earlier
+method received an HTTP status that was not a challenge.
 
 ## Sessions and login cookies
 
