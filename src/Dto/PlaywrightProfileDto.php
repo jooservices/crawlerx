@@ -25,6 +25,8 @@ final class PlaywrightProfileDto extends Dto
         public readonly ?string $storageStatePath = null,
         public readonly int $readyTimeoutMs = 45000,
         public readonly bool $blockResources = true,
+        /** Extra wait for the network to go quiet after a ready marker appeared; 0 returns at once. */
+        public readonly int $settleAfterReadyMs = 0,
     ) {
     }
 }

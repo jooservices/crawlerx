@@ -74,6 +74,43 @@ final class FetchFallbackChainBehaviourTest extends TestCase
         self::assertSame('handler not registered', $result->attempts[0]['error']);
     }
 
+    public function test_the_settle_wait_reaches_the_browser_handler_with_and_without_a_session(): void
+    {
+        $seen = [];
+        $recorder = new class ($seen) implements FetchMethodHandler {
+            /** @param list<int> $seen */
+            public function __construct(public array &$seen)
+            {
+            }
+
+            public function supports(FetchMethod $method): bool
+            {
+                return $method === FetchMethod::Playwright;
+            }
+
+            public function fetch(string $url, SiteProfileDto $profile, FetchMethod $method, ?CrawlOptionsDto $options = null): FetchResultDto
+            {
+                $this->seen[] = $profile->playwright?->settleAfterReadyMs ?? -1;
+
+                return new FetchResultDto(ok: true, body: '<html>ok</html>', status: 200, methodUsed: $method, elapsedMs: 1, challengeDetected: false, finalUrl: $url);
+            }
+        };
+        $profile = new SiteProfileDto(
+            slug: 'demo',
+            displayName: 'Demo',
+            baseUrl: 'https://example.test',
+            fetchProfile: FetchProfile::BrowserLikely,
+            fetchChain: [FetchMethod::Playwright],
+            http: new HttpProfileDto(),
+            playwright: new \JOOservices\CrawlerX\Dto\PlaywrightProfileDto(settleAfterReadyMs: 4000),
+        );
+
+        (new FetchFallbackChain([FetchMethod::Playwright->value => $recorder]))->fetch(self::URL, $profile, [FetchMethod::Playwright]);
+        (new FetchFallbackChain([FetchMethod::Playwright->value => $recorder]))->fetch(self::URL, $profile, [FetchMethod::Playwright], new CrawlOptionsDto(fetch: new \JOOservices\CrawlerX\Dto\FetchOptionsDto(deadlineSeconds: 30)));
+
+        self::assertSame([4000, 4000], $seen);
+    }
+
     public function test_flaresolverr_runs_after_a_browser_that_never_got_an_answer(): void
     {
         $chain = new FetchFallbackChain([

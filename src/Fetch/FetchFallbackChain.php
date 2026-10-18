@@ -469,6 +469,7 @@ final class FetchFallbackChain
                 timezoneId: $playwright->timezoneId,
                 userAgent: $playwright->userAgent,
                 storageStatePath: $playwright->storageStatePath,
+                settleAfterReadyMs: $playwright->settleAfterReadyMs,
             ),
             cookieHandoffAfterBrowser: $profile->cookieHandoffAfterBrowser,
             readyMarkers: $profile->readyMarkers,
@@ -582,6 +583,7 @@ final class FetchFallbackChain
                 storageStatePath: $playwright->storageStatePath,
                 readyTimeoutMs: $playwright->readyTimeoutMs,
                 blockResources: $playwright->blockResources,
+                settleAfterReadyMs: $playwright->settleAfterReadyMs,
             );
         }
 
