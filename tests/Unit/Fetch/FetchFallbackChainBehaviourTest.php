@@ -88,6 +88,18 @@ final class FetchFallbackChainBehaviourTest extends TestCase
         self::assertSame(0, $result->attempts[0]['status']);
     }
 
+    public function test_a_browser_navigation_error_code_is_not_an_answer_from_the_site(): void
+    {
+        $chain = new FetchFallbackChain([
+            FetchMethod::Playwright->value => $this->handler(FetchMethod::Playwright, 1, ''),
+            FetchMethod::Flaresolverr->value => $this->handler(FetchMethod::Flaresolverr, 200, '<html>solved</html>'),
+        ]);
+
+        $result = $chain->fetch(self::URL, $this->profile(), [FetchMethod::Playwright, FetchMethod::Flaresolverr]);
+
+        self::assertSame(FetchMethod::Flaresolverr, $result->methodUsed);
+    }
+
     public function test_a_silent_browser_and_a_failing_flaresolverr_still_end_as_a_network_failure(): void
     {
         $chain = new FetchFallbackChain([

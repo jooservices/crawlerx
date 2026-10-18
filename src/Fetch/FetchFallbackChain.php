@@ -146,8 +146,9 @@ final class FetchFallbackChain
                     $result->ok,
                     $result->error,
                 );
-                // Every answer counts, also one a later retry replaces (a 503 followed by a network error).
-                $answered = $answered || ($result->status > 0 && ! $result->challengeDetected);
+                // Every answer counts, also one a later retry replaces (a 503 followed by a network error). Browser services report
+                // a failed navigation as a small non-HTTP code (for example 1), which is not an answer from the site.
+                $answered = $answered || ($result->status >= 100 && ! $result->challengeDetected);
 
                 if (
                     $method !== FetchMethod::Http
