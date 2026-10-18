@@ -84,12 +84,20 @@ final class Gallery extends AbstractHtmlType implements TypeInterface
         ];
     }
 
-    /** "July 07, 2023" */
+    /** "July 07, 2023"; anything that does not parse exactly (rolled-over days such as Feb 30) is rejected. */
     private function englishDate(?string $text): ?string
     {
-        $date = $text === null ? false : date_create_immutable($text);
+        if ($text === null) {
+            return null;
+        }
 
-        return $date === false ? null : $date->format('Y-m-d');
+        $date = \DateTimeImmutable::createFromFormat('!F d, Y', $text);
+        $errors = \DateTimeImmutable::getLastErrors();
+        if ($date === false || ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0))) {
+            return null;
+        }
+
+        return $date->format('Y-m-d');
     }
 
     /**
