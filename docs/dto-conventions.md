@@ -21,7 +21,7 @@
 | Key | Type | Meaning |
 |---|---|---|
 | `maker`, `label`, `series`, `director` | string | Publisher data. If a site shows several directors, join them with `, `. |
-| `rating` | `{score, scale, votes}` | `MovieMeta::rating()`; scale is the maximum (5, 10), `null` if unknown. |
+| `rating` | `{score, scale, votes}` | `MovieMeta::rating()`; scale is the maximum (5, 10), `null` if unknown. `MovieMeta::rating()` returns `null` (so the key is dropped) for a negative score or vote count, a scale of zero or less, or a score above the scale. |
 | `magnets` | list | `MovieMeta::magnet()`: `{name, url, size_label, size_bytes, date, tags}`; `url` is the `magnet:` link. |
 | `downloads` | list | Other download options (torrent file, file sizes per resolution): `{type, url, quality, size_label, size_bytes}`. |
 | `sample_video_url` | string | Preview or trailer. |

@@ -44,7 +44,12 @@ final class MovieMetaTest extends TestCase
         yield 'minutes javdb' => ['160 minute(s)', 160];
         yield 'long clock' => ['01:02:12', 62];
         yield 'rounds seconds' => ['00:48:33', 49];
-        yield 'mixed japanese' => ['48分 33秒', 48];
+        yield 'mixed japanese' => ['48分 33秒', 49];
+        yield 'japanese seconds below half' => ['48分 10秒', 48];
+        yield 'invalid japanese seconds' => ['48分 99秒', null];
+        yield 'invalid long clock minutes' => ['01:99:00', null];
+        yield 'invalid long clock seconds' => ['01:10:99', null];
+        yield 'invalid short clock' => ['48:99', null];
         yield 'short clock' => ['48:33', 49];
         yield 'none' => ['unknown', null];
         yield 'null' => [null, null];
@@ -60,6 +65,10 @@ final class MovieMetaTest extends TestCase
     {
         self::assertSame(['score' => 4.5, 'scale' => 5.0, 'votes' => 34], MovieMeta::rating(4.5, 5.0, 34));
         self::assertSame(['score' => 3.0, 'scale' => null, 'votes' => null], MovieMeta::rating(3.0));
+        self::assertNull(MovieMeta::rating(6.0, 5.0));
+        self::assertNull(MovieMeta::rating(-1.0));
+        self::assertNull(MovieMeta::rating(3.0, 0.0));
+        self::assertNull(MovieMeta::rating(3.0, 5.0, -2));
         self::assertSame(['amount' => 3980.0, 'currency' => 'JPY', 'label' => '通常版'], MovieMeta::price(3980.0, 'JPY', ' 通常版 '));
         self::assertSame(['external_id' => '12', 'name' => 'Aoi Mei', 'url' => 'https://example.test/12'], MovieMeta::performer(' Aoi Mei ', '12', 'https://example.test/12'));
 

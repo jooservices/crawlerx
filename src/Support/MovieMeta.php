@@ -51,9 +51,18 @@ final class MovieMeta
 
     public const FIELDS = 'fields';
 
-    /** @return array{score: float, scale: ?float, votes: ?int} */
-    public static function rating(float $score, ?float $scale = null, ?int $votes = null): array
+    /**
+     * Null when the numbers cannot be a rating: a negative score or votes, a scale of zero or less, or a score above
+     * the scale. A missing rating is absent from the metadata (see filter()).
+     *
+     * @return array{score: float, scale: ?float, votes: ?int}|null
+     */
+    public static function rating(float $score, ?float $scale = null, ?int $votes = null): ?array
     {
+        if ($score < 0 || ($votes !== null && $votes < 0) || ($scale !== null && ($scale <= 0 || $score > $scale))) {
+            return null;
+        }
+
         return ['score' => $score, 'scale' => $scale, 'votes' => $votes];
     }
 
@@ -109,6 +118,7 @@ final class MovieMeta
 
     /**
      * Duration in whole minutes from "120分", "120 min", "160 minute(s)", "1:02:12", "48分 33秒", "48:33".
+     * Seconds of 30 or more round the minutes up, for every format. Invalid clock values give null.
      */
     public static function durationMinutes(?string $text): ?int
     {
@@ -116,16 +126,24 @@ final class MovieMeta
             return null;
         }
 
-        if (preg_match('/(\d+):(\d{2}):(\d{2})/', $text, $match) === 1) {
-            return ((int) $match[1] * 60) + (int) $match[2] + ((int) $match[3] >= 30 ? 1 : 0);
+        if (preg_match('/(?<!\d)(\d+):(\d{2}):(\d{2})(?!\d)/', $text, $match) === 1) {
+            return (int) $match[2] > 59 || (int) $match[3] > 59
+                ? null
+                : ((int) $match[1] * 60) + (int) $match[2] + ((int) $match[3] >= 30 ? 1 : 0);
         }
 
-        if (preg_match('/(\d+)\s*分/u', $text, $match) === 1 || preg_match('/(\d+)\s*(?:minutes?|mins?)(?:\(s\))?/i', $text, $match) === 1) {
+        if (preg_match('/(\d+)\s*分(?:\s*(\d{1,2})\s*秒)?/u', $text, $match) === 1) {
+            $seconds = (int) ($match[2] ?? 0);
+
+            return $seconds > 59 ? null : (int) $match[1] + ($seconds >= 30 ? 1 : 0);
+        }
+
+        if (preg_match('/(\d+)\s*(?:minutes?|mins?)(?:\(s\))?/i', $text, $match) === 1) {
             return (int) $match[1];
         }
 
         if (preg_match('/(?<!\d)(\d{1,3}):(\d{2})(?!\d)/', $text, $match) === 1) {
-            return (int) $match[1] + ((int) $match[2] >= 30 ? 1 : 0);
+            return (int) $match[2] > 59 ? null : (int) $match[1] + ((int) $match[2] >= 30 ? 1 : 0);
         }
 
         return null;
