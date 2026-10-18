@@ -14,6 +14,7 @@ use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Support\CodeNormalizer;
+use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class Detail extends AbstractType implements TypeInterface
@@ -38,27 +39,91 @@ final class Detail extends AbstractType implements TypeInterface
         $title = $this->titleWithoutCode($titleRaw, $code) ?? $titleRaw ?? $externalId;
         $coverUrl = $this->firstAttribute($crawler, Selectors::DETAIL_COVER, 'src');
 
+        $maker = $this->linked($crawler, Selectors::DETAIL_MAKER, $request->url);
+        $label = $this->linked($crawler, Selectors::DETAIL_LABEL, $request->url);
+        $director = $this->linked($crawler, Selectors::DETAIL_DIRECTOR, $request->url);
+
         $item = MovieDto::item(
             url: $request->url,
             externalId: $externalId,
             title: $title,
-            data: [
+            data: MovieMeta::filter([
                 'code' => $code,
                 'cover_url' => $coverUrl === null ? null : $this->normalizer->absolute($request->url, $coverUrl),
                 'date' => $this->date($this->firstText($crawler, Selectors::DETAIL_DATE)),
                 'duration' => $this->durationMinutes($this->firstText($crawler, Selectors::DETAIL_LENGTH)),
-                'director' => $this->firstText($crawler, Selectors::DETAIL_DIRECTOR),
-                'maker' => $this->firstText($crawler, Selectors::DETAIL_MAKER),
-                'publisher' => $this->firstText($crawler, Selectors::DETAIL_LABEL),
-                'performers' => $this->texts($crawler, Selectors::DETAIL_CAST),
+                'performers' => $this->performers($crawler, $request->url),
                 'tags' => $this->texts($crawler, Selectors::DETAIL_GENRES),
                 'screenshots' => $this->screenshots($crawler, $request->url),
-            ],
+                'metadata' => MovieMeta::filter([
+                    MovieMeta::DIRECTOR => $director['name'] ?? null,
+                    MovieMeta::MAKER => $maker['name'] ?? null,
+                    MovieMeta::LABEL => $label['name'] ?? null,
+                    'director_url' => $director['url'] ?? null,
+                    'maker_url' => $maker['url'] ?? null,
+                    'label_url' => $label['url'] ?? null,
+                    MovieMeta::RATING => $this->rating($this->firstText($crawler, '#video_review .score')),
+                    'want_count' => $this->memberCount($crawler, 'userswanted.php'),
+                    'watched_count' => $this->memberCount($crawler, 'userswatched.php'),
+                    'owned_count' => $this->memberCount($crawler, 'usersowned.php'),
+                ]),
+            ]),
         );
 
         $this->assertUsableDetail($item, 'JavLibrary');
 
         return $item;
+    }
+
+    /** @return array{name: string, url: ?string}|null */
+    private function linked(Crawler $crawler, string $selector, string $baseUrl): ?array
+    {
+        $link = $crawler->filter($selector);
+        if ($link->count() === 0) {
+            return null;
+        }
+
+        $name = $this->normalizeText($link->first()->text(''));
+        $href = $link->first()->attr('href');
+
+        return $name === null ? null : ['name' => $name, 'url' => is_string($href) && $href !== '' ? $this->normalizer->absolute($baseUrl, $href) : null];
+    }
+
+    /** @return list<array{external_id: ?string, name: string, url: ?string}> */
+    private function performers(Crawler $crawler, string $baseUrl): array
+    {
+        $performers = [];
+        $crawler->filter(Selectors::DETAIL_CAST)->each(function (Crawler $link) use (&$performers, $baseUrl): void {
+            $name = $this->normalizeText($link->text(''));
+            $href = (string) $link->attr('href');
+            if ($name === null) {
+                return;
+            }
+
+            $id = preg_match('/[?&]s=([a-z0-9]+)/i', $href, $match) === 1 ? $match[1] : null;
+            $performers[$id ?? $name] ??= MovieMeta::performer($name, $id, $href === '' ? null : $this->normalizer->absolute($baseUrl, $href));
+        });
+
+        return array_values($performers);
+    }
+
+    /**
+     * "(9.00)" out of 10; an unrated video has an empty score.
+     *
+     * @return array{score: float, scale: ?float, votes: ?int}|null
+     */
+    private function rating(?string $text): ?array
+    {
+        return $text !== null && preg_match('/(\d+(?:\.\d+)?)/', $text, $match) === 1 ? MovieMeta::rating((float) $match[1], 10.0) : null;
+    }
+
+    /** "(<a href="userswanted.php?v=..">72</a> members want it)" */
+    private function memberCount(Crawler $crawler, string $page): ?int
+    {
+        $link = $crawler->filter('#video_favorite_edit a[href*="' . $page . '"]');
+        $text = $link->count() > 0 ? $this->normalizeText($link->first()->text('')) : null;
+
+        return $text !== null && preg_match('/^\d[\d,]*$/', $text) === 1 ? (int) str_replace(',', '', $text) : null;
     }
 
     /**
