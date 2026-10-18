@@ -342,17 +342,20 @@ final class Detail extends AbstractHtmlType implements TypeInterface
 
             $widget = new Crawler((string) $psr->getBody());
             // Scripts, styles and the invisible honeypot paragraphs are not description text: the site hides random
-            // base64 tokens with several tricks (height:0, opacity:0, display:none, zoom, font-size 0...).
-            $hidden = ['height:0', 'opacity:0', 'display:none', 'visibility:hidden', 'zoom:0', 'font-size:0'];
-            $selector = 'script, style, ' . implode(', ', array_merge(
-                array_map(static fn(string $css): string => '[style*="' . $css . '"]', $hidden),
-                array_map(static fn(string $css): string => '[style*="' . str_replace(':', ': ', $css) . '"]', $hidden),
-            ));
-            $widget->filter($selector)->each(static function (Crawler $node): void {
+            // base64 tokens with several tricks (exactly zero height/opacity/zoom/font-size, display:none, hidden).
+            $widget->filter('script, style')->each(static function (Crawler $node): void {
                 $dom = $node->getNode(0);
-                $parent = $dom?->parentNode;
-                if ($dom !== null && $parent !== null) {
-                    $parent->removeChild($dom);
+                if ($dom !== null) {
+                    $dom->parentNode?->removeChild($dom);
+                }
+            });
+            $widget->filter('[style]')->each(static function (Crawler $node): void {
+                $style = (string) $node->attr('style');
+                $zero = '(?:0(?:\\.0+)?(?:px|em|rem|pt|%)?)';
+                $hidden = '/(?<![\\w-])(?:(?:height|opacity|zoom|font-size)\\s*:\\s*' . $zero . '|display\\s*:\\s*none|visibility\\s*:\\s*hidden)\\s*(?:;|!important|$)/i';
+                $dom = $node->getNode(0);
+                if ($dom !== null && $dom->parentNode !== null && preg_match($hidden, $style) === 1) {
+                    $dom->parentNode->removeChild($dom);
                 }
             });
             $widget->filter('[data-container] p, [data-container] span, [data-container] div')->each(static function (Crawler $node): void {

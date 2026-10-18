@@ -121,6 +121,15 @@ final class FieldsTest extends TestCase
         self::assertSame('Real synopsis.Second line.', $this->detail(widget: $widget)['description']);
     }
 
+    public function test_only_exact_zero_styles_are_honeypots(): void
+    {
+        $widget = '<html><body><div data-container><p style="font-size:0.9em">Small print.</p>'
+            . '<div style="min-height:0;opacity:0.8">Wrapped <b>text</b>.</div><p style="line-height:0">Tight.</p>'
+            . '<p style="font-size:0">MC5iYmJkNjJmMS40YmNm</p><p style="zoom: 0.0;">hidden</p></div></body></html>';
+
+        self::assertSame('Small print.Wrapped text.Tight.', $this->detail(widget: $widget)['description']);
+    }
+
     public function test_a_translation_notice_is_not_a_description(): void
     {
         self::assertNull($this->detail(widget: '<html><body><div data-container><p>Currently, we are preparing for translation. Please wait a moment.</p></div></body></html>')['description']);
