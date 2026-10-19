@@ -7,11 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-10-19
+
 ### Added
 
-- Standard metadata keys and builders for movie data (`Support\MovieMeta`, `docs/dto-conventions.md`).
+- Per-site field completeness: every site's pages were compared with the live site and now return every offered field. Movie details (JavDB, JavBus, Caribbeancom, Duga, FC2, Heyzo, Tokyo-Hot, MissAV, ffjav, Jable, JavLibrary, XCity, 1Pondo, 141jav, onejav, javbtc, MinnanoAV), list cards (price, size, date, duration, actresses, magnets where the card has them), performer profiles (Aisex, javdatabase, avjoho, avfan_profiles, warashi, JavBus, XCity, MinnanoAV) and galleries (warashi related scene).
+- Standard metadata keys and builders for movie data (`Support\MovieMeta`, `docs/dto-conventions.md`): maker, label, series, director, rating, magnets, downloads, sample video, price, titles, posted date.
+- Performers inside a movie carry `{external_id, name, url}` where the site provides them.
+- Dev VM browser and FlareSolverr services configured only through `.env` (`scripts/docker/*-vm`), `CRAWLERX_DISABLED_SITES`, `fetch.settleAfterReadyMs` and `browserHeaders` in the adapter manifest.
 
 ### Changed
+
+- ffjav: `date` is now the release date (発売日); the post date moved to `metadata.posted_date`.
+- XCity reads both Japanese and English pages (plain requests are answered in Japanese); profile fields were lost on Japanese pages before.
+- FC2 is requested in Japanese and the description is read from its description widget (session cookie and referer are sent).
+- Tokyo-Hot and Heyzo covers are the real cover image (not the site logo); Heyzo values built by page scripts are read from the script text.
+- Jable returns every model including hashed url slugs (the name comes from the avatar tooltip) and the release date.
+- JavLibrary: `maker`, `label`, `director` use the standard metadata keys (`publisher` is now `label`).
+- Fetch chain: FlareSolverr also runs when the browser step got no answer at all; a normal page that only references Cloudflare is no longer treated as blocked.
+- The shared Onejav-theme card reader serves 141jav, onejav and ffjav (detail and list cards).
+
+### Removed
+
+- The unused generic `Shared\Catalog\Detail` and `Listing` parsers (every catalog site has a dedicated parser).
+
+### Also in this release
+
+- Standard metadata keys and builders for movie data (`Support\MovieMeta`, `docs/dto-conventions.md`).
 
 - Caribbeancom returns every field of the movie page (starring with ids, all tags, release date, duration, poster, sample video, every download size per resolution, the whole photo gallery with a sample flag) and of the listing cards (title, cover, date, performers); the performer no longer comes from a menu link.
 - JavBus returns every field of the movie page (ID, date, length, director, studio as maker, label, series, genres, performers with ids, sample images, all magnets with size, date and HD/subtitle flags), the listing cards (date, flags), the performer pages (date of birth, age, height, cup, bust, waist, hips, hobby, birthplace, filmography) and the performer listing avatar; English, Chinese and Japanese labels are understood.
