@@ -242,6 +242,10 @@ final class Listing extends AbstractHtmlType implements TypeInterface
     private function contentPathSegments(string $path): array
     {
         $segments = array_values(array_filter(explode('/', trim(strtolower($path), '/')), static fn(string $segment): bool => $segment !== ''));
+        // Pagination links carry a mirror prefix such as /dm539/en/new?page=2.
+        if (isset($segments[0]) && preg_match('/^dm\d+$/', $segments[0]) === 1) {
+            array_shift($segments);
+        }
         if (isset($segments[0]) && in_array($segments[0], self::LOCALES, true)) {
             array_shift($segments);
         }

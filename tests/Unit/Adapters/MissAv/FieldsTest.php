@@ -80,6 +80,16 @@ class FieldsTest extends TestCase
         self::assertSame('https://fourhoi.com/ihd-010/preview.mp4', $byId['ihd-010']['metadata']['preview_video_url']);
     }
 
+    public function test_the_listing_follows_the_next_page_link_with_a_mirror_prefix(): void
+    {
+        $result = (new Listing($this->clientWithHtml((string) file_get_contents(__DIR__ . '/../../../Fixtures/missav/listing-new.html'))))
+            ->execute(new CrawlRequestDto(url: 'https://missav.ws/en/new', type: CrawlType::Listing));
+
+        self::assertTrue($result->pagination->hasNextPage);
+        self::assertSame('https://missav.ws/dm539/en/new?page=2', $result->pagination->nextUrl);
+        self::assertSame(2, $result->pagination->nextPage);
+    }
+
     /** @return array<string, mixed> */
     private function detail(string $html): array
     {
