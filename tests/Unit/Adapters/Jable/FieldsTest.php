@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Tests\Unit\Adapters\Jable;
 
 use JOOservices\CrawlerX\Adapters\Jable\Types\Detail;
+use JOOservices\CrawlerX\Adapters\Jable\Types\PerformerListing;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Enums\CrawlType;
 use JOOservices\CrawlerX\Tests\TestCase;
@@ -48,6 +49,15 @@ class FieldsTest extends TestCase
         self::assertSame(2637, $movie['metadata']['favorite_count']);
         self::assertSame(7, $movie['metadata']['comment_count']);
         self::assertSame('此作品曾在本站上傳，現已更新至中文字幕版。', $movie['description']);
+    }
+
+    public function test_the_models_index_follows_the_numbered_next_page(): void
+    {
+        $result = (new PerformerListing($this->clientWithHtml((string) file_get_contents(self::FIXTURES . 'models-listing.html'))))
+            ->execute(new CrawlRequestDto(url: 'https://en.jable.tv/models/', type: CrawlType::PerformerListing));
+
+        self::assertTrue($result->pagination->hasNextPage);
+        self::assertSame('https://en.jable.tv/models/2/', $result->pagination->nextUrl);
     }
 
     /** @return array<string, mixed> */
