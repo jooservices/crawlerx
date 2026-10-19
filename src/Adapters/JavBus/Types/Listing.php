@@ -15,6 +15,7 @@ use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Support\CodeNormalizer;
+use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class Listing extends AbstractHtmlType implements TypeInterface
@@ -67,10 +68,12 @@ final class Listing extends AbstractHtmlType implements TypeInterface
                 url: $url,
                 externalId: $externalId,
                 title: $this->titleWithoutCode($rawTitle, $code),
-                data: [
+                data: MovieMeta::filter([
                     'code' => $code,
                     'cover_url' => $this->coverUrl($box, $request->url),
-                ],
+                    'date' => $this->cardDate($box),
+                    'metadata' => MovieMeta::filter(['flags' => $this->texts($box, '.item-tag button, .item-tag a')]),
+                ]),
             );
         });
 
@@ -85,6 +88,14 @@ final class Listing extends AbstractHtmlType implements TypeInterface
             items: array_values($items),
             pagination: $this->parsePagination($crawler, $request->url, $request->page),
         );
+    }
+
+    /** The card shows `<date>CODE</date> / <date>YYYY-MM-DD</date>`. */
+    private function cardDate(Crawler $box): ?string
+    {
+        $dates = $box->filter('date');
+
+        return $dates->count() > 1 ? MovieMeta::isoDate($dates->eq(1)->text('')) : null;
     }
 
     private function listingCrawler(CrawlRequestDto $request): Crawler

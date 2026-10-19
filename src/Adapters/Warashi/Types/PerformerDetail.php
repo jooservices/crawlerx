@@ -111,7 +111,12 @@ final class PerformerDetail extends AbstractType implements TypeInterface
             'zodiac_sign' => $zodiacSign,
             'name_japanese' => $jpName,
             'name_romaji' => $name,
-        ], fn(mixed $value): bool => $value !== null && $value !== '');
+            'weight' => $this->nullableUnknown($this->labeledValue($profileCrawler, 'weight')),
+            'photo_galleries' => $this->photoGalleries($crawler, $request->url),
+            'filmography' => $this->filmography($crawler, $request->url),
+            'links' => $this->externalLinks($crawler),
+            'biography' => $this->biography($crawler),
+        ], fn(mixed $value): bool => $value !== null && $value !== '' && $value !== []);
 
         $item = PerformerDto::item(
             url: $request->url,
@@ -123,6 +128,82 @@ final class PerformerDetail extends AbstractType implements TypeInterface
         $this->assertUsablePerformerDetail($item, 'warashi');
 
         return $item;
+    }
+
+    /** @return list<array{title: string, url: string, pictures: ?int, preview_url: ?string}> */
+    private function photoGalleries(Crawler $crawler, string $baseUrl): array
+    {
+        $galleries = [];
+        $crawler->filter('figure.galerie-photos-pornostar-preview')->each(function (Crawler $figure) use (&$galleries, $baseUrl): void {
+            $link = $figure->filter('figcaption a[href]');
+            $href = $link->count() > 0 ? (string) $link->first()->attr('href') : '';
+            if ($href === '') {
+                return;
+            }
+
+            $pictures = $figure->filter('figcaption > span');
+            $image = $figure->filter('img');
+            $url = UriResolver::resolve($href, $baseUrl);
+            $galleries[$url] ??= [
+                'title' => $this->normalizeText($link->first()->text('')) ?? '',
+                'url' => $url,
+                'pictures' => $pictures->count() > 0 && preg_match('/(\d+)\s+pictures/', $pictures->last()->text(''), $m) === 1 ? (int) $m[1] : null,
+                'preview_url' => $image->count() > 0 ? UriResolver::resolve((string) $image->first()->attr('src'), $baseUrl) : null,
+            ];
+        });
+
+        return array_values($galleries);
+    }
+
+    /** @return list<array<string, mixed>> the physical-media filmography rows (title, original title, code, studio, distributor, date) */
+    private function filmography(Crawler $crawler, string $baseUrl): array
+    {
+        $rows = [];
+        $crawler->filter('#pornostar-profil-filmographie table.filmographie tbody tr')->each(function (Crawler $row) use (&$rows, $baseUrl): void {
+            $cells = $row->filter('td');
+            if ($cells->count() < 6) {
+                return;
+            }
+
+            $link = $cells->eq(0)->filter('a[href]');
+            $movieId = $link->count() > 0 && preg_match('#/movie/(\d+)#', (string) $link->first()->attr('href'), $match) === 1 ? $match[1] : null;
+            $rows[] = array_filter([
+                'external_id' => $movieId,
+                'title' => $this->normalizeText($cells->eq(0)->text('')),
+                'url' => $link->count() > 0 ? UriResolver::resolve((string) $link->first()->attr('href'), $baseUrl) : null,
+                'original_title' => $this->normalizeText($cells->eq(1)->text('')),
+                'code' => $this->normalizeText($cells->eq(2)->text('')),
+                'studio' => $this->normalizeText($cells->eq(3)->text('')),
+                'distributor' => $this->normalizeText($cells->eq(4)->text('')),
+                'date' => $this->normalizeText($cells->eq(5)->text('')),
+                'cover_url' => $this->coverFromRow($row, $baseUrl),
+            ], static fn(mixed $value): bool => $value !== null && $value !== '');
+        });
+
+        return $rows;
+    }
+
+    private function coverFromRow(Crawler $row, string $baseUrl): ?string
+    {
+        $img = $row->attr('data-img');
+
+        return is_string($img) && $img !== '' ? UriResolver::resolve($img, $baseUrl) : null;
+    }
+
+    /** @return list<string> */
+    private function externalLinks(Crawler $crawler): array
+    {
+        return array_values(array_unique(array_filter(
+            $crawler->filter('#pornostar-profil-liens a[href]')->each(static fn(Crawler $a): string => (string) $a->attr('href')),
+            static fn(string $href): bool => $href !== '',
+        )));
+    }
+
+    private function biography(Crawler $crawler): ?string
+    {
+        $text = $this->normalizeText($crawler->filter('#pornostar-profil-biographie')->count() > 0 ? $crawler->filter('#pornostar-profil-biographie')->first()->text('') : '');
+
+        return $text !== null && $text !== '' && ! str_contains($text, 'no biography is available') ? $text : null;
     }
 
     private function birthDateRaw(Crawler $crawler): ?string
@@ -225,7 +306,7 @@ final class PerformerDetail extends AbstractType implements TypeInterface
             return $cup !== null ? "B00({$cup})" : null;
         }
 
-        if (preg_match('/JP\s*(\d{2,3})\s*[-–]\s*(\d{2,3})\s*[-–]\s*(\d{2,3})/i', $measurementsRaw, $match) === 1) {
+        if (preg_match('/JP\s*(\d{2,3})\s*[-–]\s*(\d{2,3})\s*[-–]\s*(\d{2,3})/iu', $measurementsRaw, $match) === 1) {
             $bust = $match[1];
             $waist = $match[2];
             $hip = $match[3];

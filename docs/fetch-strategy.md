@@ -8,8 +8,8 @@ The strategy is configured by each adapter manifest under `runtime.fetch`.
 | Profile | First method | Fallback behavior |
 |---|---|---|
 | `http_only` | HTTP | No browser fallback |
-| `adaptive` | HTTP | Optional curl-impersonate, then Playwright, then FlareSolverr only after a detected challenge |
-| `browser_likely` | Playwright | FlareSolverr only after a detected challenge |
+| `adaptive` | HTTP | Optional curl-impersonate, then Playwright, then FlareSolverr after a detected challenge or when no earlier method got an answer |
+| `browser_likely` | Playwright | FlareSolverr after a detected challenge or when no earlier method got an answer |
 
 The legacy `playwrightFetchEnabled: true` setting maps to `browser_likely`. An
 explicit `runtime.fetch.profile` takes precedence. The five browser-likely
@@ -38,8 +38,10 @@ The consumer receives these terminal error codes and retry hints:
 | Challenge after all permitted methods | `challenge` | Yes |
 | Other fetch failure | `network` | Yes |
 
-Terminal results stop the fallback chain. FlareSolverr is never called unless
-the preceding response was classified as a challenge.
+Terminal results stop the fallback chain. FlareSolverr is called after a
+detected challenge, and also when no earlier method got any answer from the site (a method could not run, or a
+browser timed out on a page that never settles, as Cloudflare interstitials do). It is skipped only when an earlier
+method received an HTTP status that was not a challenge.
 
 ## Sessions and login cookies
 
@@ -54,13 +56,35 @@ Configure login cookies with `CrawlerXFactory::configure($logins)`, where
 Provider cookies are attached to every request for that site. A persistent
 login wall returns `auth_required` and is not retryable.
 
-`PLAYWRIGHT_URL` is the one Playwright container for the node. `FLARESOLVERR_URL`
-is the one FlareSolverr container. Playwright runs the `node` binary on PATH
+`PLAYWRIGHT_URL` is the one browser service for the node and `FLARESOLVERR_URL` the one FlareSolverr service; both are plain addresses set in `.env`, so they can point at this project's Docker, the Workspaces Dev VM (through `scripts/docker/playwright-fetch-vm` and `scripts/docker/flaresolverr-vm`) or any other host. The browser service binds `PLAYWRIGHT_HOST` (default `0.0.0.0`, use `127.0.0.1` behind a tunnel). Playwright runs the `node` binary on PATH
 when `PLAYWRIGHT_URL` is empty.
 `CRAWLERX_USER_AGENT` sets the user agent. The default is a modern Chrome user
 agent. `CRAWLERX_USER_AGENT_POOL` accepts a comma-separated pool; after three
 consecutive challenges for a site, CrawlerX switches to the next user agent and
 keeps it sticky in that site's session.
+
+## Host throttling
+
+Adapters may set `runtime.defaultThrottle` with `default_gap_seconds`,
+`min_gap_seconds` and `max_gap_seconds`. CrawlerX clamps the configured gap to
+those bounds and spaces requests by host and node. `CRAWLERX_NODE` identifies a
+node; when unset, the hostname is used. A wait that cannot fit within the
+remaining fetch budget returns retryable `rate_limited` with `Retry-After`
+instead of sending a request.
+
+The default throttle state is held by the worker process. To share it across
+workers on one node, pass a PSR-16 cache as the second argument to
+`CrawlerXFactory::configure($logins, $throttleCache)`. Cache keys use a
+namespaced hash so they stay within PSR-16's portable key rules. PSR-16 has no
+atomic reservation operation, so closely concurrent workers may occasionally
+start within the same interval. See the [PSR-16 key and method requirements](https://www.php-fig.org/psr/psr-16/).
+
+The same configuration shares the per-host circuit state across workers on a
+node. Ten consecutive non-terminal fetch failures open the circuit for five
+minutes. The first request after that interval is a half-open probe; an
+additional request waits for its 30-second probe lease. An open circuit returns
+retryable `rate_limited` with the remaining time in `Retry-After`. Circuit cache
+failures fall back to worker-local state.
 
 ## Budgets
 

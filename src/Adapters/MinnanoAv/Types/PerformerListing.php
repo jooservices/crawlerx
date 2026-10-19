@@ -63,7 +63,7 @@ final class PerformerListing extends AbstractType implements TypeInterface
             $items = $this->itemsFromLinks($crawler, $request->url);
         }
 
-        $nextUrl = $this->nextPageUrl($crawler, $html, $request->url);
+        $nextUrl = $this->nextPageUrl($crawler, $request->url);
         $lastPage = $this->lastPageNumber($crawler, $html);
 
         return new CrawlListResultDto(
@@ -167,7 +167,7 @@ final class PerformerListing extends AbstractType implements TypeInterface
         );
     }
 
-    private function nextPageUrl(Crawler $crawler, string $html, string $baseUrl): ?string
+    private function nextPageUrl(Crawler $crawler, string $baseUrl): ?string
     {
         $node = $crawler->filter('link[rel="next"]');
         if ($node->count() > 0) {
@@ -183,10 +183,6 @@ final class PerformerListing extends AbstractType implements TypeInterface
             if (is_string($href) && trim($href) !== '') {
                 return $this->normalizer->absolute($baseUrl, $href);
             }
-        }
-
-        if (preg_match('/<link rel="next" href="([^"]+)"/', $html, $match) === 1) {
-            return $this->normalizer->absolute($baseUrl, $match[1]);
         }
 
         return null;

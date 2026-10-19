@@ -7,6 +7,7 @@ namespace JOOservices\CrawlerX\Adapters;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Exceptions\CrawlBlockedException;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
+use JOOservices\CrawlerX\Fetch\ChallengeDetector;
 use Psr\Http\Message\ResponseInterface;
 
 abstract class AbstractType
@@ -86,14 +87,14 @@ abstract class AbstractType
 
     private function isChallengeResponse(ResponseInterface $response, string $html): bool
     {
-        $mitigated = strtolower(implode(' ', $response->getHeader('cf-mitigated')));
+        // One definition of a challenge for the whole library: a real interstitial, not any page that merely
+        // mentions Cloudflare (a Turnstile script on a normal page must not make the page "blocked").
+        $headers = [];
+        foreach ($response->getHeaders() as $name => $values) {
+            $headers[(string) $name] = array_values($values);
+        }
 
-        return str_contains($mitigated, 'challenge')
-            || str_contains($html, 'challenges.cloudflare.com')
-            || str_contains($html, 'cf-browser-verification')
-            || str_contains($html, 'cf-mitigated')
-            || str_contains($html, 'Just a moment...')
-            || str_contains($html, 'Attention Required!');
+        return ChallengeDetector::isChallenge($html, $response->getStatusCode(), $headers);
     }
 
     /** @param array<string, mixed> $data */

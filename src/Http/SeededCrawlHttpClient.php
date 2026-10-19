@@ -18,23 +18,24 @@ final readonly class SeededCrawlHttpClient implements CrawlHttpClient
     ) {
     }
 
-    public function get(string $url): CrawlHttpResponse
+    public function get(string $url, array $headers = []): CrawlHttpResponse
     {
         if ($this->matches($url)) {
-            $headers = ['Content-Type' => $this->contentType()];
+            $responseHeaders = ['Content-Type' => $this->contentType()];
             foreach ($this->fetch->headers as $name => $values) {
-                $headers[$name] = $values[0] ?? '';
+                // Keep every value: a page can set several cookies (Set-Cookie) that a follow-up request needs.
+                $responseHeaders[$name] = $values === [] ? '' : $values;
             }
 
             return new PsrCrawlHttpResponse(new Response(
                 $this->fetch->status > 0 ? $this->fetch->status : 200,
-                $headers,
+                $responseHeaders,
                 $this->fetch->body,
             ));
         }
 
         try {
-            return $this->inner->get($url);
+            return $this->inner->get($url, $headers);
         } catch (NetworkConnectionException) {
             return new PsrCrawlHttpResponse(new Response(404, ['Content-Type' => 'text/plain'], ''));
         }

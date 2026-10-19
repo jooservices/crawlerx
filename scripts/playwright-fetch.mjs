@@ -281,6 +281,14 @@ export async function fetchWithBrowser(config, browser) {
             } catch {
                 // The PHP layer performs the final marker validation.
             }
+            const settleMs = positiveTimeout(config.settleAfterReadyMs, 0);
+            if (readyMarker !== null && settleMs > 0) {
+                try {
+                    await page.waitForLoadState('networkidle', { timeout: Math.min(settleMs, readyTimeoutMs) });
+                } catch {
+                    // best-effort: pages that never go quiet (ads) are returned as they are
+                }
+            }
         } else {
             try {
                 await page.waitForLoadState('networkidle', { timeout: Math.min(5000, readyTimeoutMs) });

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Tests\Unit\Fetch;
 
 use JOOservices\Client\Client\ClientBuilder;
+use JOOservices\Client\Exceptions\NetworkConnectionException;
 use JOOservices\Client\Testing\TestResponse;
 use JOOservices\Client\Testing\TestResponseSequence;
 use JOOservices\CrawlerX\Contracts\ProcessRunner;
@@ -16,12 +17,14 @@ use JOOservices\CrawlerX\Dto\SiteProfileDto;
 use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Enums\FetchProfile;
 use JOOservices\CrawlerX\Fetch\FetchRuntimeConfig;
+use JOOservices\CrawlerX\Fetch\Guard\TransientRetry;
 use JOOservices\CrawlerX\Fetch\Handlers\CurlImpersonateFetchHandler;
 use JOOservices\CrawlerX\Fetch\Handlers\FlaresolverrFetchHandler;
 use JOOservices\CrawlerX\Fetch\Handlers\HttpFetchHandler;
 use JOOservices\CrawlerX\Fetch\Handlers\PuppeteerStealthFetchHandler;
 use JOOservices\CrawlerX\Fetch\Session\CookieHandoffStore;
 use JOOservices\CrawlerX\Services\ClientFactory;
+use Nyholm\Psr7\Request;
 use Nyholm\Psr7\Response;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Client\ClientInterface;
@@ -240,6 +243,43 @@ final class FetchHandlersTest extends TestCase
         $blocked = $handler->fetch('https://example.test/wall', $this->profile(), FetchMethod::Http);
         self::assertFalse($blocked->ok);
         self::assertTrue($blocked->challengeDetected);
+    }
+
+    public function test_http_handler_uses_a_safe_code_for_retryable_network_errors(): void
+    {
+        ClientBuilder::fake();
+        ClientBuilder::push(new NetworkConnectionException(
+            new Request('GET', 'https://example.test/?token=synthetic'),
+            'private transport diagnostic',
+        ));
+
+        $result = (new HttpFetchHandler(new ClientFactory()))->fetch(
+            'https://example.test/?token=synthetic',
+            $this->profile(),
+            FetchMethod::Http,
+        );
+
+        self::assertSame(TransientRetry::NETWORK_ERROR, $result->error);
+        self::assertSame(0, $result->status);
+        self::assertStringNotContainsString('private transport diagnostic', (string) $result->error);
+        self::assertStringNotContainsString('synthetic', (string) $result->error);
+    }
+
+    public function test_http_handler_does_not_expose_unexpected_exception_text(): void
+    {
+        ClientBuilder::fake();
+        ClientBuilder::push(new \RuntimeException('private transport diagnostic with token=synthetic'));
+
+        $result = (new HttpFetchHandler(new ClientFactory()))->fetch(
+            'https://example.test/?token=synthetic',
+            $this->profile(),
+            FetchMethod::Http,
+        );
+
+        self::assertSame(TransientRetry::FETCH_ERROR, $result->error);
+        self::assertFalse((new TransientRetry())->isEligible($result));
+        self::assertStringNotContainsString('private transport diagnostic', (string) $result->error);
+        self::assertStringNotContainsString('synthetic', (string) $result->error);
     }
 
     private function profile(): SiteProfileDto

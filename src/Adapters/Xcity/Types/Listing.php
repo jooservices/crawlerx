@@ -12,6 +12,7 @@ use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
+use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class Listing extends AbstractType implements TypeInterface
@@ -30,22 +31,54 @@ final class Listing extends AbstractType implements TypeInterface
         $crawler = new Crawler($html, $request->url);
         $items = [];
 
-        $crawler->filter('.x-itemBox a[href*="/avod/detail/"]')->each(function (Crawler $node) use (&$items, $request): void {
-            $href = $node->attr('href');
+        $crawler->filter('.x-itemBox')->each(function (Crawler $card) use (&$items, $request): void {
+            $link = $card->filter('a[href*="/avod/detail/"]');
+            $href = $link->count() > 0 ? $link->first()->attr('href') : null;
             if (! is_string($href) || trim($href) === '') {
                 return;
             }
 
             $absolute = $this->normalizer->absolute($request->url, $href);
             $externalId = $this->externalId($absolute);
-            if ($externalId === null) {
+            if ($externalId === null || isset($items[$absolute])) {
                 return;
             }
+
+            $thumb = $card->filter('img.packageThumb');
+            $cover = $thumb->count() > 0 ? $thumb->first()->attr('src') : null;
+            $zoom = $card->filter('.x-itemBox-availableList a[rel^="lightbox"]');
+            $large = $zoom->count() > 0 ? $zoom->first()->attr('href') : null;
+            $maker = $card->filter('.x-itemBox-maker a');
+            $badge = $card->filter('.badgeDistribution');
+            $abs = fn(?string $url): ?string => is_string($url) && trim($url) !== '' ? $this->normalizer->absolute($request->url, $url) : null;
+
+            $performers = [];
+            $card->filter('.x-itemBox-credit a[href*="/idol/detail/"]')->each(function (Crawler $idol) use (&$performers, $abs): void {
+                $name = $this->cleanText($idol->text(''));
+                $idolHref = (string) $idol->attr('href');
+                if ($name !== '') {
+                    $performers[] = MovieMeta::performer($name, preg_match('~/idol/detail/(\d+)~', $idolHref, $m) === 1 ? $m[1] : null, $abs($idolHref));
+                }
+            });
 
             $items[$absolute] = MovieDto::item(
                 url: $absolute,
                 externalId: $externalId,
-                title: $this->itemTitle($node),
+                title: $this->itemTitle($card->filter('.x-itemBox-title a')->count() > 0 ? $card->filter('.x-itemBox-title a')->first() : $link->first()),
+                data: MovieMeta::filter([
+                    'cover_url' => $abs(is_string($cover) ? $cover : null),
+                    'performers' => $performers,
+                    'metadata' => MovieMeta::filter([
+                        'cover_large_url' => $abs(is_string($large) ? $large : null),
+                        MovieMeta::MAKER => $maker->count() > 0 ? $this->cleanText($maker->first()->text('')) : null,
+                        'maker_url' => $maker->count() > 0 ? $abs((string) $maker->first()->attr('href')) : null,
+                        'distribution_badge' => $badge->count() > 0 ? $this->cleanText($badge->first()->text('')) : null,
+                        'has_free_preview' => $card->filter('img[alt^="Free preview Available"]')->count() > 0 ? true : null,
+                        'has_ondemand' => $card->filter('img[alt^="AV OnDemand Available"]')->count() > 0 ? true : null,
+                        'has_gravure' => $card->filter('img[alt^="Gravure Available"]')->count() > 0 ? true : null,
+                        'has_behind_the_scenes' => $card->filter('img[alt^="Behind the scenes Available"]')->count() > 0 ? true : null,
+                    ]),
+                ]),
             );
         });
 

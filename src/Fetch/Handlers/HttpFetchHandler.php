@@ -13,6 +13,7 @@ use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Fetch\ChallengeDetector;
 use JOOservices\CrawlerX\Fetch\Session\CookieHandoffStore;
 use JOOservices\CrawlerX\Fetch\Session\SessionStore;
+use JOOservices\CrawlerX\Fetch\Guard\TransientRetry;
 use JOOservices\CrawlerX\Services\ClientFactory;
 use Throwable;
 
@@ -66,7 +67,7 @@ final class HttpFetchHandler implements FetchMethodHandler
         ];
 
         try {
-            $response = $this->clientFactory->factory($clientOptions)->get($url);
+            $response = $this->clientFactory->factory($clientOptions, $profile->slug)->get($url);
             $psr = $response->toPsrResponse();
             $body = (string) $psr->getBody();
             $status = $psr->getStatusCode();
@@ -76,6 +77,8 @@ final class HttpFetchHandler implements FetchMethodHandler
                 $headerMap[(string) $name] = array_values($values);
             }
         } catch (Throwable $exception) {
+            $error = TransientRetry::errorCode($exception);
+
             return new FetchResultDto(
                 ok: false,
                 body: '',
@@ -84,7 +87,7 @@ final class HttpFetchHandler implements FetchMethodHandler
                 elapsedMs: (int) round(microtime(true) * 1000) - $started,
                 challengeDetected: false,
                 finalUrl: $url,
-                error: $exception->getMessage(),
+                error: $error,
             );
         }
 

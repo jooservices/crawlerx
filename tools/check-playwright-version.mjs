@@ -61,16 +61,15 @@ function findPlaywrightVersionLiterals() {
             continue;
         }
 
-        const content = readFileSync(filePath, 'utf8');
-        for (const match of content.matchAll(semverPattern)) {
-            const index = match.index ?? 0;
-            const context = content.slice(Math.max(0, index - 96), Math.min(content.length, index + 96));
-            if (!/playwright/i.test(context)) {
+        const lines = readFileSync(filePath, 'utf8').split('\n');
+        for (const [lineIndex, line] of lines.entries()) {
+            if (!/playwright/i.test(line)) {
                 continue;
             }
 
-            const line = content.slice(0, index).split('\n').length;
-            findings.push(`${relative(root, filePath)}:${line}: ${match[0]}`);
+            for (const match of line.matchAll(semverPattern)) {
+                findings.push(`${relative(root, filePath)}:${lineIndex + 1}: ${match[0]}`);
+            }
         }
     }
     return findings;

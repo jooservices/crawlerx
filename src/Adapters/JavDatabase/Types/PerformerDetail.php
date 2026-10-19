@@ -13,6 +13,7 @@ use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use Psr\Http\Message\ResponseInterface;
+use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\DomCrawler\UriResolver;
 
@@ -47,6 +48,78 @@ final class PerformerDetail extends AbstractType implements TypeInterface
         }
 
         return $html;
+    }
+
+    /** @return array{score: float, scale: ?float, votes: ?int}|null "(4.46/5 from 35 votes)" */
+    private function rating(Crawler $crawler): ?array
+    {
+        $text = $this->cleanText($crawler->filter('.wp-postratings')->count() > 0 ? $crawler->filter('.wp-postratings')->first()->ancestors()->first()->text('') : '');
+
+        return preg_match('/\((\d+(?:\.\d+)?)\s*\/\s*(\d+)\s+from\s+(\d+)\s+votes?\)/i', $text, $match) === 1
+            ? MovieMeta::rating((float) $match[1], (float) $match[2], (int) $match[3])
+            : null;
+    }
+
+    /** @return list<array{type: string, url: string}> the twitter / site links next to the profile */
+    private function socialLinks(Crawler $crawler): array
+    {
+        $links = [];
+        $crawler->filter('a:has(i.fa-brands), a:has(i.fa-solid.fa-house)')->each(static function (Crawler $link) use (&$links): void {
+            $href = (string) $link->attr('href');
+            $icon = $link->filter('i')->count() > 0 ? (string) $link->filter('i')->first()->attr('class') : '';
+            if ($href !== '' && ! str_contains($href, 'javdatabase.com')) {
+                $links[$href] ??= ['type' => preg_match('/fa-(?:square-)?([a-z-]+)\b(?!.*fa-brands)/', str_replace('fa-brands', '', $icon), $m) === 1 ? trim($m[1], '-') : 'link', 'url' => $href];
+            }
+        });
+
+        return array_values($links);
+    }
+
+    private function movieCount(Crawler $crawler): ?int
+    {
+        $heading = $crawler->filter('h4');
+        foreach ($heading->each(fn(Crawler $h): string => $this->cleanText($h->text(''))) as $text) {
+            if (preg_match('/JAV Movies\s*\((\d+)\)/i', $text, $match) === 1) {
+                return (int) $match[1];
+            }
+        }
+
+        return null;
+    }
+
+    /** @return list<array<string, mixed>> the movie cards of this page (code, title, date, age, cover, maker) */
+    private function filmography(Crawler $crawler): array
+    {
+        $works = [];
+        $crawler->filter('.facetwp-template .card')->each(function (Crawler $card) use (&$works): void {
+            $link = $card->filter('a[href*="/movies/"]');
+            $href = $link->count() > 0 ? (string) $link->first()->attr('href') : '';
+            if ($href === '') {
+                return;
+            }
+
+            $text = $this->cleanText($card->filter('.mt-auto')->count() > 0 ? $card->filter('.mt-auto')->first()->text('') : '');
+            $cover = $card->filter('img');
+            $maker = $card->filter('span.btn a');
+            $works[$href] ??= array_filter([
+                'code' => $this->cleanText($card->filter('p.pcard a')->count() > 0 ? $card->filter('p.pcard a')->first()->text('') : ''),
+                'url' => $href,
+                'title' => $card->filter('.mt-auto a')->count() > 0 ? $this->cleanText($card->filter('.mt-auto a')->first()->text('')) : null,
+                'date' => MovieMeta::isoDate($text),
+                'age_at_release' => preg_match('/Age:\s*(\d+)/', $text, $age) === 1 ? (int) $age[1] : null,
+                'cover_url' => $cover->count() > 0 ? $cover->first()->attr('src') : null,
+                'maker' => $maker->count() > 0 ? $this->cleanText($maker->first()->text('')) : null,
+            ], static fn(mixed $value): bool => $value !== null && $value !== '');
+        });
+
+        return array_values($works);
+    }
+
+    private function nextPage(Crawler $crawler, string $baseUrl): ?string
+    {
+        $next = $crawler->filter('ul.pagination a[aria-label="Next Page"]');
+
+        return $next->count() > 0 ? UriResolver::resolve((string) $next->first()->attr('href'), $baseUrl) : null;
     }
 
     public function execute(CrawlRequestDto $request): CrawlItemResultDto
@@ -152,7 +225,12 @@ final class PerformerDetail extends AbstractType implements TypeInterface
             'hair_length' => $hairLength,
             'hair_color' => $hairColor,
             'name_japanese' => $jpName,
-        ], fn(mixed $value): bool => $value !== null && $value !== '');
+            'rating' => $this->rating($crawler),
+            'social_links' => $this->socialLinks($crawler),
+            'movie_count' => $this->movieCount($crawler),
+            'filmography' => $this->filmography($crawler),
+            'filmography_next_url' => $this->nextPage($crawler, $request->url),
+        ], fn(mixed $value): bool => $value !== null && $value !== '' && $value !== []);
 
         $item = PerformerDto::item(
             url: $request->url,

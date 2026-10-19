@@ -11,6 +11,8 @@ import { assertSafeBrowserUrl, SsrfBlockedError } from './ssrf-guard.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const port = Number.parseInt(process.env.PLAYWRIGHT_PORT ?? '3000', 10);
+// PLAYWRIGHT_HOST: bind address. 0.0.0.0 inside a container; 127.0.0.1 on a host that is reached through a tunnel.
+const listenHost = process.env.PLAYWRIGHT_HOST?.trim() || '0.0.0.0';
 const maxRequestBytes = 1024 * 1024;
 const maxConcurrency = positiveInteger(process.env.CRAWLERX_BROWSER_MAX_CONCURRENCY, 2);
 const maxQueue = nonNegativeInteger(process.env.CRAWLERX_BROWSER_MAX_QUEUE, 8);
@@ -503,7 +505,7 @@ async function start() {
     });
     process.on('SIGTERM', () => beginShutdown('SIGTERM'));
     process.on('SIGINT', () => beginShutdown('SIGINT'));
-    server.listen(port, '0.0.0.0', () => {
+    server.listen(port, listenHost, () => {
         process.stderr.write(`CrawlerX browser service listening on ${port}\n`);
     });
 }

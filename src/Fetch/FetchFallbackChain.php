@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Fetch;
 
+use Closure;
 use JOOservices\CrawlerX\Contracts\FetchMethodHandler;
 use JOOservices\CrawlerX\Contracts\LoginCookieProvider;
 use JOOservices\CrawlerX\Dto\CrawlOptionsDto;
@@ -17,6 +18,9 @@ use JOOservices\CrawlerX\Enums\CrawlType;
 use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Exceptions\CrawlFetchException;
 use JOOservices\CrawlerX\Fetch\Budget\FetchBudget;
+use JOOservices\CrawlerX\Fetch\Guard\HostCircuit;
+use JOOservices\CrawlerX\Fetch\Guard\HostThrottle;
+use JOOservices\CrawlerX\Fetch\Guard\TransientRetry;
 use JOOservices\CrawlerX\Fetch\Session\CookieHandoffStore;
 use JOOservices\CrawlerX\Fetch\Session\SessionStore;
 use Throwable;
@@ -29,8 +33,16 @@ final class FetchFallbackChain
 
     private readonly ?FetchRuntimeConfig $runtime;
 
+    /** @var Closure(int): void */
+    private readonly Closure $retrySleeper;
+
+    private readonly ?HostThrottle $hostThrottle;
+
+    private readonly ?HostCircuit $hostCircuit;
+
     /**
      * @param  array<string, FetchMethodHandler>  $handlers
+     * @param  Closure(int): void|null  $retrySleeper
      */
     public function __construct(
         private readonly array $handlers,
@@ -38,10 +50,19 @@ final class FetchFallbackChain
         ?SessionStore $sessions = null,
         ?LoginCookieProvider $logins = null,
         ?FetchRuntimeConfig $runtime = null,
+        ?Closure $retrySleeper = null,
+        ?HostThrottle $hostThrottle = null,
+        ?HostCircuit $hostCircuit = null,
+        private readonly int $maxTransientRetries = TransientRetry::MAX_RETRIES,
     ) {
         $this->sessions = $sessions ?? new SessionStore();
         $this->logins = $logins;
         $this->runtime = $runtime;
+        $this->retrySleeper = $retrySleeper ?? static function (int $microseconds): void {
+            usleep($microseconds);
+        };
+        $this->hostThrottle = $hostThrottle;
+        $this->hostCircuit = $hostCircuit;
     }
 
     /**
@@ -56,8 +77,13 @@ final class FetchFallbackChain
     ): FetchResultDto {
         $attempts = [];
         $last = null;
+        $host = parse_url($url, PHP_URL_HOST);
+        $circuitChecked = false;
+        $nonTerminalFailure = false;
         $sawChallenge = false;
+        $answered = false;
         $budget = FetchBudget::start($options?->fetch);
+        $transientRetry = new TransientRetry();
         $readyMarkers = $profile->readyMarkersFor($type);
         $session = $this->sessions->get($profile->slug);
         $loginCookies = $this->logins?->cookiesFor($profile->slug) ?? [];
@@ -68,7 +94,11 @@ final class FetchFallbackChain
             ?? null;
 
         foreach ($plan as $method) {
-            if ($method === FetchMethod::Flaresolverr && ! $sawChallenge) {
+            // FlareSolverr is the expensive last resort. It is skipped only when an earlier method got a real
+            // answer from the site (an HTTP status) that was not a challenge. When nothing answered (a method
+            // could not run, or a browser timed out on a page that never settles, as Cloudflare interstitials
+            // do) it must still be tried, otherwise such sites report a false network error.
+            if ($method === FetchMethod::Flaresolverr && ! $sawChallenge && $answered) {
                 continue;
             }
 
@@ -86,37 +116,83 @@ final class FetchFallbackChain
             $started = (int) round(microtime(true) * 1000);
 
             try {
-                $result = $handler->fetch(
+                $result = $this->fetchWithHandler(
+                    $handler,
                     $url,
-                    $this->boundedProfile(
-                        $this->profileWithSession($profile, $options, $session, $loginCookies, $requestUserAgent),
-                        $method,
-                        $budget,
-                    ),
+                    $profile,
+                    $options,
                     $method,
-                    $this->boundedOptions(
+                    $budget,
+                    $readyMarkers,
+                    $session,
+                    $loginCookies,
+                    $requestUserAgent,
+                    $circuitChecked,
+                );
+            } catch (Throwable $exception) {
+                $elapsed = (int) round(microtime(true) * 1000) - $started;
+                $attempts[] = $this->attempt($method, $elapsed, 0, false, false, TransientRetry::errorCode($exception));
+                $nonTerminalFailure = true;
+                continue;
+            }
+
+            $retries = 0;
+            while (true) {
+                $attempts[] = $this->attempt(
+                    $method,
+                    $result->elapsedMs,
+                    $result->status,
+                    $result->challengeDetected,
+                    $result->ok,
+                    $result->error,
+                );
+                // Every answer counts, also one a later retry replaces (a 503 followed by a network error). Browser services report
+                // a failed navigation as a small non-HTTP code (for example 1), which is not an answer from the site.
+                $answered = $answered || ($result->status >= 100 && ! $result->challengeDetected);
+
+                if (
+                    $method !== FetchMethod::Http
+                    || $retries >= $this->maxTransientRetries
+                    || ! $transientRetry->canRetry($result, $retries)
+                ) {
+                    break;
+                }
+
+                $delay = $transientRetry->delaySeconds($retries + 1);
+                if (! $transientRetry->canAfford($budget->remainingSeconds(), $delay)) {
+                    break;
+                }
+
+                ($this->retrySleeper)((int) round($delay * 1_000_000));
+                if (! $budget->canStart($method)) {
+                    break;
+                }
+
+                $started = (int) round(microtime(true) * 1000);
+                try {
+                    $result = $this->fetchWithHandler(
+                        $handler,
+                        $url,
+                        $profile,
                         $options,
                         $method,
                         $budget,
                         $readyMarkers,
-                        $session['storageState'] ?? null,
-                    ),
-                );
-                $result = $this->applyReadyMarker($result, $readyMarkers);
-            } catch (Throwable $exception) {
-                $elapsed = (int) round(microtime(true) * 1000) - $started;
-                $attempts[] = $this->attempt($method, $elapsed, 0, false, false, $exception->getMessage());
-                continue;
+                        $session,
+                        $loginCookies,
+                        $requestUserAgent,
+                        $circuitChecked,
+                    );
+                } catch (Throwable $exception) {
+                    $elapsed = (int) round(microtime(true) * 1000) - $started;
+                    $attempts[] = $this->attempt($method, $elapsed, 0, false, false, TransientRetry::errorCode($exception));
+                    $nonTerminalFailure = true;
+                    break;
+                }
+
+                $retries++;
             }
 
-            $attempts[] = $this->attempt(
-                $method,
-                $result->elapsedMs,
-                $result->status,
-                $result->challengeDetected,
-                $result->ok,
-                $result->error,
-            );
             $last = $result->withAttempts($attempts);
             $sawChallenge = $sawChallenge || $result->challengeDetected;
 
@@ -131,6 +207,10 @@ final class FetchFallbackChain
             }
 
             if ($this->isAuthRequired($result)) {
+                if (is_string($host) && $host !== '') {
+                    $this->hostCircuit?->recordSuccess($host);
+                }
+
                 throw new CrawlFetchException(
                     message: 'Authentication is required for URL [' . $url . '].',
                     errorCode: CrawlErrorCode::AuthRequired,
@@ -151,6 +231,21 @@ final class FetchFallbackChain
 
             $terminal = TerminalStatus::fromResult($result, $profile->soft404Markers);
             if ($terminal !== null) {
+                if (
+                    is_string($host)
+                    && $host !== ''
+                    && ! isset($result->headers['X-CrawlerX-Guard'])
+                ) {
+                    $this->hostCircuit?->recordSuccess($host);
+                } elseif (
+                    is_string($host)
+                    && $host !== ''
+                    && ($result->headers['X-CrawlerX-Guard'][0] ?? null) === 'throttle'
+                    && $nonTerminalFailure
+                ) {
+                    $this->hostCircuit?->recordFailure($host);
+                }
+
                 throw new CrawlFetchException(
                     message: 'Terminal fetch status for URL [' . $url . '].',
                     errorCode: $terminal->code,
@@ -161,6 +256,10 @@ final class FetchFallbackChain
             }
 
             if ($result->ok) {
+                if (is_string($host) && $host !== '') {
+                    $this->hostCircuit?->recordSuccess($host);
+                }
+
                 $this->sessions->putResult($profile->slug, $result);
                 if ($profile->cookieHandoffAfterBrowser && $result->cookies !== []) {
                     $host = parse_url($result->finalUrl ?? $url, PHP_URL_HOST);
@@ -171,6 +270,12 @@ final class FetchFallbackChain
 
                 return $last;
             }
+
+            $nonTerminalFailure = true;
+        }
+
+        if ($nonTerminalFailure && is_string($host) && $host !== '') {
+            $this->hostCircuit?->recordFailure($host);
         }
 
         if ($sawChallenge) {
@@ -240,6 +345,89 @@ final class FetchFallbackChain
         return $row;
     }
 
+    /**
+     * @param  array{cookies: array<string, string>, userAgent: ?string, source: string, expiresAt: int, storageState: array<string, mixed>|null, challengeCount: int}|null  $session
+     * @param  array<string, string>  $loginCookies
+     * @param  list<string>  $readyMarkers
+     */
+    private function fetchWithHandler(
+        FetchMethodHandler $handler,
+        string $url,
+        SiteProfileDto $profile,
+        ?CrawlOptionsDto $options,
+        FetchMethod $method,
+        FetchBudget $budget,
+        array $readyMarkers,
+        ?array $session,
+        array $loginCookies,
+        ?string $requestUserAgent,
+        bool &$circuitChecked,
+    ): FetchResultDto {
+        $host = parse_url($url, PHP_URL_HOST);
+        if ($this->hostThrottle !== null && is_string($host) && $host !== '') {
+            $retryAfter = $this->hostThrottle->waitBeforeFetch(
+                $host,
+                $profile->defaultThrottle,
+                $budget,
+                $method,
+            );
+            if ($retryAfter !== null) {
+                return $this->rateLimitedResult($method, $url, $retryAfter, 'throttle');
+            }
+        }
+
+        if (! $circuitChecked) {
+            $circuitChecked = true;
+            if ($this->hostCircuit !== null && is_string($host) && $host !== '') {
+                $retryAfter = $this->hostCircuit->beforeFetch($host);
+                if ($retryAfter !== null) {
+                    return $this->rateLimitedResult($method, $url, $retryAfter, 'circuit');
+                }
+            }
+        }
+
+        $result = $handler->fetch(
+            $url,
+            $this->boundedProfile(
+                $this->profileWithSession($profile, $options, $session, $loginCookies, $requestUserAgent),
+                $method,
+                $budget,
+            ),
+            $method,
+            $this->boundedOptions(
+                $options,
+                $method,
+                $budget,
+                $readyMarkers,
+                $session['storageState'] ?? null,
+            ),
+        );
+
+        return $this->applyReadyMarker($result, $readyMarkers);
+    }
+
+    private function rateLimitedResult(
+        FetchMethod $method,
+        string $url,
+        int $retryAfter,
+        string $guard,
+    ): FetchResultDto {
+        return new FetchResultDto(
+            ok: false,
+            body: '',
+            status: 429,
+            methodUsed: $method,
+            elapsedMs: 0,
+            challengeDetected: false,
+            finalUrl: $url,
+            headers: [
+                'Retry-After' => [(string) $retryAfter],
+                'X-CrawlerX-Guard' => [$guard],
+            ],
+            error: CrawlErrorCode::RateLimited->value,
+        );
+    }
+
     private function boundedProfile(SiteProfileDto $profile, FetchMethod $method, FetchBudget $budget): SiteProfileDto
     {
         if (
@@ -281,10 +469,12 @@ final class FetchFallbackChain
                 timezoneId: $playwright->timezoneId,
                 userAgent: $playwright->userAgent,
                 storageStatePath: $playwright->storageStatePath,
+                settleAfterReadyMs: $playwright->settleAfterReadyMs,
             ),
             cookieHandoffAfterBrowser: $profile->cookieHandoffAfterBrowser,
             readyMarkers: $profile->readyMarkers,
             soft404Markers: $profile->soft404Markers,
+            defaultThrottle: $profile->defaultThrottle,
         );
     }
 
@@ -393,6 +583,7 @@ final class FetchFallbackChain
                 storageStatePath: $playwright->storageStatePath,
                 readyTimeoutMs: $playwright->readyTimeoutMs,
                 blockResources: $playwright->blockResources,
+                settleAfterReadyMs: $playwright->settleAfterReadyMs,
             );
         }
 
@@ -407,6 +598,7 @@ final class FetchFallbackChain
             cookieHandoffAfterBrowser: $profile->cookieHandoffAfterBrowser,
             readyMarkers: $profile->readyMarkers,
             soft404Markers: $profile->soft404Markers,
+            defaultThrottle: $profile->defaultThrottle,
         );
     }
 

@@ -26,7 +26,7 @@ final class CatalogAdapterCrawlTest extends CrawlerXTestCase
         yield 'javdb' => ['https://javdb.com/v/a8yV0p', 'javdb/detail.html', 'a8yV0p'];
         yield 'duga' => ['https://duga.jp/ppv/vrpandemic-0023/', 'duga/detail.html', 'vrpandemic-0023'];
         yield 'fc2' => ['https://adult.contents.fc2.com/article/4968399/', 'fc2/detail.html', '4968399'];
-        yield 'tokyohot' => ['https://my.tokyo-hot.com/product/crazyasia097085/', 'tokyohot/detail.html', 'crazyasia097085'];
+        yield 'tokyohot' => ['https://my.tokyo-hot.com/product/n1700/', 'tokyohot/detail.html', 'n1700'];
         yield 'caribbeancom' => ['https://en.caribbeancom.com/eng/moviepages/080826-001/index.html', 'caribbeancom/detail.html', '080826-001'];
         yield 'heyzo' => ['https://en.heyzo.com/moviepages/3927/index.html', 'heyzo/detail.html', '3927'];
     }
@@ -49,7 +49,7 @@ final class CatalogAdapterCrawlTest extends CrawlerXTestCase
     public static function ageGateProvider(): iterable
     {
         yield 'javbus' => ['https://www.javbus.com/', 'https://www.javbus.com/en/', 'javbus/listing-live.html'];
-        yield 'duga' => ['https://duga.jp/', 'https://duga.jp/main/', 'duga/listing.html'];
+        yield 'duga' => ['https://duga.jp/', 'https://duga.jp/ranking/', 'duga/listing-ranking.html'];
         yield 'tokyohot' => ['https://my.tokyo-hot.com/', 'https://my.tokyo-hot.com/index?lang=en', 'tokyohot/listing.html'];
         yield 'caribbeancom' => ['https://en.caribbeancom.com/', 'https://en.caribbeancom.com/eng/index2.htm', 'caribbeancom/listing.html'];
         yield 'heyzo' => ['https://en.heyzo.com/', 'https://en.heyzo.com/listpages/all_1.html', 'heyzo/listing.html'];

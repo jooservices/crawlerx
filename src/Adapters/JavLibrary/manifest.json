@@ -98,6 +98,11 @@
                 "type": "detail"
             },
             {
+                "url": "https://www.javlibrary.com/en/javme3tuqi.html",
+                "name": "detail-javme3tuqi-rated.html",
+                "type": "detail"
+            },
+            {
                 "url": "https://www.javlibrary.com/en/star_list.php?prefix=A",
                 "name": "performer-listing-live.html",
                 "type": "performer_listing"

@@ -16,6 +16,23 @@ final class FileAdapterManifestRegistry implements AdapterManifestRegistry
     /** @var array<string, AdapterManifestDto>|null */
     private ?array $manifests = null;
 
+    /**
+     * Site slugs switched off through CRAWLERX_DISABLED_SITES (comma separated). They are absent from the registry.
+     *
+     * @return list<string>
+     */
+    public static function disabledSlugs(): array
+    {
+        $value = getenv('CRAWLERX_DISABLED_SITES');
+        if (! is_string($value) || trim($value) === '') {
+            return [];
+        }
+
+        $slugs = array_map(static fn(string $slug): string => strtolower(trim($slug)), explode(',', $value));
+
+        return array_values(array_unique(array_filter($slugs, static fn(string $slug): bool => $slug !== '')));
+    }
+
     /** @return array<string, AdapterManifestDto> */
     public function all(): array
     {
@@ -90,6 +107,10 @@ final class FileAdapterManifestRegistry implements AdapterManifestRegistry
             $manifests[$manifest->slug] = $manifest;
         }
 
+        foreach (self::disabledSlugs() as $slug) {
+            unset($manifests[$slug]);
+        }
+
         $this->manifests = $manifests;
 
         return $this->manifests;
@@ -126,6 +147,7 @@ final class FileAdapterManifestRegistry implements AdapterManifestRegistry
             ?? ($playwrightFetchEnabled ? FetchProfile::BrowserLikely : FetchProfile::Adaptive);
         $readyMarkers = $this->normalizeMarkers($fetch['readyMarkers'] ?? []);
         $soft404Markers = $this->normalizeStringList($fetch['soft404Markers'] ?? []);
+        $settleAfterReadyMs = is_numeric($fetch['settleAfterReadyMs'] ?? null) ? max(0, (int) $fetch['settleAfterReadyMs']) : 0;
 
         if ($slug === '' || $name === '' || $baseUrl === '' || $adapterClass === '') {
             throw new InvalidArgumentException("Manifest [{$path}] is missing required slug, name, base_url, or adapter.class.");
@@ -157,6 +179,7 @@ final class FileAdapterManifestRegistry implements AdapterManifestRegistry
             fetchProfile: $fetchProfile,
             readyMarkers: $readyMarkers,
             soft404Markers: $soft404Markers,
+            settleAfterReadyMs: $settleAfterReadyMs,
         );
     }
 

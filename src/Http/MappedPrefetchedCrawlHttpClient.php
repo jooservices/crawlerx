@@ -22,7 +22,7 @@ final readonly class MappedPrefetchedCrawlHttpClient implements CrawlHttpClient
     ) {
     }
 
-    public function get(string $url): CrawlHttpResponse
+    public function get(string $url, array $headers = []): CrawlHttpResponse
     {
         $config = $this->responses[$url] ?? null;
 

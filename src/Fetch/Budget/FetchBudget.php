@@ -67,6 +67,7 @@ final class FetchBudget
         return max(1, (int) min($this->methodCap($method), floor($this->remainingSeconds())));
     }
 
+    /** @phpstan-impure The answer can change as the monotonic deadline advances. */
     public function canStart(FetchMethod $method): bool
     {
         return $this->remainingSeconds() >= 1.0 && $this->remainingSeconds() >= min(1, $this->methodCap($method));

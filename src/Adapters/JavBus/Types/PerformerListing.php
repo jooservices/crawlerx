@@ -56,10 +56,12 @@ final class PerformerListing extends AbstractHtmlType implements TypeInterface
 
             $name = $this->performerName($node);
 
+            $image = $this->firstAttribute($node, '.photo-frame img', 'src');
             $items[$url] = PerformerDto::item(
                 url: $url,
                 externalId: $externalId,
                 title: $name,
+                data: $image === null ? [] : ['profile_image_url' => $this->normalizer->absoluteAndCanonical($request->url, $image)],
             );
         });
 

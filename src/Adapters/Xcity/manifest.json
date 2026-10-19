@@ -119,6 +119,16 @@
                 "type": "detail"
             },
             {
+                "url": "https://xcity.jp/avod/detail/?id=208587",
+                "name": "detail-208587.html",
+                "type": "detail"
+            },
+            {
+                "url": "https://xcity.jp/idol/detail/10696/",
+                "name": "performer-detail-10696.html",
+                "type": "performer_detail"
+            },
+            {
                 "url": "https://xxx.xcity.jp/idol/",
                 "name": "performer-index.html",
                 "type": "performer_listing"

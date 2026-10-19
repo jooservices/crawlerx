@@ -158,6 +158,25 @@ final class FetchStrategyLabTest extends TestCase
         self::assertCount(2, $result->attempts);
     }
 
+    public function test_tc_ht_03_retries_a_transient_502_and_returns_success(): void
+    {
+        $context = stream_context_create(['http' => ['method' => 'POST']]);
+        self::assertNotFalse(file_get_contents($this->fixtureUrl('/__reset'), false, $context));
+
+        $result = $this->chain()->fetch(
+            $this->fixtureUrl('/flaky/TC-HT-03'),
+            $this->profile(),
+            [FetchMethod::Http],
+        );
+
+        self::assertTrue($result->ok);
+        self::assertCount(2, $result->attempts);
+        self::assertSame(502, $result->attempts[0]['status']);
+        self::assertFalse($result->attempts[0]['ok']);
+        self::assertSame(200, $result->attempts[1]['status']);
+        self::assertTrue($result->attempts[1]['ok']);
+    }
+
     private function chain(): FetchFallbackChain
     {
         $runtime = $this->runtime();
