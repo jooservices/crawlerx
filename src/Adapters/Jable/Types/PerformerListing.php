@@ -76,18 +76,27 @@ final class PerformerListing extends AbstractType implements TypeInterface
     {
         $nextUrl = null;
 
-        $crawler->filter('ul.pagination a.page-link')->each(function (Crawler $node) use (&$nextUrl, $url): void {
+        // The page being shown is the active pager entry (the request's page number is not set when a follow-up
+        // request comes from a next url).
+        $active = $crawler->filter('ul.pagination .page-link.active');
+        if ($active->count() > 0 && preg_match('/^0*(\d+)$/', trim($active->first()->text('')), $activeMatch) === 1) {
+            $currentPage = (int) $activeMatch[1];
+        }
+
+        // The pager has "Next"/"»" on some pages and only numbered links on others (the models index): take the
+        // link of the page after this one.
+        $crawler->filter('ul.pagination a.page-link')->each(function (Crawler $node) use (&$nextUrl, $url, $currentPage): void {
             $label = strtolower(trim($node->text('')));
-            if (! in_array($label, ['next', '»'], true)) {
+            $isNext = in_array($label, ['next', '»'], true)
+                || (preg_match('/^0*(\d+)$/', $label, $match) === 1 && (int) $match[1] === $currentPage + 1);
+            if (! $isNext || $nextUrl !== null) {
                 return;
             }
 
             $href = $node->attr('href');
-            if (! is_string($href) || trim($href) === '') {
-                return;
+            if (is_string($href) && trim($href) !== '') {
+                $nextUrl = $this->absolute($url, $href);
             }
-
-            $nextUrl = $this->absolute($url, $href);
         });
 
         return new CrawlPaginationDto(

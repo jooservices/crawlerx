@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Tests\Unit\Adapters\Jable;
 
 use JOOservices\CrawlerX\Adapters\Jable\Types\Detail;
+use JOOservices\CrawlerX\Adapters\Jable\Types\PerformerListing;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Enums\CrawlType;
 use JOOservices\CrawlerX\Tests\TestCase;
@@ -48,6 +49,32 @@ class FieldsTest extends TestCase
         self::assertSame(2637, $movie['metadata']['favorite_count']);
         self::assertSame(7, $movie['metadata']['comment_count']);
         self::assertSame('此作品曾在本站上傳，現已更新至中文字幕版。', $movie['description']);
+    }
+
+    public function test_the_models_index_follows_the_numbered_next_page(): void
+    {
+        $result = (new PerformerListing($this->clientWithHtml((string) file_get_contents(self::FIXTURES . 'models-listing.html'))))
+            ->execute(new CrawlRequestDto(url: 'https://en.jable.tv/models/', type: CrawlType::PerformerListing));
+
+        self::assertTrue($result->pagination->hasNextPage);
+        self::assertSame('https://en.jable.tv/models/2/', $result->pagination->nextUrl);
+    }
+
+    public function test_the_next_page_comes_from_the_page_shown_not_from_the_request_number(): void
+    {
+        $html = (string) file_get_contents(self::FIXTURES . 'models-listing.html');
+        $page2 = str_replace(
+            ['<span class="page-link active disabled">01</span>', '<a class="page-link" href="/models/2/" data-action="ajax" data-container-id="list_models_models_list_pagination" data-block-id="list_models_models_list" data-parameters="sort_by:avg_videos_popularity;from:02">02</a>'],
+            ['<a class="page-link" href="/models/">01</a>', '<span class="page-link active disabled">02</span>'],
+            $html,
+        );
+
+        // The request still says page 1 (a follow-up from a next url keeps the default).
+        $result = (new PerformerListing($this->clientWithHtml($page2)))
+            ->execute(new CrawlRequestDto(url: 'https://en.jable.tv/models/2/', type: CrawlType::PerformerListing, page: 1));
+
+        self::assertSame('https://en.jable.tv/models/3/', $result->pagination->nextUrl);
+        self::assertSame(2, $result->pagination->currentPage);
     }
 
     /** @return array<string, mixed> */
