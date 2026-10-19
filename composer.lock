@@ -8,16 +8,16 @@
     "packages": [
         {
             "name": "jooservices/client",
-            "version": "v4.4.1",
+            "version": "v4.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/jooservices/client.git",
-                "reference": "30d1e5d968446c405bf5f4783cc9f5c62cd0842f"
+                "reference": "191312b7f02070c4024dae6850877356cf12a751"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/jooservices/client/zipball/30d1e5d968446c405bf5f4783cc9f5c62cd0842f",
-                "reference": "30d1e5d968446c405bf5f4783cc9f5c62cd0842f",
+                "url": "https://api.github.com/repos/jooservices/client/zipball/191312b7f02070c4024dae6850877356cf12a751",
+                "reference": "191312b7f02070c4024dae6850877356cf12a751",
                 "shasum": ""
             },
             "require": {
@@ -62,9 +62,9 @@
             "description": "PSR-18 HTTP client with JOOservices developer experience.",
             "support": {
                 "issues": "https://github.com/jooservices/client/issues",
-                "source": "https://github.com/jooservices/client/tree/v4.4.1"
+                "source": "https://github.com/jooservices/client/tree/v4.5.0"
             },
-            "time": "2026-10-04T00:16:48+00:00"
+            "time": "2026-10-10T23:39:04+00:00"
         },
         {
             "name": "jooservices/dto",
