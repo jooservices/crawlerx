@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-10-19
+
+### Fixed
+
+- MissAV: the listing follows the next page link when it carries a mirror prefix (`/dm539/en/new?page=2`).
+- Jable: the models index follows its numbered pages; the current page is read from the active pager entry.
+
 ## [1.4.0] - 2026-10-19
 
 ### Added
