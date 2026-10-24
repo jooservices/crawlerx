@@ -105,4 +105,50 @@ class FetchBudgetTest extends TestCase
             self::assertSame('playwright', $exception->fetch?->attempts[1]['method']);
         }
     }
+
+    /** @return iterable<string, array{bool}> */
+    public static function lateHandlers(): iterable
+    {
+        yield 'late success' => [false];
+        yield 'thrown failure' => [true];
+    }
+
+    #[DataProvider('lateHandlers')]
+    public function test_an_overdue_handler_cannot_succeed_or_lose_failure_metadata(bool $throws): void
+    {
+        $now = 0;
+        $handler = new class ($now, $throws) implements FetchMethodHandler {
+            public function __construct(private int &$now, private readonly bool $throws)
+            {
+            }
+
+            public function supports(FetchMethod $method): bool
+            {
+                return true;
+            }
+
+            public function fetch(string $url, SiteProfileDto $profile, FetchMethod $method, ?CrawlOptionsDto $options = null): FetchResultDto
+            {
+                $this->now = 8_000_000_000;
+                if ($this->throws) {
+                    throw new \RuntimeException('Synthetic overdue transport');
+                }
+
+                return new FetchResultDto(ok: true, body: '<html>Late answer</html>', status: 200, methodUsed: $method, elapsedMs: 8000, challengeDetected: false);
+            }
+        };
+        $chain = new FetchFallbackChain(['http' => $handler], budgetClock: static function () use (&$now): int {
+            return $now;
+        });
+        $profile = new SiteProfileDto(slug: 'budget', displayName: 'Budget', baseUrl: 'https://example.test', fetchProfile: FetchProfile::Adaptive, fetchChain: [], http: new HttpProfileDto());
+        try {
+            $chain->fetch('https://example.test', $profile, [FetchMethod::Http, FetchMethod::Playwright], new CrawlOptionsDto(fetch: new FetchOptionsDto(deadlineSeconds: 7)));
+            self::fail('Expected a timeout even if the overdue handler returns success.');
+        } catch (CrawlFetchException $exception) {
+            self::assertSame(CrawlErrorCode::Timeout, $exception->errorCode);
+            self::assertSame(8000, $exception->fetch?->elapsedMs);
+            self::assertNotEmpty($exception->fetch?->attempts);
+            self::assertSame('http', $exception->fetch?->attempts[0]['method']);
+        }
+    }
 }
