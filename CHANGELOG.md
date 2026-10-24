@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bound a fetch and its fallbacks to 60 seconds by default, retain every failure attempt, and remove curl watchdog grace time (JOOXCR-260).
 - Recognize removed AVfanProfiles pages, refresh its live profile sample, and wait for DUGA product content rather than navigation links (JOOXCR-260).
 - Try the proven solver before a slow browser on Jable/JAVLibrary, and let the canary use project-configured browser endpoints (JOOXCR-260).
+### Documentation
+
+- Canary: status refreshed for 1.4.x (58 of 68 samples pass; the rest are timeouts and challenges during a run sharing browser services with JavMeta (load was not measured), and warashi offline) and the report published as `docs/testing/canary-latest.json` (JOOXCR-182).
 
 ## [1.4.2] - 2026-10-24
 
