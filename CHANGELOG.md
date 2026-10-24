@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+
+- Canary: status refreshed for 1.4.x (58 of 68 samples pass; the rest are timeouts and challenges under shared browser-service load, and warashi offline) and the report published as `docs/testing/canary-latest.json` (JOOXCR-182).
+
 ## [1.4.2] - 2026-10-24
 
 ### Documentation

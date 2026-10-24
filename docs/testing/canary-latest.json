@@ -1,0 +1,2962 @@
+{
+  "schema": "crawlerx.canary.v1",
+  "generated_at": "2026-10-24T14:32:35.476Z",
+  "git_sha": "74ff40d8737db0b42481a79800e41cef21aba85c",
+  "samples": [
+    {
+      "id": "aisex:performer_listing:listing-page1.html",
+      "site": "aisex",
+      "page_type": "performer_listing",
+      "sample": "listing-page1.html",
+      "url": "https://www.aisex.jp/actress/",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 9909,
+          "status": 200,
+          "bytes": 79705,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 10014,
+      "php_cpu_seconds": 0.089152,
+      "php_peak_rss_bytes": 8388608,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "aisex:performer_detail:detail-aiuti-siori.html",
+      "site": "aisex",
+      "page_type": "performer_detail",
+      "sample": "detail-aiuti-siori.html",
+      "url": "https://www.aisex.jp/actress/1004850/",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 1806,
+          "status": 200,
+          "bytes": 60444,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 1823,
+      "php_cpu_seconds": 0.016361,
+      "php_peak_rss_bytes": 10485760,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "avfan_profiles:performer_listing:listing-cup-a.html",
+      "site": "avfan_profiles",
+      "page_type": "performer_listing",
+      "sample": "listing-cup-a.html",
+      "url": "https://av-fan.tokyo/actress/cup/A.html",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 958,
+          "status": 200,
+          "bytes": 193315,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 989,
+      "php_cpu_seconds": 0.058091,
+      "php_peak_rss_bytes": 10485760,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "avfan_profiles:performer_detail:detail-arisu-mai.html",
+      "site": "avfan_profiles",
+      "page_type": "performer_detail",
+      "sample": "detail-arisu-mai.html",
+      "url": "https://av-fan.tokyo/actress/%E6%9C%89%E6%A0%96%E8%88%9E%E8%A1%A3.html",
+      "status": "timeout",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 602,
+          "status": 200,
+          "bytes": 104878,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        },
+        {
+          "method": "playwright",
+          "elapsed_ms": 45005,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "Browser service request failed: The HTTP request timed out."
+        }
+      ],
+      "wall_ms": 45617,
+      "php_cpu_seconds": 0.013993,
+      "php_peak_rss_bytes": 10485760,
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "avjoho:performer_listing:listing-page1.html",
+      "site": "avjoho",
+      "page_type": "performer_listing",
+      "sample": "listing-page1.html",
+      "url": "https://db.avjoho.com/category/%e3%83%87%e3%83%93%e3%83%a5%e3%83%bc%ef%bc%882025%e5%b9%b4-%ef%bc%89/",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 2244,
+          "status": 200,
+          "bytes": 99573,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 2267,
+      "php_cpu_seconds": 0.054432,
+      "php_peak_rss_bytes": 10485760,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "avjoho:performer_detail:detail-ichise-airi.html",
+      "site": "avjoho",
+      "page_type": "performer_detail",
+      "sample": "detail-ichise-airi.html",
+      "url": "https://db.avjoho.com/%e5%b8%82%e7%80%ac%e3%81%82%e3%81%84%e3%82%8a/",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 1996,
+          "status": 200,
+          "bytes": 62278,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 2016,
+      "php_cpu_seconds": 0.021099,
+      "php_peak_rss_bytes": 10485760,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "caribbeancom:listing:listing.html",
+      "site": "caribbeancom",
+      "page_type": "listing",
+      "sample": "listing.html",
+      "url": "https://en.caribbeancom.com/eng/index2.htm",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 1718,
+          "status": 200,
+          "bytes": 114598,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 1759,
+      "php_cpu_seconds": 0.069721,
+      "php_peak_rss_bytes": 10485760,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "caribbeancom:detail:detail.html",
+      "site": "caribbeancom",
+      "page_type": "detail",
+      "sample": "detail.html",
+      "url": "https://en.caribbeancom.com/eng/moviepages/080826-001/index.html",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 329,
+          "status": 200,
+          "bytes": 73547,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 360,
+      "php_cpu_seconds": 0.030825,
+      "php_peak_rss_bytes": 10485760,
+      "coverage": {
+        "found": 2,
+        "expected": 2
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "duga:listing:listing-ranking.html",
+      "site": "duga",
+      "page_type": "listing",
+      "sample": "listing-ranking.html",
+      "url": "https://duga.jp/ranking/",
+      "status": "timeout",
+      "missing_fields": [],
+      "winning_method": null,
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 1383,
+          "status": 503,
+          "bytes": 1261,
+          "challenge": false,
+          "ok": false,
+          "error": "unusable HTTP body"
+        },
+        {
+          "method": "http",
+          "elapsed_ms": 182,
+          "status": 503,
+          "bytes": 1261,
+          "challenge": false,
+          "ok": false,
+          "error": "unusable HTTP body"
+        },
+        {
+          "method": "http",
+          "elapsed_ms": 2613,
+          "status": 503,
+          "bytes": 1261,
+          "challenge": false,
+          "ok": false,
+          "error": "unusable HTTP body"
+        },
+        {
+          "method": "playwright",
+          "elapsed_ms": 45001,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "Browser service request failed: The HTTP request timed out."
+        }
+      ],
+      "wall_ms": 51590,
+      "php_cpu_seconds": 0.060393,
+      "php_peak_rss_bytes": 10485760,
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "duga:detail:detail.html",
+      "site": "duga",
+      "page_type": "detail",
+      "sample": "detail.html",
+      "url": "https://duga.jp/ppv/vrpandemic-0023/",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 1135,
+          "status": 200,
+          "bytes": 67484,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 1174,
+      "php_cpu_seconds": 0.070958,
+      "php_peak_rss_bytes": 10485760,
+      "coverage": {
+        "found": 2,
+        "expected": 2
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "eporner:gallery:gallery-sample.html",
+      "site": "eporner",
+      "page_type": "gallery",
+      "sample": "gallery-sample.html",
+      "url": "https://www.eporner.com/gallery/xKeoFe7VHmO/Iori-Kogawa-gu-chuaniori-STAR-836-Uncensored-Leak/",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "playwright",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 5001,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "network_timeout"
+        },
+        {
+          "method": "playwright",
+          "elapsed_ms": 1455,
+          "status": 200,
+          "bytes": 320983,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 6787,
+      "php_cpu_seconds": 0.168304,
+      "php_peak_rss_bytes": 12582912,
+      "coverage": {
+        "found": 2,
+        "expected": 2
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "fc2:listing:listing.html",
+      "site": "fc2",
+      "page_type": "listing",
+      "sample": "listing.html",
+      "url": "https://adult.contents.fc2.com/",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 965,
+          "status": 200,
+          "bytes": 249462,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 1042,
+      "php_cpu_seconds": 0.108389,
+      "php_peak_rss_bytes": 12582912,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "fc2:detail:detail.html",
+      "site": "fc2",
+      "page_type": "detail",
+      "sample": "detail.html",
+      "url": "https://adult.contents.fc2.com/article/4968399/",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 1291,
+          "status": 200,
+          "bytes": 315718,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 2216,
+      "php_cpu_seconds": 0.148858,
+      "php_peak_rss_bytes": 12582912,
+      "coverage": {
+        "found": 2,
+        "expected": 2
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "ffjav:listing:listing-page-1.html",
+      "site": "ffjav",
+      "page_type": "listing",
+      "sample": "listing-page-1.html",
+      "url": "https://ffjav.com/javtorrent",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 1855,
+          "status": 200,
+          "bytes": 61733,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 1883,
+      "php_cpu_seconds": 0.059494,
+      "php_peak_rss_bytes": 12582912,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "ffjav:detail:detail-sample-1.html",
+      "site": "ffjav",
+      "page_type": "detail",
+      "sample": "detail-sample-1.html",
+      "url": "https://ffjav.com/torrent/mida-768-%e5%a6%bb%e3%81%8c%e5%b8%b0%e7%9c%81%e4%b8%ad%e3%80%812%e4%ba%ba%e3%81%8d%e3%82%8a%e3%81%ae%e8%87%aa%e5%ae%85%e3%81%a7%e4%bd%95%e3%81%a7%e3%82%82ok%e3%81%97%e3%81%a6%e3%81%8f%e3%82%8c",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 886,
+          "status": 200,
+          "bytes": 33366,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 891,
+      "php_cpu_seconds": 0.006575,
+      "php_peak_rss_bytes": 12582912,
+      "coverage": {
+        "found": 2,
+        "expected": 2
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "heyzo:listing:listing.html",
+      "site": "heyzo",
+      "page_type": "listing",
+      "sample": "listing.html",
+      "url": "https://en.heyzo.com/listpages/all_1.html",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 3043,
+          "status": 200,
+          "bytes": 79788,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 3064,
+      "php_cpu_seconds": 0.052844,
+      "php_peak_rss_bytes": 12582912,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "heyzo:detail:detail.html",
+      "site": "heyzo",
+      "page_type": "detail",
+      "sample": "detail.html",
+      "url": "https://en.heyzo.com/moviepages/3927/index.html",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 2368,
+          "status": 200,
+          "bytes": 119188,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 2391,
+      "php_cpu_seconds": 0.024475,
+      "php_peak_rss_bytes": 12582912,
+      "coverage": {
+        "found": 2,
+        "expected": 2
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "jable:listing:listing-new-release.html",
+      "site": "jable",
+      "page_type": "listing",
+      "sample": "listing-new-release.html",
+      "url": "https://en.jable.tv/new-release/",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "flaresolverr",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 5003,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "network_timeout"
+        },
+        {
+          "method": "playwright",
+          "elapsed_ms": 44999,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "Browser service request failed: The HTTP request timed out."
+        },
+        {
+          "method": "flaresolverr",
+          "elapsed_ms": 27421,
+          "status": 200,
+          "bytes": 90143,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 77463,
+      "php_cpu_seconds": 0.074184,
+      "php_peak_rss_bytes": 12582912,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "jable:detail:detail-fjin-091.html",
+      "site": "jable",
+      "page_type": "detail",
+      "sample": "detail-fjin-091.html",
+      "url": "https://en.jable.tv/videos/fjin-091/",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "flaresolverr",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 5002,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "network_timeout"
+        },
+        {
+          "method": "playwright",
+          "elapsed_ms": 45000,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "Browser service request failed: The HTTP request timed out."
+        },
+        {
+          "method": "flaresolverr",
+          "elapsed_ms": 41298,
+          "status": 200,
+          "bytes": 144916,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 91350,
+      "php_cpu_seconds": 0.079662,
+      "php_peak_rss_bytes": 12582912,
+      "coverage": {
+        "found": 2,
+        "expected": 2
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "jable:detail:detail-jur-832.html",
+      "site": "jable",
+      "page_type": "detail",
+      "sample": "detail-jur-832.html",
+      "url": "https://en.jable.tv/videos/jur-832/",
+      "status": "timeout",
+      "missing_fields": [],
+      "winning_method": null,
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 5002,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "network_timeout"
+        },
+        {
+          "method": "playwright",
+          "elapsed_ms": 45001,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "Browser service request failed: The HTTP request timed out."
+        },
+        {
+          "method": "flaresolverr",
+          "elapsed_ms": 59998,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "FlareSolverr request failed: The HTTP request timed out."
+        }
+      ],
+      "wall_ms": 110008,
+      "php_cpu_seconds": 0.038244,
+      "php_peak_rss_bytes": 12582912,
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "jable:performer_listing:models-listing.html",
+      "site": "jable",
+      "page_type": "performer_listing",
+      "sample": "models-listing.html",
+      "url": "https://en.jable.tv/models/",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "flaresolverr",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 5002,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "network_timeout"
+        },
+        {
+          "method": "playwright",
+          "elapsed_ms": 45112,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "Browser service request failed: The HTTP request timed out."
+        },
+        {
+          "method": "flaresolverr",
+          "elapsed_ms": 54386,
+          "status": 200,
+          "bytes": 66460,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 104536,
+      "php_cpu_seconds": 0.059609,
+      "php_peak_rss_bytes": 12582912,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "jable:performer_detail:performer-detail-bfaca44240620be2f3092c294fb22fbe.html",
+      "site": "jable",
+      "page_type": "performer_detail",
+      "sample": "performer-detail-bfaca44240620be2f3092c294fb22fbe.html",
+      "url": "https://en.jable.tv/models/bfaca44240620be2f3092c294fb22fbe/",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "flaresolverr",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 5002,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "network_timeout"
+        },
+        {
+          "method": "playwright",
+          "elapsed_ms": 37964,
+          "status": 1,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "page.goto: net::ERR_CONNECTION_CLOSED at https://en.jable.tv/models/bfaca44240620be2f3092c294fb22fbe/\nCall log:\n  - navigating to \"https://en.jable.tv/models/bfaca44240620be2f3092c294fb22fbe/\", waiting until \"domcontentloaded\"\n"
+        },
+        {
+          "method": "flaresolverr",
+          "elapsed_ms": 12683,
+          "status": 200,
+          "bytes": 48960,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 55764,
+      "php_cpu_seconds": 0.047732,
+      "php_peak_rss_bytes": 12582912,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "javbus:listing:listing-live.html",
+      "site": "javbus",
+      "page_type": "listing",
+      "sample": "listing-live.html",
+      "url": "https://www.javbus.com/en/",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "playwright",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 2147,
+          "status": 200,
+          "bytes": 21799,
+          "challenge": true,
+          "ok": false,
+          "error": "challenge page"
+        },
+        {
+          "method": "playwright",
+          "elapsed_ms": 5636,
+          "status": 200,
+          "bytes": 52749,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 7975,
+      "php_cpu_seconds": 0.059881,
+      "php_peak_rss_bytes": 12582912,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "javbus:detail:detail-namh-074-live.html",
+      "site": "javbus",
+      "page_type": "detail",
+      "sample": "detail-namh-074-live.html",
+      "url": "https://www.javbus.com/en/NAMH-074",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 341,
+          "status": 200,
+          "bytes": 41432,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 355,
+      "php_cpu_seconds": 0.016303,
+      "php_peak_rss_bytes": 12582912,
+      "coverage": {
+        "found": 2,
+        "expected": 2
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "javbus:performer_listing:performer-listing-live.html",
+      "site": "javbus",
+      "page_type": "performer_listing",
+      "sample": "performer-listing-live.html",
+      "url": "https://www.javbus.com/en/actresses",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 330,
+          "status": 200,
+          "bytes": 46285,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 401,
+      "php_cpu_seconds": 0.073074,
+      "php_peak_rss_bytes": 12582912,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "javbus:performer_detail:performer-detail-11p7-live.html",
+      "site": "javbus",
+      "page_type": "performer_detail",
+      "sample": "performer-detail-11p7-live.html",
+      "url": "https://www.javbus.com/en/star/11p7",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 338,
+          "status": 200,
+          "bytes": 53237,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 360,
+      "php_cpu_seconds": 0.023755,
+      "php_peak_rss_bytes": 12582912,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "javbus:performer_detail:performer-detail-okq-live.html",
+      "site": "javbus",
+      "page_type": "performer_detail",
+      "sample": "performer-detail-okq-live.html",
+      "url": "https://www.javbus.com/en/star/okq",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 339,
+          "status": 200,
+          "bytes": 52861,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 359,
+      "php_cpu_seconds": 0.02159,
+      "php_peak_rss_bytes": 12582912,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "javdatabase:performer_listing:listing_page1.html",
+      "site": "javdatabase",
+      "page_type": "performer_listing",
+      "sample": "listing_page1.html",
+      "url": "https://www.javdatabase.com/idols/",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 2778,
+          "status": 200,
+          "bytes": 98681,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 2796,
+      "php_cpu_seconds": 0.050239,
+      "php_peak_rss_bytes": 12582912,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "javdatabase:performer_detail:detail_yua_mikami.html",
+      "site": "javdatabase",
+      "page_type": "performer_detail",
+      "sample": "detail_yua_mikami.html",
+      "url": "https://www.javdatabase.com/idols/yua-mikami/",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 6941,
+          "status": 200,
+          "bytes": 189000,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 7011,
+      "php_cpu_seconds": 0.064528,
+      "php_peak_rss_bytes": 12582912,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "javdb:listing:listing.html",
+      "site": "javdb",
+      "page_type": "listing",
+      "sample": "listing.html",
+      "url": "https://javdb.com/",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 1917,
+          "status": 200,
+          "bytes": 69136,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 1966,
+      "php_cpu_seconds": 0.081523,
+      "php_peak_rss_bytes": 12582912,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "javdb:detail:detail.html",
+      "site": "javdb",
+      "page_type": "detail",
+      "sample": "detail.html",
+      "url": "https://javdb.com/v/a8yV0p",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 685,
+          "status": 200,
+          "bytes": 84878,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 729,
+      "php_cpu_seconds": 0.045253,
+      "php_peak_rss_bytes": 12582912,
+      "coverage": {
+        "found": 2,
+        "expected": 2
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "javlibrary:listing:listing-live.html",
+      "site": "javlibrary",
+      "page_type": "listing",
+      "sample": "listing-live.html",
+      "url": "https://www.javlibrary.com/en/vl_newrelease.php",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "flaresolverr",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 1608,
+          "status": 403,
+          "bytes": 5607,
+          "challenge": true,
+          "ok": false,
+          "error": "challenge page"
+        },
+        {
+          "method": "playwright",
+          "elapsed_ms": 45000,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "Browser service request failed: The HTTP request timed out."
+        },
+        {
+          "method": "flaresolverr",
+          "elapsed_ms": 26113,
+          "status": 200,
+          "bytes": 32485,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 72744,
+      "php_cpu_seconds": 0.051684,
+      "php_peak_rss_bytes": 12582912,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "javlibrary:detail:detail-javme3rasy-live.html",
+      "site": "javlibrary",
+      "page_type": "detail",
+      "sample": "detail-javme3rasy-live.html",
+      "url": "https://www.javlibrary.com/en/javme3rasy.html",
+      "status": "challenge",
+      "missing_fields": [],
+      "winning_method": null,
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 96,
+          "status": 403,
+          "bytes": 5515,
+          "challenge": true,
+          "ok": false,
+          "error": "challenge page"
+        },
+        {
+          "method": "playwright",
+          "elapsed_ms": 44998,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "Browser service request failed: The HTTP request timed out."
+        },
+        {
+          "method": "flaresolverr",
+          "elapsed_ms": 60000,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "FlareSolverr request failed: The HTTP request timed out."
+        }
+      ],
+      "wall_ms": 105103,
+      "php_cpu_seconds": 0.010253,
+      "php_peak_rss_bytes": 12582912,
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "javlibrary:detail:detail-javme3tuqi-rated.html",
+      "site": "javlibrary",
+      "page_type": "detail",
+      "sample": "detail-javme3tuqi-rated.html",
+      "url": "https://www.javlibrary.com/en/javme3tuqi.html",
+      "status": "challenge",
+      "missing_fields": [],
+      "winning_method": null,
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 78,
+          "status": 403,
+          "bytes": 5580,
+          "challenge": true,
+          "ok": false,
+          "error": "challenge page"
+        },
+        {
+          "method": "playwright",
+          "elapsed_ms": 45000,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "Browser service request failed: The HTTP request timed out."
+        },
+        {
+          "method": "flaresolverr",
+          "elapsed_ms": 59998,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "FlareSolverr request failed: The HTTP request timed out."
+        }
+      ],
+      "wall_ms": 105083,
+      "php_cpu_seconds": 0.010057,
+      "php_peak_rss_bytes": 12582912,
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "javlibrary:performer_listing:performer-listing-live.html",
+      "site": "javlibrary",
+      "page_type": "performer_listing",
+      "sample": "performer-listing-live.html",
+      "url": "https://www.javlibrary.com/en/star_list.php?prefix=A",
+      "status": "challenge",
+      "missing_fields": [],
+      "winning_method": null,
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 90,
+          "status": 403,
+          "bytes": 5637,
+          "challenge": true,
+          "ok": false,
+          "error": "challenge page"
+        },
+        {
+          "method": "playwright",
+          "elapsed_ms": 44998,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "Browser service request failed: The HTTP request timed out."
+        },
+        {
+          "method": "flaresolverr",
+          "elapsed_ms": 59998,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "FlareSolverr request failed: The HTTP request timed out."
+        }
+      ],
+      "wall_ms": 105095,
+      "php_cpu_seconds": 0.009252,
+      "php_peak_rss_bytes": 12582912,
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "javlibrary:performer_detail:performer-detail-ayubu-live.html",
+      "site": "javlibrary",
+      "page_type": "performer_detail",
+      "sample": "performer-detail-ayubu-live.html",
+      "url": "https://www.javlibrary.com/en/vl_star.php?s=ayubu",
+      "status": "challenge",
+      "missing_fields": [],
+      "winning_method": null,
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 80,
+          "status": 403,
+          "bytes": 5628,
+          "challenge": true,
+          "ok": false,
+          "error": "challenge page"
+        },
+        {
+          "method": "playwright",
+          "elapsed_ms": 45001,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "Browser service request failed: The HTTP request timed out."
+        },
+        {
+          "method": "flaresolverr",
+          "elapsed_ms": 59997,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "FlareSolverr request failed: The HTTP request timed out."
+        }
+      ],
+      "wall_ms": 105089,
+      "php_cpu_seconds": 0.01149,
+      "php_peak_rss_bytes": 12582912,
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "javphotos:listing:listing-page1.html",
+      "site": "javphotos",
+      "page_type": "listing",
+      "sample": "listing-page1.html",
+      "url": "https://jav.photos/free/",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 1784,
+          "status": 200,
+          "bytes": 28884,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 1838,
+      "php_cpu_seconds": 0.064846,
+      "php_peak_rss_bytes": 12582912,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "javphotos:gallery:gallery-hana-aoyama.html",
+      "site": "javphotos",
+      "page_type": "gallery",
+      "sample": "gallery-hana-aoyama.html",
+      "url": "https://jav.photos/free/1pondo-hana-aoyama-sexist-mobile-pics",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 364,
+          "status": 200,
+          "bytes": 15220,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 381,
+      "php_cpu_seconds": 0.010569,
+      "php_peak_rss_bytes": 12582912,
+      "coverage": {
+        "found": 2,
+        "expected": 2
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "javbtc:listing:listing-page-1.html",
+      "site": "javbtc",
+      "page_type": "listing",
+      "sample": "listing-page-1.html",
+      "url": "https://javbtc.com/",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 815,
+          "status": 200,
+          "bytes": 40138,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 846,
+      "php_cpu_seconds": 0.057252,
+      "php_peak_rss_bytes": 12582912,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "javbtc:detail:detail-sample-1.html",
+      "site": "javbtc",
+      "page_type": "detail",
+      "sample": "detail-sample-1.html",
+      "url": "https://javbtc.com/r18/s1no1style-yua-mikami-sougouwiki-celebrity",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 288,
+          "status": 200,
+          "bytes": 28397,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 342,
+      "php_cpu_seconds": 0.017854,
+      "php_peak_rss_bytes": 12582912,
+      "coverage": {
+        "found": 2,
+        "expected": 2
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "minnanoav:performer_listing:listing_page1.html",
+      "site": "minnanoav",
+      "page_type": "performer_listing",
+      "sample": "listing_page1.html",
+      "url": "https://www.minnano-av.com/actress_list.php",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 8093,
+          "status": 200,
+          "bytes": 89585,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 8132,
+      "php_cpu_seconds": 0.068585,
+      "php_peak_rss_bytes": 12582912,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "minnanoav:performer_detail:detail_rich.html",
+      "site": "minnanoav",
+      "page_type": "performer_detail",
+      "sample": "detail_rich.html",
+      "url": "https://www.minnano-av.com/actress945093.html",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 611,
+          "status": 200,
+          "bytes": 96241,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 644,
+      "php_cpu_seconds": 0.031199,
+      "php_peak_rss_bytes": 12582912,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "minnanoav:listing:movie-listing.html",
+      "site": "minnanoav",
+      "page_type": "listing",
+      "sample": "movie-listing.html",
+      "url": "https://www.minnano-av.com/actress.php?actress_id=945093",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 1157,
+          "status": 200,
+          "bytes": 96241,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 1203,
+      "php_cpu_seconds": 0.046279,
+      "php_peak_rss_bytes": 12582912,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "minnanoav:detail:movie-detail.html",
+      "site": "minnanoav",
+      "page_type": "detail",
+      "sample": "movie-detail.html",
+      "url": "https://www.minnano-av.com/av159081.html",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 1324,
+          "status": 200,
+          "bytes": 196110,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 1445,
+      "php_cpu_seconds": 0.071343,
+      "php_peak_rss_bytes": 14680064,
+      "coverage": {
+        "found": 2,
+        "expected": 2
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "missav:listing:listing-new.html",
+      "site": "missav",
+      "page_type": "listing",
+      "sample": "listing-new.html",
+      "url": "https://missav.ws/en/new",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "flaresolverr",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 510,
+          "status": 403,
+          "bytes": 5919,
+          "challenge": true,
+          "ok": false,
+          "error": "challenge page"
+        },
+        {
+          "method": "playwright",
+          "elapsed_ms": 30678,
+          "status": 1,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "page.goto: net::ERR_CONNECTION_CLOSED at https://missav.ws/en/new\nCall log:\n  - navigating to \"https://missav.ws/en/new\", waiting until \"domcontentloaded\"\n"
+        },
+        {
+          "method": "flaresolverr",
+          "elapsed_ms": 58819,
+          "status": 200,
+          "bytes": 156946,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 90248,
+      "php_cpu_seconds": 0.084815,
+      "php_peak_rss_bytes": 14680064,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "missav:detail:detail-fns-247.html",
+      "site": "missav",
+      "page_type": "detail",
+      "sample": "detail-fns-247.html",
+      "url": "https://missav.ws/en/fns-247",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "flaresolverr",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 142,
+          "status": 403,
+          "bytes": 5888,
+          "challenge": true,
+          "ok": false,
+          "error": "challenge page"
+        },
+        {
+          "method": "playwright",
+          "elapsed_ms": 30396,
+          "status": 1,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "page.goto: net::ERR_CONNECTION_CLOSED at https://missav.ws/en/fns-247\nCall log:\n  - navigating to \"https://missav.ws/en/fns-247\", waiting until \"domcontentloaded\"\n"
+        },
+        {
+          "method": "flaresolverr",
+          "elapsed_ms": 47066,
+          "status": 200,
+          "bytes": 377378,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 77838,
+      "php_cpu_seconds": 0.109148,
+      "php_peak_rss_bytes": 16777216,
+      "coverage": {
+        "found": 2,
+        "expected": 2
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "141jav:listing:listing-page-1.html",
+      "site": "141jav",
+      "page_type": "listing",
+      "sample": "listing-page-1.html",
+      "url": "https://www.141jav.com/new?page=1",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 404,
+          "status": 200,
+          "bytes": 59682,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 436,
+      "php_cpu_seconds": 0.056008,
+      "php_peak_rss_bytes": 16777216,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "141jav:detail:detail-sample-1.html",
+      "site": "141jav",
+      "page_type": "detail",
+      "sample": "detail-sample-1.html",
+      "url": "https://www.141jav.com/torrent/JUQ521",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 926,
+          "status": 200,
+          "bytes": 22869,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 933,
+      "php_cpu_seconds": 0.007965,
+      "php_peak_rss_bytes": 16777216,
+      "coverage": {
+        "found": 2,
+        "expected": 2
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "onepondo:listing:list-newest-0.json",
+      "site": "onepondo",
+      "page_type": "listing",
+      "sample": "list-newest-0.json",
+      "url": "https://en.1pondo.tv/dyn/phpauto/movie_lists/list_newest_0.json",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 813,
+          "status": 200,
+          "bytes": 474957,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 848,
+      "php_cpu_seconds": 0.067739,
+      "php_peak_rss_bytes": 16777216,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "onepondo:detail:detail-060426_001.json",
+      "site": "onepondo",
+      "page_type": "detail",
+      "sample": "detail-060426_001.json",
+      "url": "https://en.1pondo.tv/dyn/phpauto/movie_details/movie_id/060426_001.json",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 319,
+          "status": 200,
+          "bytes": 7474,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 1002,
+      "php_cpu_seconds": 0.035648,
+      "php_peak_rss_bytes": 16777216,
+      "coverage": {
+        "found": 2,
+        "expected": 2
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "onejav:listing:listing-page-1.html",
+      "site": "onejav",
+      "page_type": "listing",
+      "sample": "listing-page-1.html",
+      "url": "https://onejav.com/new",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 4013,
+          "status": 200,
+          "bytes": 436905,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 4064,
+      "php_cpu_seconds": 0.073773,
+      "php_peak_rss_bytes": 16777216,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "onejav:detail:detail-sample-1.html",
+      "site": "onejav",
+      "page_type": "detail",
+      "sample": "detail-sample-1.html",
+      "url": "https://onejav.com/torrent/ymds282",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "playwright",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 2297,
+          "status": 500,
+          "bytes": 1083,
+          "challenge": false,
+          "ok": false,
+          "error": "unusable HTTP body"
+        },
+        {
+          "method": "playwright",
+          "elapsed_ms": 32268,
+          "status": 200,
+          "bytes": 19239,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 35023,
+      "php_cpu_seconds": 0.013327,
+      "php_peak_rss_bytes": 16777216,
+      "coverage": {
+        "found": 2,
+        "expected": 2
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "onejav:listing:tag-fc2.html",
+      "site": "onejav",
+      "page_type": "listing",
+      "sample": "tag-fc2.html",
+      "url": "https://onejav.com/tag/FC2",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 9955,
+          "status": 200,
+          "bytes": 116628,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 9971,
+      "php_cpu_seconds": 0.016883,
+      "php_peak_rss_bytes": 16777216,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "tokyohot:listing:listing.html",
+      "site": "tokyohot",
+      "page_type": "listing",
+      "sample": "listing.html",
+      "url": "https://my.tokyo-hot.com/index",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 2899,
+          "status": 200,
+          "bytes": 182858,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 2959,
+      "php_cpu_seconds": 0.083782,
+      "php_peak_rss_bytes": 16777216,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "tokyohot:listing:listing-products.html",
+      "site": "tokyohot",
+      "page_type": "listing",
+      "sample": "listing-products.html",
+      "url": "https://my.tokyo-hot.com/product/",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "flaresolverr",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 20002,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "network_timeout"
+        },
+        {
+          "method": "playwright",
+          "elapsed_ms": 45001,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "Browser service request failed: The HTTP request timed out."
+        },
+        {
+          "method": "flaresolverr",
+          "elapsed_ms": 6568,
+          "status": 200,
+          "bytes": 171259,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 71664,
+      "php_cpu_seconds": 0.096677,
+      "php_peak_rss_bytes": 16777216,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "tokyohot:detail:detail.html",
+      "site": "tokyohot",
+      "page_type": "detail",
+      "sample": "detail.html",
+      "url": "https://my.tokyo-hot.com/product/n1700/",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 5128,
+          "status": 200,
+          "bytes": 152774,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 5175,
+      "php_cpu_seconds": 0.074145,
+      "php_peak_rss_bytes": 16777216,
+      "coverage": {
+        "found": 2,
+        "expected": 2
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "tokyohot:detail:detail-tags.html",
+      "site": "tokyohot",
+      "page_type": "detail",
+      "sample": "detail-tags.html",
+      "url": "https://my.tokyo-hot.com/product/adl_301/",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 2173,
+          "status": 200,
+          "bytes": 135297,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 2194,
+      "php_cpu_seconds": 0.023362,
+      "php_peak_rss_bytes": 16777216,
+      "coverage": {
+        "found": 2,
+        "expected": 2
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "warashi:gallery:gallery-yuna-ishikawa.html",
+      "site": "warashi",
+      "page_type": "gallery",
+      "sample": "gallery-yuna-ishikawa.html",
+      "url": "https://warashi-asian-pornstars.fr/en/s-7-0/yuna-ishikawa/female-asian-pornstar/photo-gallery/56092",
+      "status": "timeout",
+      "missing_fields": [],
+      "winning_method": null,
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 3532,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "network_error"
+        },
+        {
+          "method": "http",
+          "elapsed_ms": 3546,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "network_error"
+        },
+        {
+          "method": "http",
+          "elapsed_ms": 5001,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "network_timeout"
+        },
+        {
+          "method": "playwright",
+          "elapsed_ms": 44997,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "Browser service request failed: The HTTP request timed out."
+        },
+        {
+          "method": "flaresolverr",
+          "elapsed_ms": 8058,
+          "status": 0,
+          "bytes": 0,
+          "challenge": true,
+          "ok": false,
+          "error": "Error: Error solving the challenge. Message: unknown error: net::ERR_CONNECTION_REFUSED\\n  (Session info: chrome=153.0.8010.0)\\nStacktrace:\\n#0 0x5a416b6ae9fa <unknown>\\n#1 0x5a416afe45b9 <unknown>\\n#2 0x5a416afdb44a <unknown>\\n#3 0x5a416afcc4b1 <unknown>\\n#4 0x5a416afce1f0 <unknown>\\n#5 0x5a416afcc99a <unknown>\\n#6 0x5a416afcc038 <unknown>\\n#7 0x5a416afcbc56 <unknown>\\n#8 0x5a416afc9890 <unknown>\\n#9 0x5a416afca0b0 <unknown>\\n#10 0x5a416afe8041 <unknown>\\n#11 0x5a416b0855cb <unknown>\\n#12 0x5a416b0848de <unknown>\\n#13 0x5a416b02db8b <unknown>\\n#14 0x5a416b02e971 <unknown>\\n#15 0x5a416b671667 <unknown>\\n#16 0x5a416b66fe95 <unknown>\\n#17 0x5a416b65af55 <unknown>\\n#18 0x5a416b670aea <unknown>\\n#19 0x5a416b6436c9 <unknown>\\n#20 0x5a416b6989a8 <unknown>\\n#21 0x5a416b698b45 <unknown>\\n#22 0x5a416b6ad353 <unknown>\\n#23 0x750efc09cb84 <unknown>\\n#24 0x750efc129ecc <unknown>\\n"
+        }
+      ],
+      "wall_ms": 67739,
+      "php_cpu_seconds": 0.010623,
+      "php_peak_rss_bytes": 16777216,
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "warashi:performer_listing:listing_page1.html",
+      "site": "warashi",
+      "page_type": "performer_listing",
+      "sample": "listing_page1.html",
+      "url": "https://warashi-asian-pornstars.fr/en/s-2-2/female-pornstars/toutes/all/page/1",
+      "status": "timeout",
+      "missing_fields": [],
+      "winning_method": null,
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 3610,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "network_error"
+        },
+        {
+          "method": "http",
+          "elapsed_ms": 4999,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "network_timeout"
+        },
+        {
+          "method": "playwright",
+          "elapsed_ms": 45003,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "Browser service request failed: The HTTP request timed out."
+        },
+        {
+          "method": "flaresolverr",
+          "elapsed_ms": 2212,
+          "status": 0,
+          "bytes": 0,
+          "challenge": true,
+          "ok": false,
+          "error": "Error: Error solving the challenge. Message: unknown error: net::ERR_CONNECTION_REFUSED\\n  (Session info: chrome=153.0.8010.0)\\nStacktrace:\\n#0 0x5671e289c9fa <unknown>\\n#1 0x5671e21d25b9 <unknown>\\n#2 0x5671e21c944a <unknown>\\n#3 0x5671e21ba4b1 <unknown>\\n#4 0x5671e21bc1f0 <unknown>\\n#5 0x5671e21ba99a <unknown>\\n#6 0x5671e21ba038 <unknown>\\n#7 0x5671e21b9c56 <unknown>\\n#8 0x5671e21b7890 <unknown>\\n#9 0x5671e21b80b0 <unknown>\\n#10 0x5671e21d6041 <unknown>\\n#11 0x5671e22735cb <unknown>\\n#12 0x5671e22728de <unknown>\\n#13 0x5671e221bb8b <unknown>\\n#14 0x5671e221c971 <unknown>\\n#15 0x5671e285f667 <unknown>\\n#16 0x5671e285de95 <unknown>\\n#17 0x5671e2848f55 <unknown>\\n#18 0x5671e285eaea <unknown>\\n#19 0x5671e28316c9 <unknown>\\n#20 0x5671e28869a8 <unknown>\\n#21 0x5671e2886b45 <unknown>\\n#22 0x5671e289b353 <unknown>\\n#23 0x7880fa69cb84 <unknown>\\n#24 0x7880fa729ecc <unknown>\\n"
+        }
+      ],
+      "wall_ms": 56681,
+      "php_cpu_seconds": 0.00854,
+      "php_peak_rss_bytes": 16777216,
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "warashi:performer_detail:detail_yua_mikami.html",
+      "site": "warashi",
+      "page_type": "performer_detail",
+      "sample": "detail_yua_mikami.html",
+      "url": "https://warashi-asian-pornstars.fr/en/s-2-0/yua-mikami/asian-female-pornstar/1234",
+      "status": "timeout",
+      "missing_fields": [],
+      "winning_method": null,
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 5002,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "network_timeout"
+        },
+        {
+          "method": "playwright",
+          "elapsed_ms": 44998,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "Browser service request failed: The HTTP request timed out."
+        },
+        {
+          "method": "flaresolverr",
+          "elapsed_ms": 2291,
+          "status": 0,
+          "bytes": 0,
+          "challenge": true,
+          "ok": false,
+          "error": "Error: Error solving the challenge. Message: unknown error: net::ERR_CONNECTION_REFUSED\\n  (Session info: chrome=153.0.8010.0)\\nStacktrace:\\n#0 0x61f4141ea9fa <unknown>\\n#1 0x61f413b205b9 <unknown>\\n#2 0x61f413b1744a <unknown>\\n#3 0x61f413b084b1 <unknown>\\n#4 0x61f413b0a1f0 <unknown>\\n#5 0x61f413b0899a <unknown>\\n#6 0x61f413b08038 <unknown>\\n#7 0x61f413b07c56 <unknown>\\n#8 0x61f413b05890 <unknown>\\n#9 0x61f413b060b0 <unknown>\\n#10 0x61f413b24041 <unknown>\\n#11 0x61f413bc15cb <unknown>\\n#12 0x61f413bc08de <unknown>\\n#13 0x61f413b69b8b <unknown>\\n#14 0x61f413b6a971 <unknown>\\n#15 0x61f4141ad667 <unknown>\\n#16 0x61f4141abe95 <unknown>\\n#17 0x61f414196f55 <unknown>\\n#18 0x61f4141acaea <unknown>\\n#19 0x61f41417f6c9 <unknown>\\n#20 0x61f4141d49a8 <unknown>\\n#21 0x61f4141d4b45 <unknown>\\n#22 0x61f4141e9353 <unknown>\\n#23 0x773b7829cb84 <unknown>\\n#24 0x773b78329ecc <unknown>\\n"
+        }
+      ],
+      "wall_ms": 52298,
+      "php_cpu_seconds": 0.007653,
+      "php_peak_rss_bytes": 16777216,
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "xcity:listing:listing_page1.html",
+      "site": "xcity",
+      "page_type": "listing",
+      "sample": "listing_page1.html",
+      "url": "https://xxx.xcity.jp/avod/list/",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 1950,
+          "status": 200,
+          "bytes": 115243,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 1999,
+      "php_cpu_seconds": 0.078143,
+      "php_peak_rss_bytes": 16777216,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "xcity:detail:detail-placeholder.html",
+      "site": "xcity",
+      "page_type": "detail",
+      "sample": "detail-placeholder.html",
+      "url": "https://xxx.xcity.jp/avod/detail/?id=186022",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 1084,
+          "status": 200,
+          "bytes": 63977,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 1104,
+      "php_cpu_seconds": 0.019509,
+      "php_peak_rss_bytes": 16777216,
+      "coverage": {
+        "found": 2,
+        "expected": 2
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "xcity:detail:detail-208587.html",
+      "site": "xcity",
+      "page_type": "detail",
+      "sample": "detail-208587.html",
+      "url": "https://xcity.jp/avod/detail/?id=208587",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 1752,
+          "status": 200,
+          "bytes": 69437,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 1767,
+      "php_cpu_seconds": 0.045133,
+      "php_peak_rss_bytes": 16777216,
+      "coverage": {
+        "found": 2,
+        "expected": 2
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "xcity:performer_detail:performer-detail-10696.html",
+      "site": "xcity",
+      "page_type": "performer_detail",
+      "sample": "performer-detail-10696.html",
+      "url": "https://xcity.jp/idol/detail/10696/",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 1265,
+          "status": 200,
+          "bytes": 95489,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 1295,
+      "php_cpu_seconds": 0.031033,
+      "php_peak_rss_bytes": 16777216,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "xcity:performer_listing:performer-index.html",
+      "site": "xcity",
+      "page_type": "performer_listing",
+      "sample": "performer-index.html",
+      "url": "https://xxx.xcity.jp/idol/",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 3477,
+          "status": 200,
+          "bytes": 59424,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 3495,
+      "php_cpu_seconds": 0.018859,
+      "php_peak_rss_bytes": 16777216,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "xcity:performer_listing:performer-kana-a.html",
+      "site": "xcity",
+      "page_type": "performer_listing",
+      "sample": "performer-kana-a.html",
+      "url": "https://xxx.xcity.jp/idol/?kana=%E3%81%82",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 2316,
+          "status": 200,
+          "bytes": 63288,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 2335,
+      "php_cpu_seconds": 0.018956,
+      "php_peak_rss_bytes": 16777216,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "xcity:performer_listing:performer-listing-a.html",
+      "site": "xcity",
+      "page_type": "performer_listing",
+      "sample": "performer-listing-a.html",
+      "url": "https://xxx.xcity.jp/idol/?ini=%E3%81%82&num=100",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 1482,
+          "status": 200,
+          "bytes": 90301,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 1522,
+      "php_cpu_seconds": 0.04271,
+      "php_peak_rss_bytes": 16777216,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    },
+    {
+      "id": "xcity:performer_detail:performer-detail-5517.html",
+      "site": "xcity",
+      "page_type": "performer_detail",
+      "sample": "performer-detail-5517.html",
+      "url": "https://xxx.xcity.jp/idol/detail/5517/",
+      "status": "ok",
+      "missing_fields": [],
+      "winning_method": "http",
+      "attempts": [
+        {
+          "method": "http",
+          "elapsed_ms": 1198,
+          "status": 200,
+          "bytes": 85793,
+          "challenge": false,
+          "ok": true,
+          "error": null
+        }
+      ],
+      "wall_ms": 1224,
+      "php_cpu_seconds": 0.028001,
+      "php_peak_rss_bytes": 16777216,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
+      "resources": {
+        "node": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        },
+        "flaresolverr": {
+          "cpu_seconds": 0,
+          "peak_rss_bytes": 0
+        }
+      }
+    }
+  ],
+  "summary": {
+    "total": 68,
+    "pass": 58,
+    "statuses": {
+      "ok": 58,
+      "timeout": 6,
+      "challenge": 4
+    },
+    "p50_ms": 2216,
+    "p95_ms": 105089,
+    "methods": {
+      "http": {
+        "samples": 48,
+        "cpu_seconds": 0,
+        "peak_rss_bytes": 0
+      },
+      "none": {
+        "samples": 9,
+        "cpu_seconds": 0,
+        "peak_rss_bytes": 0
+      },
+      "playwright": {
+        "samples": 3,
+        "cpu_seconds": 0,
+        "peak_rss_bytes": 0
+      },
+      "flaresolverr": {
+        "samples": 8,
+        "cpu_seconds": 0,
+        "peak_rss_bytes": 0
+      }
+    }
+  }
+}
