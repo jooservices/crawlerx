@@ -9,6 +9,7 @@ use JOOservices\CrawlerX\Contracts\FetchMethodHandler;
 use JOOservices\CrawlerX\Contracts\LoginCookieProvider;
 use JOOservices\CrawlerX\Dto\CrawlOptionsDto;
 use JOOservices\CrawlerX\Dto\FetchResultDto;
+use JOOservices\CrawlerX\Dto\FetchMetaDto;
 use JOOservices\CrawlerX\Dto\HttpProfileDto;
 use JOOservices\CrawlerX\Dto\HttpOptionsDto;
 use JOOservices\CrawlerX\Dto\PlaywrightProfileDto;
@@ -54,6 +55,8 @@ final class FetchFallbackChain
         ?HostThrottle $hostThrottle = null,
         ?HostCircuit $hostCircuit = null,
         private readonly int $maxTransientRetries = TransientRetry::MAX_RETRIES,
+        /** @var Closure(): (int|float)|null */
+        private readonly ?Closure $budgetClock = null,
     ) {
         $this->sessions = $sessions ?? new SessionStore();
         $this->logins = $logins;
@@ -82,7 +85,7 @@ final class FetchFallbackChain
         $nonTerminalFailure = false;
         $sawChallenge = false;
         $answered = false;
-        $budget = FetchBudget::start($options?->fetch);
+        $budget = FetchBudget::start($options?->fetch, $this->budgetClock);
         $transientRetry = new TransientRetry();
         $readyMarkers = $profile->readyMarkersFor($type);
         $session = $this->sessions->get($profile->slug);
@@ -255,6 +258,10 @@ final class FetchFallbackChain
                 );
             }
 
+            if ($result->ok && $budget->remainingSeconds() <= 0.0) {
+                break;
+            }
+
             if ($result->ok) {
                 if (is_string($host) && $host !== '') {
                     $this->hostCircuit?->recordSuccess($host);
@@ -294,7 +301,7 @@ final class FetchFallbackChain
                 errorCode: CrawlErrorCode::Timeout,
                 retryable: true,
                 retryAfterSeconds: null,
-                fetch: $last?->toMeta(),
+                fetch: $this->failureMeta($last, $attempts, $plan, $budget, $sawChallenge),
             );
         }
 
@@ -305,18 +312,27 @@ final class FetchFallbackChain
             errorCode: $code,
             retryable: $code->defaultRetryable(),
             retryAfterSeconds: null,
-            fetch: $last?->toMeta() ?? new \JOOservices\CrawlerX\Dto\FetchMetaDto(
-                methodUsed: ($plan[0] ?? FetchMethod::Http)->value,
-                elapsedMs: 0,
-                challengeDetected: $sawChallenge,
-                attempts: $attempts,
-            ),
+            fetch: $this->failureMeta($last, $attempts, $plan, $budget, $sawChallenge),
         );
     }
 
     public function cookies(): CookieHandoffStore
     {
         return $this->cookies;
+    }
+
+    /**
+     * @param list<array{method: string, elapsed_ms: int, status: int, challenge: bool, ok: bool, error?: string|null}> $attempts
+     * @param list<FetchMethod> $plan
+     */
+    private function failureMeta(?FetchResultDto $last, array $attempts, array $plan, FetchBudget $budget, bool $sawChallenge): FetchMetaDto
+    {
+        return new FetchMetaDto(
+            methodUsed: $last?->methodUsed->value ?? ($plan[0] ?? FetchMethod::Http)->value,
+            elapsedMs: (int) round($budget->elapsedSeconds() * 1000),
+            challengeDetected: $sawChallenge,
+            attempts: $attempts,
+        );
     }
 
     /**

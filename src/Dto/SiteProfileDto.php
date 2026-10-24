@@ -46,7 +46,7 @@ final class SiteProfileDto extends Dto
             displayName: $manifest->displayName,
             baseUrl: $manifest->baseUrl,
             fetchProfile: $fetchProfile,
-            fetchChain: $fetchProfile->chain(),
+            fetchChain: $manifest->fetchChain !== [] ? $manifest->fetchChain : $fetchProfile->chain(),
             http: new HttpProfileDto(
                 timeout: $timeoutSeconds > 0 ? $timeoutSeconds : 30,
                 verifySsl: true,

@@ -85,7 +85,7 @@ final class FetchHandlersTest extends TestCase
         );
 
         self::assertTrue($result->ok);
-        self::assertSame(22, $runner->timeout);
+        self::assertSame(7, $runner->timeout);
         self::assertContains('session=token', $runner->command);
         self::assertContains('7', $runner->command);
     }

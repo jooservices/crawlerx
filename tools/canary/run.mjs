@@ -180,11 +180,8 @@ function markdown(report) {
 
 const child = spawn(process.env.PHP_BIN ?? 'php', phpArguments, {
     cwd: root,
-    env: {
-        ...process.env,
-        PLAYWRIGHT_URL: process.env.PLAYWRIGHT_URL ?? 'http://127.0.0.1:3000',
-        FLARESOLVERR_URL: process.env.FLARESOLVERR_URL ?? 'http://127.0.0.1:8191/v1',
-    },
+    // live-check.php loads project .env; do not shadow its service addresses.
+    env: process.env,
     stdio: ['ignore', 'pipe', 'inherit'],
 });
 

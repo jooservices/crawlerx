@@ -62,6 +62,7 @@
     "runtime": {
         "fetch": {
             "profile": "browser_likely",
+            "chain": ["http", "flaresolverr", "playwright"],
             "readyMarkers": {
                 "listing": [".video-img-box"],
                 "detail": ["section.video-info h4"],
