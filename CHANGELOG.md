@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fetch strategy: a status log of sources that are down or walled; warashi is offline (Dedibox maintenance, port 443 refused) and is not behind a challenge (JOOXCR-244).
 
+### Security
+
+- Node tooling: override the transitive `zod` to 4.6.6 (GHSA-mrhx-c7xc-m3w5, High); puppeteer, puppeteer-extra, the stealth plugin and playwright still load (JOOXCR-250).
+
 ## [1.4.1] - 2026-10-19
 
 ### Fixed
