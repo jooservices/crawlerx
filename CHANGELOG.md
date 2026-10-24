@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- JavBus: every fetch sends the age confirmation cookie (`dv=1`), so the site returns its pages instead of the "Age Verification JavBus" wall that was reported as a challenge on every method (JOOXCR-243). `existmag=all` makes the pages list movies with and without magnets.
+
 ### Security
 
 - Node tooling: override the transitive `zod` to 4.6.6 (GHSA-mrhx-c7xc-m3w5, High); puppeteer, puppeteer-extra, the stealth plugin and playwright still load (JOOXCR-250).
