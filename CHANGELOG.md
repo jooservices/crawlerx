@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.2] - 2026-10-24
+
 ### Documentation
 
 - Fetch strategy: a status log of sources that are down or walled; warashi is offline (Dedibox maintenance, port 443 refused) and is not behind a challenge (JOOXCR-244).
