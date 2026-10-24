@@ -127,6 +127,9 @@
             "min_gap_seconds": 3,
             "max_gap_seconds": 45
         },
+        "browserHeaders": {
+            "Cookie": "dv=1; existmag=all"
+        },
         "playwrightFetchEnabled": true
     },
     "type": "site"
