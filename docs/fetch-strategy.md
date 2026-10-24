@@ -117,3 +117,12 @@ FLARESOLVERR_HOST_PORT=8193 FIXTURE_SITE_HOST_PORT=8082 make fetch-down
 The lab is suitable for CI because all requests stay inside Docker and use
 fixtures. Live adapter checks belong to the local canary tooling, not this
 test suite.
+
+## Sources that are down or walled (status log)
+
+| Source | Checked | Result | Methods tested |
+|---|---|---|---|
+| warashi | 2026-10-24 | The site is offline, not behind Cloudflare. `warashi-asian-pornstars.fr` resolves to 51.159.55.143; port 443 refuses connections from WSL, the Dev VM browser services (FlareSolverr: `net::ERR_CONNECTION_REFUSED`) and a Mac; port 80 answers `503` with the page "Serveur Dedibox en maintenance". | http, flaresolverr (the Dev VM browser services cannot even connect, so playwright and stealth variants cannot do better). |
+| javbus | 2026-10-24 | Not a Cloudflare challenge: the site answers 200 with its "Age Verification JavBus" page until the cookie `dv=1` is sent. The profile now sends `dv=1; existmag=all` (JOOXCR-243). | flaresolverr with the cookie returns the real listing. |
+
+Re-check a source with `php artisan crawler:source-health --source=<slug>` in JavMeta before opening a new ticket.
