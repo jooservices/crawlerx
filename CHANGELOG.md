@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+
+- Fetch strategy: a status log of sources that are down or walled; warashi is offline (Dedibox maintenance, port 443 refused) and is not behind a challenge (JOOXCR-244).
+
 ### Fixed
 
 - JavBus: every fetch sends the age confirmation cookie (`dv=1`), so the site returns its pages instead of the "Age Verification JavBus" wall that was reported as a challenge on every method (JOOXCR-243). `existmag=all` makes the pages list movies with and without magnets.
