@@ -12,8 +12,8 @@
         "fetch": {
             "profile": "adaptive",
             "readyMarkers": {
-                "listing": [".sidemenu, .listitem, .contentslist:not(.empty)"],
-                "detail": ["a[href^='/ppv/']"]
+                "listing": [".contentslistrank a[href^='/ppv/'], .contentslist:not(.empty) a[href^='/ppv/']"],
+                "detail": ["h1.title, h1[itemprop='name']"]
             },
             "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
         },

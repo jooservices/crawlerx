@@ -80,7 +80,7 @@ final class CurlImpersonateFetchHandler implements FetchMethodHandler
         $timeout = ($options !== null && $options->http !== null && $options->http->timeout !== null)
             ? $options->http->timeout
             : $profile->http->timeout;
-        $result = $this->runner->run($command, $timeout + 15);
+        $result = $this->runner->run($command, min($timeout, $options->methodTimeoutSeconds ?? $timeout));
         $body = $result->stdout;
         $status = $result->exitCode === 0 ? 200 : 0;
         $challenge = ChallengeDetector::isChallenge($body, $status);

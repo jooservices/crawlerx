@@ -148,6 +148,10 @@ final class FileAdapterManifestRegistry implements AdapterManifestRegistry
         $readyMarkers = $this->normalizeMarkers($fetch['readyMarkers'] ?? []);
         $soft404Markers = $this->normalizeStringList($fetch['soft404Markers'] ?? []);
         $settleAfterReadyMs = is_numeric($fetch['settleAfterReadyMs'] ?? null) ? max(0, (int) $fetch['settleAfterReadyMs']) : 0;
+        $fetchChain = [];
+        foreach ($this->normalizeStringList($fetch['chain'] ?? []) as $method) {
+            $fetchChain[] = \JOOservices\CrawlerX\Enums\FetchMethod::from($method);
+        }
 
         if ($slug === '' || $name === '' || $baseUrl === '' || $adapterClass === '') {
             throw new InvalidArgumentException("Manifest [{$path}] is missing required slug, name, base_url, or adapter.class.");
@@ -180,6 +184,7 @@ final class FileAdapterManifestRegistry implements AdapterManifestRegistry
             readyMarkers: $readyMarkers,
             soft404Markers: $soft404Markers,
             settleAfterReadyMs: $settleAfterReadyMs,
+            fetchChain: $fetchChain,
         );
     }
 

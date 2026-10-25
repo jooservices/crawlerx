@@ -10,7 +10,7 @@ use JOOservices\CrawlerX\Enums\FetchMethod;
 
 final class FetchBudget
 {
-    public const DEFAULT_TOTAL_SECONDS = 150;
+    public const DEFAULT_TOTAL_SECONDS = 60;
 
     public const HTTP_CAP_SECONDS = 20;
 
@@ -36,9 +36,10 @@ final class FetchBudget
 
     private readonly int $deadline;
 
-    public static function start(?FetchOptionsDto $options): self
+    /** @param Closure(): (int|float)|null $clock */
+    public static function start(?FetchOptionsDto $options, ?Closure $clock = null): self
     {
-        return new self($options?->deadlineSeconds, hrtime(true));
+        return new self($options?->deadlineSeconds, $clock !== null ? $clock() : hrtime(true), $clock);
     }
 
     public function elapsedSeconds(): float

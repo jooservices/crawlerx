@@ -41,7 +41,9 @@ final class FetchFallbackCrawlTest extends TestCase
             : self::success($method, $body, $url));
         $this->useHandler($handler, FetchMethod::browserChain());
 
-        $result = CrawlerX::url('https://en.jable.tv/videos/fjin-091/')->crawl();
+        $result = CrawlerX::url('https://en.jable.tv/videos/fjin-091/')->options(new CrawlOptionsDto(
+            fetch: new FetchOptionsDto(profile: FetchProfile::BrowserLikely),
+        ))->crawl();
 
         self::assertInstanceOf(CrawlItemResultDto::class, $result);
         $movie = $result->meta['movie'] ?? null;
