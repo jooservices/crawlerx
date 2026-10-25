@@ -51,6 +51,8 @@ final class FetchFallbackCrawlTest extends TestCase
         self::assertIsString($movie['code'] ?? null);
         self::assertNotSame('', trim($movie['code']));
         self::assertSame([FetchMethod::Playwright, FetchMethod::Flaresolverr], $handler->attempts);
+        self::assertSame(['error', 'ok'], array_column($result->fetch?->attempts ?? [], 'outcome'));
+        self::assertSame($result->fetch, $result->withNextCrawlType(null)->fetch);
     }
 
     public function test_explicit_method_without_fallback_uses_only_requested_handler(): void
@@ -65,6 +67,7 @@ final class FetchFallbackCrawlTest extends TestCase
 
         self::assertInstanceOf(CrawlListResultDto::class, $result);
         self::assertNotEmpty($result->items);
+        self::assertSame(['ok'], array_column($result->fetch?->attempts ?? [], 'outcome'));
         self::assertSame([FetchMethod::ChromeStealth], $handler->attempts);
     }
 

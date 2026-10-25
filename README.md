@@ -477,3 +477,18 @@ CrawlerX facade
 Adapter behavior and supported page types are declared under
 `src/Adapters/*/manifest.json`. `CrawlerXFactory::reset()` is available for
 long-running workers that need to release the process-wide runtime instance.
+
+### Fetch attempt diagnostics
+
+The fallback result and `CrawlFetchException::fetch` expose ordered `attempts`.
+Successful public list/item objects also expose optional `fetch` metadata;
+it is hidden from DTO serialization to preserve the existing response shape.
+Each actual request (including HTTP retries) carries `method`, UTC `started_at`,
+`duration_ms`, nullable `http_status`, nullable `cf_mitigated`, `outcome`
+(`ok`, `error`, `skipped`), nullable `error_code`, and a short `error`.
+Legacy `elapsed_ms`, `status`, `challenge`, and `ok` keys remain available.
+Errors omit HTML bodies, redact URLs, and are capped at 500 bytes.
+Skipped entries explain missing handlers, budget exhaustion, or an earlier
+non-challenge answer. Methods after success or a terminal error are not visited.
+The fallback order and selection rules are unchanged. Header values are null
+when the handler/service does not expose them; a missing HTTP response is null.

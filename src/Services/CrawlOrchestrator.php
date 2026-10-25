@@ -68,6 +68,6 @@ final class CrawlOrchestrator
             query: $query,
         );
 
-        return $this->service->site($classified['slug'])->crawl($request);
+        return $this->service->site($classified['slug'])->crawl($request)->withFetch($fetch->toMeta());
     }
 }
