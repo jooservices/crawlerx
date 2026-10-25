@@ -1,7 +1,7 @@
 {
   "schema": "crawlerx.canary.v1",
-  "generated_at": "2026-10-24T14:32:35.476Z",
-  "git_sha": "74ff40d8737db0b42481a79800e41cef21aba85c",
+  "generated_at": "2026-10-25T11:46:13.669Z",
+  "git_sha": "e37110834caf6db10c8977df4028a03b87fd886b",
   "samples": [
     {
       "id": "aisex:performer_listing:listing-page1.html",
@@ -15,16 +15,16 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 9909,
+          "elapsed_ms": 2075,
           "status": 200,
-          "bytes": 79705,
+          "bytes": 79713,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 10014,
-      "php_cpu_seconds": 0.089152,
+      "wall_ms": 2108,
+      "php_cpu_seconds": 0.051856,
       "php_peak_rss_bytes": 8388608,
       "coverage": {
         "found": 3,
@@ -53,7 +53,7 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 1806,
+          "elapsed_ms": 295,
           "status": 200,
           "bytes": 60444,
           "challenge": false,
@@ -61,8 +61,8 @@
           "error": null
         }
       ],
-      "wall_ms": 1823,
-      "php_cpu_seconds": 0.016361,
+      "wall_ms": 309,
+      "php_cpu_seconds": 0.014576,
       "php_peak_rss_bytes": 10485760,
       "coverage": {
         "found": 3,
@@ -91,7 +91,7 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 958,
+          "elapsed_ms": 1016,
           "status": 200,
           "bytes": 193315,
           "challenge": false,
@@ -99,8 +99,8 @@
           "error": null
         }
       ],
-      "wall_ms": 989,
-      "php_cpu_seconds": 0.058091,
+      "wall_ms": 1042,
+      "php_cpu_seconds": 0.048991,
       "php_peak_rss_bytes": 10485760,
       "coverage": {
         "found": 3,
@@ -118,37 +118,32 @@
       }
     },
     {
-      "id": "avfan_profiles:performer_detail:detail-arisu-mai.html",
+      "id": "avfan_profiles:performer_detail:detail-current.html",
       "site": "avfan_profiles",
       "page_type": "performer_detail",
-      "sample": "detail-arisu-mai.html",
-      "url": "https://av-fan.tokyo/actress/%E6%9C%89%E6%A0%96%E8%88%9E%E8%A1%A3.html",
-      "status": "timeout",
+      "sample": "detail-current.html",
+      "url": "https://av-fan.tokyo/actress/%E6%B0%B8%E7%80%AC%E3%82%86%E3%81%84.html",
+      "status": "ok",
       "missing_fields": [],
       "winning_method": "http",
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 602,
+          "elapsed_ms": 4326,
           "status": 200,
-          "bytes": 104878,
+          "bytes": 1910259,
           "challenge": false,
           "ok": true,
           "error": null
-        },
-        {
-          "method": "playwright",
-          "elapsed_ms": 45005,
-          "status": 0,
-          "bytes": 0,
-          "challenge": false,
-          "ok": false,
-          "error": "Browser service request failed: The HTTP request timed out."
         }
       ],
-      "wall_ms": 45617,
-      "php_cpu_seconds": 0.013993,
-      "php_peak_rss_bytes": 10485760,
+      "wall_ms": 5186,
+      "php_cpu_seconds": 0.874209,
+      "php_peak_rss_bytes": 37748736,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
       "resources": {
         "node": {
           "cpu_seconds": 0,
@@ -172,7 +167,7 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 2244,
+          "elapsed_ms": 752,
           "status": 200,
           "bytes": 99573,
           "challenge": false,
@@ -180,9 +175,9 @@
           "error": null
         }
       ],
-      "wall_ms": 2267,
-      "php_cpu_seconds": 0.054432,
-      "php_peak_rss_bytes": 10485760,
+      "wall_ms": 767,
+      "php_cpu_seconds": 0.035868,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -210,7 +205,7 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 1996,
+          "elapsed_ms": 439,
           "status": 200,
           "bytes": 62278,
           "challenge": false,
@@ -218,9 +213,9 @@
           "error": null
         }
       ],
-      "wall_ms": 2016,
-      "php_cpu_seconds": 0.021099,
-      "php_peak_rss_bytes": 10485760,
+      "wall_ms": 449,
+      "php_cpu_seconds": 0.0118,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -248,17 +243,17 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 1718,
+          "elapsed_ms": 1546,
           "status": 200,
-          "bytes": 114598,
+          "bytes": 114968,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 1759,
-      "php_cpu_seconds": 0.069721,
-      "php_peak_rss_bytes": 10485760,
+      "wall_ms": 1568,
+      "php_cpu_seconds": 0.041269,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -286,7 +281,7 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 329,
+          "elapsed_ms": 265,
           "status": 200,
           "bytes": 73547,
           "challenge": false,
@@ -294,9 +289,9 @@
           "error": null
         }
       ],
-      "wall_ms": 360,
-      "php_cpu_seconds": 0.030825,
-      "php_peak_rss_bytes": 10485760,
+      "wall_ms": 280,
+      "php_cpu_seconds": 0.016118,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 2,
         "expected": 2
@@ -324,7 +319,7 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 1383,
+          "elapsed_ms": 503,
           "status": 503,
           "bytes": 1261,
           "challenge": false,
@@ -333,7 +328,7 @@
         },
         {
           "method": "http",
-          "elapsed_ms": 182,
+          "elapsed_ms": 116,
           "status": 503,
           "bytes": 1261,
           "challenge": false,
@@ -342,7 +337,7 @@
         },
         {
           "method": "http",
-          "elapsed_ms": 2613,
+          "elapsed_ms": 124,
           "status": 503,
           "bytes": 1261,
           "challenge": false,
@@ -359,9 +354,9 @@
           "error": "Browser service request failed: The HTTP request timed out."
         }
       ],
-      "wall_ms": 51590,
-      "php_cpu_seconds": 0.060393,
-      "php_peak_rss_bytes": 10485760,
+      "wall_ms": 47802,
+      "php_cpu_seconds": 0.028639,
+      "php_peak_rss_bytes": 37748736,
       "resources": {
         "node": {
           "cpu_seconds": 0,
@@ -379,27 +374,50 @@
       "page_type": "detail",
       "sample": "detail.html",
       "url": "https://duga.jp/ppv/vrpandemic-0023/",
-      "status": "ok",
+      "status": "timeout",
       "missing_fields": [],
-      "winning_method": "http",
+      "winning_method": null,
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 1135,
-          "status": 200,
-          "bytes": 67484,
+          "elapsed_ms": 521,
+          "status": 503,
+          "bytes": 1261,
           "challenge": false,
-          "ok": true,
-          "error": null
+          "ok": false,
+          "error": "unusable HTTP body"
+        },
+        {
+          "method": "http",
+          "elapsed_ms": 120,
+          "status": 503,
+          "bytes": 1261,
+          "challenge": false,
+          "ok": false,
+          "error": "unusable HTTP body"
+        },
+        {
+          "method": "http",
+          "elapsed_ms": 120,
+          "status": 503,
+          "bytes": 1261,
+          "challenge": false,
+          "ok": false,
+          "error": "unusable HTTP body"
+        },
+        {
+          "method": "playwright",
+          "elapsed_ms": 44999,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "Browser service request failed: The HTTP request timed out."
         }
       ],
-      "wall_ms": 1174,
-      "php_cpu_seconds": 0.070958,
-      "php_peak_rss_bytes": 10485760,
-      "coverage": {
-        "found": 2,
-        "expected": 2
-      },
+      "wall_ms": 48102,
+      "php_cpu_seconds": 0.024795,
+      "php_peak_rss_bytes": 37748736,
       "resources": {
         "node": {
           "cpu_seconds": 0,
@@ -419,30 +437,21 @@
       "url": "https://www.eporner.com/gallery/xKeoFe7VHmO/Iori-Kogawa-gu-chuaniori-STAR-836-Uncensored-Leak/",
       "status": "ok",
       "missing_fields": [],
-      "winning_method": "playwright",
+      "winning_method": "http",
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 5001,
-          "status": 0,
-          "bytes": 0,
-          "challenge": false,
-          "ok": false,
-          "error": "network_timeout"
-        },
-        {
-          "method": "playwright",
-          "elapsed_ms": 1455,
+          "elapsed_ms": 1364,
           "status": 200,
-          "bytes": 320983,
+          "bytes": 319339,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 6787,
-      "php_cpu_seconds": 0.168304,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 1439,
+      "php_cpu_seconds": 0.094926,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 2,
         "expected": 2
@@ -470,17 +479,17 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 965,
+          "elapsed_ms": 865,
           "status": 200,
-          "bytes": 249462,
+          "bytes": 254138,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 1042,
-      "php_cpu_seconds": 0.108389,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 915,
+      "php_cpu_seconds": 0.069645,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -508,17 +517,17 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 1291,
+          "elapsed_ms": 1185,
           "status": 200,
-          "bytes": 315718,
+          "bytes": 316007,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 2216,
-      "php_cpu_seconds": 0.148858,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 1854,
+      "php_cpu_seconds": 0.089171,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 2,
         "expected": 2
@@ -546,17 +555,17 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 1855,
+          "elapsed_ms": 840,
           "status": 200,
-          "bytes": 61733,
+          "bytes": 52905,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 1883,
-      "php_cpu_seconds": 0.059494,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 851,
+      "php_cpu_seconds": 0.029365,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -584,7 +593,7 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 886,
+          "elapsed_ms": 626,
           "status": 200,
           "bytes": 33366,
           "challenge": false,
@@ -592,9 +601,9 @@
           "error": null
         }
       ],
-      "wall_ms": 891,
-      "php_cpu_seconds": 0.006575,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 631,
+      "php_cpu_seconds": 0.005924,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 2,
         "expected": 2
@@ -622,17 +631,17 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 3043,
+          "elapsed_ms": 920,
           "status": 200,
-          "bytes": 79788,
+          "bytes": 79799,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 3064,
-      "php_cpu_seconds": 0.052844,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 936,
+      "php_cpu_seconds": 0.037542,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -660,17 +669,17 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 2368,
+          "elapsed_ms": 1133,
           "status": 200,
-          "bytes": 119188,
+          "bytes": 119907,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 2391,
-      "php_cpu_seconds": 0.024475,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 1147,
+      "php_cpu_seconds": 0.016212,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 2,
         "expected": 2
@@ -698,35 +707,26 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 5003,
-          "status": 0,
-          "bytes": 0,
-          "challenge": false,
+          "elapsed_ms": 304,
+          "status": 403,
+          "bytes": 5960,
+          "challenge": true,
           "ok": false,
-          "error": "network_timeout"
-        },
-        {
-          "method": "playwright",
-          "elapsed_ms": 44999,
-          "status": 0,
-          "bytes": 0,
-          "challenge": false,
-          "ok": false,
-          "error": "Browser service request failed: The HTTP request timed out."
+          "error": "challenge page"
         },
         {
           "method": "flaresolverr",
-          "elapsed_ms": 27421,
+          "elapsed_ms": 27445,
           "status": 200,
-          "bytes": 90143,
+          "bytes": 90058,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 77463,
-      "php_cpu_seconds": 0.074184,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 27777,
+      "php_cpu_seconds": 0.047628,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -748,45 +748,32 @@
       "page_type": "detail",
       "sample": "detail-fjin-091.html",
       "url": "https://en.jable.tv/videos/fjin-091/",
-      "status": "ok",
+      "status": "challenge",
       "missing_fields": [],
-      "winning_method": "flaresolverr",
+      "winning_method": null,
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 5002,
-          "status": 0,
-          "bytes": 0,
-          "challenge": false,
+          "elapsed_ms": 60,
+          "status": 403,
+          "bytes": 5929,
+          "challenge": true,
           "ok": false,
-          "error": "network_timeout"
-        },
-        {
-          "method": "playwright",
-          "elapsed_ms": 45000,
-          "status": 0,
-          "bytes": 0,
-          "challenge": false,
-          "ok": false,
-          "error": "Browser service request failed: The HTTP request timed out."
+          "error": "challenge page"
         },
         {
           "method": "flaresolverr",
-          "elapsed_ms": 41298,
-          "status": 200,
-          "bytes": 144916,
+          "elapsed_ms": 58999,
+          "status": 0,
+          "bytes": 0,
           "challenge": false,
-          "ok": true,
-          "error": null
+          "ok": false,
+          "error": "FlareSolverr request failed: The HTTP request timed out."
         }
       ],
-      "wall_ms": 91350,
-      "php_cpu_seconds": 0.079662,
-      "php_peak_rss_bytes": 12582912,
-      "coverage": {
-        "found": 2,
-        "expected": 2
-      },
+      "wall_ms": 59063,
+      "php_cpu_seconds": 0.005152,
+      "php_peak_rss_bytes": 37748736,
       "resources": {
         "node": {
           "cpu_seconds": 0,
@@ -804,31 +791,22 @@
       "page_type": "detail",
       "sample": "detail-jur-832.html",
       "url": "https://en.jable.tv/videos/jur-832/",
-      "status": "timeout",
+      "status": "challenge",
       "missing_fields": [],
       "winning_method": null,
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 5002,
-          "status": 0,
-          "bytes": 0,
-          "challenge": false,
+          "elapsed_ms": 58,
+          "status": 403,
+          "bytes": 5969,
+          "challenge": true,
           "ok": false,
-          "error": "network_timeout"
-        },
-        {
-          "method": "playwright",
-          "elapsed_ms": 45001,
-          "status": 0,
-          "bytes": 0,
-          "challenge": false,
-          "ok": false,
-          "error": "Browser service request failed: The HTTP request timed out."
+          "error": "challenge page"
         },
         {
           "method": "flaresolverr",
-          "elapsed_ms": 59998,
+          "elapsed_ms": 58999,
           "status": 0,
           "bytes": 0,
           "challenge": false,
@@ -836,9 +814,9 @@
           "error": "FlareSolverr request failed: The HTTP request timed out."
         }
       ],
-      "wall_ms": 110008,
-      "php_cpu_seconds": 0.038244,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 59062,
+      "php_cpu_seconds": 0.005278,
+      "php_peak_rss_bytes": 37748736,
       "resources": {
         "node": {
           "cpu_seconds": 0,
@@ -856,45 +834,41 @@
       "page_type": "performer_listing",
       "sample": "models-listing.html",
       "url": "https://en.jable.tv/models/",
-      "status": "ok",
+      "status": "challenge",
       "missing_fields": [],
-      "winning_method": "flaresolverr",
+      "winning_method": null,
       "attempts": [
         {
           "method": "http",
+          "elapsed_ms": 59,
+          "status": 403,
+          "bytes": 5924,
+          "challenge": true,
+          "ok": false,
+          "error": "challenge page"
+        },
+        {
+          "method": "flaresolverr",
+          "elapsed_ms": 54505,
+          "status": 0,
+          "bytes": 0,
+          "challenge": true,
+          "ok": false,
+          "error": "Error: Error solving the challenge. Message: unknown error: net::ERR_CONNECTION_CLOSED\\n  (Session info: chrome=153.0.8010.0)\\nStacktrace:\\n#0 0x583e9392e9fa <unknown>\\n#1 0x583e932645b9 <unknown>\\n#2 0x583e9325b44a <unknown>\\n#3 0x583e9324c4b1 <unknown>\\n#4 0x583e9324e1f0 <unknown>\\n#5 0x583e9324c99a <unknown>\\n#6 0x583e9324c038 <unknown>\\n#7 0x583e9324bc56 <unknown>\\n#8 0x583e93249890 <unknown>\\n#9 0x583e9324a0b0 <unknown>\\n#10 0x583e93268041 <unknown>\\n#11 0x583e933055cb <unknown>\\n#12 0x583e933048de <unknown>\\n#13 0x583e932adb8b <unknown>\\n#14 0x583e932ae971 <unknown>\\n#15 0x583e938f1667 <unknown>\\n#16 0x583e938efe95 <unknown>\\n#17 0x583e938daf55 <unknown>\\n#18 0x583e938f0aea <unknown>\\n#19 0x583e938c36c9 <unknown>\\n#20 0x583e939189a8 <unknown>\\n#21 0x583e93918b45 <unknown>\\n#22 0x583e9392d353 <unknown>\\n#23 0x72f84469cb84 <unknown>\\n#24 0x72f844729ecc <unknown>\\n"
+        },
+        {
+          "method": "playwright",
           "elapsed_ms": 5002,
           "status": 0,
           "bytes": 0,
           "challenge": false,
           "ok": false,
-          "error": "network_timeout"
-        },
-        {
-          "method": "playwright",
-          "elapsed_ms": 45112,
-          "status": 0,
-          "bytes": 0,
-          "challenge": false,
-          "ok": false,
           "error": "Browser service request failed: The HTTP request timed out."
-        },
-        {
-          "method": "flaresolverr",
-          "elapsed_ms": 54386,
-          "status": 200,
-          "bytes": 66460,
-          "challenge": false,
-          "ok": true,
-          "error": null
         }
       ],
-      "wall_ms": 104536,
-      "php_cpu_seconds": 0.059609,
-      "php_peak_rss_bytes": 12582912,
-      "coverage": {
-        "found": 3,
-        "expected": 3
-      },
+      "wall_ms": 59571,
+      "php_cpu_seconds": 0.007212,
+      "php_peak_rss_bytes": 37748736,
       "resources": {
         "node": {
           "cpu_seconds": 0,
@@ -918,35 +892,26 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 5002,
-          "status": 0,
-          "bytes": 0,
-          "challenge": false,
+          "elapsed_ms": 62,
+          "status": 403,
+          "bytes": 6087,
+          "challenge": true,
           "ok": false,
-          "error": "network_timeout"
-        },
-        {
-          "method": "playwright",
-          "elapsed_ms": 37964,
-          "status": 1,
-          "bytes": 0,
-          "challenge": false,
-          "ok": false,
-          "error": "page.goto: net::ERR_CONNECTION_CLOSED at https://en.jable.tv/models/bfaca44240620be2f3092c294fb22fbe/\nCall log:\n  - navigating to \"https://en.jable.tv/models/bfaca44240620be2f3092c294fb22fbe/\", waiting until \"domcontentloaded\"\n"
+          "error": "challenge page"
         },
         {
           "method": "flaresolverr",
-          "elapsed_ms": 12683,
+          "elapsed_ms": 52153,
           "status": 200,
-          "bytes": 48960,
+          "bytes": 55384,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 55764,
-      "php_cpu_seconds": 0.047732,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 52227,
+      "php_cpu_seconds": 0.013983,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -974,7 +939,7 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 2147,
+          "elapsed_ms": 1354,
           "status": 200,
           "bytes": 21799,
           "challenge": true,
@@ -983,17 +948,17 @@
         },
         {
           "method": "playwright",
-          "elapsed_ms": 5636,
+          "elapsed_ms": 5587,
           "status": 200,
-          "bytes": 52749,
+          "bytes": 52441,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 7975,
-      "php_cpu_seconds": 0.059881,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 7119,
+      "php_cpu_seconds": 0.043325,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -1021,7 +986,7 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 341,
+          "elapsed_ms": 275,
           "status": 200,
           "bytes": 41432,
           "challenge": false,
@@ -1029,9 +994,9 @@
           "error": null
         }
       ],
-      "wall_ms": 355,
-      "php_cpu_seconds": 0.016303,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 286,
+      "php_cpu_seconds": 0.011386,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 2,
         "expected": 2
@@ -1059,7 +1024,7 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 330,
+          "elapsed_ms": 264,
           "status": 200,
           "bytes": 46285,
           "challenge": false,
@@ -1067,9 +1032,9 @@
           "error": null
         }
       ],
-      "wall_ms": 401,
-      "php_cpu_seconds": 0.073074,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 320,
+      "php_cpu_seconds": 0.056858,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -1097,7 +1062,7 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 338,
+          "elapsed_ms": 267,
           "status": 200,
           "bytes": 53237,
           "challenge": false,
@@ -1105,9 +1070,9 @@
           "error": null
         }
       ],
-      "wall_ms": 360,
-      "php_cpu_seconds": 0.023755,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 282,
+      "php_cpu_seconds": 0.016056,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -1135,7 +1100,7 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 339,
+          "elapsed_ms": 279,
           "status": 200,
           "bytes": 52861,
           "challenge": false,
@@ -1143,9 +1108,9 @@
           "error": null
         }
       ],
-      "wall_ms": 359,
-      "php_cpu_seconds": 0.02159,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 295,
+      "php_cpu_seconds": 0.016917,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -1173,17 +1138,17 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 2778,
+          "elapsed_ms": 318,
           "status": 200,
-          "bytes": 98681,
+          "bytes": 98291,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 2796,
-      "php_cpu_seconds": 0.050239,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 327,
+      "php_cpu_seconds": 0.029778,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -1211,17 +1176,17 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 6941,
+          "elapsed_ms": 63,
           "status": 200,
-          "bytes": 189000,
+          "bytes": 189472,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 7011,
-      "php_cpu_seconds": 0.064528,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 97,
+      "php_cpu_seconds": 0.036228,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -1249,17 +1214,17 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 1917,
+          "elapsed_ms": 663,
           "status": 200,
-          "bytes": 69136,
+          "bytes": 68796,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 1966,
-      "php_cpu_seconds": 0.081523,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 693,
+      "php_cpu_seconds": 0.049849,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -1287,7 +1252,7 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 685,
+          "elapsed_ms": 412,
           "status": 200,
           "bytes": 84878,
           "challenge": false,
@@ -1295,9 +1260,9 @@
           "error": null
         }
       ],
-      "wall_ms": 729,
-      "php_cpu_seconds": 0.045253,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 433,
+      "php_cpu_seconds": 0.02219,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 2,
         "expected": 2
@@ -1325,7 +1290,7 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 1608,
+          "elapsed_ms": 272,
           "status": 403,
           "bytes": 5607,
           "challenge": true,
@@ -1333,27 +1298,18 @@
           "error": "challenge page"
         },
         {
-          "method": "playwright",
-          "elapsed_ms": 45000,
-          "status": 0,
-          "bytes": 0,
-          "challenge": false,
-          "ok": false,
-          "error": "Browser service request failed: The HTTP request timed out."
-        },
-        {
           "method": "flaresolverr",
-          "elapsed_ms": 26113,
+          "elapsed_ms": 42236,
           "status": 200,
-          "bytes": 32485,
+          "bytes": 32762,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 72744,
-      "php_cpu_seconds": 0.051684,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 42534,
+      "php_cpu_seconds": 0.043037,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -1375,41 +1331,27 @@
       "page_type": "detail",
       "sample": "detail-javme3rasy-live.html",
       "url": "https://www.javlibrary.com/en/javme3rasy.html",
-      "status": "challenge",
+      "status": "ok",
       "missing_fields": [],
-      "winning_method": null,
+      "winning_method": "http",
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 96,
-          "status": 403,
-          "bytes": 5515,
-          "challenge": true,
-          "ok": false,
-          "error": "challenge page"
-        },
-        {
-          "method": "playwright",
-          "elapsed_ms": 44998,
-          "status": 0,
-          "bytes": 0,
+          "elapsed_ms": 784,
+          "status": 200,
+          "bytes": 37269,
           "challenge": false,
-          "ok": false,
-          "error": "Browser service request failed: The HTTP request timed out."
-        },
-        {
-          "method": "flaresolverr",
-          "elapsed_ms": 60000,
-          "status": 0,
-          "bytes": 0,
-          "challenge": false,
-          "ok": false,
-          "error": "FlareSolverr request failed: The HTTP request timed out."
+          "ok": true,
+          "error": null
         }
       ],
-      "wall_ms": 105103,
-      "php_cpu_seconds": 0.010253,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 807,
+      "php_cpu_seconds": 0.025195,
+      "php_peak_rss_bytes": 37748736,
+      "coverage": {
+        "found": 2,
+        "expected": 2
+      },
       "resources": {
         "node": {
           "cpu_seconds": 0,
@@ -1427,41 +1369,27 @@
       "page_type": "detail",
       "sample": "detail-javme3tuqi-rated.html",
       "url": "https://www.javlibrary.com/en/javme3tuqi.html",
-      "status": "challenge",
+      "status": "ok",
       "missing_fields": [],
-      "winning_method": null,
+      "winning_method": "http",
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 78,
-          "status": 403,
-          "bytes": 5580,
-          "challenge": true,
-          "ok": false,
-          "error": "challenge page"
-        },
-        {
-          "method": "playwright",
-          "elapsed_ms": 45000,
-          "status": 0,
-          "bytes": 0,
+          "elapsed_ms": 802,
+          "status": 200,
+          "bytes": 42958,
           "challenge": false,
-          "ok": false,
-          "error": "Browser service request failed: The HTTP request timed out."
-        },
-        {
-          "method": "flaresolverr",
-          "elapsed_ms": 59998,
-          "status": 0,
-          "bytes": 0,
-          "challenge": false,
-          "ok": false,
-          "error": "FlareSolverr request failed: The HTTP request timed out."
+          "ok": true,
+          "error": null
         }
       ],
-      "wall_ms": 105083,
-      "php_cpu_seconds": 0.010057,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 829,
+      "php_cpu_seconds": 0.025813,
+      "php_peak_rss_bytes": 37748736,
+      "coverage": {
+        "found": 2,
+        "expected": 2
+      },
       "resources": {
         "node": {
           "cpu_seconds": 0,
@@ -1479,41 +1407,27 @@
       "page_type": "performer_listing",
       "sample": "performer-listing-live.html",
       "url": "https://www.javlibrary.com/en/star_list.php?prefix=A",
-      "status": "challenge",
+      "status": "ok",
       "missing_fields": [],
-      "winning_method": null,
+      "winning_method": "http",
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 90,
-          "status": 403,
-          "bytes": 5637,
-          "challenge": true,
-          "ok": false,
-          "error": "challenge page"
-        },
-        {
-          "method": "playwright",
-          "elapsed_ms": 44998,
-          "status": 0,
-          "bytes": 0,
+          "elapsed_ms": 773,
+          "status": 200,
+          "bytes": 23020,
           "challenge": false,
-          "ok": false,
-          "error": "Browser service request failed: The HTTP request timed out."
-        },
-        {
-          "method": "flaresolverr",
-          "elapsed_ms": 59998,
-          "status": 0,
-          "bytes": 0,
-          "challenge": false,
-          "ok": false,
-          "error": "FlareSolverr request failed: The HTTP request timed out."
+          "ok": true,
+          "error": null
         }
       ],
-      "wall_ms": 105095,
-      "php_cpu_seconds": 0.009252,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 789,
+      "php_cpu_seconds": 0.014885,
+      "php_peak_rss_bytes": 37748736,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
       "resources": {
         "node": {
           "cpu_seconds": 0,
@@ -1531,41 +1445,27 @@
       "page_type": "performer_detail",
       "sample": "performer-detail-ayubu-live.html",
       "url": "https://www.javlibrary.com/en/vl_star.php?s=ayubu",
-      "status": "challenge",
+      "status": "ok",
       "missing_fields": [],
-      "winning_method": null,
+      "winning_method": "http",
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 80,
-          "status": 403,
-          "bytes": 5628,
-          "challenge": true,
-          "ok": false,
-          "error": "challenge page"
-        },
-        {
-          "method": "playwright",
-          "elapsed_ms": 45001,
-          "status": 0,
-          "bytes": 0,
+          "elapsed_ms": 542,
+          "status": 200,
+          "bytes": 13789,
           "challenge": false,
-          "ok": false,
-          "error": "Browser service request failed: The HTTP request timed out."
-        },
-        {
-          "method": "flaresolverr",
-          "elapsed_ms": 59997,
-          "status": 0,
-          "bytes": 0,
-          "challenge": false,
-          "ok": false,
-          "error": "FlareSolverr request failed: The HTTP request timed out."
+          "ok": true,
+          "error": null
         }
       ],
-      "wall_ms": 105089,
-      "php_cpu_seconds": 0.01149,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 551,
+      "php_cpu_seconds": 0.008956,
+      "php_peak_rss_bytes": 37748736,
+      "coverage": {
+        "found": 3,
+        "expected": 3
+      },
       "resources": {
         "node": {
           "cpu_seconds": 0,
@@ -1589,17 +1489,17 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 1784,
+          "elapsed_ms": 714,
           "status": 200,
-          "bytes": 28884,
+          "bytes": 28667,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 1838,
-      "php_cpu_seconds": 0.064846,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 742,
+      "php_cpu_seconds": 0.061899,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -1627,17 +1527,17 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 364,
+          "elapsed_ms": 519,
           "status": 200,
-          "bytes": 15220,
+          "bytes": 15199,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 381,
-      "php_cpu_seconds": 0.010569,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 536,
+      "php_cpu_seconds": 0.014385,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 2,
         "expected": 2
@@ -1665,17 +1565,17 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 815,
+          "elapsed_ms": 617,
           "status": 200,
-          "bytes": 40138,
+          "bytes": 40170,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 846,
-      "php_cpu_seconds": 0.057252,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 646,
+      "php_cpu_seconds": 0.063818,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -1703,17 +1603,17 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 288,
+          "elapsed_ms": 276,
           "status": 200,
-          "bytes": 28397,
+          "bytes": 28418,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 342,
-      "php_cpu_seconds": 0.017854,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 305,
+      "php_cpu_seconds": 0.021613,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 2,
         "expected": 2
@@ -1741,17 +1641,17 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 8093,
+          "elapsed_ms": 1327,
           "status": 200,
-          "bytes": 89585,
+          "bytes": 89304,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 8132,
-      "php_cpu_seconds": 0.068585,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 1364,
+      "php_cpu_seconds": 0.06525,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -1779,17 +1679,17 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 611,
+          "elapsed_ms": 769,
           "status": 200,
-          "bytes": 96241,
+          "bytes": 94515,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 644,
-      "php_cpu_seconds": 0.031199,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 806,
+      "php_cpu_seconds": 0.037389,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -1817,17 +1717,17 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 1157,
+          "elapsed_ms": 557,
           "status": 200,
-          "bytes": 96241,
+          "bytes": 94515,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 1203,
-      "php_cpu_seconds": 0.046279,
-      "php_peak_rss_bytes": 12582912,
+      "wall_ms": 599,
+      "php_cpu_seconds": 0.041741,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -1855,17 +1755,17 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 1324,
+          "elapsed_ms": 790,
           "status": 200,
-          "bytes": 196110,
+          "bytes": 195128,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 1445,
-      "php_cpu_seconds": 0.071343,
-      "php_peak_rss_bytes": 14680064,
+      "wall_ms": 866,
+      "php_cpu_seconds": 0.078219,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 2,
         "expected": 2
@@ -1889,39 +1789,30 @@
       "url": "https://missav.ws/en/new",
       "status": "ok",
       "missing_fields": [],
-      "winning_method": "flaresolverr",
+      "winning_method": "playwright",
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 510,
-          "status": 403,
-          "bytes": 5919,
-          "challenge": true,
-          "ok": false,
-          "error": "challenge page"
-        },
-        {
-          "method": "playwright",
-          "elapsed_ms": 30678,
-          "status": 1,
+          "elapsed_ms": 5002,
+          "status": 0,
           "bytes": 0,
           "challenge": false,
           "ok": false,
-          "error": "page.goto: net::ERR_CONNECTION_CLOSED at https://missav.ws/en/new\nCall log:\n  - navigating to \"https://missav.ws/en/new\", waiting until \"domcontentloaded\"\n"
+          "error": "network_timeout"
         },
         {
-          "method": "flaresolverr",
-          "elapsed_ms": 58819,
+          "method": "playwright",
+          "elapsed_ms": 710,
           "status": 200,
-          "bytes": 156946,
+          "bytes": 156646,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 90248,
-      "php_cpu_seconds": 0.084815,
-      "php_peak_rss_bytes": 14680064,
+      "wall_ms": 5854,
+      "php_cpu_seconds": 0.047188,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -1949,16 +1840,16 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 142,
-          "status": 403,
-          "bytes": 5888,
-          "challenge": true,
+          "elapsed_ms": 5000,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
           "ok": false,
-          "error": "challenge page"
+          "error": "network_timeout"
         },
         {
           "method": "playwright",
-          "elapsed_ms": 30396,
+          "elapsed_ms": 30242,
           "status": 1,
           "bytes": 0,
           "challenge": false,
@@ -1967,17 +1858,17 @@
         },
         {
           "method": "flaresolverr",
-          "elapsed_ms": 47066,
+          "elapsed_ms": 8697,
           "status": 200,
-          "bytes": 377378,
+          "bytes": 381087,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 77838,
-      "php_cpu_seconds": 0.109148,
-      "php_peak_rss_bytes": 16777216,
+      "wall_ms": 44126,
+      "php_cpu_seconds": 0.080623,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 2,
         "expected": 2
@@ -2005,17 +1896,17 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 404,
+          "elapsed_ms": 208,
           "status": 200,
-          "bytes": 59682,
+          "bytes": 51399,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 436,
-      "php_cpu_seconds": 0.056008,
-      "php_peak_rss_bytes": 16777216,
+      "wall_ms": 222,
+      "php_cpu_seconds": 0.034518,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -2043,17 +1934,17 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 926,
+          "elapsed_ms": 635,
           "status": 200,
-          "bytes": 22869,
+          "bytes": 21986,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 933,
-      "php_cpu_seconds": 0.007965,
-      "php_peak_rss_bytes": 16777216,
+      "wall_ms": 640,
+      "php_cpu_seconds": 0.005631,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 2,
         "expected": 2
@@ -2081,17 +1972,17 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 813,
+          "elapsed_ms": 1095,
           "status": 200,
-          "bytes": 474957,
+          "bytes": 474975,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 848,
-      "php_cpu_seconds": 0.067739,
-      "php_peak_rss_bytes": 16777216,
+      "wall_ms": 1113,
+      "php_cpu_seconds": 0.041081,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -2119,7 +2010,7 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 319,
+          "elapsed_ms": 201,
           "status": 200,
           "bytes": 7474,
           "challenge": false,
@@ -2127,9 +2018,9 @@
           "error": null
         }
       ],
-      "wall_ms": 1002,
-      "php_cpu_seconds": 0.035648,
-      "php_peak_rss_bytes": 16777216,
+      "wall_ms": 1018,
+      "php_cpu_seconds": 0.022152,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 2,
         "expected": 2
@@ -2151,27 +2042,41 @@
       "page_type": "listing",
       "sample": "listing-page-1.html",
       "url": "https://onejav.com/new",
-      "status": "ok",
+      "status": "challenge",
       "missing_fields": [],
-      "winning_method": "http",
+      "winning_method": null,
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 4013,
-          "status": 200,
-          "bytes": 436905,
+          "elapsed_ms": 298,
+          "status": 403,
+          "bytes": 5599,
+          "challenge": true,
+          "ok": false,
+          "error": "challenge page"
+        },
+        {
+          "method": "playwright",
+          "elapsed_ms": 852,
+          "status": 403,
+          "bytes": 28523,
+          "challenge": true,
+          "ok": false,
+          "error": "playwright fetch failed"
+        },
+        {
+          "method": "flaresolverr",
+          "elapsed_ms": 52999,
+          "status": 0,
+          "bytes": 0,
           "challenge": false,
-          "ok": true,
-          "error": null
+          "ok": false,
+          "error": "FlareSolverr request failed: The HTTP request timed out."
         }
       ],
-      "wall_ms": 4064,
-      "php_cpu_seconds": 0.073773,
-      "php_peak_rss_bytes": 16777216,
-      "coverage": {
-        "found": 3,
-        "expected": 3
-      },
+      "wall_ms": 59178,
+      "php_cpu_seconds": 0.02541,
+      "php_peak_rss_bytes": 37748736,
       "resources": {
         "node": {
           "cpu_seconds": 0,
@@ -2189,36 +2094,41 @@
       "page_type": "detail",
       "sample": "detail-sample-1.html",
       "url": "https://onejav.com/torrent/ymds282",
-      "status": "ok",
+      "status": "challenge",
       "missing_fields": [],
-      "winning_method": "playwright",
+      "winning_method": null,
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 2297,
-          "status": 500,
-          "bytes": 1083,
-          "challenge": false,
+          "elapsed_ms": 71,
+          "status": 403,
+          "bytes": 5635,
+          "challenge": true,
           "ok": false,
-          "error": "unusable HTTP body"
+          "error": "challenge page"
         },
         {
           "method": "playwright",
-          "elapsed_ms": 32268,
-          "status": 200,
-          "bytes": 19239,
+          "elapsed_ms": 45001,
+          "status": 0,
+          "bytes": 0,
           "challenge": false,
-          "ok": true,
-          "error": null
+          "ok": false,
+          "error": "Browser service request failed: The HTTP request timed out."
+        },
+        {
+          "method": "flaresolverr",
+          "elapsed_ms": 14003,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "FlareSolverr request failed: The HTTP request timed out."
         }
       ],
-      "wall_ms": 35023,
-      "php_cpu_seconds": 0.013327,
-      "php_peak_rss_bytes": 16777216,
-      "coverage": {
-        "found": 2,
-        "expected": 2
-      },
+      "wall_ms": 59078,
+      "php_cpu_seconds": 0.007908,
+      "php_peak_rss_bytes": 37748736,
       "resources": {
         "node": {
           "cpu_seconds": 0,
@@ -2236,27 +2146,41 @@
       "page_type": "listing",
       "sample": "tag-fc2.html",
       "url": "https://onejav.com/tag/FC2",
-      "status": "ok",
+      "status": "challenge",
       "missing_fields": [],
-      "winning_method": "http",
+      "winning_method": null,
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 9955,
-          "status": 200,
-          "bytes": 116628,
+          "elapsed_ms": 95,
+          "status": 403,
+          "bytes": 5611,
+          "challenge": true,
+          "ok": false,
+          "error": "challenge page"
+        },
+        {
+          "method": "playwright",
+          "elapsed_ms": 6098,
+          "status": 403,
+          "bytes": 28556,
+          "challenge": true,
+          "ok": false,
+          "error": "playwright fetch failed"
+        },
+        {
+          "method": "flaresolverr",
+          "elapsed_ms": 52999,
+          "status": 0,
+          "bytes": 0,
           "challenge": false,
-          "ok": true,
-          "error": null
+          "ok": false,
+          "error": "FlareSolverr request failed: The HTTP request timed out."
         }
       ],
-      "wall_ms": 9971,
-      "php_cpu_seconds": 0.016883,
-      "php_peak_rss_bytes": 16777216,
-      "coverage": {
-        "found": 3,
-        "expected": 3
-      },
+      "wall_ms": 59325,
+      "php_cpu_seconds": 0.007225,
+      "php_peak_rss_bytes": 37748736,
       "resources": {
         "node": {
           "cpu_seconds": 0,
@@ -2280,17 +2204,17 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 2899,
+          "elapsed_ms": 4172,
           "status": 200,
-          "bytes": 182858,
+          "bytes": 182528,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 2959,
-      "php_cpu_seconds": 0.083782,
-      "php_peak_rss_bytes": 16777216,
+      "wall_ms": 4212,
+      "php_cpu_seconds": 0.057987,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -2314,39 +2238,21 @@
       "url": "https://my.tokyo-hot.com/product/",
       "status": "ok",
       "missing_fields": [],
-      "winning_method": "flaresolverr",
+      "winning_method": "http",
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 20002,
-          "status": 0,
-          "bytes": 0,
-          "challenge": false,
-          "ok": false,
-          "error": "network_timeout"
-        },
-        {
-          "method": "playwright",
-          "elapsed_ms": 45001,
-          "status": 0,
-          "bytes": 0,
-          "challenge": false,
-          "ok": false,
-          "error": "Browser service request failed: The HTTP request timed out."
-        },
-        {
-          "method": "flaresolverr",
-          "elapsed_ms": 6568,
+          "elapsed_ms": 2976,
           "status": 200,
-          "bytes": 171259,
+          "bytes": 159336,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 71664,
-      "php_cpu_seconds": 0.096677,
-      "php_peak_rss_bytes": 16777216,
+      "wall_ms": 3022,
+      "php_cpu_seconds": 0.047386,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -2374,17 +2280,17 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 5128,
+          "elapsed_ms": 1651,
           "status": 200,
-          "bytes": 152774,
+          "bytes": 152728,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 5175,
-      "php_cpu_seconds": 0.074145,
-      "php_peak_rss_bytes": 16777216,
+      "wall_ms": 1675,
+      "php_cpu_seconds": 0.025207,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 2,
         "expected": 2
@@ -2412,17 +2318,17 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 2173,
+          "elapsed_ms": 800,
           "status": 200,
-          "bytes": 135297,
+          "bytes": 135251,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 2194,
-      "php_cpu_seconds": 0.023362,
-      "php_peak_rss_bytes": 16777216,
+      "wall_ms": 820,
+      "php_cpu_seconds": 0.020464,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 2,
         "expected": 2
@@ -2444,13 +2350,13 @@
       "page_type": "gallery",
       "sample": "gallery-yuna-ishikawa.html",
       "url": "https://warashi-asian-pornstars.fr/en/s-7-0/yuna-ishikawa/female-asian-pornstar/photo-gallery/56092",
-      "status": "timeout",
+      "status": "challenge",
       "missing_fields": [],
       "winning_method": null,
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 3532,
+          "elapsed_ms": 3587,
           "status": 0,
           "bytes": 0,
           "challenge": false,
@@ -2459,7 +2365,7 @@
         },
         {
           "method": "http",
-          "elapsed_ms": 3546,
+          "elapsed_ms": 3165,
           "status": 0,
           "bytes": 0,
           "challenge": false,
@@ -2468,35 +2374,35 @@
         },
         {
           "method": "http",
-          "elapsed_ms": 5001,
+          "elapsed_ms": 3203,
           "status": 0,
           "bytes": 0,
           "challenge": false,
           "ok": false,
-          "error": "network_timeout"
+          "error": "network_error"
         },
         {
           "method": "playwright",
-          "elapsed_ms": 44997,
-          "status": 0,
+          "elapsed_ms": 10659,
+          "status": 1,
           "bytes": 0,
           "challenge": false,
           "ok": false,
-          "error": "Browser service request failed: The HTTP request timed out."
+          "error": "page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://warashi-asian-pornstars.fr/en/s-7-0/yuna-ishikawa/female-asian-pornstar/photo-gallery/56092\nCall log:\n  - navigating to \"https://warashi-asian-pornstars.fr/en/s-7-0/yuna-ishikawa/female-asian-pornstar/photo-gallery/56092\", waiting until \"domcontentloaded\"\n"
         },
         {
           "method": "flaresolverr",
-          "elapsed_ms": 8058,
+          "elapsed_ms": 24386,
           "status": 0,
           "bytes": 0,
           "challenge": true,
           "ok": false,
-          "error": "Error: Error solving the challenge. Message: unknown error: net::ERR_CONNECTION_REFUSED\\n  (Session info: chrome=153.0.8010.0)\\nStacktrace:\\n#0 0x5a416b6ae9fa <unknown>\\n#1 0x5a416afe45b9 <unknown>\\n#2 0x5a416afdb44a <unknown>\\n#3 0x5a416afcc4b1 <unknown>\\n#4 0x5a416afce1f0 <unknown>\\n#5 0x5a416afcc99a <unknown>\\n#6 0x5a416afcc038 <unknown>\\n#7 0x5a416afcbc56 <unknown>\\n#8 0x5a416afc9890 <unknown>\\n#9 0x5a416afca0b0 <unknown>\\n#10 0x5a416afe8041 <unknown>\\n#11 0x5a416b0855cb <unknown>\\n#12 0x5a416b0848de <unknown>\\n#13 0x5a416b02db8b <unknown>\\n#14 0x5a416b02e971 <unknown>\\n#15 0x5a416b671667 <unknown>\\n#16 0x5a416b66fe95 <unknown>\\n#17 0x5a416b65af55 <unknown>\\n#18 0x5a416b670aea <unknown>\\n#19 0x5a416b6436c9 <unknown>\\n#20 0x5a416b6989a8 <unknown>\\n#21 0x5a416b698b45 <unknown>\\n#22 0x5a416b6ad353 <unknown>\\n#23 0x750efc09cb84 <unknown>\\n#24 0x750efc129ecc <unknown>\\n"
+          "error": "Error: Error solving the challenge. Message: unknown error: net::ERR_CONNECTION_REFUSED\\n  (Session info: chrome=153.0.8010.0)\\nStacktrace:\\n#0 0x622e6db979fa <unknown>\\n#1 0x622e6d4cd5b9 <unknown>\\n#2 0x622e6d4c444a <unknown>\\n#3 0x622e6d4b54b1 <unknown>\\n#4 0x622e6d4b71f0 <unknown>\\n#5 0x622e6d4b599a <unknown>\\n#6 0x622e6d4b5038 <unknown>\\n#7 0x622e6d4b4c56 <unknown>\\n#8 0x622e6d4b2890 <unknown>\\n#9 0x622e6d4b30b0 <unknown>\\n#10 0x622e6d4d1041 <unknown>\\n#11 0x622e6d56e5cb <unknown>\\n#12 0x622e6d56d8de <unknown>\\n#13 0x622e6d516b8b <unknown>\\n#14 0x622e6d517971 <unknown>\\n#15 0x622e6db5a667 <unknown>\\n#16 0x622e6db58e95 <unknown>\\n#17 0x622e6db43f55 <unknown>\\n#18 0x622e6db59aea <unknown>\\n#19 0x622e6db2c6c9 <unknown>\\n#20 0x622e6db819a8 <unknown>\\n#21 0x622e6db81b45 <unknown>\\n#22 0x622e6db96353 <unknown>\\n#23 0x7fcfab89cb84 <unknown>\\n#24 0x7fcfab929ecc <unknown>\\n"
         }
       ],
-      "wall_ms": 67739,
-      "php_cpu_seconds": 0.010623,
-      "php_peak_rss_bytes": 16777216,
+      "wall_ms": 47008,
+      "php_cpu_seconds": 0.008863,
+      "php_peak_rss_bytes": 37748736,
       "resources": {
         "node": {
           "cpu_seconds": 0,
@@ -2514,13 +2420,13 @@
       "page_type": "performer_listing",
       "sample": "listing_page1.html",
       "url": "https://warashi-asian-pornstars.fr/en/s-2-2/female-pornstars/toutes/all/page/1",
-      "status": "timeout",
+      "status": "challenge",
       "missing_fields": [],
       "winning_method": null,
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 3610,
+          "elapsed_ms": 3220,
           "status": 0,
           "bytes": 0,
           "challenge": false,
@@ -2529,35 +2435,44 @@
         },
         {
           "method": "http",
-          "elapsed_ms": 4999,
+          "elapsed_ms": 3276,
           "status": 0,
           "bytes": 0,
           "challenge": false,
           "ok": false,
-          "error": "network_timeout"
+          "error": "network_error"
+        },
+        {
+          "method": "http",
+          "elapsed_ms": 3178,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "network_error"
         },
         {
           "method": "playwright",
-          "elapsed_ms": 45003,
-          "status": 0,
+          "elapsed_ms": 10656,
+          "status": 1,
           "bytes": 0,
           "challenge": false,
           "ok": false,
-          "error": "Browser service request failed: The HTTP request timed out."
+          "error": "page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://warashi-asian-pornstars.fr/en/s-2-2/female-pornstars/toutes/all/page/1\nCall log:\n  - navigating to \"https://warashi-asian-pornstars.fr/en/s-2-2/female-pornstars/toutes/all/page/1\", waiting until \"domcontentloaded\"\n"
         },
         {
           "method": "flaresolverr",
-          "elapsed_ms": 2212,
+          "elapsed_ms": 26308,
           "status": 0,
           "bytes": 0,
           "challenge": true,
           "ok": false,
-          "error": "Error: Error solving the challenge. Message: unknown error: net::ERR_CONNECTION_REFUSED\\n  (Session info: chrome=153.0.8010.0)\\nStacktrace:\\n#0 0x5671e289c9fa <unknown>\\n#1 0x5671e21d25b9 <unknown>\\n#2 0x5671e21c944a <unknown>\\n#3 0x5671e21ba4b1 <unknown>\\n#4 0x5671e21bc1f0 <unknown>\\n#5 0x5671e21ba99a <unknown>\\n#6 0x5671e21ba038 <unknown>\\n#7 0x5671e21b9c56 <unknown>\\n#8 0x5671e21b7890 <unknown>\\n#9 0x5671e21b80b0 <unknown>\\n#10 0x5671e21d6041 <unknown>\\n#11 0x5671e22735cb <unknown>\\n#12 0x5671e22728de <unknown>\\n#13 0x5671e221bb8b <unknown>\\n#14 0x5671e221c971 <unknown>\\n#15 0x5671e285f667 <unknown>\\n#16 0x5671e285de95 <unknown>\\n#17 0x5671e2848f55 <unknown>\\n#18 0x5671e285eaea <unknown>\\n#19 0x5671e28316c9 <unknown>\\n#20 0x5671e28869a8 <unknown>\\n#21 0x5671e2886b45 <unknown>\\n#22 0x5671e289b353 <unknown>\\n#23 0x7880fa69cb84 <unknown>\\n#24 0x7880fa729ecc <unknown>\\n"
+          "error": "Error: Error solving the challenge. Message: unknown error: net::ERR_CONNECTION_REFUSED\\n  (Session info: chrome=153.0.8010.0)\\nStacktrace:\\n#0 0x5f78304699fa <unknown>\\n#1 0x5f782fd9f5b9 <unknown>\\n#2 0x5f782fd9644a <unknown>\\n#3 0x5f782fd874b1 <unknown>\\n#4 0x5f782fd891f0 <unknown>\\n#5 0x5f782fd8799a <unknown>\\n#6 0x5f782fd87038 <unknown>\\n#7 0x5f782fd86c56 <unknown>\\n#8 0x5f782fd84890 <unknown>\\n#9 0x5f782fd850b0 <unknown>\\n#10 0x5f782fda3041 <unknown>\\n#11 0x5f782fe405cb <unknown>\\n#12 0x5f782fe3f8de <unknown>\\n#13 0x5f782fde8b8b <unknown>\\n#14 0x5f782fde9971 <unknown>\\n#15 0x5f783042c667 <unknown>\\n#16 0x5f783042ae95 <unknown>\\n#17 0x5f7830415f55 <unknown>\\n#18 0x5f783042baea <unknown>\\n#19 0x5f78303fe6c9 <unknown>\\n#20 0x5f78304539a8 <unknown>\\n#21 0x5f7830453b45 <unknown>\\n#22 0x5f7830468353 <unknown>\\n#23 0x7e92b5e9cb84 <unknown>\\n#24 0x7e92b5f29ecc <unknown>\\n"
         }
       ],
-      "wall_ms": 56681,
-      "php_cpu_seconds": 0.00854,
-      "php_peak_rss_bytes": 16777216,
+      "wall_ms": 49037,
+      "php_cpu_seconds": 0.007619,
+      "php_peak_rss_bytes": 37748736,
       "resources": {
         "node": {
           "cpu_seconds": 0,
@@ -2575,41 +2490,59 @@
       "page_type": "performer_detail",
       "sample": "detail_yua_mikami.html",
       "url": "https://warashi-asian-pornstars.fr/en/s-2-0/yua-mikami/asian-female-pornstar/1234",
-      "status": "timeout",
+      "status": "challenge",
       "missing_fields": [],
       "winning_method": null,
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 5002,
+          "elapsed_ms": 3168,
           "status": 0,
           "bytes": 0,
           "challenge": false,
           "ok": false,
-          "error": "network_timeout"
+          "error": "network_error"
+        },
+        {
+          "method": "http",
+          "elapsed_ms": 3200,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "network_error"
+        },
+        {
+          "method": "http",
+          "elapsed_ms": 3260,
+          "status": 0,
+          "bytes": 0,
+          "challenge": false,
+          "ok": false,
+          "error": "network_error"
         },
         {
           "method": "playwright",
-          "elapsed_ms": 44998,
-          "status": 0,
+          "elapsed_ms": 10936,
+          "status": 1,
           "bytes": 0,
           "challenge": false,
           "ok": false,
-          "error": "Browser service request failed: The HTTP request timed out."
+          "error": "page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://warashi-asian-pornstars.fr/en/s-2-0/yua-mikami/asian-female-pornstar/1234\nCall log:\n  - navigating to \"https://warashi-asian-pornstars.fr/en/s-2-0/yua-mikami/asian-female-pornstar/1234\", waiting until \"domcontentloaded\"\n"
         },
         {
           "method": "flaresolverr",
-          "elapsed_ms": 2291,
+          "elapsed_ms": 30256,
           "status": 0,
           "bytes": 0,
           "challenge": true,
           "ok": false,
-          "error": "Error: Error solving the challenge. Message: unknown error: net::ERR_CONNECTION_REFUSED\\n  (Session info: chrome=153.0.8010.0)\\nStacktrace:\\n#0 0x61f4141ea9fa <unknown>\\n#1 0x61f413b205b9 <unknown>\\n#2 0x61f413b1744a <unknown>\\n#3 0x61f413b084b1 <unknown>\\n#4 0x61f413b0a1f0 <unknown>\\n#5 0x61f413b0899a <unknown>\\n#6 0x61f413b08038 <unknown>\\n#7 0x61f413b07c56 <unknown>\\n#8 0x61f413b05890 <unknown>\\n#9 0x61f413b060b0 <unknown>\\n#10 0x61f413b24041 <unknown>\\n#11 0x61f413bc15cb <unknown>\\n#12 0x61f413bc08de <unknown>\\n#13 0x61f413b69b8b <unknown>\\n#14 0x61f413b6a971 <unknown>\\n#15 0x61f4141ad667 <unknown>\\n#16 0x61f4141abe95 <unknown>\\n#17 0x61f414196f55 <unknown>\\n#18 0x61f4141acaea <unknown>\\n#19 0x61f41417f6c9 <unknown>\\n#20 0x61f4141d49a8 <unknown>\\n#21 0x61f4141d4b45 <unknown>\\n#22 0x61f4141e9353 <unknown>\\n#23 0x773b7829cb84 <unknown>\\n#24 0x773b78329ecc <unknown>\\n"
+          "error": "Error: Error solving the challenge. Message: unknown error: net::ERR_CONNECTION_REFUSED\\n  (Session info: chrome=153.0.8010.0)\\nStacktrace:\\n#0 0x5c8e4d34f9fa <unknown>\\n#1 0x5c8e4cc855b9 <unknown>\\n#2 0x5c8e4cc7c44a <unknown>\\n#3 0x5c8e4cc6d4b1 <unknown>\\n#4 0x5c8e4cc6f1f0 <unknown>\\n#5 0x5c8e4cc6d99a <unknown>\\n#6 0x5c8e4cc6d038 <unknown>\\n#7 0x5c8e4cc6cc56 <unknown>\\n#8 0x5c8e4cc6a890 <unknown>\\n#9 0x5c8e4cc6b0b0 <unknown>\\n#10 0x5c8e4cc89041 <unknown>\\n#11 0x5c8e4cd265cb <unknown>\\n#12 0x5c8e4cd258de <unknown>\\n#13 0x5c8e4ccceb8b <unknown>\\n#14 0x5c8e4cccf971 <unknown>\\n#15 0x5c8e4d312667 <unknown>\\n#16 0x5c8e4d310e95 <unknown>\\n#17 0x5c8e4d2fbf55 <unknown>\\n#18 0x5c8e4d311aea <unknown>\\n#19 0x5c8e4d2e46c9 <unknown>\\n#20 0x5c8e4d3399a8 <unknown>\\n#21 0x5c8e4d339b45 <unknown>\\n#22 0x5c8e4d34e353 <unknown>\\n#23 0x748d61e9cb84 <unknown>\\n#24 0x748d61f29ecc <unknown>\\n"
         }
       ],
-      "wall_ms": 52298,
-      "php_cpu_seconds": 0.007653,
-      "php_peak_rss_bytes": 16777216,
+      "wall_ms": 53072,
+      "php_cpu_seconds": 0.007921,
+      "php_peak_rss_bytes": 37748736,
       "resources": {
         "node": {
           "cpu_seconds": 0,
@@ -2633,17 +2566,17 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 1950,
+          "elapsed_ms": 2065,
           "status": 200,
-          "bytes": 115243,
+          "bytes": 115189,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 1999,
-      "php_cpu_seconds": 0.078143,
-      "php_peak_rss_bytes": 16777216,
+      "wall_ms": 2128,
+      "php_cpu_seconds": 0.092212,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -2671,7 +2604,7 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 1084,
+          "elapsed_ms": 419,
           "status": 200,
           "bytes": 63977,
           "challenge": false,
@@ -2679,9 +2612,9 @@
           "error": null
         }
       ],
-      "wall_ms": 1104,
-      "php_cpu_seconds": 0.019509,
-      "php_peak_rss_bytes": 16777216,
+      "wall_ms": 435,
+      "php_cpu_seconds": 0.018514,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 2,
         "expected": 2
@@ -2709,7 +2642,7 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 1752,
+          "elapsed_ms": 1020,
           "status": 200,
           "bytes": 69437,
           "challenge": false,
@@ -2717,9 +2650,9 @@
           "error": null
         }
       ],
-      "wall_ms": 1767,
-      "php_cpu_seconds": 0.045133,
-      "php_peak_rss_bytes": 16777216,
+      "wall_ms": 1034,
+      "php_cpu_seconds": 0.047878,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 2,
         "expected": 2
@@ -2747,7 +2680,7 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 1265,
+          "elapsed_ms": 639,
           "status": 200,
           "bytes": 95489,
           "challenge": false,
@@ -2755,9 +2688,9 @@
           "error": null
         }
       ],
-      "wall_ms": 1295,
-      "php_cpu_seconds": 0.031033,
-      "php_peak_rss_bytes": 16777216,
+      "wall_ms": 671,
+      "php_cpu_seconds": 0.033255,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -2785,17 +2718,17 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 3477,
+          "elapsed_ms": 436,
           "status": 200,
-          "bytes": 59424,
+          "bytes": 58685,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 3495,
-      "php_cpu_seconds": 0.018859,
-      "php_peak_rss_bytes": 16777216,
+      "wall_ms": 446,
+      "php_cpu_seconds": 0.011437,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -2823,17 +2756,17 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 2316,
+          "elapsed_ms": 1578,
           "status": 200,
-          "bytes": 63288,
+          "bytes": 62549,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 2335,
-      "php_cpu_seconds": 0.018956,
-      "php_peak_rss_bytes": 16777216,
+      "wall_ms": 1587,
+      "php_cpu_seconds": 0.011659,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -2861,17 +2794,17 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 1482,
+          "elapsed_ms": 565,
           "status": 200,
-          "bytes": 90301,
+          "bytes": 89561,
           "challenge": false,
           "ok": true,
           "error": null
         }
       ],
-      "wall_ms": 1522,
-      "php_cpu_seconds": 0.04271,
-      "php_peak_rss_bytes": 16777216,
+      "wall_ms": 586,
+      "php_cpu_seconds": 0.021662,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -2899,7 +2832,7 @@
       "attempts": [
         {
           "method": "http",
-          "elapsed_ms": 1198,
+          "elapsed_ms": 499,
           "status": 200,
           "bytes": 85793,
           "challenge": false,
@@ -2907,9 +2840,9 @@
           "error": null
         }
       ],
-      "wall_ms": 1224,
-      "php_cpu_seconds": 0.028001,
-      "php_peak_rss_bytes": 16777216,
+      "wall_ms": 521,
+      "php_cpu_seconds": 0.023252,
+      "php_peak_rss_bytes": 37748736,
       "coverage": {
         "found": 3,
         "expected": 3
@@ -2928,32 +2861,32 @@
   ],
   "summary": {
     "total": 68,
-    "pass": 58,
+    "pass": 57,
     "statuses": {
-      "ok": 58,
-      "timeout": 6,
-      "challenge": 4
+      "ok": 57,
+      "timeout": 2,
+      "challenge": 9
     },
-    "p50_ms": 2216,
-    "p95_ms": 105089,
+    "p50_ms": 915,
+    "p95_ms": 59078,
     "methods": {
       "http": {
-        "samples": 48,
+        "samples": 51,
         "cpu_seconds": 0,
         "peak_rss_bytes": 0
       },
       "none": {
-        "samples": 9,
-        "cpu_seconds": 0,
-        "peak_rss_bytes": 0
-      },
-      "playwright": {
-        "samples": 3,
+        "samples": 11,
         "cpu_seconds": 0,
         "peak_rss_bytes": 0
       },
       "flaresolverr": {
-        "samples": 8,
+        "samples": 4,
+        "cpu_seconds": 0,
+        "peak_rss_bytes": 0
+      },
+      "playwright": {
+        "samples": 2,
         "cpu_seconds": 0,
         "peak_rss_bytes": 0
       }
