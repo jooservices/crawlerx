@@ -29,8 +29,15 @@ Every sample reports exactly one status: `ok`, `parse_failed`, `challenge`,
 Only `ok` is a pass, so the command exits non-zero for any other status.
 
 Reports are written to `build/canary/<git-sha>-<timestamp>.json` and `.md`.
+For a published status refresh, copy the full run's JSON report to
+`docs/testing/canary-latest.json` and update `canary-status.md` from that same
+report. Preserve the measured code revision and timestamp; a later documentation
+commit does not change which revision was tested. Do not publish the empty
+reports produced by the runner's unit tests as live results.
 The JSON includes the winning method, every attempt, wall time, PHP CPU and
 peak memory, and Docker `node`/`flaresolverr` CPU and peak RSS deltas.
+Resource counters only cover containers visible to the runner's local Docker
+probe; zero counters do not measure the load of remote Dev VM services.
 
 After each full run, update
 [`canary-status.md`](./canary-status.md) with the status, missing fields, and

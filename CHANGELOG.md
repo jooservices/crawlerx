@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Recognize removed AVfanProfiles pages, refresh its live profile sample, and wait for DUGA product content rather than navigation links (JOOXCR-260).
 - Try the proven solver before a slow browser on Jable/JAVLibrary, and let the canary use project-configured browser endpoints (JOOXCR-260).
 
+### Documentation
+
+- Canary: refresh the 1.4.x status after the fetch-budget and source-fallback changes (57/68 samples pass), and publish the observed failures in `docs/testing/canary-latest.json`. Shared-service load is a possible, unconfirmed timing factor (JOOXCR-182).
+
 ## [1.4.2] - 2026-10-24
 
 ### Documentation
