@@ -262,6 +262,7 @@ final class FetchFallbackChain
             }
 
             if ($result->ok && $budget->remainingSeconds() <= 0.0) {
+                $attempts = $this->rejectedMeta($last, CrawlErrorCode::Timeout)->attempts;
                 break;
             }
 
