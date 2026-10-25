@@ -392,7 +392,8 @@ final class FetchFallbackChain
 
         $error ??= $challenge ? 'challenge detected' : ($status >= 400 ? 'HTTP ' . $status : null);
         if ($error !== null && $error !== '') {
-            $row['error'] = substr(preg_replace('~https?://[^\\s<>]+~i', '[url]', (str_contains($error, '<') ? 'HTML error omitted' : $error)) ?? 'fetch error', 0, 500);
+            $redacted = preg_replace('~https?://[^\\s<>]+~i', '[url]', (str_contains($error, '<') ? 'HTML error omitted' : $error)) ?? 'fetch error';
+            $row['error'] = preg_match('/\\A.{0,500}/us', $redacted, $matches) === 1 ? $matches[0] : 'fetch error';
         }
 
         return $row;

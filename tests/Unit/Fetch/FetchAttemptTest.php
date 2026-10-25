@@ -65,6 +65,7 @@ final class FetchAttemptTest extends TestCase
     {
         yield 'URL' => ['failed https://example.test?token=private', 'failed [url]'];
         yield 'HTML' => ['<html>private body</html>', 'HTML error omitted'];
+        yield 'Unicode' => [str_repeat('あ', 600), str_repeat('あ', 500)];
         yield 'long' => [str_repeat('x', 600), str_repeat('x', 500)];
     }
 

@@ -489,7 +489,7 @@ Each actual request (including HTTP retries) carries `method`, UTC `started_at`,
 `duration_ms`, nullable `http_status`, nullable `cf_mitigated`, `outcome`
 (`ok`, `error`, `skipped`), nullable `error_code`, and a short `error`.
 Legacy `elapsed_ms`, `status`, `challenge`, and `ok` keys remain available.
-Errors omit HTML bodies, redact URLs, and are capped at 500 bytes.
+Errors omit HTML bodies, redact URLs, and are capped at 500 characters without splitting UTF-8.
 Skipped entries explain missing handlers, budget exhaustion, or an earlier
 non-challenge answer. Methods after success or a terminal error are not visited.
 The fallback order and selection rules are unchanged. Header values are null
