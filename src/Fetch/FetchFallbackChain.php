@@ -208,7 +208,7 @@ final class FetchFallbackChain
                     errorCode: CrawlErrorCode::SsrfBlocked,
                     retryable: false,
                     retryAfterSeconds: null,
-                    fetch: $last->toMeta(),
+                    fetch: $this->rejectedMeta($last, CrawlErrorCode::SsrfBlocked),
                 );
             }
 
@@ -222,7 +222,7 @@ final class FetchFallbackChain
                     errorCode: CrawlErrorCode::AuthRequired,
                     retryable: false,
                     retryAfterSeconds: null,
-                    fetch: $last->toMeta(),
+                    fetch: $this->rejectedMeta($last, CrawlErrorCode::AuthRequired),
                 );
             }
 
@@ -257,7 +257,7 @@ final class FetchFallbackChain
                     errorCode: $terminal->code,
                     retryable: $terminal->retryable,
                     retryAfterSeconds: $terminal->retryAfterSeconds,
-                    fetch: $last->toMeta(),
+                    fetch: $this->rejectedMeta($last, $terminal->code),
                 );
             }
 
@@ -317,6 +317,20 @@ final class FetchFallbackChain
             retryAfterSeconds: null,
             fetch: $this->failureMeta($last, $attempts, $plan, $budget, $sawChallenge),
         );
+    }
+
+    private function rejectedMeta(FetchResultDto $result, CrawlErrorCode $code): FetchMetaDto
+    {
+        $attempts = $result->attempts;
+        $key = array_key_last($attempts);
+        if ($key !== null) {
+            $attempts[$key]['ok'] = false;
+            $attempts[$key]['outcome'] = 'error';
+            $attempts[$key]['error_code'] = $code->value;
+            $attempts[$key]['error'] = $code->value;
+        }
+
+        return $result->withAttempts($attempts)->toMeta();
     }
 
     public function cookies(): CookieHandoffStore

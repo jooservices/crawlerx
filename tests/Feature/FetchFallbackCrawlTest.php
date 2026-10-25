@@ -71,6 +71,16 @@ final class FetchFallbackCrawlTest extends TestCase
         self::assertSame([FetchMethod::ChromeStealth], $handler->attempts);
     }
 
+    public function test_parse_failure_keeps_successful_fetch_diagnostics(): void
+    {
+        $handler = $this->handler(static fn(FetchMethod $method, string $url): FetchResultDto => self::success($method, '<html><body>Performer page<div class="title-with-avatar"><div class="title-box"><h2></h2></div></div></body></html>', $url));
+        $this->useHandler($handler, [FetchMethod::Http]);
+        $outcome = CrawlerX::url('https://en.jable.tv/models/sample/')->options(new CrawlOptionsDto(fetch: new FetchOptionsDto(method: FetchMethod::Http, noFallback: true)))->tryCrawl();
+        self::assertTrue($outcome->failed());
+        self::assertSame(CrawlErrorCode::ParseFailed, $outcome->error?->code);
+        self::assertSame(['ok'], array_column($outcome->error?->fetch?->attempts ?? [], 'outcome'));
+    }
+
     public function test_explicit_chain_preserves_order(): void
     {
         $body = $this->loadFixture('onejav/detail-sample-1.html');

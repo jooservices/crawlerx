@@ -481,6 +481,8 @@ long-running workers that need to release the process-wide runtime instance.
 ### Fetch attempt diagnostics
 
 The fallback result and `CrawlFetchException::fetch` expose ordered `attempts`.
+Parse failures retain the preceding fetch metadata on `CrawlParseException::fetch`.
+Authentication walls and terminal statuses are recorded as unusable errors.
 Successful public list/item objects also expose optional `fetch` metadata;
 it is hidden from DTO serialization to preserve the existing response shape.
 Each actual request (including HTTP retries) carries `method`, UTC `started_at`,

@@ -118,7 +118,7 @@ final class CrawlRequestBuilder
         } catch (CrawlBlockedException $exception) {
             return $this->failure(CrawlErrorCode::Blocked, $exception->getMessage(), $exception->fetch);
         } catch (CrawlParseException $exception) {
-            return $this->failure(CrawlErrorCode::ParseFailed, $exception->getMessage());
+            return $this->failure(CrawlErrorCode::ParseFailed, $exception->getMessage(), $exception->fetch);
         } catch (Throwable $exception) {
             return $this->failure(CrawlErrorCode::Unknown, $exception->getMessage());
         }

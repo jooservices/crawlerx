@@ -236,6 +236,8 @@ final class FetchFallbackChainBehaviourTest extends TestCase
             self::fail('A CrawlFetchException was expected.');
         } catch (CrawlFetchException $exception) {
             self::assertSame(CrawlErrorCode::AuthRequired, $exception->errorCode);
+            self::assertSame('error', $exception->fetch?->attempts[0]['outcome']);
+            self::assertSame('auth_required', $exception->fetch?->attempts[0]['error_code']);
             self::assertFalse($exception->retryable);
         }
     }

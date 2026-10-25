@@ -15,6 +15,8 @@ use JOOservices\CrawlerX\Enums\FetchProfile;
 use JOOservices\CrawlerX\Exceptions\CrawlFetchException;
 use JOOservices\CrawlerX\Fetch\FetchFallbackChain;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
+use DateTimeImmutable;
 
 final class FetchAttemptTest extends TestCase
 {
@@ -30,6 +32,9 @@ final class FetchAttemptTest extends TestCase
         self::assertSame('challenge', $result->attempts[0]['cf_mitigated']);
         self::assertNull($result->attempts[1]['cf_mitigated']);
         self::assertNotEmpty($result->attempts[0]['started_at']);
+        self::assertInstanceOf(DateTimeImmutable::class, new DateTimeImmutable($result->attempts[0]['started_at']));
+        self::assertSame('challenge', $result->attempts[0]['error_code']);
+        self::assertNull($result->attempts[1]['error_code']);
         self::assertGreaterThanOrEqual(0, $result->attempts[0]['duration_ms']);
         self::assertSame($result->attempts, $result->toMeta()->attempts);
     }
@@ -55,10 +60,30 @@ final class FetchAttemptTest extends TestCase
         }
     }
 
-    private function handler(?\Closure $after = null): FetchMethodHandler
+    /** @return iterable<string, array{string, string}> */
+    public static function errors(): iterable
     {
-        return new class ($after) implements FetchMethodHandler {
-            public function __construct(private readonly ?\Closure $after)
+        yield 'URL' => ['failed https://example.test?token=private', 'failed [url]'];
+        yield 'HTML' => ['<html>private body</html>', 'HTML error omitted'];
+        yield 'long' => [str_repeat('x', 600), str_repeat('x', 500)];
+    }
+
+    #[DataProvider('errors')]
+    public function test_errors_are_short_and_do_not_expose_urls_or_html(string $error, string $expected): void
+    {
+        $chain = new FetchFallbackChain(['http' => $this->handler(error: $error)]);
+        try {
+            $chain->fetch('https://example.test', $this->profile(), [FetchMethod::Http]);
+            self::fail('Expected challenge failure');
+        } catch (CrawlFetchException $exception) {
+            self::assertSame($expected, $exception->fetch?->attempts[0]['error']);
+        }
+    }
+
+    private function handler(?\Closure $after = null, ?string $error = null): FetchMethodHandler
+    {
+        return new class ($after, $error) implements FetchMethodHandler {
+            public function __construct(private readonly ?\Closure $after, private readonly ?string $error)
             {
             }
             public function supports(FetchMethod $method): bool
@@ -70,7 +95,7 @@ final class FetchAttemptTest extends TestCase
                 ($this->after ?? static function (): void {
                 })();
                 $ok = $method === FetchMethod::Flaresolverr;
-                return new FetchResultDto(ok: $ok, body: '<html>page</html>', status: $ok ? 200 : 403, methodUsed: $method, elapsedMs: 3, challengeDetected: !$ok, headers: $ok ? [] : ['CF-Mitigated' => ['challenge']]);
+                return new FetchResultDto(ok: $ok, body: '<html>page</html>', status: $ok ? 200 : 403, methodUsed: $method, elapsedMs: 3, challengeDetected: !$ok, headers: $ok ? [] : ['CF-Mitigated' => ['challenge']], error: $this->error);
             }
         };
     }
