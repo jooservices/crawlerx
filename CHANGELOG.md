@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.3] - 2026-10-26
+
 ### Fixed
 
 - Bound a fetch and its fallbacks to 60 seconds by default, retain every failure attempt, and remove curl watchdog grace time (JOOXCR-260).
