@@ -62,6 +62,8 @@ final class AdapterManifestDto extends Dto
         public readonly array $soft404Markers = [],
         /** Extra wait for the page to go quiet after a ready marker appeared (pages that load data with AJAX). */
         public readonly int $settleAfterReadyMs = 0,
+        /** @var list<\JOOservices\CrawlerX\Enums\FetchMethod> */
+        public readonly array $fetchChain = [],
     ) {
     }
 

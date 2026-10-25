@@ -88,7 +88,7 @@ failures fall back to worker-local state.
 
 ## Budgets
 
-The default total budget is 150 seconds. Individual method caps are 20 seconds
+The default total budget is 60 seconds. Individual method caps are 20 seconds
 for HTTP, 45 seconds for browser methods and 60 seconds for FlareSolverr.
 `FetchOptionsDto::deadlineSeconds` can set a shorter consumer deadline; the
 browser and FlareSolverr process timeouts are bounded by the remaining method
@@ -126,3 +126,19 @@ test suite.
 | javbus | 2026-10-24 | Not a Cloudflare challenge: the site answers 200 with its "Age Verification JavBus" page until the cookie `dv=1` is sent. The profile now sends `dv=1; existmag=all` (JOOXCR-243). | flaresolverr with the cookie returns the real listing. |
 
 Re-check a source with `php artisan crawler:source-health --source=<slug>` in JavMeta before opening a new ticket.
+
+### Source method order
+
+An optional `runtime.fetch.chain` array overrides the profile's method order for
+that adapter. Explicit consumer fetch options still take precedence. Jable and
+JAVLibrary try HTTP, then FlareSolverr, then Playwright: the isolated canary
+showed browser waits consuming 45 seconds before the solver could run. HTTP
+also reuses an already established session without launching another browser.
+Other adapters retain their existing profile order.
+
+The budget includes retry backoff and host-throttle waits. Each transport receives
+at most the remaining whole seconds; curl's process watchdog has no extra grace
+period. Timeout/network failure metadata contains all completed attempts,
+transport exceptions and the first fallback skipped when the budget is spent.
+Custom fetch handlers must honor `methodTimeoutSeconds`; the chain cannot
+preempt arbitrary PHP code inside a consumer-supplied synchronous handler.

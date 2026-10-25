@@ -13,7 +13,7 @@ class FieldsTest extends TestCase
 {
     public function test_the_profile_yields_height_clean_birth_ranking_counts_and_works(): void
     {
-        $p = (new PerformerDetail($this->clientWithFixture('AvfanProfiles/detail-arisu-mai.html')))
+        $p = (new PerformerDetail($this->clientWithFixture('AvfanProfiles/detail-arisu-mai.txt')))
             ->execute(new CrawlRequestDto(url: 'https://av-fan.tokyo/actress/%E6%9C%89%E6%A0%96%E8%88%9E%E8%A1%A3.html', type: CrawlType::PerformerDetail))->meta['performer'];
 
         self::assertSame('2003/03/06', $p['birth_date_raw']);

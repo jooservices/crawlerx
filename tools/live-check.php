@@ -422,7 +422,12 @@ function runCanary(array $arguments): never
         } else {
             try {
                 $options = new CrawlOptionsDto(
-                    fetch: new FetchOptionsDto(profile: FetchProfile::Adaptive),
+                    fetch: new FetchOptionsDto(
+                        profile: FetchProfile::Adaptive,
+                        chain: $manifests[$slug]->fetchChain !== []
+                            ? new FetchChainDto($manifests[$slug]->fetchChain)
+                            : null,
+                    ),
                 );
                 $outcome = CrawlerX::url($sample->url)
                     ->site($slug)

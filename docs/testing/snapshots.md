@@ -34,3 +34,11 @@ vendor/bin/phpunit tests/Feature/Snapshots
 node --test tests/Unit/Tools/sanitizer.test.mjs
 ```
 
+
+The AVfanProfiles current sample is a minimal sanitized DOM excerpt: personal
+values and image addresses are replaced with synthetic data. The former sample
+now returns an HTTP-200 Japanese soft-404. Its historical positive response is
+retained as `detail-arisu-mai.txt` for the existing detailed parser regression
+assertions, separately from the current manifest captures. The minimal negative
+response is `detail-removed.txt` and tests fail-fast classification without
+launching a browser.
