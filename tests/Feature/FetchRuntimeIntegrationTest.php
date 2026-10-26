@@ -13,6 +13,7 @@ use JOOservices\CrawlerX\CrawlerX;
 use JOOservices\CrawlerX\CrawlerXFactory;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlOptionsDto;
+use JOOservices\CrawlerX\Dto\FetchChainDto;
 use JOOservices\CrawlerX\Dto\FetchOptionsDto;
 use JOOservices\CrawlerX\Dto\FetchResultDto;
 use JOOservices\CrawlerX\Dto\ProcessResultDto;
@@ -122,7 +123,7 @@ final class FetchRuntimeIntegrationTest extends TestCase
         ]));
 
         $result = CrawlerX::url('https://onejav.com/new')->options(new CrawlOptionsDto(
-            fetch: new FetchOptionsDto(method: FetchMethod::Playwright),
+            fetch: new FetchOptionsDto(chain: new FetchChainDto([FetchMethod::Playwright, FetchMethod::Flaresolverr])),
         ))->crawl();
 
         self::assertNotEmpty($result->items);
