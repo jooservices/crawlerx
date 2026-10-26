@@ -57,7 +57,13 @@ function collectFiles(directory) {
 function findPlaywrightVersionLiterals() {
     const findings = [];
     for (const filePath of collectFiles(root)) {
-        if (allowedManifestNames.has(filePath.split('/').pop())) {
+        const filename = filePath.split('/').pop().toLowerCase();
+        if (allowedManifestNames.has(filename)) {
+            continue;
+        }
+
+        // Changelogs record historical versions; they are not active dependency pins.
+        if (filename === 'changelog.md') {
             continue;
         }
 
