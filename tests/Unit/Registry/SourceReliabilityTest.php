@@ -24,6 +24,8 @@ class SourceReliabilityTest extends TestCase
     {
         yield 'Jable' => ['jable'];
         yield 'JAVLibrary' => ['javlibrary'];
+        yield 'OneJav' => ['onejav'];
+        yield 'MissAV' => ['missav'];
     }
 
     #[DataProvider('challengeSites')]
@@ -67,11 +69,15 @@ class SourceReliabilityTest extends TestCase
         self::assertTrue(ChallengeDetector::isUsableBody($detail, 200, $profile->readyMarkersFor(CrawlType::Detail)));
     }
 
-    public function test_unconfigured_sites_keep_the_existing_method_order(): void
+    public function test_slow_challenge_sources_try_flaresolverr_before_the_browser(): void
     {
-        $manifest = (new FileAdapterManifestRegistry())->get('onejav');
-        self::assertNotNull($manifest);
-        $profile = SiteProfileDto::fromManifest($manifest);
-        self::assertSame($profile->fetchProfile->chain(), $profile->fetchChain);
+        $registry = new FileAdapterManifestRegistry();
+
+        foreach (['onejav', 'missav'] as $slug) {
+            $manifest = $registry->get($slug);
+            self::assertNotNull($manifest);
+            $profile = SiteProfileDto::fromManifest($manifest);
+            self::assertSame([FetchMethod::Http, FetchMethod::Flaresolverr, FetchMethod::Playwright], $profile->fetchChain);
+        }
     }
 }
