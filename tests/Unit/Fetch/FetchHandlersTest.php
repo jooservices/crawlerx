@@ -212,6 +212,44 @@ final class FetchHandlersTest extends TestCase
         )->error);
     }
 
+    public function test_flaresolverr_service_error_is_not_reported_as_a_challenge(): void
+    {
+        $handler = new FlaresolverrFetchHandler(
+            new FetchRuntimeConfig(flaresolverrUrl: 'http://flare.test/v1'),
+            $this->httpClient(static fn(): ResponseInterface => new Response(200, [], json_encode([
+                'status' => 'error',
+                'message' => 'Request timed out',
+            ], JSON_THROW_ON_ERROR))),
+        );
+
+        $result = $handler->fetch('https://onejav.com/new', $this->profile(), FetchMethod::Flaresolverr);
+
+        self::assertFalse($result->ok);
+        self::assertFalse($result->challengeDetected);
+        self::assertSame(0, $result->status);
+        self::assertSame('Request timed out', $result->error);
+    }
+
+    public function test_flaresolverr_solution_with_a_challenge_page_is_still_a_challenge(): void
+    {
+        $handler = new FlaresolverrFetchHandler(
+            new FetchRuntimeConfig(flaresolverrUrl: 'http://flare.test/v1'),
+            $this->httpClient(static fn(): ResponseInterface => new Response(200, [], json_encode([
+                'status' => 'ok',
+                'solution' => [
+                    'status' => 403,
+                    'response' => '<html><title>Just a moment...</title></html>',
+                ],
+            ], JSON_THROW_ON_ERROR))),
+        );
+
+        $result = $handler->fetch('https://onejav.com/new', $this->profile(), FetchMethod::Flaresolverr);
+
+        self::assertFalse($result->ok);
+        self::assertTrue($result->challengeDetected);
+        self::assertSame(403, $result->status);
+    }
+
     public function test_http_handler_uses_client_fake_and_detects_challenges(): void
     {
         ClientBuilder::fake();
