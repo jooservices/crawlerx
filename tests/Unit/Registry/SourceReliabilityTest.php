@@ -56,6 +56,83 @@ class SourceReliabilityTest extends TestCase
         self::assertSame(['http', 'flaresolverr'], array_column($result->attempts, 'method'));
     }
 
+    public function test_slow_challenge_sources_fall_back_to_playwright_when_flaresolverr_fails(): void
+    {
+        $registry = new FileAdapterManifestRegistry();
+
+        foreach (['onejav', 'missav'] as $slug) {
+            $manifest = $registry->get($slug);
+            self::assertNotNull($manifest);
+            $profile = SiteProfileDto::fromManifest($manifest);
+            $sample = $manifest->fixtureSamples[0];
+            $body = (string) file_get_contents(ManifestFixtureCatalog::fixturePath($slug, $sample->name));
+
+            $handler = new class ($body) implements FetchMethodHandler {
+                public function __construct(private readonly string $body)
+                {
+                }
+
+                public function supports(FetchMethod $method): bool
+                {
+                    return true;
+                }
+
+                public function fetch(
+                    string $url,
+                    SiteProfileDto $profile,
+                    FetchMethod $method,
+                    ?CrawlOptionsDto $options = null,
+                ): FetchResultDto {
+                    if ($method === FetchMethod::Http) {
+                        return new FetchResultDto(
+                            ok: false,
+                            body: '<title>Just a moment...</title>',
+                            status: 403,
+                            methodUsed: $method,
+                            elapsedMs: 1,
+                            challengeDetected: true,
+                            finalUrl: $url,
+                            error: 'challenge',
+                        );
+                    }
+
+                    if ($method === FetchMethod::Flaresolverr) {
+                        return new FetchResultDto(
+                            ok: false,
+                            body: '',
+                            status: 0,
+                            methodUsed: $method,
+                            elapsedMs: 2,
+                            challengeDetected: false,
+                            finalUrl: $url,
+                            error: 'FlareSolverr timed out',
+                        );
+                    }
+
+                    return new FetchResultDto(
+                        ok: true,
+                        body: $this->body,
+                        status: 200,
+                        methodUsed: $method,
+                        elapsedMs: 3,
+                        challengeDetected: false,
+                        finalUrl: $url,
+                    );
+                }
+            };
+
+            $result = (new FetchFallbackChain([
+                FetchMethod::Http->value => $handler,
+                FetchMethod::Flaresolverr->value => $handler,
+                FetchMethod::Playwright->value => $handler,
+            ]))->fetch($sample->url, $profile, $profile->fetchChain, type: CrawlType::Listing);
+
+            self::assertTrue($result->ok);
+            self::assertSame(['http', 'flaresolverr', 'playwright'], array_column($result->attempts, 'method'));
+            self::assertSame(['error', 'error', 'ok'], array_column($result->attempts, 'outcome'));
+        }
+    }
+
     public function test_duga_waits_for_product_cards_and_its_own_title(): void
     {
         $manifest = (new FileAdapterManifestRegistry())->get('duga');
