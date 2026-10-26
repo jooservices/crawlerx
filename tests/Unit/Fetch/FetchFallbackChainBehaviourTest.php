@@ -189,7 +189,12 @@ final class FetchFallbackChainBehaviourTest extends TestCase
             $chain->fetch(self::URL, $this->profile(), [FetchMethod::Http, FetchMethod::Flaresolverr]);
             self::fail('A CrawlFetchException was expected.');
         } catch (CrawlFetchException $exception) {
-            $methods = array_column($exception->fetch?->attempts ?? [], 'method');
+            $attempts = $exception->fetch?->attempts ?? [];
+            $skipped = array_values(array_filter($attempts, static fn(array $attempt): bool => ($attempt['outcome'] ?? null) === 'skipped'));
+            self::assertCount(1, $skipped);
+            self::assertSame('flaresolverr', $skipped[0]['method']);
+            self::assertSame('earlier non-challenge answer', $skipped[0]['error']);
+            $methods = array_column(array_filter($attempts, static fn(array $attempt): bool => ($attempt['outcome'] ?? null) !== 'skipped'), 'method');
             self::assertContains('http', $methods);
             self::assertNotContains('flaresolverr', $methods);
         }
@@ -231,6 +236,8 @@ final class FetchFallbackChainBehaviourTest extends TestCase
             self::fail('A CrawlFetchException was expected.');
         } catch (CrawlFetchException $exception) {
             self::assertSame(CrawlErrorCode::AuthRequired, $exception->errorCode);
+            self::assertSame('error', $exception->fetch?->attempts[0]['outcome']);
+            self::assertSame('auth_required', $exception->fetch?->attempts[0]['error_code']);
             self::assertFalse($exception->retryable);
         }
     }

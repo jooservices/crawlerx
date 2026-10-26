@@ -12,6 +12,7 @@ use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Dto\SiteProfileDto;
 use JOOservices\CrawlerX\Enums\CrawlType;
 use JOOservices\CrawlerX\Exceptions\AdapterNotFoundException;
+use JOOservices\CrawlerX\Exceptions\CrawlParseException;
 use JOOservices\CrawlerX\Exceptions\UnsupportedUrlException;
 use JOOservices\CrawlerX\Fetch\FetchFallbackChain;
 use JOOservices\CrawlerX\Fetch\FetchPlanResolver;
@@ -68,6 +69,10 @@ final class CrawlOrchestrator
             query: $query,
         );
 
-        return $this->service->site($classified['slug'])->crawl($request);
+        try {
+            return $this->service->site($classified['slug'])->crawl($request)->withFetch($fetch->toMeta());
+        } catch (CrawlParseException $exception) {
+            throw new CrawlParseException($exception->getMessage(), $exception->getCode(), $exception, $fetch->toMeta());
+        }
     }
 }
