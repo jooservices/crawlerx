@@ -256,6 +256,7 @@ adapter's current manifest.
 | --- | --- | :---: | :---: | :---: | :---: | :---: |
 | 141Jav | `141jav` | Yes | Yes | — | — | — |
 | 1Pondo | `onepondo` | Yes | Yes | — | — | — |
+| 10Musume | `10musume` | Yes | Yes | — | — | — |
 | Aisex | `aisex` | — | — | — | Yes | Yes |
 | Avfan | `avfan` | Yes | Yes | — | — | — |
 | Avfan Profiles | `avfan_profiles` | — | — | — | Yes | Yes |

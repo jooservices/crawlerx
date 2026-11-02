@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Muramura listing and detail adapter using the shared 1Pondo-family JSON parser, with live fixtures and URL detection (JOOXCR-310).
+- Add the 10musume adapter on the shared 1Pondo-family JSON base (listing + detail) (JOOXCR-308).
+- Add the Muramura adapter on the shared 1Pondo-family JSON base (listing + detail) (JOOXCR-310).
 
 ### Changed
 
