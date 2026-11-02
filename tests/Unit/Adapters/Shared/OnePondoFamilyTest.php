@@ -62,6 +62,8 @@ class OnePondoFamilyTest extends TestCase
         self::assertSame($base . '/assets/pictures/' . $image, $detail->meta['movie']['screenshots'][0]['url']);
         $listing = $crawler->listing(new CrawlRequestDto(url: $base . '/list/'));
         self::assertStringStartsWith($base . '/videos/', $listing->items[0]->url);
+        self::assertNull($listing->pagination->totalRows);
+        self::assertSame(['currentPage', 'lastPage', 'nextPage', 'nextUrl', 'hasNextPage'], array_keys($listing->pagination->toArray()));
         self::assertSame($base . '/assets/file.jpg', $normalizer->assetUrl('/file.jpg'));
         self::assertSame($base . '/file.jpg', $normalizer->absolute($base, '//' . parse_url($base, PHP_URL_HOST) . '/file.jpg'));
     }

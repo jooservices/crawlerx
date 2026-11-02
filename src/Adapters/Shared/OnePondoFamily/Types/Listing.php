@@ -66,6 +66,7 @@ class Listing extends AbstractType implements TypeInterface
                 nextPage: $hasNextPage ? $page + 1 : null,
                 nextUrl: $hasNextPage ? $this->nextListingUrl($request->url, $page + 1) : null,
                 hasNextPage: $hasNextPage,
+                totalRows: $this->config->exposeTotalRows ? $totalRows : null,
             ),
         );
     }

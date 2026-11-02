@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add the Pacopacomama listing/detail adapter on the shared 1Pondo-family base with real JSON fixtures and public sample galleries (JOOXCR-309).
+
 ### Changed
 
 - Extract configurable 1Pondo-family JSON parsing and crawler base while preserving OnePondo DTO output (JOOXCR-307).

@@ -74,7 +74,7 @@ class Detail extends AbstractType implements TypeInterface
 
         $basename = preg_replace('/\.json$/i', '', trim(basename(trim($path, '/')), '/')) ?? '';
 
-        return preg_match('#^(\d{6}_\d{3})$#', $basename, $match) === 1 ? $match[1] : null;
+        return preg_match($this->config->movieUrlPattern, $this->normalizer->movieUrl($basename), $match) === 1 ? $match[1] : null;
     }
 
     private function detailJsonUrl(string $movieId): string

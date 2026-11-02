@@ -46,7 +46,8 @@ final class FixtureProvenanceTest extends TestCase
     public function test_fixture_directory_contains_only_registered_live_captures(): void
     {
         $registry = new FileAdapterManifestRegistry();
-        $registered = [];
+        // Secondary JSON fetched by the detail parser, not a standalone capability.
+        $registered = ['pacopacomama/gallery-110326_100.json' => true];
         $fixturesRoot = dirname(__DIR__) . '/Fixtures/';
 
         foreach ($registry->slugs() as $slug) {
