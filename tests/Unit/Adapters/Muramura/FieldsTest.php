@@ -155,6 +155,32 @@ class FieldsTest extends TestCase
         self::assertTrue($result->meta['movie']['metadata']['has_gallery']);
     }
 
+    public function test_false_muramura_gallery_flag_overrides_true_default_field(): void
+    {
+        $config = Site::config();
+        $payload = json_decode($this->loadFixture('muramura/detail-103126_1273.json'), true, flags: JSON_THROW_ON_ERROR);
+        $payload['Gallery'] = false;
+        $payload['HasGallery'] = true;
+        $client = $this->clientWithMappedResponses([
+            self::DETAIL_URL => [
+                'body' => json_encode($payload, JSON_THROW_ON_ERROR),
+                'headers' => ['Content-Type' => 'application/json'],
+            ],
+            self::GALLERY_URL => [
+                'body' => '',
+                'status' => 404,
+            ],
+        ]);
+
+        $result = (new Detail($client, new UrlNormalizer($config), new MovieRowFields($config), $config))
+            ->execute(new CrawlRequestDto(
+                url: 'https://www.muramura.tv/movies/103126_1273/',
+                type: CrawlType::Detail,
+            ));
+
+        self::assertFalse($result->meta['movie']['metadata']['has_gallery']);
+    }
+
     public function test_detail_preserves_movie_ids_with_two_digit_suffixes(): void
     {
         $config = Site::config();

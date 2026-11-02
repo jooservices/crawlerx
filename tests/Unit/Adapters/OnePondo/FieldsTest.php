@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Tests\Unit\Adapters\OnePondo;
 
+use JOOservices\CrawlerX\Adapters\OnePondo\Site;
+use JOOservices\CrawlerX\Adapters\Shared\OnePondoFamily\MovieRowFields;
 use JOOservices\CrawlerX\Adapters\OnePondo\Types\Detail;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Enums\CrawlType;
@@ -11,6 +13,13 @@ use JOOservices\CrawlerX\Tests\TestCase;
 
 class FieldsTest extends TestCase
 {
+    public function test_gallery_flag_defaults_to_has_gallery_and_preserves_true(): void
+    {
+        $fields = new MovieRowFields(Site::config());
+
+        self::assertTrue($fields->read(['HasGallery' => true])['metadata']['has_gallery']);
+    }
+
     public function test_the_movie_json_yields_both_languages_actress_ids_and_extra_data(): void
     {
         $json = $this->loadFixture('onepondo/detail-060426_001.json');

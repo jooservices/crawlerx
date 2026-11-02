@@ -19,7 +19,7 @@ final class MuramuraRouteCrawlTest extends CrawlerXTestCase
         parent::tearDown();
     }
 
-    public function test_movie_page_url_is_detected_and_crawled_from_json_fixtures(): void
+    public function test_movie_page_url_is_inferred_as_detail_without_site_or_type(): void
     {
         FixtureResponder::for('GET', 'https://www.muramura.tv/movies/103126_1273/')
             ->file('muramura/detail-103126_1273.json');
@@ -49,5 +49,29 @@ final class MuramuraRouteCrawlTest extends CrawlerXTestCase
         self::assertSame(3, $result->pagination->nextPage);
         self::assertTrue($result->pagination->hasNextPage);
         self::assertSame('103126_1273', $result->items[0]->meta['movie']['external_id']);
+    }
+
+    public function test_list_route_is_inferred_without_site_or_type(): void
+    {
+        FixtureResponder::for('GET', 'https://www.muramura.tv/list/?o=n')->file('muramura/list-newest-0.json');
+        FixtureResponder::for('GET', 'https://www.muramura.tv/dyn/phpauto/movie_lists/list_newest_0.json')
+            ->file('muramura/list-newest-0.json');
+
+        $result = CrawlerX::url('https://www.muramura.tv/list/?o=n')->crawl();
+
+        self::assertInstanceOf(CrawlListResultDto::class, $result);
+        self::assertNotEmpty($result->items);
+    }
+
+    public function test_bare_host_is_inferred_without_site_or_type(): void
+    {
+        FixtureResponder::for('GET', 'https://muramura.tv/list/?o=n')->file('muramura/list-newest-0.json');
+        FixtureResponder::for('GET', 'https://www.muramura.tv/dyn/phpauto/movie_lists/list_newest_0.json')
+            ->file('muramura/list-newest-0.json');
+
+        $result = CrawlerX::url('https://muramura.tv/list/?o=n')->crawl();
+
+        self::assertInstanceOf(CrawlListResultDto::class, $result);
+        self::assertNotEmpty($result->items);
     }
 }
