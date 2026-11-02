@@ -62,4 +62,37 @@ final class TenMusumeRouteCrawlTest extends CrawlerXTestCase
         self::assertIsArray($movie);
         self::assertSame('110326_01', $movie['external_id'] ?? null);
     }
+
+    public function test_public_list_route_is_inferred_as_listing_without_site_or_type(): void
+    {
+        FixtureResponder::for('GET', 'https://www.10musume.com/list/?o=n')->file('10musume/list-newest-0.json');
+        FixtureResponder::for('GET', self::LIST_ENDPOINT)->file('10musume/list-newest-0.json');
+
+        $result = CrawlerX::url('https://www.10musume.com/list/?o=n')->crawl();
+
+        self::assertInstanceOf(CrawlListResultDto::class, $result);
+        self::assertNotEmpty($result->items);
+    }
+
+    public function test_public_movie_url_is_inferred_as_detail_without_site_or_type(): void
+    {
+        FixtureResponder::for('GET', 'https://www.10musume.com/movies/110326_01/')->file('10musume/detail-110326_01.json');
+        FixtureResponder::for('GET', self::DETAIL_ENDPOINT)->file('10musume/detail-110326_01.json');
+
+        $result = CrawlerX::url('https://www.10musume.com/movies/110326_01/')->crawl();
+
+        self::assertInstanceOf(CrawlItemResultDto::class, $result);
+        self::assertSame('110326_01', $result->meta['movie']['external_id']);
+    }
+
+    public function test_bare_host_is_accepted_during_inference(): void
+    {
+        FixtureResponder::for('GET', 'https://10musume.com/list/?o=n')->file('10musume/list-newest-0.json');
+        FixtureResponder::for('GET', self::LIST_ENDPOINT)->file('10musume/list-newest-0.json');
+
+        $result = CrawlerX::url('https://10musume.com/list/?o=n')->crawl();
+
+        self::assertInstanceOf(CrawlListResultDto::class, $result);
+        self::assertNotEmpty($result->items);
+    }
 }
