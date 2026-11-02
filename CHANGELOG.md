@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Extract configurable 1Pondo-family JSON parsing and crawler base while preserving OnePondo DTO output (JOOXCR-307).
+
 ## [1.4.3] - 2026-10-26
 
 ### Fixed
