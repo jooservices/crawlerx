@@ -10,6 +10,7 @@ No account, token or application key is required.
 `section.article-body`, the article's product fields, and its category term.
 Actor tags become `MovieDto.performers`; list pages resolve the public tag and
 category records so actor profiles and taxonomy descriptions are retained.
+Follow-up API requests use the configured `CRAWLERX_USER_AGENT`.
 
 Release dates use ISO `YYYY-MM-DD`; WordPress post and modification dates use
 ISO 8601 timestamps. Runtime fields from WordPress remain under

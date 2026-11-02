@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Tests\Feature\Adapters;
 
+use JOOservices\Client\Client\ClientBuilder;
+use JOOservices\Client\Testing\RecordedRequest;
 use JOOservices\CrawlerX\CrawlerX;
+use JOOservices\CrawlerX\CrawlerXFactory;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Tests\CrawlerXTestCase;
@@ -16,6 +19,32 @@ final class AvWikiFieldsTest extends CrawlerXTestCase
     private const DETAIL_URL = 'https://av-wiki.net/200gana-3482/';
 
     private const DETAIL_API_URL = 'https://av-wiki.net/wp-json/wp/v2/posts?slug=200gana-3482&_embed=1';
+
+    public function test_rest_lookups_use_the_configured_crawler_user_agent(): void
+    {
+        $previousUserAgent = getenv('CRAWLERX_USER_AGENT');
+        putenv('CRAWLERX_USER_AGENT=AVWikiFixtureTest/1.0');
+        CrawlerXFactory::reset();
+
+        try {
+            $this->listingFixtures();
+            CrawlerX::url(self::LIST_URL)->crawl();
+
+            $matchingRequests = array_filter(
+                ClientBuilder::recorded(),
+                static fn(RecordedRequest $request): bool => $request->request->getUri()->getPath() === '/wp-json/wp/v2/tags'
+                    && $request->request->getHeaderLine('User-Agent') === 'AVWikiFixtureTest/1.0',
+            );
+            self::assertNotSame([], $matchingRequests);
+        } finally {
+            CrawlerXFactory::reset();
+            if (is_string($previousUserAgent)) {
+                putenv('CRAWLERX_USER_AGENT=' . $previousUserAgent);
+            } else {
+                putenv('CRAWLERX_USER_AGENT');
+            }
+        }
+    }
 
     public function test_listing_preserves_every_post_field_and_extracts_rich_tag_and_category_data(): void
     {
