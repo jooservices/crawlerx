@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Muramura listing and detail adapter using the shared 1Pondo-family JSON parser, with live fixtures and URL detection (JOOXCR-310).
+
 ### Changed
 
 - Extract configurable 1Pondo-family JSON parsing and crawler base while preserving OnePondo DTO output (JOOXCR-307).

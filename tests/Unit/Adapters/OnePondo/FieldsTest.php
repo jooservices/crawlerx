@@ -32,6 +32,7 @@ class FieldsTest extends TestCase
         self::assertSame('Hotel Concierge', $meta['series']);
         self::assertSame('ホテルコンシェルジュ', $meta['series_titles']['ja']);
         self::assertSame(666, $meta['series_id']);
+        self::assertFalse($meta['has_gallery']);
         self::assertSame(['score' => 5.0, 'scale' => 5.0, 'votes' => null], $meta['rating']);
         self::assertContains('AV女優', $meta['tags_ja']);
         self::assertStringEndsWith('1080p.mp4', $meta['sample_video_url']);
