@@ -16,7 +16,7 @@ final readonly class SiteConfig
         public string $maker,
         public string $label,
         public string $gallerySource,
-        public bool $exposeTotalRows = false,
+        public string $movieIdPattern = '#^(\d{6}_\d{3})$#',
     ) {
     }
 }

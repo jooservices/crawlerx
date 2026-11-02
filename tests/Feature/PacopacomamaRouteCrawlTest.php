@@ -47,7 +47,17 @@ final class PacopacomamaRouteCrawlTest extends CrawlerXTestCase
 
         self::assertInstanceOf(CrawlListResultDto::class, $result);
         self::assertSame(2, $result->page);
-        self::assertSame(3119, $result->pagination->totalRows);
         self::assertCount(2, $result->items);
+    }
+    public function test_bare_host_is_inferred_without_site_or_type(): void
+    {
+        $url = 'https://pacopacomama.com/list/?o=n';
+        FixtureResponder::for('GET', $url)->file('pacopacomama/list-newest-0.json');
+        FixtureResponder::for('GET', self::BASE . '/dyn/phpauto/movie_lists/list_newest_0.json')->file('pacopacomama/list-newest-0.json');
+
+        $result = CrawlerX::url($url)->crawl();
+
+        self::assertInstanceOf(CrawlListResultDto::class, $result);
+        self::assertNotEmpty($result->items);
     }
 }

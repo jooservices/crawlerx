@@ -58,4 +58,37 @@ final class OnePondoRouteCrawlTest extends CrawlerXTestCase
         self::assertIsArray($movie);
         self::assertSame('060426_001', $movie['external_id'] ?? null);
     }
+
+    public function test_public_list_route_is_inferred_as_listing_without_site_or_type(): void
+    {
+        FixtureResponder::for('GET', 'https://en.1pondo.tv/list/?o=n')->file('onepondo/list-newest-0.json');
+        FixtureResponder::for('GET', 'https://en.1pondo.tv/dyn/phpauto/movie_lists/list_newest_0.json')->file('onepondo/list-newest-0.json');
+
+        $result = CrawlerX::url('https://en.1pondo.tv/list/?o=n')->crawl();
+
+        self::assertInstanceOf(CrawlListResultDto::class, $result);
+        self::assertNotEmpty($result->items);
+    }
+
+    public function test_public_movie_url_is_inferred_as_detail_without_site_or_type(): void
+    {
+        FixtureResponder::for('GET', 'https://en.1pondo.tv/movies/060426_001/')->file('onepondo/detail-060426_001.json');
+        FixtureResponder::for('GET', self::DETAIL_ENDPOINT)->file('onepondo/detail-060426_001.json');
+
+        $result = CrawlerX::url('https://en.1pondo.tv/movies/060426_001/')->crawl();
+
+        self::assertInstanceOf(CrawlItemResultDto::class, $result);
+        self::assertSame('060426_001', $result->meta['movie']['external_id']);
+    }
+
+    public function test_bare_host_is_accepted_during_inference(): void
+    {
+        FixtureResponder::for('GET', 'https://1pondo.tv/list/?o=n')->file('onepondo/list-newest-0.json');
+        FixtureResponder::for('GET', 'https://en.1pondo.tv/dyn/phpauto/movie_lists/list_newest_0.json')->file('onepondo/list-newest-0.json');
+
+        $result = CrawlerX::url('https://1pondo.tv/list/?o=n')->crawl();
+
+        self::assertInstanceOf(CrawlListResultDto::class, $result);
+        self::assertNotEmpty($result->items);
+    }
 }

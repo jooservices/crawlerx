@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Dto;
 
 use JOOservices\Dto\Core\Dto;
-use JOOservices\Dto\Attributes\Hidden;
 
 final class CrawlPaginationDto extends Dto
 {
@@ -15,8 +14,6 @@ final class CrawlPaginationDto extends Dto
         public readonly ?int $nextPage,
         public readonly ?string $nextUrl,
         public readonly bool $hasNextPage,
-        #[Hidden]
-        public readonly ?int $totalRows = null,
     ) {
     }
 }

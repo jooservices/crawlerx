@@ -20,7 +20,7 @@ final class Site
             maker: 'Pacopacomama',
             label: 'Pacopacomama',
             gallerySource: 'pacopacomama_gallery',
-            exposeTotalRows: true,
+            movieIdPattern: '#^(\d{6}_\d{2,3})$#',
         );
     }
 }

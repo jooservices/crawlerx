@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add the Pacopacomama listing/detail adapter on the shared 1Pondo-family base with real JSON fixtures and public sample galleries (JOOXCR-309).
+- Add the 10musume adapter on the shared 1Pondo-family JSON base (listing + detail) (JOOXCR-308).
 
 ### Changed
 

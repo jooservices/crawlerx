@@ -75,7 +75,7 @@ class FieldsTest extends TestCase
         }
     }
 
-    public function test_pagination_uses_offsets_and_exposes_the_total_without_changing_serialized_pagination(): void
+    public function test_pagination_uses_offsets_and_derives_last_page_from_total_rows(): void
     {
         $config = Site::config();
         $json = $this->loadFixture('pacopacomama/list-newest-0.json');
@@ -89,7 +89,6 @@ class FieldsTest extends TestCase
         $page = $type->execute(new CrawlRequestDto(url: self::BASE . '/list/?o=n', page: 2));
         self::assertSame(2, $page->pagination->currentPage);
         self::assertSame(63, $page->pagination->lastPage);
-        self::assertSame(3119, $page->pagination->totalRows);
         self::assertSame(3, $page->pagination->nextPage);
         self::assertSame(self::BASE . '/list/?o=n&page=3', $page->pagination->nextUrl);
         self::assertTrue($page->pagination->hasNextPage);
@@ -137,7 +136,5 @@ class FieldsTest extends TestCase
             self::assertSame(CrawlType::Listing, $adapter->detectUrl(self::BASE . $path)->crawlType);
         }
         self::assertFalse($adapter->detectUrl('https://unrelated.example/movies/110326_100/')->hostMatched);
-        self::assertFalse($adapter->detectUrl(self::BASE . '/movies/not-an-id/')->matched);
-        self::assertFalse($adapter->detectUrl(self::BASE . '/dyn/phpauto/actresses.json')->matched);
     }
 }

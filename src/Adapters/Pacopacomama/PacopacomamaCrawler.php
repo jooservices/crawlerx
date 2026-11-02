@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Adapters\Pacopacomama;
 
 use JOOservices\CrawlerX\Adapters\Concerns\DetectsUrls;
-use JOOservices\CrawlerX\Adapters\Concerns\UrlDetect\PacopacomamaUrlDetectRules;
+use JOOservices\CrawlerX\Adapters\Shared\OnePondoFamily\UrlDetectRules;
 use JOOservices\CrawlerX\Adapters\Shared\OnePondoFamily\FamilyCrawler;
 use JOOservices\CrawlerX\Adapters\Shared\OnePondoFamily\SiteConfig;
 use JOOservices\CrawlerX\Contracts\UrlDetectCapable;
@@ -13,7 +13,7 @@ use JOOservices\CrawlerX\Contracts\UrlDetectCapable;
 final class PacopacomamaCrawler extends FamilyCrawler implements UrlDetectCapable
 {
     use DetectsUrls;
-    use PacopacomamaUrlDetectRules;
+    use UrlDetectRules;
 
     protected function siteConfig(): SiteConfig
     {

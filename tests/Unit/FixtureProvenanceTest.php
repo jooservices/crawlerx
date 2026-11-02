@@ -46,8 +46,7 @@ final class FixtureProvenanceTest extends TestCase
     public function test_fixture_directory_contains_only_registered_live_captures(): void
     {
         $registry = new FileAdapterManifestRegistry();
-        // Secondary JSON fetched by the detail parser, not a standalone capability.
-        $registered = ['pacopacomama/gallery-110326_100.json' => true];
+        $registered = [];
         $fixturesRoot = dirname(__DIR__) . '/Fixtures/';
 
         foreach ($registry->slugs() as $slug) {
@@ -72,7 +71,14 @@ final class FixtureProvenanceTest extends TestCase
             }
 
             $relativePath = substr($path, strlen($fixturesRoot));
-            self::assertArrayHasKey($relativePath, $registered, "Unregistered fixture: {$relativePath}");
+            if (! isset($registered[$relativePath])) {
+                // Secondary parser responses must carry independently verified provenance.
+                self::assertFileExists($path . '.meta.json', "Unregistered fixture: {$relativePath}");
+                $metadata = json_decode((string) file_get_contents($path . '.meta.json'), true, flags: JSON_THROW_ON_ERROR);
+                self::assertSame(hash_file('sha256', $path), $metadata['content_hash'] ?? null);
+                self::assertSame('detail', $metadata['target_type'] ?? null);
+                self::assertSame(200, $metadata['http_status'] ?? null);
+            }
         }
     }
 }
