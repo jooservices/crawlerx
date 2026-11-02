@@ -18,11 +18,12 @@ use JOOservices\CrawlerX\Fetch\FetchFallbackChain;
 use JOOservices\CrawlerX\Registry\FileAdapterManifestRegistry;
 use JOOservices\CrawlerX\Tests\Support\ManifestFixtureCatalog;
 use JOOservices\CrawlerX\Tools\Canary\RequiredFields;
-use PHPUnit\Framework\TestCase;
+use JOOservices\CrawlerX\Tests\CrawlerXTestCase;
+use JOOservices\CrawlerX\Tests\Support\FixtureResponder;
 
 require_once dirname(__DIR__, 3) . '/tools/canary/RequiredFields.php';
 
-final class SnapshotParseTest extends TestCase
+final class SnapshotParseTest extends CrawlerXTestCase
 {
     protected function tearDown(): void
     {
@@ -40,6 +41,7 @@ final class SnapshotParseTest extends TestCase
                 $body = file_get_contents($path);
                 self::assertIsString($body);
                 $responses[$sample->url] = $body;
+                FixtureResponder::for('GET', $sample->url)->body($body);
             }
         }
 
