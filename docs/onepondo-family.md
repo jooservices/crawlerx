@@ -40,3 +40,8 @@ rendered title, description, performer, measurements, series, date and duration
 fields. This movie has unknown age/measurements (`0`, `0-0-0`); its separate public
 review endpoint returns 404, so no rating is available for this capture. Source
 matrix and canary both pass listing/detail using HTTP.
+
+Direct JSON listing URLs retain their order and numeric offset (for example,
+`list_weekly_0.json` and `list_newest_50.json`). Pagination derives the current
+page from the payload's split size and emits the next JSON offset URL. Public
+`/list/?o=...&page=...` routes retain their existing query-based behavior.

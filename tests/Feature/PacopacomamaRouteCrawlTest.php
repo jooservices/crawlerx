@@ -60,4 +60,19 @@ final class PacopacomamaRouteCrawlTest extends CrawlerXTestCase
         self::assertInstanceOf(CrawlListResultDto::class, $result);
         self::assertNotEmpty($result->items);
     }
+    public function test_direct_json_urls_preserve_listing_kind_offset_and_next_url(): void
+    {
+        foreach (['weekly' => 0, 'newest' => 50] as $kind => $offset) {
+            CrawlerXFactory::reset();
+            $url = self::BASE . '/dyn/phpauto/movie_lists/list_' . $kind . '_' . $offset . '.json';
+            FixtureResponder::for('GET', $url)->file('pacopacomama/list-newest-0.json');
+
+            $result = CrawlerX::url($url)->crawl();
+
+            self::assertInstanceOf(CrawlListResultDto::class, $result);
+            self::assertSame(intdiv($offset, 50) + 1, $result->page);
+            self::assertSame($result->page, $result->pagination->currentPage);
+            self::assertSame(self::BASE . '/dyn/phpauto/movie_lists/list_' . $kind . '_' . ($offset + 50) . '.json', $result->pagination->nextUrl);
+        }
+    }
 }
