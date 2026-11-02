@@ -20,6 +20,7 @@ final class Site
             maker: '1Pondo',
             label: 'OnePondo',
             gallerySource: 'onepondo_gallery',
+            movieIdPattern: Selectors::MOVIE_ID_PATTERN,
         );
     }
 }

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add the 10musume adapter on the shared 1Pondo-family JSON base (listing + detail) (JOOXCR-308).
+
 ### Changed
 
 - Extract configurable 1Pondo-family JSON parsing and crawler base while preserving OnePondo DTO output (JOOXCR-307).
