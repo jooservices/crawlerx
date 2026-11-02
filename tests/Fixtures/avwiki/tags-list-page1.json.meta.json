@@ -1,0 +1,10 @@
+{
+  "source_url": "https://av-wiki.net/wp-json/wp/v2/tags?include=121544,125105,128853",
+  "final_url": "https://av-wiki.net/wp-json/wp/v2/tags?include=121544,125105,128853",
+  "captured_at": "2026-11-02T22:59:43Z",
+  "http_status": 200,
+  "content_hash": "54e65173e711f77d72166121140c0ed6f0af58ba385a1e08e45a9e8383a6300c",
+  "target_type": "supporting",
+  "fetch_method": "http",
+  "sanitized": false
+}

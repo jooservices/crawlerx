@@ -377,6 +377,10 @@ function runCanary(array $arguments): never
         }
 
         foreach ($manifest->fixtureSamples as $sample) {
+            if (in_array($sample->type, ['supporting', 'taxonomy'], true)) {
+                continue;
+            }
+
             $samples[] = [$slug, $sample];
         }
     }

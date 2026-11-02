@@ -1,0 +1,134 @@
+{
+    "slug": "avwiki",
+    "name": "AV-Wiki",
+    "version": "1.0.0",
+    "description": "Crawler for AV-Wiki's public WordPress catalog and actor taxonomy",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\AvWiki\\AvWikiCrawler",
+        "capabilities": [
+            "listing",
+            "detail"
+        ]
+    },
+    "base_url": "https://av-wiki.net",
+    "pagination": {
+        "strategy": "query",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 6,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        }
+    ],
+    "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": ["body"],
+                "detail": ["h1.entry-title"]
+            },
+            "soft404Markers": [
+                "rest_no_route",
+                "no route was found matching the URL and request method"
+            ]
+        },
+        "targetProfiles": {
+            "new": {
+                "label": "Newest",
+                "url": "https://av-wiki.net/wp-json/wp/v2/posts?per_page=100&page=1&_embed=1"
+            },
+            "detail_sample": {
+                "label": "Detail sample",
+                "url": "https://av-wiki.net/200gana-3482/"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "new",
+                "url": "https://av-wiki.net/wp-json/wp/v2/posts?per_page=100&page=1&_embed=1",
+                "paginated": true,
+                "loop": true,
+                "priority": 0,
+                "max_pages": 5,
+                "status": "paused"
+            },
+            {
+                "url_type": "detail_sample",
+                "url": "https://av-wiki.net/200gana-3482/",
+                "paginated": false,
+                "loop": true,
+                "priority": 1,
+                "status": "paused"
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://av-wiki.net/wp-json/wp/v2/posts?per_page=2&page=1&_embed=1",
+                "name": "listing-page1.json",
+                "type": "listing"
+            },
+            {
+                "url": "https://av-wiki.net/200gana-3482/",
+                "name": "detail-200gana-3482.html",
+                "type": "detail"
+            },
+            {
+                "url": "https://av-wiki.net/wp-json/wp/v2/posts?slug=200gana-3482&_embed=1",
+                "name": "detail-200gana-3482.json",
+                "type": "supporting"
+            },
+            {
+                "url": "https://av-wiki.net/wp-json/wp/v2/tags?include=121544,125105,128853",
+                "name": "tags-list-page1.json",
+                "type": "supporting"
+            },
+            {
+                "url": "https://av-wiki.net/wp-json/wp/v2/tags?include=128919",
+                "name": "tags-detail-200gana-3482.json",
+                "type": "supporting"
+            },
+            {
+                "url": "https://av-wiki.net/wp-json/wp/v2/categories?include=127889",
+                "name": "categories-list-page1.json",
+                "type": "supporting"
+            },
+            {
+                "url": "https://av-wiki.net/wp-json/wp/v2/categories?include=2858",
+                "name": "categories-detail-200gana-3482.json",
+                "type": "supporting"
+            },
+            {
+                "url": "https://av-wiki.net/wp-json/wp/v2/categories?include=2840",
+                "name": "category-maker-2840.json",
+                "type": "supporting"
+            }
+        ],
+        "defaultThrottle": {
+            "default_gap_seconds": 6,
+            "min_gap_seconds": 5,
+            "max_gap_seconds": 30
+        },
+        "browserHeaders": {
+            "Accept": "application/json,text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "ja,en-US;q=0.9,en;q=0.8"
+        },
+        "playwrightFetchEnabled": false
+    },
+    "type": "site"
+}
