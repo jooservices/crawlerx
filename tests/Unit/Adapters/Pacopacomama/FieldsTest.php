@@ -121,7 +121,7 @@ class FieldsTest extends TestCase
         self::assertSame([], $result->meta['movie']['screenshots']);
     }
 
-    public function test_manifest_registration_and_strict_url_detection(): void
+    public function test_manifest_registration_and_shared_url_detection(): void
     {
         $manifests = new FileAdapterManifestRegistry();
         $registry = new AdapterRegistry(new ClientFactory(), $manifests);

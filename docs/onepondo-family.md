@@ -33,3 +33,10 @@ release date, duration, actor names and IDs, tags and IDs, series and IDs, year,
 meta movie ID, thumbnail/cover/stream cover, availability flags, sample videos,
 and public gallery images. Duplicate source aliases and administrative/member
 payloads are excluded from the catalog DTO.
+
+Rechecked on dev-workspaces on 2026-11-03: live detail `110326_100` matches the
+fixture, and the site's JavaScript confirms the detail/gallery API paths and
+rendered title, description, performer, measurements, series, date and duration
+fields. This movie has unknown age/measurements (`0`, `0-0-0`); its separate public
+review endpoint returns 404, so no rating is available for this capture. Source
+matrix and canary both pass listing/detail using HTTP.
