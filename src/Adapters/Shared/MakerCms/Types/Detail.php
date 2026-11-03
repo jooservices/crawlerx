@@ -44,8 +44,9 @@ final class Detail extends AbstractType implements TypeInterface
                 'maker' => $this->config->maker,
                 'genres' => $genres,
                 'series' => isset($rows['シリーズ']) ? $fields->links($rows['シリーズ'], 'a[href]') : [],
+                ...(isset($rows['レーベル']) ? ['label' => $fields->links($rows['レーベル'], 'a[href]')] : []),
                 'release_links' => isset($rows['発売日']) ? $fields->links($rows['発売日'], 'a[href]') : [],
-                'director' => isset($rows['監督']) ? $fields->text($rows['監督'], '.td') : null,
+                'director' => $this->director($rows, $fields),
                 'formats' => $formats,
                 'sample_video_url' => $this->videoAttribute($body, 'src'),
                 'sample_video_poster_url' => $this->videoAttribute($body, 'poster'),
@@ -79,6 +80,14 @@ final class Detail extends AbstractType implements TypeInterface
         }
 
         return array_values($formats);
+    }
+
+    /** @param array<string, Crawler> $rows */
+    private function director(array $rows, Fields $fields): ?string
+    {
+        $director = isset($rows['監督']) ? $fields->text($rows['監督'], '.td') : null;
+
+        return $director === '---' ? null : $director;
     }
 
     private function videoAttribute(Crawler $node, string $attribute): ?string

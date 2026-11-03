@@ -50,6 +50,9 @@ final class AllAdaptersCrawlTest extends CrawlerXTestCase
         if ($fixtureRelativePath === 's1/dates.html') {
             FixtureResponder::for('GET', 'https://s1s1s1.com/works/list/date/2026-11-24')->file('s1/list-2026-11-24.html');
         }
+        if ($fixtureRelativePath === 'ideapocket/dates.html') {
+            FixtureResponder::for('GET', 'https://ideapocket.com/works/list/date/2026-12-01')->file('ideapocket/list-2026-12-01.html');
+        }
 
         FixtureResponder::for('GET', $sample->url)->file($fixtureRelativePath, $blocked ? 403 : 200);
 
