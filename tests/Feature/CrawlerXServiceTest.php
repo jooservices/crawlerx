@@ -50,6 +50,6 @@ final class CrawlerXServiceTest extends TestCase
     public function test_factory_registers_all_manifest_adapters(): void
     {
         $manifests = new FileAdapterManifestRegistry();
-        self::assertCount(32, $manifests->slugs());
+        self::assertCount(33, $manifests->slugs());
     }
 }
