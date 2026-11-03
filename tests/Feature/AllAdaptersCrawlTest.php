@@ -56,6 +56,8 @@ final class AllAdaptersCrawlTest extends CrawlerXTestCase
         }
         if ($fixtureRelativePath === 'premiumbeauty/dates.html') {
             FixtureResponder::for('GET', 'https://premium-beauty.com/works/list/date/2026-11-17')->file('premiumbeauty/list-2026-11-17.html');
+        if ($fixtureRelativePath === 'dasdas/dates.html') {
+            FixtureResponder::for('GET', 'https://dasdas.jp/works/list/date/2026-11-24')->file('dasdas/list-2026-11-24.html');
         }
         if ($fixtureRelativePath === 'attackers/dates.html') {
             FixtureResponder::for('GET', 'https://attackers.net/works/list/date/2026-12-01')->file('attackers/list-2026-12-01.html');
