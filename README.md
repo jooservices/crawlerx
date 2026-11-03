@@ -249,7 +249,7 @@ Available methods are `http`, `curl_impersonate`, `playwright`,
 
 ## Supported sites
 
-CrawlerX currently registers 34 adapters. Capabilities below come from each
+CrawlerX currently registers 35 adapters. Capabilities below come from each
 adapter's current manifest.
 
 | Site | Slug | Listing | Detail | Gallery | Performer listing | Performer detail |
@@ -258,6 +258,7 @@ adapter's current manifest.
 | S1 NO.1 STYLE | `s1` | Yes | Yes | — | — | Yes |
 | MOODYZ | `moodyz` | Yes | Yes | — | — | Yes |
 | Fitch | `fitch` | Yes | Yes | — | — | Yes |
+| ATTACKERS | `attackers` | Yes | Yes | — | — | Yes |
 | IDEAPOCKET | `ideapocket` | Yes | Yes | — | — | Yes |
 | Pacopacomama | `pacopacomama` | Yes | Yes | — | — | — |
 | 1Pondo | `onepondo` | Yes | Yes | — | — | — |
