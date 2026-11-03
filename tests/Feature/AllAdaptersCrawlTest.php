@@ -25,7 +25,7 @@ final class AllAdaptersCrawlTest extends CrawlerXTestCase
     }
 
     /**
-     * @return iterable<string, array{FixtureSampleDto, string}>
+     * @return iterable<string, array{string, FixtureSampleDto, string}>
      */
     public static function manifestSamplesProvider(): iterable
     {
@@ -33,6 +33,7 @@ final class AllAdaptersCrawlTest extends CrawlerXTestCase
             $key = $entry['slug'] . ':' . $entry['sample']->type . ':' . $entry['sample']->name;
 
             yield $key => [
+                $entry['slug'],
                 $entry['sample'],
                 ManifestFixtureCatalog::fixtureRelativePath($entry['slug'], $entry['sample']->name),
             ];
@@ -40,14 +41,43 @@ final class AllAdaptersCrawlTest extends CrawlerXTestCase
     }
 
     #[DataProvider('manifestSamplesProvider')]
-    public function test_crawlerx_crawls_manifest_fixture(FixtureSampleDto $sample, string $fixtureRelativePath): void
+    public function test_crawlerx_crawls_manifest_fixture(string $slug, FixtureSampleDto $sample, string $fixtureRelativePath): void
     {
         $fullPath = __DIR__ . '/../Fixtures/' . $fixtureRelativePath;
         self::assertFileExists($fullPath);
         $html = (string) file_get_contents($fullPath);
         $blocked = $this->isBlockedCapture($html);
 
+        if ($fixtureRelativePath === 's1/dates.html') {
+            FixtureResponder::for('GET', 'https://s1s1s1.com/works/list/date/2026-11-24')->file('s1/list-2026-11-24.html');
+        }
+        if ($fixtureRelativePath === 'ideapocket/dates.html') {
+            FixtureResponder::for('GET', 'https://ideapocket.com/works/list/date/2026-12-01')->file('ideapocket/list-2026-12-01.html');
+        }
+        if ($fixtureRelativePath === 'premiumbeauty/dates.html') {
+            FixtureResponder::for('GET', 'https://premium-beauty.com/works/list/date/2026-11-17')->file('premiumbeauty/list-2026-11-17.html');
+        }
+        if ($fixtureRelativePath === 'dasdas/dates.html') {
+            FixtureResponder::for('GET', 'https://dasdas.jp/works/list/date/2026-11-24')->file('dasdas/list-2026-11-24.html');
+        }
+        if ($fixtureRelativePath === 'attackers/dates.html') {
+            FixtureResponder::for('GET', 'https://attackers.net/works/list/date/2026-12-01')->file('attackers/list-2026-12-01.html');
+        }
+
+        if ($fixtureRelativePath === 'moodyz/dates.html') {
+            FixtureResponder::for('GET', 'https://moodyz.com/works/list/date/2026-12-01')->file('moodyz/list-2026-12-01.html');
+        }
+
+        if ($fixtureRelativePath === 'madonna/dates.html') {
+            FixtureResponder::for('GET', 'https://madonna-av.com/works/list/date/2026-12-01')->file('madonna/list-2026-12-01.html');
+        }
+
+        if ($fixtureRelativePath === 'kawaiikawaii/dates.html') {
+            FixtureResponder::for('GET', 'https://kawaiikawaii.jp/works/list/date/2026-12-01')->file('kawaiikawaii/list-2026-12-01.html');
+        }
+
         FixtureResponder::for('GET', $sample->url)->file($fixtureRelativePath, $blocked ? 403 : 200);
+        ManifestFixtureCatalog::registerSupportingResponses($slug);
 
         if ($blocked) {
             try {

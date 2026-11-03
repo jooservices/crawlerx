@@ -1,0 +1,84 @@
+<?php
+
+declare(strict_types=1);
+
+namespace JOOservices\CrawlerX\Tests\Unit\Adapters\AvWiki;
+
+use JOOservices\CrawlerX\Adapters\AvWiki\Site;
+use PHPUnit\Framework\TestCase;
+
+final class SiteTest extends TestCase
+{
+    public function test_builds_listing_api_and_pagination_urls(): void
+    {
+        self::assertSame(
+            'https://av-wiki.net/wp-json/wp/v2/posts?per_page=100&page=3&_embed=1',
+            Site::listingApiUrl('https://av-wiki.net/', 3),
+        );
+        self::assertSame(
+            'https://av-wiki.net/wp-json/wp/v2/posts?per_page=2&page=4&_embed=1',
+            Site::listingPageUrl('https://av-wiki.net/wp-json/wp/v2/posts?per_page=2&page=1&_embed=1', 4),
+        );
+        self::assertSame(2, Site::pageSize('https://av-wiki.net/wp-json/wp/v2/posts?per_page=2'));
+        self::assertSame(100, Site::pageSize('https://av-wiki.net/'));
+    }
+
+    public function test_listing_per_page_is_clamped_to_the_wordpress_limit_used_for_pagination(): void
+    {
+        self::assertSame(
+            'https://av-wiki.net/wp-json/wp/v2/posts?per_page=100&_embed=1&page=2',
+            Site::listingApiUrl('https://av-wiki.net/wp-json/wp/v2/posts?per_page=200', 2),
+        );
+        self::assertSame(
+            'https://av-wiki.net/wp-json/wp/v2/posts?per_page=100&_embed=1&page=1',
+            Site::listingApiUrl('https://av-wiki.net/wp-json/wp/v2/posts?per_page=0', 1),
+        );
+    }
+
+    public function test_builds_detail_api_urls(): void
+    {
+        self::assertSame(
+            'https://av-wiki.net/wp-json/wp/v2/posts?slug=200gana-3482&_embed=1',
+            Site::detailApiUrl('https://av-wiki.net/200gana-3482/'),
+        );
+        self::assertSame(
+            'https://av-wiki.net/wp-json/wp/v2/posts/123?_embed=1',
+            Site::detailApiUrl('https://av-wiki.net/wp-json/wp/v2/posts/123'),
+        );
+    }
+
+    public function test_maps_numeric_post_id_queries_to_the_single_post_endpoint(): void
+    {
+        self::assertSame('https://av-wiki.net/wp-json/wp/v2/posts/123?_embed=1', Site::detailApiUrl('https://av-wiki.net/?p=123'));
+        self::assertSame(
+            'https://av-wiki.net/wp-json/wp/v2/posts/456?_embed=1',
+            Site::detailApiUrl('https://av-wiki.net/wp-json/wp/v2/posts?id=456'),
+        );
+        self::assertSame(
+            'https://av-wiki.net/wp-json/wp/v2/posts?slug=abc&_embed=1',
+            Site::detailApiUrl('https://av-wiki.net/wp-json/wp/v2/posts?slug=abc'),
+        );
+    }
+
+    public function test_list_path_is_a_listing_not_a_detail_slug(): void
+    {
+        $manifests = new \JOOservices\CrawlerX\Registry\FileAdapterManifestRegistry();
+        $registry = new \JOOservices\CrawlerX\Registry\AdapterRegistry(new \JOOservices\CrawlerX\Services\ClientFactory(), $manifests);
+        $registry->registerFromManifests($manifests);
+        $adapter = $registry->resolve('avwiki');
+        self::assertInstanceOf(\JOOservices\CrawlerX\Contracts\UrlDetectCapable::class, $adapter);
+
+        self::assertSame(
+            \JOOservices\CrawlerX\Enums\CrawlType::Listing,
+            $adapter->detectUrl('https://av-wiki.net/list/')->crawlType,
+        );
+    }
+
+    public function test_resolves_absolute_and_relative_links(): void
+    {
+        self::assertSame('https://av-wiki.net/path', Site::absoluteUrl('/path'));
+        self::assertSame('https://cdn.example/image.jpg', Site::absoluteUrl('//cdn.example/image.jpg'));
+        self::assertSame('https://av-wiki.net/image.jpg', Site::absoluteUrl('image.jpg'));
+        self::assertSame('https://cdn.example/image.jpg', Site::absoluteUrl('https://cdn.example/image.jpg'));
+    }
+}

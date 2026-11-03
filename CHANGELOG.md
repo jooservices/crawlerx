@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-11-03
+
+### Added
+
+- Add the Fitch adapter on the shared Maker CMS base with complete movie, date/label/genre/series/release/reserve/search listing and actress fields, captured fixtures and URL inference (JOOXCR-356).
+- Add the ATTACKERS adapter on the shared Maker CMS base (date index, date/genre/label/series listings, movie detail, actress profile) with captured-fixture field assertions (JOOXCR-355).
+- Add the Pacopacomama listing/detail adapter on the shared 1Pondo-family base with real JSON fixtures and public sample galleries (JOOXCR-309).
+- Add the caribbeancompr adapter (English and Japanese detail, English listing) on the shared Caribbeancom listing/detail parsers through a per-site `Profile`; `caribbeancom` output is unchanged (JOOXCR-351).
+- Complete shared OnePondoFamily list/detail field extraction, retain full file/category/performer source records, and guard every family fixture against silent field loss and changes to existing DTO values (JOOXCR-360).
+- Add the 10musume adapter on the shared 1Pondo-family JSON base (listing + detail) (JOOXCR-308).
+- Add the Muramura adapter on the shared 1Pondo-family JSON base (listing + detail) (JOOXCR-310).
+- Add configurable Maker CMS family parsing with the S1 adapter, complete movie/actress metadata and captured-fixture field assertions (JOOXCR-348).
+- Add the MOODYZ adapter on the shared Maker CMS base (date index, date listing, detail, actress) using the shared `metadata.label` field (JOOXCR-352).
+- Add the Premium Beauty adapter on the shared Maker CMS base (date index, date/genre/label/series listings, movie detail with label, actress profile) with captured-fixture field assertions (JOOXCR-359).
+- Add the IDEAPOCKET adapter on the shared Maker CMS base (date index, date/genre/label/series listings, movie detail with label, actress profile) with captured-fixture field assertions (JOOXCR-353).
+- Add the DASDAS adapter on the shared Maker CMS base (date index, date/genre/label/series listings, movie detail, actress profile) with captured-fixture field assertions (JOOXCR-357).
+- Add the Madonna adapter on the shared Maker CMS base (date index, date listing, detail with label/series/formats/purchase links, actress profile) with captured-fixture field assertions (JOOXCR-354).
+- Add the kawaii* adapter on the shared Maker CMS base (date index, date listings, detail with label/series/formats/purchase links, actress profile) with captured-fixture field assertions (JOOXCR-358).
+- AV-Wiki listing and detail support, using one `_embed=1` REST request per listing page or detail post (categories and tags come from `_embedded['wp:term']`), a 45 s timeout and a 12 s host throttle for the site's per-request delay, plus captured source fixtures (JOOXCR-349).
+- Configurable `connect_timeout` (manifest `defaultCrawlConfig`) for hosts that delay the connection phase; it defaults to the previous fixed 5 s.
+
+### Changed
+
+- Extract configurable 1Pondo-family JSON parsing and crawler base while preserving OnePondo DTO output (JOOXCR-307).
+
+### Security
+
+- Upgrade `phpunit/phpunit` to 13.4.6 (CVE-2026-119193), override the `minimatch` npm dependency to 11.0.4, and ignore only the unfixable `deepmerge` advisory (GHSA-gcqx-w48m-w2h4) in `osv-scanner.toml` until 2026-12-31 (JOOXCR-320).
+
 ## [1.4.3] - 2026-10-26
 
 ### Fixed

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Dto;
 
 use JOOservices\Dto\Attributes\MapTo;
+use JOOservices\Dto\Attributes\Hidden;
 use JOOservices\Dto\Core\Dto;
 
 final class CrawlItemResultDto extends Dto
@@ -19,6 +20,8 @@ final class CrawlItemResultDto extends Dto
         public readonly array $meta = [],
         #[MapTo('next_crawl_type')]
         public readonly ?string $nextCrawlType = null,
+        #[Hidden]
+        public readonly ?FetchMetaDto $fetch = null,
     ) {
     }
 
@@ -34,6 +37,11 @@ final class CrawlItemResultDto extends Dto
             entityType: $this->entityType,
             meta: $this->meta,
             nextCrawlType: $nextCrawlType,
+            fetch: $this->fetch,
         );
+    }
+    public function withFetch(FetchMetaDto $fetch): self
+    {
+        return new self($this->url, $this->entityType, $this->meta, $this->nextCrawlType, $fetch);
     }
 }

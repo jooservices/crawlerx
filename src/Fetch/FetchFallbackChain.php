@@ -102,17 +102,18 @@ final class FetchFallbackChain
             // could not run, or a browser timed out on a page that never settles, as Cloudflare interstitials
             // do) it must still be tried, otherwise such sites report a false network error.
             if ($method === FetchMethod::Flaresolverr && ! $sawChallenge && $answered) {
+                $attempts[] = $this->attempt($method, 0, 0, false, false, 'earlier non-challenge answer', skipped: true);
                 continue;
             }
 
             if (! $budget->canStart($method)) {
-                $attempts[] = $this->attempt($method, 0, 0, false, false, 'fetch budget exhausted');
+                $attempts[] = $this->attempt($method, 0, 0, false, false, 'fetch budget exhausted', skipped: true);
                 break;
             }
 
             $handler = $this->handlers[$method->value] ?? null;
             if (! $handler instanceof FetchMethodHandler || ! $handler->supports($method)) {
-                $attempts[] = $this->attempt($method, 0, 0, false, false, 'handler not registered');
+                $attempts[] = $this->attempt($method, 0, 0, false, false, 'handler not registered', skipped: true);
                 continue;
             }
 
@@ -134,7 +135,7 @@ final class FetchFallbackChain
                 );
             } catch (Throwable $exception) {
                 $elapsed = (int) round(microtime(true) * 1000) - $started;
-                $attempts[] = $this->attempt($method, $elapsed, 0, false, false, TransientRetry::errorCode($exception));
+                $attempts[] = $this->attempt($method, $elapsed, 0, false, false, TransientRetry::errorCode($exception), started: $started);
                 $nonTerminalFailure = true;
                 continue;
             }
@@ -148,6 +149,8 @@ final class FetchFallbackChain
                     $result->challengeDetected,
                     $result->ok,
                     $result->error,
+                    started: $started,
+                    headers: $result->headers,
                 );
                 // Every answer counts, also one a later retry replaces (a 503 followed by a network error). Browser services report
                 // a failed navigation as a small non-HTTP code (for example 1), which is not an answer from the site.
@@ -188,7 +191,7 @@ final class FetchFallbackChain
                     );
                 } catch (Throwable $exception) {
                     $elapsed = (int) round(microtime(true) * 1000) - $started;
-                    $attempts[] = $this->attempt($method, $elapsed, 0, false, false, TransientRetry::errorCode($exception));
+                    $attempts[] = $this->attempt($method, $elapsed, 0, false, false, TransientRetry::errorCode($exception), started: $started);
                     $nonTerminalFailure = true;
                     break;
                 }
@@ -205,7 +208,7 @@ final class FetchFallbackChain
                     errorCode: CrawlErrorCode::SsrfBlocked,
                     retryable: false,
                     retryAfterSeconds: null,
-                    fetch: $last->toMeta(),
+                    fetch: $this->rejectedMeta($last, CrawlErrorCode::SsrfBlocked),
                 );
             }
 
@@ -219,7 +222,7 @@ final class FetchFallbackChain
                     errorCode: CrawlErrorCode::AuthRequired,
                     retryable: false,
                     retryAfterSeconds: null,
-                    fetch: $last->toMeta(),
+                    fetch: $this->rejectedMeta($last, CrawlErrorCode::AuthRequired),
                 );
             }
 
@@ -254,11 +257,12 @@ final class FetchFallbackChain
                     errorCode: $terminal->code,
                     retryable: $terminal->retryable,
                     retryAfterSeconds: $terminal->retryAfterSeconds,
-                    fetch: $last->toMeta(),
+                    fetch: $this->rejectedMeta($last, $terminal->code),
                 );
             }
 
             if ($result->ok && $budget->remainingSeconds() <= 0.0) {
+                $attempts = $this->rejectedMeta($last, CrawlErrorCode::Timeout)->attempts;
                 break;
             }
 
@@ -316,13 +320,27 @@ final class FetchFallbackChain
         );
     }
 
+    private function rejectedMeta(FetchResultDto $result, CrawlErrorCode $code): FetchMetaDto
+    {
+        $attempts = $result->attempts;
+        $key = array_key_last($attempts);
+        if ($key !== null) {
+            $attempts[$key]['ok'] = false;
+            $attempts[$key]['outcome'] = 'error';
+            $attempts[$key]['error_code'] = $code->value;
+            $attempts[$key]['error'] = $code->value;
+        }
+
+        return $result->withAttempts($attempts)->toMeta();
+    }
+
     public function cookies(): CookieHandoffStore
     {
         return $this->cookies;
     }
 
     /**
-     * @param list<array{method: string, elapsed_ms: int, status: int, challenge: bool, ok: bool, error?: string|null}> $attempts
+     * @param list<array{started_at?: string, duration_ms?: int, http_status?: ?int, cf_mitigated?: ?string, outcome?: string, error_code?: ?string, method: string, elapsed_ms: int, status: int, challenge: bool, ok: bool, error?: string|null}> $attempts
      * @param list<FetchMethod> $plan
      */
     private function failureMeta(?FetchResultDto $last, array $attempts, array $plan, FetchBudget $budget, bool $sawChallenge): FetchMetaDto
@@ -336,7 +354,8 @@ final class FetchFallbackChain
     }
 
     /**
-     * @return array{method: string, elapsed_ms: int, status: int, challenge: bool, ok: bool, error?: string|null}
+     * @param array<string, list<string>> $headers
+     * @return array{started_at: string, duration_ms: int, http_status: ?int, cf_mitigated: ?string, outcome: string, error_code: ?string, method: string, elapsed_ms: int, status: int, challenge: bool, ok: bool, error?: string|null}
      */
     private function attempt(
         FetchMethod $method,
@@ -345,8 +364,25 @@ final class FetchFallbackChain
         bool $challenge,
         bool $ok,
         ?string $error,
+        ?int $started = null,
+        array $headers = [],
+        bool $skipped = false,
     ): array {
+        $cfMitigated = null;
+        foreach ($headers as $name => $values) {
+            if (strcasecmp($name, 'cf-mitigated') === 0) {
+                $cfMitigated = substr($values[0] ?? '', 0, 255);
+            }
+        }
+        $started ??= (int) round(microtime(true) * 1000);
         $row = [
+            'started_at' => gmdate('Y-m-d\\TH:i:s', intdiv($started, 1000)) . sprintf('.%03dZ', $started % 1000),
+            'duration_ms' => max(0, (int) round(microtime(true) * 1000) - $started),
+            'http_status' => $status >= 100 && $status <= 599 ? $status : null,
+            'cf_mitigated' => $cfMitigated,
+            'outcome' => $skipped ? 'skipped' : ($ok ? 'ok' : 'error'),
+            'error_code' => $ok ? null : ($skipped ? 'skipped' : ($challenge ? 'challenge' : ($status >= 400 ? 'http_' . $status : 'fetch_error'))),
+            'error' => null,
             'method' => $method->value,
             'elapsed_ms' => $elapsedMs,
             'status' => $status,
@@ -354,8 +390,10 @@ final class FetchFallbackChain
             'ok' => $ok,
         ];
 
+        $error ??= $challenge ? 'challenge detected' : ($status >= 400 ? 'HTTP ' . $status : null);
         if ($error !== null && $error !== '') {
-            $row['error'] = $error;
+            $redacted = preg_replace('~https?://[^\\s<>]+~i', '[url]', (str_contains($error, '<') ? 'HTML error omitted' : $error)) ?? 'fetch error';
+            $row['error'] = preg_match('/\\A.{0,500}/us', $redacted, $matches) === 1 ? $matches[0] : 'fetch error';
         }
 
         return $row;

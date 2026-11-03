@@ -249,18 +249,31 @@ Available methods are `http`, `curl_impersonate`, `playwright`,
 
 ## Supported sites
 
-CrawlerX currently registers 25 adapters. Capabilities below come from each
+CrawlerX currently registers 39 adapters. Capabilities below come from each
 adapter's current manifest.
 
 | Site | Slug | Listing | Detail | Gallery | Performer listing | Performer detail |
 | --- | --- | :---: | :---: | :---: | :---: | :---: |
 | 141Jav | `141jav` | Yes | Yes | — | — | — |
+| S1 NO.1 STYLE | `s1` | Yes | Yes | — | — | Yes |
+| MOODYZ | `moodyz` | Yes | Yes | — | — | Yes |
+| Fitch | `fitch` | Yes | Yes | — | — | Yes |
+| ATTACKERS | `attackers` | Yes | Yes | — | — | Yes |
+| IDEAPOCKET | `ideapocket` | Yes | Yes | — | — | Yes |
+| Premium Beauty | `premiumbeauty` | Yes | Yes | — | — | Yes |
+| DASDAS | `dasdas` | Yes | Yes | — | — | Yes |
+| Madonna | `madonna` | Yes | Yes | — | — | Yes |
+| kawaii* | `kawaiikawaii` | Yes | Yes | — | — | Yes |
+| Pacopacomama | `pacopacomama` | Yes | Yes | — | — | — |
 | 1Pondo | `onepondo` | Yes | Yes | — | — | — |
+| 10Musume | `10musume` | Yes | Yes | — | — | — |
 | Aisex | `aisex` | — | — | — | Yes | Yes |
 | Avfan | `avfan` | Yes | Yes | — | — | — |
 | Avfan Profiles | `avfan_profiles` | — | — | — | Yes | Yes |
 | Avjoho | `avjoho` | — | — | — | Yes | Yes |
+| AV-Wiki | `avwiki` | Yes | Yes | — | — | — |
 | Caribbeancom | `caribbeancom` | Yes | Yes | — | — | — |
+| Caribbeancom Premium | `caribbeancompr` | Yes | Yes | — | — | — |
 | DUGA | `duga` | Yes | Yes | — | — | — |
 | EPORNER | `eporner` | — | — | Yes | — | — |
 | FC2 Content Market | `fc2` | Yes | Yes | — | — | — |
@@ -275,6 +288,7 @@ adapter's current manifest.
 | JavPhotos | `javphotos` | Yes | — | Yes | — | — |
 | Minnano AV | `minnanoav` | Yes | Yes | — | Yes | Yes |
 | MissAV | `missav` | Yes | Yes | — | — | — |
+| Muramura | `muramura` | Yes | Yes | — | — | — |
 | OneJav | `onejav` | Yes | Yes | — | — | — |
 | Tokyo-Hot | `tokyohot` | Yes | Yes | — | — | — |
 | Warashi | `warashi` | — | — | Yes | Yes | Yes |
@@ -477,3 +491,22 @@ CrawlerX facade
 Adapter behavior and supported page types are declared under
 `src/Adapters/*/manifest.json`. `CrawlerXFactory::reset()` is available for
 long-running workers that need to release the process-wide runtime instance.
+
+### Fetch attempt diagnostics
+
+The fallback result and `CrawlFetchException::fetch` expose ordered `attempts`.
+Parse failures retain the preceding fetch metadata on `CrawlParseException::fetch`.
+Authentication walls and terminal statuses are recorded as unusable errors.
+Successful public list/item objects also expose optional `fetch` metadata;
+it is hidden from DTO serialization to preserve the existing response shape.
+Each actual request (including HTTP retries) carries `method`, UTC `started_at`,
+`duration_ms`, nullable `http_status`, nullable `cf_mitigated`, `outcome`
+(`ok`, `error`, `skipped`), nullable `error_code`, and a short `error`.
+Legacy `elapsed_ms`, `status`, `challenge`, and `ok` keys remain available.
+Errors omit HTML bodies, redact URLs, and are capped at 500 characters without splitting UTF-8.
+Skipped entries explain missing handlers, budget exhaustion, or an earlier
+non-challenge answer. Methods after success or a terminal error are not visited.
+The fallback order and selection rules are unchanged. Header values are null
+when the handler/service does not expose them; a missing HTTP response is null.
+
+Maker CMS shared parsing and field mapping: [docs/maker-cms.md](docs/maker-cms.md).

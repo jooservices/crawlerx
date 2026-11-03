@@ -1,0 +1,56 @@
+{
+    "url": "https://fitch-av.com/search/list?keyword=DEAB010",
+    "page": 1,
+    "entity_type": "movie",
+    "items": [
+        {
+            "url": "https://fitch-av.com/works/detail/DEAB010",
+            "entity_type": "movie",
+            "meta": {
+                "movie": {
+                    "external_id": "DEAB010",
+                    "title": "瑞々しい天然素材！南の島の美少女 上原みなみAVデビュー",
+                    "code": "DEAB010",
+                    "cover_url": "https://cdn.up-timely.com/image/12/content/88419/LE8iiMgcJFXO20lvHCN7zCUXVeh9y1T6IESNNMXc.jpg",
+                    "description": null,
+                    "date": null,
+                    "duration": null,
+                    "performers": [
+                        {
+                            "external_id": "876895",
+                            "name": "上原みなみ",
+                            "name_japanese": "上原みなみ",
+                            "url": "https://fitch-av.com/actress/detail/876895",
+                            "profile_image_url": null,
+                            "birth_date_raw": null,
+                            "height_raw": null,
+                            "size_raw": null,
+                            "aliases": [],
+                            "tags": [],
+                            "raw_profile": [],
+                            "metadata": []
+                        }
+                    ],
+                    "tags": [],
+                    "screenshots": [],
+                    "metadata": {
+                        "maker": "Fitch",
+                        "performer_count": null,
+                        "badge": null,
+                        "release_group": null,
+                        "search_key": "キーワード検索結果：DEAB010",
+                        "listing_range": "全1作品中 1 〜 1 タイトルを表示"
+                    }
+                }
+            },
+            "next_crawl_type": null
+        }
+    ],
+    "pagination": {
+        "currentPage": 1,
+        "lastPage": 1,
+        "nextPage": null,
+        "nextUrl": null,
+        "hasNextPage": false
+    }
+}

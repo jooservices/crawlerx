@@ -149,6 +149,7 @@ class FetchBudgetTest extends TestCase
             self::assertSame(8000, $exception->fetch?->elapsedMs);
             self::assertNotEmpty($exception->fetch?->attempts);
             self::assertSame('http', $exception->fetch?->attempts[0]['method']);
+            self::assertSame('error', $exception->fetch?->attempts[0]['outcome']);
         }
     }
 }

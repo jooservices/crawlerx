@@ -60,6 +60,7 @@
     "runtime": {
         "fetch": {
             "profile": "browser_likely",
+            "chain": ["http", "flaresolverr", "playwright"],
             "readyMarkers": {
                 "listing": ["a[href]"],
                 "detail": ["h1, h2, meta[property='og:title'], meta[name='title']"]

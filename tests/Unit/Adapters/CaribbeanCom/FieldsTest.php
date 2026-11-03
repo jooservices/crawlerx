@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Tests\Unit\Adapters\CaribbeanCom;
 
+use JOOservices\CrawlerX\Adapters\CaribbeanCom\Profile;
 use JOOservices\CrawlerX\Adapters\CaribbeanCom\Types\Detail;
 use JOOservices\CrawlerX\Adapters\CaribbeanCom\Types\Listing;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
@@ -85,7 +86,7 @@ class FieldsTest extends TestCase
 
     public function test_listing_cards_carry_title_cover_date_and_performers(): void
     {
-        $result = (new Listing($this->clientWithHtml((string) file_get_contents(self::FIXTURES . 'listing.html'))))
+        $result = (new Listing($this->clientWithHtml((string) file_get_contents(self::FIXTURES . 'listing.html')), Profile::caribbeancom()))
             ->execute(new CrawlRequestDto(url: 'https://en.caribbeancom.com/eng/index2.htm', type: CrawlType::Listing));
 
         self::assertCount(20, $result->items);
@@ -103,14 +104,14 @@ class FieldsTest extends TestCase
     {
         $this->expectException(CrawlParseException::class);
 
-        (new Listing($this->clientWithHtml('<html><body></body></html>')))
+        (new Listing($this->clientWithHtml('<html><body></body></html>'), Profile::caribbeancom()))
             ->execute(new CrawlRequestDto(url: 'https://en.caribbeancom.com/eng/index2.htm', type: CrawlType::Listing));
     }
 
     /** @return array<string, mixed> */
     private function detail(string $html): array
     {
-        return (new Detail($this->clientWithHtml($html)))
+        return (new Detail($this->clientWithHtml($html), Profile::caribbeancom()))
             ->execute(new CrawlRequestDto(url: 'https://en.caribbeancom.com/eng/moviepages/080826-001/index.html', type: CrawlType::Detail))
             ->meta['movie'];
     }

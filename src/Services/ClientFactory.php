@@ -12,6 +12,8 @@ use JOOservices\CrawlerX\Http\PrefetchedCrawlHttpClient;
 
 final class ClientFactory
 {
+    private const DEFAULT_CONNECT_TIMEOUT = 5.0;
+
     /** @var array<string, HttpClient> */
     private static array $clients = [];
 
@@ -59,7 +61,7 @@ final class ClientFactory
         $builder = ClientBuilder::create();
         if (! $isFaked) {
             $builder = $builder
-                ->withConnectTimeout(5)
+                ->withConnectTimeout($this->connectTimeout($options))
                 ->withCompression();
         }
 
@@ -86,6 +88,19 @@ final class ClientFactory
     }
 
     /**
+     * Sites that throttle per client delay the response from the connection phase on, and libcurl reports
+     * that wait as a connect timeout, so the connect timeout must be configurable next to the total timeout.
+     *
+     * @param  array<string, mixed>  $options
+     */
+    private function connectTimeout(array $options): float
+    {
+        $value = $options['connect_timeout'] ?? null;
+
+        return (is_int($value) || is_float($value)) && $value > 0 ? (float) $value : self::DEFAULT_CONNECT_TIMEOUT;
+    }
+
+    /**
      * @param  array<string, mixed>  $options
      */
     private function cacheKey(?string $site, array $options): ?string
@@ -98,6 +113,7 @@ final class ClientFactory
             'timeout' => is_int($options['timeout'] ?? null) || is_float($options['timeout'] ?? null)
                 ? (float) $options['timeout']
                 : 30.0,
+            'connect_timeout' => $this->connectTimeout($options),
             'verify_ssl' => is_bool($options['verify_ssl'] ?? null) ? $options['verify_ssl'] : true,
         ];
         if (is_string($options['base_uri'] ?? null)) {

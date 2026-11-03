@@ -103,7 +103,7 @@ final class FlaresolverrFetchHandler implements FetchMethodHandler
         /** @var array<string, mixed>|null $storageState */
         $storageState = $solutionCookies === [] ? null : ['cookies' => $solutionCookies];
         $userAgent = is_string($solution['userAgent'] ?? null) ? $solution['userAgent'] : null;
-        $challenge = $status !== 'ok' || ChallengeDetector::isChallenge($html, $httpStatus);
+        $challenge = ChallengeDetector::isChallenge($html, $httpStatus);
         $ok = $status === 'ok' && ! $challenge && ChallengeDetector::isUsableBody($html, $httpStatus > 0 ? $httpStatus : 200);
 
         return new FetchResultDto(
