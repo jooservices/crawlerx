@@ -31,6 +31,20 @@ abstract class AbstractHtmlType extends AbstractType
             $this->contextLabel(),
         );
 
-        return new Crawler($html, $request->url);
+        return new Crawler($this->declaredCharsetFixed($html), $request->url);
+    }
+
+    /**
+     * A page already decoded to UTF-8 (browser or proxy fetch) can still declare a legacy charset such as EUC-JP in
+     * its <meta>, which makes DomCrawler decode it a second time. Raw legacy bytes are not valid UTF-8 and are left
+     * for DomCrawler to convert.
+     */
+    private function declaredCharsetFixed(string $html): string
+    {
+        $pattern = '/(<meta[^>]+charset\s*=\s*["\']?)(?!utf-?8)[a-z0-9_:.-]+/i';
+
+        return preg_match($pattern, $html) === 1 && mb_check_encoding($html, 'UTF-8')
+            ? (string) preg_replace($pattern, '${1}utf-8', $html, 1)
+            : $html;
     }
 }
