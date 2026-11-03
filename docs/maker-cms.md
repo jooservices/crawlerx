@@ -4,7 +4,8 @@
 date-group movie cards, movie details and actress profiles. S1 is the first
 consumer. `S1/Site.php` supplies configuration; `S1Crawler` supplies the slug.
 The manifest registers capabilities and URL samples through the existing registry.
-Sister sites are deliberately not registered by this change.
+IDEAPOCKET (`Adapters/Ideapocket`) is the second consumer: a `Site` config, a
+crawler slug and a manifest only. Other sister sites are registered by their own tickets.
 
 `SiteConfig` controls the origin, maker and date/list/detail/actress route prefixes.
 The shared URL rules use those prefixes, including performer-detail inference.
@@ -29,3 +30,11 @@ The real HTML fixtures were captured from public S1 pages on 2026-11-03, without
 credentials. Data is rendered in HTML; the inspected work/profile scripts only
 initialize sliders. No authenticated endpoint is supported. Unit/feature field
 assertions cover these captures, an empty biography and another configured host.
+
+IDEAPOCKET (fixtures captured 2026-11-03 from public pages, no credentials) shows
+the same markup. Differences handled in the base: the `レーベル` row is kept as
+`metadata.label` (only when present), the `---` director placeholder becomes null,
+listing metadata carries `search_key` (the `p-search__key` heading, e.g. the date
+or genre name), listing movie URLs are canonical (tracking query removed) and
+actress work URLs drop `page_from`/`sys_code`. Besides date pages, URL inference
+and listing pagination (`rel="next"`) cover `/works/list/{genre,label,series}/<id>`.

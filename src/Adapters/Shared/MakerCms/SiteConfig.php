@@ -13,6 +13,7 @@ final readonly class SiteConfig
         public string $maker,
         public string $datePath = '/works/date',
         public string $listingPath = '/works/list/date/',
+        public string $groupListPath = '/works/list/',
         public string $detailPath = '/works/detail/',
         public string $actressPath = '/actress/detail/',
         public int $dateGapSeconds = 5,
