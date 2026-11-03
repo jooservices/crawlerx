@@ -50,6 +50,10 @@ final class ManifestFixtureExecutorTest extends CrawlerXTestCase
             || str_contains($html, 'driver-verify')
             || str_contains($html, 'Age Verification');
 
+        if ($slug === 's1' && $sample->name === 'dates.html') {
+            FixtureResponder::for('GET', 'https://s1s1s1.com/works/list/date/2026-11-24')->file('s1/list-2026-11-24.html');
+        }
+
         FixtureResponder::for('GET', $sample->url)->file($fixtureRelativePath, $blocked ? 403 : 200);
 
         $manifests = new FileAdapterManifestRegistry();
