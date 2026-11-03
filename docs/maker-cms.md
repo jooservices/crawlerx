@@ -5,7 +5,8 @@ date-group movie cards, movie details and actress profiles. S1 is the first
 consumer. `S1/Site.php` supplies configuration; `S1Crawler` supplies the slug.
 The manifest registers capabilities and URL samples through the existing registry.
 IDEAPOCKET (`Adapters/Ideapocket`) is the second consumer: a `Site` config, a
-crawler slug and a manifest only. Other sister sites are registered by their own tickets.
+crawler slug and a manifest only. MOODYZ (`Adapters/Moodyz`) is the third consumer.
+Other sister sites are registered by their own tickets.
 
 `SiteConfig` controls the origin, maker and date/list/detail/actress route prefixes.
 The shared URL rules use those prefixes, including performer-detail inference.
@@ -15,7 +16,7 @@ index has no later date or the direct group has no next link.
 
 Movies retain site IDs, title, synopsis, ISO release date, duration in minutes,
 ordered gallery images, performers and genre tags. Metadata retains series and
-genre IDs/links, release links, director, each physical format's code/runtime/price,
+genre IDs/links, label links (`label`), release links, director, each physical format's code/runtime/price,
 sample video/poster, purchase links and release caveat. Labeled source rows are
 also retained. Listing metadata preserves withheld ensemble counts, card badges,
 displayed range and date-group counts. Images use lazy-load attributes before src.
@@ -38,3 +39,5 @@ listing metadata carries `search_key` (the `p-search__key` heading, e.g. the dat
 or genre name), listing movie URLs are canonical (tracking query removed) and
 actress work URLs drop `page_from`/`sys_code`. Besides date pages, URL inference
 and listing pagination (`rel="next"`) cover `/works/list/{genre,label,series}/<id>`.
+
+MOODYZ fixtures (`tests/Fixtures/moodyz`) were captured from the public site on 2026-11-03 without credentials: the date index, two date-group listings, one detail and one actress profile. MOODYZ profiles may omit the birthday; `birth_date_raw` is then null.
