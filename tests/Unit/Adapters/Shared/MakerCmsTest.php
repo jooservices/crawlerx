@@ -44,7 +44,7 @@ class MakerCmsTest extends TestCase
         $meta = $movie['metadata'];
         self::assertSame('S1 NO.1 STYLE', $meta['maker']);
         self::assertSame('イナバール', $meta['director']);
-        self::assertSame([], $meta['labels']);
+        self::assertArrayNotHasKey('label', $meta);
         self::assertSame([['name' => '新人NO.1STYLE', 'url' => 'https://s1s1s1.com/works/list/series/414', 'external_id' => '414']], $meta['series']);
         self::assertSame('https://s1s1s1.com/works/list/date/2026-11-24', $meta['release_links'][0]['url']);
         self::assertSame('2026年11月24日', $meta['release_links'][0]['name']);
