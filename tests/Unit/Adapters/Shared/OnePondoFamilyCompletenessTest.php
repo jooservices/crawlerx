@@ -22,11 +22,12 @@ final class OnePondoFamilyCompletenessTest extends TestCase
         return dirname(__DIR__, 3) . '/FamilyFixtures/';
     }
 
+    /** Legacy hashes are frozen against the standalone captures when one exists, even after the adapter ships its own fixtures. */
     private static function fixturePath(string $relative): string
     {
-        $path = dirname(__DIR__, 3) . '/Fixtures/' . $relative;
+        $pending = self::pendingRoot() . $relative;
 
-        return is_file($path) ? $path : self::pendingRoot() . $relative;
+        return is_file($pending) ? $pending : dirname(__DIR__, 3) . '/Fixtures/' . $relative;
     }
 
     /**
@@ -38,8 +39,15 @@ final class OnePondoFamilyCompletenessTest extends TestCase
     public static function rows(): iterable
     {
         $registry = new FileAdapterManifestRegistry();
-        $roots = [dirname(__DIR__, 3) . '/Fixtures/', self::pendingRoot()];
-        foreach (array_merge(...array_map(static fn(string $root): array => glob($root . '*', GLOB_ONLYDIR) ?: [], $roots)) as $directory) {
+        $roots = ['' => dirname(__DIR__, 3) . '/Fixtures/', 'standalone/' => self::pendingRoot()];
+        $directories = [];
+        foreach ($roots as $label => $root) {
+            foreach (glob($root . '*', GLOB_ONLYDIR) ?: [] as $found) {
+                $directories[] = [$label, $found];
+            }
+        }
+
+        foreach ($directories as [$label, $directory]) {
             $slug = basename($directory);
             $manifest = $registry->get($slug);
             $registeredFamily = $manifest !== null && is_subclass_of($manifest->adapterClass, FamilyCrawler::class);
@@ -56,7 +64,7 @@ final class OnePondoFamilyCompletenessTest extends TestCase
                 $kinds[$match[1]] = true;
                 $payload = json_decode(file_get_contents($file), true, 512, JSON_THROW_ON_ERROR);
                 foreach ($payload['Rows'] ?? [$payload] as $index => $row) {
-                    yield $slug . '/' . basename($file) . ':' . $index => [$row];
+                    yield $label . $slug . '/' . basename($file) . ':' . $index => [$row];
                 }
             }
 
