@@ -32,7 +32,7 @@ final class AvWikiFields
         $fields = self::articleFields($articleMarkup);
         $tagRows = self::linkedTerms($post['tags'] ?? [], $tags);
         $categoryRows = self::linkedTerms($post['categories'] ?? [], $categories);
-        $performers = array_map(TaxonomyFields::performer(...), $tagRows);
+        $performers = array_map(self::performer(...), $tagRows);
         $dateText = $fields['配信開始日'] ?? null;
         $pageHeading = self::pageHeading($pageHtml) ?? $title;
         $pageDate = self::pageDate($pageHtml);
@@ -83,6 +83,31 @@ final class AvWikiFields
                 'metadata' => $metadata,
             ]),
         );
+    }
+
+    /**
+     * The embedded `post_tag` term only carries identity fields; the actor profile (birth date, size,
+     * aliases, SNS) lives in the tag description that needs a separate `/tags` request, which AV-Wiki's
+     * per-request throttle makes too expensive to do on every crawl.
+     *
+     * @param array<string, mixed> $term
+     * @return array<string, mixed>
+     */
+    private static function performer(array $term): array
+    {
+        $name = self::string($term['name'] ?? null);
+
+        return MovieMeta::filter([
+            'external_id' => self::stringId($term['id'] ?? null),
+            'name' => $name,
+            'name_japanese' => $name,
+            'url' => self::string($term['link'] ?? null),
+            'metadata' => [
+                'taxonomy' => 'post_tag',
+                'slug' => self::string($term['slug'] ?? null),
+                'wordpress' => $term,
+            ],
+        ]);
     }
 
     private static function pageArticle(?string $html): ?string
@@ -229,11 +254,7 @@ final class AvWikiFields
         foreach ($rawIds as $id) {
             $key = is_int($id) || (is_string($id) && ctype_digit($id)) ? (string) $id : null;
             if ($key !== null && isset($resolved[$key])) {
-                $term = $resolved[$key];
-                if (($term['taxonomy'] ?? null) === 'category' && is_string($term['description'] ?? null)) {
-                    $term['description'] = self::cleanText($term['description']);
-                }
-                $terms[] = $term;
+                $terms[] = $resolved[$key];
             }
         }
 

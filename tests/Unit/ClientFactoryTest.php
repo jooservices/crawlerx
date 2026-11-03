@@ -52,6 +52,15 @@ final class ClientFactoryTest extends TestCase
         self::assertTrue($config->compression);
     }
 
+    public function test_applies_configured_connect_timeout_for_throttled_hosts(): void
+    {
+        $config = $this->clientConfig(['timeout' => 45, 'connect_timeout' => 30]);
+
+        self::assertSame(45.0, $config->timeout);
+        self::assertSame(30.0, $config->connectTimeout);
+        self::assertSame(5.0, $this->clientConfig(['connect_timeout' => 0])->connectTimeout);
+    }
+
     public function test_keeps_request_headers_out_of_client_configuration(): void
     {
         $config = $this->clientConfig([

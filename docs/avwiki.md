@@ -1,29 +1,58 @@
 # AV-Wiki adapter
 
-The `avwiki` adapter reads the public WordPress REST API at `av-wiki.net` and
-uses the post's public article page for its product images and retailer links.
-No account, token or application key is required.
+The `avwiki` adapter reads the public WordPress REST API at `av-wiki.net`. No
+account, token or application key is required.
 
-`CrawlerX::url('https://av-wiki.net/wp-json/wp/v2/posts?per_page=100&page=1&_embed=1')` fetches the newest posts from
-`/wp-json/wp/v2/posts` with embedded taxonomy terms. A detail URL such as
-`https://av-wiki.net/200gana-3482/` combines the post API record, the article's
-`section.article-body`, the article's product fields, and its category term.
-Actor tags become `MovieDto.performers`; list pages resolve the public tag and
-category records so actor profiles and taxonomy descriptions are retained.
-Follow-up API requests use the configured `CRAWLERX_USER_AGENT`.
+## Request budget
 
-Release dates use ISO `YYYY-MM-DD`; WordPress post and modification dates use
-ISO 8601 timestamps. Runtime fields from WordPress remain under
-`metadata.wordpress`; normalized aliases expose author, featured-media ID,
-content/excerpt protection flags, and category/tag ID lists. Product fields
-from `dl.dltable` remain available as `metadata.fields`. The adapter keeps
-article text, retailer `metadata.links`, cover and sample images, tag/profile
-data, and category records under `metadata.categories`. Category descriptions
-are plain text. It removes related-page links and share controls from the parsed
-article. AV-Wiki does not provide a movie synopsis or duration in the captured
-records, so those DTO fields remain absent.
+av-wiki.net rate-limits per client: the first request answers in about 0.5 s and
+every following request (even for the same URL) is held for about 10.4 s before
+the full `200` response arrives. The adapter therefore issues the minimum:
 
-`tests/Fixtures/avwiki/` contains captured public JSON and HTML. The manifest
-registers listing and detail inputs separately from supporting API responses;
-supporting fixtures are used by offline tests and do not become source-matrix
-targets.
+- **Listing**: one request per page, `/wp-json/wp/v2/posts?per_page=100&page=N&_embed=1`.
+- **Detail**: one REST request, `/wp-json/wp/v2/posts?slug=<slug>&_embed=1`. Categories
+  and tags are resolved from the embedded `wp:term` groups of that response; the
+  `/categories` and `/tags` endpoints are never called. The article page is not
+  requested by the adapter. When a detail URL is the HTML page, the orchestrator
+  already fetches it once (fast, first request) and the adapter reuses that body
+  for the fields the REST payload lacks: the cover image (`awsimgsrc.dmm.co.jp`
+  `...pl.jpg`, injected by the theme and absent from `content.rendered`), sample
+  images, `h1.entry-title` page heading and the page date. A REST detail URL
+  (`...posts?slug=...` or `.../posts/<id>`) is a single request in total.
+
+Timeouts and pacing: `defaultCrawlConfig.timeout` and `connect_timeout` are 45 s
+(the ~10.4 s hold counts as connection wait, and a fixed 5 s connect timeout used
+to abort the request while the total `timeout` option was ignored), and
+`defaultThrottle.default_gap_seconds` is 12 (min 10) so scheduled crawls keep at
+least 10 s between requests to the host. The shared fetch chain caps its own HTTP
+attempts at 20 s, which covers the fast first request.
+
+## Fields
+
+`CrawlerX::url('https://av-wiki.net/wp-json/wp/v2/posts?per_page=100&page=1&_embed=1')`
+returns the newest posts. Release dates use ISO `YYYY-MM-DD`; WordPress dates use
+ISO 8601 timestamps. Every REST post field stays under `metadata.wordpress`.
+
+| DTO field | Source |
+| --- | --- |
+| `external_id`, `url` (`link`/`guid`), `title` | REST `id`, `link`, `title.rendered` |
+| `code` | `dl.dltable` メーカー品番 / MGS / FANZA code in `content.rendered` |
+| `date` | `dl.dltable` 配信開始日 (`metadata.release_date_raw`); `metadata.posted_date*` / `modified_date*` from REST dates |
+| `performers`, `tags` | embedded `post_tag` terms (id, name, link, slug) |
+| `metadata.categories`, `category_ids`, `tag_ids` | embedded `category` terms and REST id lists |
+| `metadata.maker`, `label`, `series`, `fields` | `dl.dltable` in `content.rendered` |
+| `metadata.author`, `metadata.wordpress` | REST `author` + `_embedded.author`, all post fields (`excerpt`, `content` protection flags, `class_list`, `_links`, ...) |
+| `metadata.links`, `article_text` | retailer links and cleaned text of `content.rendered` |
+| `cover_url`, `screenshots`, `metadata.titles.page_heading`, `page_date` | article HTML (detail via page URL only) |
+
+Limitations: the embedded tag term carries only `id/link/name/slug/taxonomy`, so
+performer profile data that lives in the tag description (birth date, size,
+aliases, SNS, profile image) and the term `count` are not returned; reading them
+needs one extra `/tags?include=` request per page, which the per-request delay
+makes too costly. The excerpt is empty for the sampled posts, and AV-Wiki offers
+no synopsis or duration, so those DTO fields stay absent. Listing items have no
+cover/sample images because the REST payload has none.
+
+`tests/Fixtures/avwiki/` contains captured public JSON and HTML. The REST detail
+response is registered as a supporting fixture and does not become a
+source-matrix target.

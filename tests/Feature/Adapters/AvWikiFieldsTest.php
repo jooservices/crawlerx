@@ -20,6 +20,13 @@ final class AvWikiFieldsTest extends CrawlerXTestCase
 
     private const DETAIL_API_URL = 'https://av-wiki.net/wp-json/wp/v2/posts?slug=200gana-3482&_embed=1';
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // Fresh fetch chain per test: the 12 s host throttle state is process-wide and would make every test wait.
+        CrawlerXFactory::reset();
+    }
+
     public function test_rest_lookups_use_the_configured_crawler_user_agent(): void
     {
         $previousUserAgent = getenv('CRAWLERX_USER_AGENT');
@@ -32,7 +39,7 @@ final class AvWikiFieldsTest extends CrawlerXTestCase
 
             $matchingRequests = array_filter(
                 ClientBuilder::recorded(),
-                static fn(RecordedRequest $request): bool => $request->request->getUri()->getPath() === '/wp-json/wp/v2/tags'
+                static fn(RecordedRequest $request): bool => $request->request->getUri()->getPath() === '/wp-json/wp/v2/posts'
                     && $request->request->getHeaderLine('User-Agent') === 'AVWikiFixtureTest/1.0',
             );
             self::assertNotSame([], $matchingRequests);
@@ -77,43 +84,23 @@ final class AvWikiFieldsTest extends CrawlerXTestCase
         self::assertSame('SNOS-484', $metadata['fields']['メーカー品番']);
         self::assertSame('snos00484', $metadata['fanza_code']);
         self::assertSame('安達夕莉', $movie['performers'][0]['name']);
-        self::assertSame('あだちゆうり', $movie['performers'][0]['metadata']['name_reading']);
-        self::assertSame('yuuri adachi', $movie['performers'][0]['metadata']['name_romanized']);
-        self::assertSame('https://pics.dmm.co.jp/mono/actjpgs/adati_yuuri.jpg', $movie['performers'][0]['profile_image_url']);
-        self::assertSame('2002-01-24', $movie['performers'][0]['birth_date_raw']);
-        self::assertSame('T152', $movie['performers'][0]['height_raw']);
-        self::assertSame('T152 / B87(Gカップ) / W56 / H83', $movie['performers'][0]['size_raw']);
-        self::assertSame([], $movie['performers'][0]['aliases']);
-        self::assertSame('https://x.com/yuuri_adachi', $movie['performers'][0]['metadata']['sns'][0]['url']);
-        self::assertSame(39, $movie['performers'][0]['metadata']['wordpress']['count']);
-        self::assertSame('2003-04-23', $movie['performers'][1]['birth_date_raw']);
-        self::assertSame('T150', $movie['performers'][1]['height_raw']);
-        self::assertSame('T150 / B85-W55-H80', $movie['performers'][1]['size_raw']);
-        self::assertSame('niko kawagoe', $movie['performers'][1]['metadata']['name_romanized']);
-        self::assertSame('https://image-optimizer.osusume.dmm.co.jp/actress/kawagoe_niko.jpg', $movie['performers'][1]['profile_image_url']);
-        self::assertSame(49, $movie['performers'][1]['metadata']['wordpress']['count']);
-        self::assertSame([
-            'https://x.com/kawagoeniko',
-            'https://www.instagram.com/kawagoeniko',
-        ], array_column($movie['performers'][1]['metadata']['sns'], 'url'));
+        self::assertSame('121544', $movie['performers'][0]['external_id']);
+        self::assertSame('https://av-wiki.net/av-actress/adachi-yuuri/', $movie['performers'][0]['url']);
+        self::assertSame('adachi-yuuri', $movie['performers'][0]['metadata']['slug']);
+        self::assertSame('post_tag', $movie['performers'][0]['metadata']['wordpress']['taxonomy']);
+        self::assertSame('川越にこ', $movie['performers'][1]['name']);
         self::assertSame([127889], $metadata['category_ids']);
         self::assertSame([121544, 125105], $metadata['tag_ids']);
         $category = $metadata['categories'][0];
-        self::assertSame(['id', 'count', 'description', 'link', 'name', 'slug', 'taxonomy', 'parent', 'meta', '_links'], array_keys($category));
+        self::assertSame(['id', 'link', 'name', 'slug', 'taxonomy', '_links'], array_keys($category));
         self::assertSame(127889, $category['id']);
-        self::assertSame(404, $category['count']);
-        self::assertSame('', $category['description']);
         self::assertSame('https://av-wiki.net/fanza-video/s1-no1-style/snos/', $category['link']);
         self::assertSame('エスワン - SNOS', $category['name']);
         self::assertSame('snos', $category['slug']);
         self::assertSame('category', $category['taxonomy']);
-        self::assertSame(7526, $category['parent']);
-        self::assertSame([], $category['meta']);
-        self::assertSame('https://av-wiki.net/wp-json/wp/v2/categories/7526', $category['_links']['up'][0]['href']);
         self::assertSame('AV女優の名前が知りたい！', $metadata['author']['name']);
         self::assertSame('av-wiki', $metadata['author']['slug']);
         self::assertSame($metadata['wordpress']['_embedded']['author'][0], $metadata['author']);
-        self::assertSame('安達夕莉（あだちゆうり）- yuuri adachi', $movie['performers'][0]['raw_profile']['AV女優名']);
         self::assertNull($movie['description']);
 
         $wordpress = $metadata['wordpress'];
@@ -182,16 +169,10 @@ final class AvWikiFieldsTest extends CrawlerXTestCase
         self::assertSame('倉科みくる', $movie['performers'][0]['name']);
         self::assertSame('https://av-wiki.net/av-actress/%e5%80%89%e7%a7%91%e3%81%bf%e3%81%8f%e3%82%8b/', $movie['performers'][0]['url']);
         self::assertSame('2858', (string) $movie['metadata']['categories'][0]['id']);
-        self::assertSame(1367, $movie['metadata']['categories'][0]['count']);
-        self::assertStringContainsString('AVメーカー〔ナンパTV〕', $movie['metadata']['categories'][0]['description']);
-        self::assertStringNotContainsString('<p>', $movie['metadata']['categories'][0]['description']);
         self::assertSame('https://av-wiki.net/mgstage/nanpatv/series-id-2858/', $movie['metadata']['categories'][0]['link']);
-        self::assertSame('2840', (string) $movie['metadata']['categories'][0]['parent']);
         self::assertSame('マジ軟派、初撮。', $movie['metadata']['categories'][0]['name']);
         self::assertSame('series-id-2858', $movie['metadata']['categories'][0]['slug']);
         self::assertSame('category', $movie['metadata']['categories'][0]['taxonomy']);
-        self::assertSame([], $movie['metadata']['categories'][0]['meta']);
-        self::assertSame('https://av-wiki.net/wp-json/wp/v2/categories/2840', $movie['metadata']['categories'][0]['_links']['up'][0]['href']);
         self::assertCount(1, $movie['screenshots']);
         self::assertSame('https://image.mgstage.com/images/nanpatv/200gana/3482/pf_t1_200gana-3482.jpg', $movie['screenshots'][0]['url']);
         self::assertCount(1, $movie['metadata']['links']);
@@ -201,20 +182,59 @@ final class AvWikiFieldsTest extends CrawlerXTestCase
         self::assertNull($movie['description']);
     }
 
+    public function test_listing_issues_exactly_one_request_and_resolves_embedded_terms(): void
+    {
+        $this->listingFixtures();
+        $result = CrawlerX::url(self::LIST_URL)->crawl();
+
+        self::assertInstanceOf(CrawlListResultDto::class, $result);
+        self::assertSame([self::LIST_URL], $this->requestedUrls());
+        self::assertSame(['安達夕莉', '川越にこ'], $result->items[1]->meta['movie']['tags']);
+        self::assertSame('エスワン - SNOS', $result->items[0]->meta['movie']['metadata']['categories'][0]['name']);
+    }
+
+    public function test_detail_issues_one_rest_request_after_the_prefetched_page_and_resolves_embedded_terms(): void
+    {
+        $this->detailFixtures();
+        $result = CrawlerX::url(self::DETAIL_URL)->crawl();
+
+        self::assertInstanceOf(CrawlItemResultDto::class, $result);
+        self::assertSame([self::DETAIL_URL, self::DETAIL_API_URL], $this->requestedUrls());
+        self::assertSame(['倉科みくる'], $result->meta['movie']['tags']);
+        self::assertSame('マジ軟派、初撮。', $result->meta['movie']['metadata']['categories'][0]['name']);
+    }
+
+    public function test_detail_by_rest_url_is_a_single_request(): void
+    {
+        $this->respondWithFixture('GET', self::DETAIL_API_URL, 'avwiki/detail-200gana-3482.json');
+        $result = CrawlerX::url(self::DETAIL_API_URL)->crawl();
+
+        self::assertInstanceOf(CrawlItemResultDto::class, $result);
+        self::assertSame([self::DETAIL_API_URL], $this->requestedUrls());
+        self::assertSame(['倉科みくる'], $result->meta['movie']['tags']);
+        self::assertNull($result->meta['movie']['cover_url']);
+    }
+
+    /** @return list<string> */
+    private function requestedUrls(): array
+    {
+        return array_map(
+            static fn(RecordedRequest $request): string => (string) $request->request->getUri(),
+            ClientBuilder::recorded(),
+        );
+    }
+
     private function listingFixtures(): void
     {
         $this->respondWithFixture('GET', self::LIST_URL, 'avwiki/listing-page1.json', 200, [
             'X-WP-Total' => '191763',
             'X-WP-TotalPages' => '95882',
         ]);
-        $this->respondWithFixture('GET', 'https://av-wiki.net/wp-json/wp/v2/tags?include=121544,125105,128853', 'avwiki/tags-list-page1.json');
-        $this->respondWithFixture('GET', 'https://av-wiki.net/wp-json/wp/v2/categories?include=127889', 'avwiki/categories-list-page1.json');
     }
 
     private function detailFixtures(): void
     {
         $this->respondWithFixture('GET', self::DETAIL_URL, 'avwiki/detail-200gana-3482.html');
         $this->respondWithFixture('GET', self::DETAIL_API_URL, 'avwiki/detail-200gana-3482.json');
-        $this->respondWithFixture('GET', 'https://av-wiki.net/wp-json/wp/v2/categories?include=2858', 'avwiki/categories-detail-200gana-3482.json');
     }
 }

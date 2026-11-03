@@ -7,8 +7,8 @@ namespace JOOservices\CrawlerX\Adapters\AvWiki\Types;
 use JOOservices\CrawlerX\Adapters\AbstractType;
 use JOOservices\CrawlerX\Adapters\AvWiki\AvWikiFields;
 use JOOservices\CrawlerX\Adapters\AvWiki\AvWikiJson;
+use JOOservices\CrawlerX\Adapters\AvWiki\EmbeddedTerms;
 use JOOservices\CrawlerX\Adapters\AvWiki\Site;
-use JOOservices\CrawlerX\Adapters\AvWiki\TaxonomyResolver;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
@@ -32,12 +32,13 @@ final class Listing extends AbstractType implements TypeInterface
             throw new CrawlParseException('AV-Wiki listing response did not contain posts.');
         }
 
-        $resolver = new TaxonomyResolver($this->client);
-        $tags = $resolver->tags($posts);
-        $categories = $resolver->categories($posts);
         $items = [];
         foreach ($posts as $post) {
-            $item = AvWikiFields::movie($post, $tags, $categories);
+            $item = AvWikiFields::movie(
+                $post,
+                EmbeddedTerms::forTaxonomy($post, EmbeddedTerms::TAG),
+                EmbeddedTerms::forTaxonomy($post, EmbeddedTerms::CATEGORY),
+            );
             $items[$item->url] = $item;
         }
 

@@ -24,14 +24,14 @@
         {
             "key": "timeout",
             "type": "int",
-            "default": 30,
+            "default": 45,
             "tier": "operational",
             "label": "Timeout"
         },
         {
             "key": "page_delay_seconds",
             "type": "int",
-            "default": 6,
+            "default": 12,
             "tier": "operational",
             "label": "Page Delay Seconds"
         }
@@ -40,8 +40,12 @@
         "fetch": {
             "profile": "adaptive",
             "readyMarkers": {
-                "listing": ["body"],
-                "detail": ["h1.entry-title"]
+                "listing": [
+                    "body"
+                ],
+                "detail": [
+                    "h1.entry-title"
+                ]
             },
             "soft404Markers": [
                 "rest_no_route",
@@ -92,37 +96,18 @@
                 "url": "https://av-wiki.net/wp-json/wp/v2/posts?slug=200gana-3482&_embed=1",
                 "name": "detail-200gana-3482.json",
                 "type": "supporting"
-            },
-            {
-                "url": "https://av-wiki.net/wp-json/wp/v2/tags?include=121544,125105,128853",
-                "name": "tags-list-page1.json",
-                "type": "supporting"
-            },
-            {
-                "url": "https://av-wiki.net/wp-json/wp/v2/tags?include=128919",
-                "name": "tags-detail-200gana-3482.json",
-                "type": "supporting"
-            },
-            {
-                "url": "https://av-wiki.net/wp-json/wp/v2/categories?include=127889",
-                "name": "categories-list-page1.json",
-                "type": "supporting"
-            },
-            {
-                "url": "https://av-wiki.net/wp-json/wp/v2/categories?include=2858",
-                "name": "categories-detail-200gana-3482.json",
-                "type": "supporting"
-            },
-            {
-                "url": "https://av-wiki.net/wp-json/wp/v2/categories?include=2840",
-                "name": "category-maker-2840.json",
-                "type": "supporting"
             }
         ],
+        "defaultCrawlConfig": {
+            "timeout": 45,
+            "connect_timeout": 45,
+            "page_delay_seconds": 12,
+            "detail_delay_seconds": 12
+        },
         "defaultThrottle": {
-            "default_gap_seconds": 6,
-            "min_gap_seconds": 5,
-            "max_gap_seconds": 30
+            "default_gap_seconds": 12,
+            "min_gap_seconds": 10,
+            "max_gap_seconds": 60
         },
         "browserHeaders": {
             "Accept": "application/json,text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",

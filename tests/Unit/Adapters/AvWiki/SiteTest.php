@@ -23,7 +23,7 @@ final class SiteTest extends TestCase
         self::assertSame(100, Site::pageSize('https://av-wiki.net/'));
     }
 
-    public function test_builds_detail_and_taxonomy_api_urls(): void
+    public function test_builds_detail_api_urls(): void
     {
         self::assertSame(
             'https://av-wiki.net/wp-json/wp/v2/posts?slug=200gana-3482&_embed=1',
@@ -32,10 +32,6 @@ final class SiteTest extends TestCase
         self::assertSame(
             'https://av-wiki.net/wp-json/wp/v2/posts/123?_embed=1',
             Site::detailApiUrl('https://av-wiki.net/wp-json/wp/v2/posts/123'),
-        );
-        self::assertSame(
-            'https://av-wiki.net/wp-json/wp/v2/categories?include=2840,2858',
-            Site::taxonomyUrl('categories', ['2840', '2858']),
         );
     }
 

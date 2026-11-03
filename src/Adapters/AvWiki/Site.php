@@ -70,15 +70,6 @@ final class Site
         return self::detailBySlugUrl($slug);
     }
 
-    /** @param list<int|string> $ids */
-    public static function taxonomyUrl(string $taxonomy, array $ids): string
-    {
-        $normalizedIds = array_values(array_unique(array_map(static fn(int|string $id): string => (string) $id, $ids)));
-        $include = implode(',', $normalizedIds);
-
-        return self::BASE_URL . '/wp-json/wp/v2/' . $taxonomy . '?include=' . $include;
-    }
-
     public static function detailBySlugUrl(string $slug): string
     {
         return self::POSTS_URL . '?slug=' . rawurlencode($slug) . '&_embed=1';
