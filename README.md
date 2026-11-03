@@ -265,6 +265,7 @@ adapter's current manifest.
 | Avjoho | `avjoho` | — | — | — | Yes | Yes |
 | AV-Wiki | `avwiki` | Yes | Yes | — | — | — |
 | Caribbeancom | `caribbeancom` | Yes | Yes | — | — | — |
+| Caribbeancom Premium | `caribbeancompr` | Yes | Yes | — | — | — |
 | DUGA | `duga` | Yes | Yes | — | — | — |
 | EPORNER | `eporner` | — | — | Yes | — | — |
 | FC2 Content Market | `fc2` | Yes | Yes | — | — | — |
