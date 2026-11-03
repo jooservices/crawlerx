@@ -249,12 +249,14 @@ Available methods are `http`, `curl_impersonate`, `playwright`,
 
 ## Supported sites
 
-CrawlerX currently registers 27 adapters. Capabilities below come from each
+CrawlerX currently registers 29 adapters. Capabilities below come from each
 adapter's current manifest.
 
 | Site | Slug | Listing | Detail | Gallery | Performer listing | Performer detail |
 | --- | --- | :---: | :---: | :---: | :---: | :---: |
 | 141Jav | `141jav` | Yes | Yes | — | — | — |
+| S1 NO.1 STYLE | `s1` | Yes | Yes | — | — | Yes |
+| IDEAPOCKET | `ideapocket` | Yes | Yes | — | — | Yes |
 | Pacopacomama | `pacopacomama` | Yes | Yes | — | — | — |
 | 1Pondo | `onepondo` | Yes | Yes | — | — | — |
 | 10Musume | `10musume` | Yes | Yes | — | — | — |
@@ -496,3 +498,5 @@ Skipped entries explain missing handlers, budget exhaustion, or an earlier
 non-challenge answer. Methods after success or a terminal error are not visited.
 The fallback order and selection rules are unchanged. Header values are null
 when the handler/service does not expose them; a missing HTTP response is null.
+
+Maker CMS shared parsing and field mapping: [docs/maker-cms.md](docs/maker-cms.md).
