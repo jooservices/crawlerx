@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add the ATTACKERS adapter on the shared Maker CMS base (date index, date/genre/label/series listings, movie detail, actress profile) with captured-fixture field assertions (JOOXCR-355).
 - Add the Pacopacomama listing/detail adapter on the shared 1Pondo-family base with real JSON fixtures and public sample galleries (JOOXCR-309).
 - Add the caribbeancompr adapter (English and Japanese detail, English listing) on the shared Caribbeancom listing/detail parsers through a per-site `Profile`; `caribbeancom` output is unchanged (JOOXCR-351).
 - Complete shared OnePondoFamily list/detail field extraction, retain full file/category/performer source records, and guard every family fixture against silent field loss and changes to existing DTO values (JOOXCR-360).
