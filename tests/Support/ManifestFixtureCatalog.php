@@ -28,6 +28,10 @@ final class ManifestFixtureCatalog
             }
 
             foreach ($manifest->fixtureSamples as $sample) {
+                if (in_array($sample->type, ['supporting', 'taxonomy'], true)) {
+                    continue;
+                }
+
                 $key = $slug . ':' . $sample->type . ':' . $sample->name;
                 if (in_array($key, self::SKIP_SAMPLES, true)) {
                     continue;
@@ -69,6 +73,22 @@ final class ManifestFixtureCatalog
             'javlibrary' => 'JavLibrary',
             default => $slug,
         };
+    }
+
+    public static function registerSupportingResponses(string $slug): void
+    {
+        $manifest = (new FileAdapterManifestRegistry())->get($slug);
+        if ($manifest === null) {
+            return;
+        }
+
+        foreach ($manifest->fixtureSamples as $sample) {
+            if (! in_array($sample->type, ['supporting', 'taxonomy'], true)) {
+                continue;
+            }
+
+            FixtureResponder::for('GET', $sample->url)->file(self::fixtureRelativePath($slug, $sample->name));
+        }
     }
 
     public static function crawlTypeFromSample(FixtureSampleDto $sample): CrawlType

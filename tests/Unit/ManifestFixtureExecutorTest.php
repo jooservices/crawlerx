@@ -66,6 +66,7 @@ final class ManifestFixtureExecutorTest extends CrawlerXTestCase
         }
 
         FixtureResponder::for('GET', $sample->url)->file($fixtureRelativePath, $blocked ? 403 : 200);
+        ManifestFixtureCatalog::registerSupportingResponses($slug);
 
         $manifests = new FileAdapterManifestRegistry();
         $registry = new AdapterRegistry(new ClientFactory(), $manifests);

@@ -25,7 +25,7 @@ final class AllAdaptersCrawlTest extends CrawlerXTestCase
     }
 
     /**
-     * @return iterable<string, array{FixtureSampleDto, string}>
+     * @return iterable<string, array{string, FixtureSampleDto, string}>
      */
     public static function manifestSamplesProvider(): iterable
     {
@@ -33,6 +33,7 @@ final class AllAdaptersCrawlTest extends CrawlerXTestCase
             $key = $entry['slug'] . ':' . $entry['sample']->type . ':' . $entry['sample']->name;
 
             yield $key => [
+                $entry['slug'],
                 $entry['sample'],
                 ManifestFixtureCatalog::fixtureRelativePath($entry['slug'], $entry['sample']->name),
             ];
@@ -40,7 +41,7 @@ final class AllAdaptersCrawlTest extends CrawlerXTestCase
     }
 
     #[DataProvider('manifestSamplesProvider')]
-    public function test_crawlerx_crawls_manifest_fixture(FixtureSampleDto $sample, string $fixtureRelativePath): void
+    public function test_crawlerx_crawls_manifest_fixture(string $slug, FixtureSampleDto $sample, string $fixtureRelativePath): void
     {
         $fullPath = __DIR__ . '/../Fixtures/' . $fixtureRelativePath;
         self::assertFileExists($fullPath);
@@ -63,6 +64,7 @@ final class AllAdaptersCrawlTest extends CrawlerXTestCase
         }
 
         FixtureResponder::for('GET', $sample->url)->file($fixtureRelativePath, $blocked ? 403 : 200);
+        ManifestFixtureCatalog::registerSupportingResponses($slug);
 
         if ($blocked) {
             try {

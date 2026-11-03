@@ -249,7 +249,7 @@ Available methods are `http`, `curl_impersonate`, `playwright`,
 
 ## Supported sites
 
-CrawlerX currently registers 32 adapters. Capabilities below come from each
+CrawlerX currently registers 34 adapters. Capabilities below come from each
 adapter's current manifest.
 
 | Site | Slug | Listing | Detail | Gallery | Performer listing | Performer detail |
@@ -266,6 +266,7 @@ adapter's current manifest.
 | Avfan | `avfan` | Yes | Yes | — | — | — |
 | Avfan Profiles | `avfan_profiles` | — | — | — | Yes | Yes |
 | Avjoho | `avjoho` | — | — | — | Yes | Yes |
+| AV-Wiki | `avwiki` | Yes | Yes | — | — | — |
 | Caribbeancom | `caribbeancom` | Yes | Yes | — | — | — |
 | Caribbeancom Premium | `caribbeancompr` | Yes | Yes | — | — | — |
 | DUGA | `duga` | Yes | Yes | — | — | — |
@@ -282,6 +283,7 @@ adapter's current manifest.
 | JavPhotos | `javphotos` | Yes | — | Yes | — | — |
 | Minnano AV | `minnanoav` | Yes | Yes | — | Yes | Yes |
 | MissAV | `missav` | Yes | Yes | — | — | — |
+| Muramura | `muramura` | Yes | Yes | — | — | — |
 | OneJav | `onejav` | Yes | Yes | — | — | — |
 | Tokyo-Hot | `tokyohot` | Yes | Yes | — | — | — |
 | Warashi | `warashi` | — | — | Yes | Yes | Yes |

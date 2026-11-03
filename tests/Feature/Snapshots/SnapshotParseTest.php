@@ -17,9 +17,9 @@ use JOOservices\CrawlerX\Exceptions\CrawlParseException;
 use JOOservices\CrawlerX\Fetch\FetchFallbackChain;
 use JOOservices\CrawlerX\Registry\FileAdapterManifestRegistry;
 use JOOservices\CrawlerX\Tests\Support\ManifestFixtureCatalog;
+use JOOservices\CrawlerX\Tests\Support\FixtureResponder;
 use JOOservices\CrawlerX\Tools\Canary\RequiredFields;
 use JOOservices\CrawlerX\Tests\CrawlerXTestCase;
-use JOOservices\CrawlerX\Tests\Support\FixtureResponder;
 
 require_once dirname(__DIR__, 3) . '/tools/canary/RequiredFields.php';
 
@@ -28,6 +28,7 @@ final class SnapshotParseTest extends CrawlerXTestCase
     protected function tearDown(): void
     {
         CrawlerXFactory::reset();
+        FixtureResponder::disableFake();
         parent::tearDown();
     }
 
@@ -35,22 +36,32 @@ final class SnapshotParseTest extends CrawlerXTestCase
     {
         $registry = new FileAdapterManifestRegistry();
         $responses = [];
+        $responseHeaders = [];
+        FixtureResponder::enableFake();
         foreach ($registry->all() as $slug => $manifest) {
             foreach ($manifest->fixtureSamples as $sample) {
                 $path = ManifestFixtureCatalog::fixturePath($slug, $sample->name);
                 $body = file_get_contents($path);
                 self::assertIsString($body);
                 $responses[$sample->url] = $body;
-                FixtureResponder::for('GET', $sample->url)->body($body);
+                $metadataPath = $path . '.meta.json';
+                $metadata = json_decode((string) file_get_contents($metadataPath), true, flags: JSON_THROW_ON_ERROR);
+                $headers = is_array($metadata['response_headers'] ?? null) ? $metadata['response_headers'] : [];
+                $responseHeaders[$sample->url] = $headers;
+                FixtureResponder::for('GET', $sample->url)->body($body, 200);
             }
         }
 
         CrawlerXFactory::useFetchChain(new FetchFallbackChain([
-            FetchMethod::Http->value => new SnapshotFetchHandler($responses),
+            FetchMethod::Http->value => new SnapshotFetchHandler($responses, $responseHeaders),
         ]));
 
         foreach ($registry->all() as $slug => $manifest) {
             foreach ($manifest->fixtureSamples as $sample) {
+                if (in_array($sample->type, ['supporting', 'taxonomy'], true)) {
+                    continue;
+                }
+
                 $result = CrawlerX::url($sample->url)
                     ->site($slug)
                     ->type($this->crawlType($sample->type))
@@ -91,9 +102,14 @@ final class SnapshotParseTest extends CrawlerXTestCase
 /** @internal */
 final class SnapshotFetchHandler implements FetchMethodHandler
 {
-    /** @param array<string, string> $responses */
-    public function __construct(private readonly array $responses)
-    {
+    /**
+     * @param array<string, string> $responses
+     * @param array<string, array<string, list<string>>> $responseHeaders
+     */
+    public function __construct(
+        private readonly array $responses,
+        private readonly array $responseHeaders = [],
+    ) {
     }
 
     public function supports(FetchMethod $method): bool
@@ -119,6 +135,7 @@ final class SnapshotFetchHandler implements FetchMethodHandler
             elapsedMs: 0,
             challengeDetected: false,
             finalUrl: $url,
+            headers: $this->responseHeaders[$url] ?? [],
         );
     }
 }
