@@ -17,6 +17,7 @@ final readonly class SiteConfig
         public string $label,
         public string $gallerySource,
         public string $movieIdPattern = '#^(\d{6}_\d{3})$#',
+        public string $galleryFlagField = 'HasGallery',
     ) {
     }
 }

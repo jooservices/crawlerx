@@ -48,7 +48,7 @@ class MovieRowFields
                 'movie_year' => $this->stringField($detail, 'Year'),
                 'meta_movie_id' => $detail['MetaMovieID'] ?? null,
                 'can_stream' => $detail['CanStream'] ?? null,
-                'has_gallery' => $detail['HasGallery'] ?? null,
+                'has_gallery' => $detail[$this->config->galleryFlagField] ?? null,
             ]), ...SourceFields::metadata($detail)],
         ]);
     }
