@@ -257,6 +257,7 @@ adapter's current manifest.
 | 141Jav | `141jav` | Yes | Yes | — | — | — |
 | S1 NO.1 STYLE | `s1` | Yes | Yes | — | — | Yes |
 | MOODYZ | `moodyz` | Yes | Yes | — | — | Yes |
+| ATTACKERS | `attackers` | Yes | Yes | — | — | Yes |
 | IDEAPOCKET | `ideapocket` | Yes | Yes | — | — | Yes |
 | Madonna | `madonna` | Yes | Yes | — | — | Yes |
 | Pacopacomama | `pacopacomama` | Yes | Yes | — | — | — |
