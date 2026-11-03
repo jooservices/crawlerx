@@ -56,6 +56,9 @@ final class ManifestFixtureExecutorTest extends CrawlerXTestCase
         if ($slug === 'ideapocket' && $sample->name === 'dates.html') {
             FixtureResponder::for('GET', 'https://ideapocket.com/works/list/date/2026-12-01')->file('ideapocket/list-2026-12-01.html');
         }
+        if ($slug === 'premiumbeauty' && $sample->name === 'dates.html') {
+            FixtureResponder::for('GET', 'https://premium-beauty.com/works/list/date/2026-11-17')->file('premiumbeauty/list-2026-11-17.html');
+        }
         if ($slug === 'attackers' && $sample->name === 'dates.html') {
             FixtureResponder::for('GET', 'https://attackers.net/works/list/date/2026-12-01')->file('attackers/list-2026-12-01.html');
         }

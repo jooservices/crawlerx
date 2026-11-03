@@ -7,6 +7,7 @@ The manifest registers capabilities and URL samples through the existing registr
 IDEAPOCKET (`Adapters/Ideapocket`) is the second consumer: a `Site` config, a
 crawler slug and a manifest only. MOODYZ (`Adapters/Moodyz`) is the third consumer.
 ATTACKERS (`Adapters/Attackers`, fixtures captured 2026-11-03 from public pages without credentials) is a further Site config + crawler + manifest consumer; no base change was needed.
+Premium Beauty (`Adapters/PremiumBeauty`, fixtures captured 2026-11-03 from public pages without credentials) is likewise a Site config + crawler + manifest consumer; no base change was needed.
 Other sister sites are registered by their own tickets.
 
 `SiteConfig` controls the origin, maker and date/list/detail/actress route prefixes.
