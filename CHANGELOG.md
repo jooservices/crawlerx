@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add the MOODYZ adapter on the shared Maker CMS base (date index, date listing, detail, actress) using the shared `metadata.label` field (JOOXCR-352).
 - Add the IDEAPOCKET adapter on the shared Maker CMS base (date index, date/genre/label/series listings, movie detail with label, actress profile) with captured-fixture field assertions (JOOXCR-353).
 - Add the Madonna adapter on the shared Maker CMS base (date index, date listing, detail with label/series/formats/purchase links, actress profile) with captured-fixture field assertions (JOOXCR-354).
+- Add the kawaii* adapter on the shared Maker CMS base (date index, date listings, detail with label/series/formats/purchase links, actress profile) with captured-fixture field assertions (JOOXCR-358).
 - AV-Wiki listing and detail support, using one `_embed=1` REST request per listing page or detail post (categories and tags come from `_embedded['wp:term']`), a 45 s timeout and a 12 s host throttle for the site's per-request delay, plus captured source fixtures (JOOXCR-349).
 - Configurable `connect_timeout` (manifest `defaultCrawlConfig`) for hosts that delay the connection phase; it defaults to the previous fixed 5 s.
 
