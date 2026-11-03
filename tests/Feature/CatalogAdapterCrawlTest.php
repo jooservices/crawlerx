@@ -28,6 +28,8 @@ final class CatalogAdapterCrawlTest extends CrawlerXTestCase
         yield 'fc2' => ['https://adult.contents.fc2.com/article/4968399/', 'fc2/detail.html', '4968399'];
         yield 'tokyohot' => ['https://my.tokyo-hot.com/product/n1700/', 'tokyohot/detail.html', 'n1700'];
         yield 'caribbeancom' => ['https://en.caribbeancom.com/eng/moviepages/080826-001/index.html', 'caribbeancom/detail.html', '080826-001'];
+        yield 'caribbeancompr' => ['https://en.caribbeancompr.com/eng/moviepages/060126_001/index.html', 'caribbeancompr/detail.html', '060126_001'];
+        yield 'caribbeancompr ja' => ['https://www.caribbeancompr.com/moviepages/060126_001/index.html', 'caribbeancompr/detail-ja.html', '060126_001'];
         yield 'heyzo' => ['https://en.heyzo.com/moviepages/3927/index.html', 'heyzo/detail.html', '3927'];
     }
 
@@ -52,6 +54,7 @@ final class CatalogAdapterCrawlTest extends CrawlerXTestCase
         yield 'duga' => ['https://duga.jp/', 'https://duga.jp/ranking/', 'duga/listing-ranking.html'];
         yield 'tokyohot' => ['https://my.tokyo-hot.com/', 'https://my.tokyo-hot.com/index?lang=en', 'tokyohot/listing.html'];
         yield 'caribbeancom' => ['https://en.caribbeancom.com/', 'https://en.caribbeancom.com/eng/index2.htm', 'caribbeancom/listing.html'];
+        yield 'caribbeancompr' => ['https://en.caribbeancompr.com/', 'https://en.caribbeancompr.com/eng/listpages/1.html', 'caribbeancompr/listing.html'];
         yield 'heyzo' => ['https://en.heyzo.com/', 'https://en.heyzo.com/listpages/all_1.html', 'heyzo/listing.html'];
     }
 
@@ -69,5 +72,17 @@ final class CatalogAdapterCrawlTest extends CrawlerXTestCase
         self::assertSame($acceptedUrl, $list->url);
         self::assertSame('movie', $list->entityType);
         self::assertNotEmpty($list->items);
+    }
+
+    public function test_caribbeancompr_urls_are_inferred_without_a_site_or_type_override(): void
+    {
+        $listing = 'https://en.caribbeancompr.com/eng/listpages/2.html';
+        FixtureResponder::for('GET', $listing)->file('caribbeancompr/listing.html');
+
+        $list = CrawlerX::url($listing)->crawl();
+
+        self::assertInstanceOf(CrawlListResultDto::class, $list);
+        self::assertSame($listing, $list->url);
+        self::assertCount(40, $list->items);
     }
 }
