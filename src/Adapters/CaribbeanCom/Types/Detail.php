@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Adapters\CaribbeanCom\Types;
 
 use JOOservices\CrawlerX\Adapters\AbstractHtmlType;
+use JOOservices\CrawlerX\Adapters\CaribbeanCom\Price;
+use JOOservices\CrawlerX\Adapters\CaribbeanCom\Profile;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
+use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
@@ -22,11 +25,20 @@ final class Detail extends AbstractHtmlType implements TypeInterface
 {
     use ParsesHtml;
 
-    private const KNOWN_SPECS = ['Starring', 'Tags', 'Release Date', 'Duration'];
+    /** Keys of the player JSON that are availability flags, kept as booleans. */
+    private const PLAYER_FLAGS = [
+        'is_recurring', 'sample_flash_exists', 'is_movie_expired', 'is_status_enabled', 'is_old_gallery', 'is_presale',
+        'is_nukumori', 'ticketonly_flag', 'ticket_enable', 'has_gallery', 'has_zip', 'is_mp4', 'has_streaming',
+    ];
+
+    public function __construct(CrawlHttpClient $client, private readonly Profile $profile)
+    {
+        parent::__construct($client);
+    }
 
     protected function siteLabel(): string
     {
-        return 'Caribbeancom';
+        return $this->profile->label;
     }
 
     protected function contextLabel(): string
@@ -40,49 +52,59 @@ final class Detail extends AbstractHtmlType implements TypeInterface
         $externalId = $this->externalId($request->url);
         $specs = $this->specs($crawler);
         $player = $this->playerData($crawler);
+        $rawDate = isset($specs['date']) ? $this->normalizeText($specs['date']->text('')) : null;
 
         $item = MovieDto::item(
             url: $request->url,
             externalId: $externalId,
-            title: $this->firstText($crawler, 'h1[itemprop="name"], .movie-info h1') ?? $externalId,
+            title: $this->firstText($crawler, $this->profile->titleSelector) ?? $externalId,
             data: MovieMeta::filter([
                 'code' => $externalId,
+                'description' => $this->description($crawler),
                 'cover_url' => $this->poster($crawler, $request->url, $externalId),
-                'date' => MovieMeta::isoDate(isset($specs['Release Date']) ? $this->normalizeText($specs['Release Date']->text('')) : null),
-                'duration' => MovieMeta::durationMinutes(isset($specs['Duration']) ? $this->normalizeText($specs['Duration']->text('')) : null),
-                'performers' => isset($specs['Starring']) ? $this->performers($specs['Starring'], $request->url) : [],
-                'tags' => isset($specs['Tags']) ? $this->texts($specs['Tags'], 'a') : [],
+                'date' => MovieMeta::isoDate($rawDate),
+                'duration' => MovieMeta::durationMinutes(isset($specs['duration']) ? $this->normalizeText($specs['duration']->text('')) : null),
+                'performers' => isset($specs['performers']) ? $this->performers($specs['performers'], $request->url) : [],
+                'tags' => isset($specs['tags']) ? $this->texts($specs['tags'], 'a') : [],
                 'screenshots' => $this->gallery($crawler, $request->url),
                 'metadata' => MovieMeta::filter([
                     MovieMeta::SAMPLE_VIDEO_URL => $this->sampleVideo($crawler, $request->url) ?? $this->stringValue($player, 'sample_flash_url'),
                     'sample_mobile_video_url' => $this->stringValue($player, 'sample_m_flash_url'),
                     MovieMeta::DOWNLOADS => $this->downloads($crawler, $request->url),
-                    MovieMeta::RELEASE_DATE_RAW => isset($specs['Release Date']) ? $this->normalizeText($specs['Release Date']->text('')) : null,
+                    MovieMeta::RELEASE_DATE_RAW => $rawDate,
+                    MovieMeta::MAKER => isset($specs['maker']) ? $this->normalizeText($specs['maker']->text('')) : null,
+                    ...$this->purchase($crawler),
+                    ...$this->playerExtras($player),
                     MovieMeta::FIELDS => $this->otherSpecs($specs),
                 ]),
             ]),
         );
 
-        $this->assertUsableMovieDetail($item, 'Caribbeancom');
+        $this->assertUsableMovieDetail($item, $this->profile->label);
 
         return $item;
     }
 
-    /** @return array<string, Crawler> spec title (without the colon) => content */
+    /** @return array<string, Crawler> spec key (performers, date, ...) or the raw spec title when unknown => content */
     private function specs(Crawler $crawler): array
     {
         $specs = [];
-        $crawler->filter('.movie-detail__spec')->each(function (Crawler $spec) use (&$specs): void {
+        $crawler->filter($this->profile->specSelector)->each(function (Crawler $spec) use (&$specs): void {
             $title = $this->firstText($spec, '.spec-title');
             if ($title === null || $spec->filter('.spec-content')->count() === 0) {
                 return;
             }
 
             $title = rtrim($title, ': ');
-            $specs[$title] ??= $spec->filter('.spec-content')->first();
+            $specs[$this->profile->specKey($title) ?? $title] ??= $spec->filter('.spec-content')->first();
         });
 
         return $specs;
+    }
+
+    private function description(Crawler $crawler): ?string
+    {
+        return $this->profile->descriptionSelector === null ? null : $this->firstText($crawler, $this->profile->descriptionSelector);
     }
 
     /** @return list<array{external_id: ?string, name: string, url: ?string}> */
@@ -96,7 +118,7 @@ final class Detail extends AbstractHtmlType implements TypeInterface
                 return;
             }
 
-            $id = preg_match('~/search_act/(\d+)/~', $href, $match) === 1 ? $match[1] : null;
+            $id = $this->profile->performerIdPattern !== '' && preg_match($this->profile->performerIdPattern, $href, $match) === 1 ? $match[1] : null;
             $performers[$href] = MovieMeta::performer($name, $id, $this->absolute($baseUrl, $href));
         });
 
@@ -145,10 +167,15 @@ final class Detail extends AbstractHtmlType implements TypeInterface
             return $this->absolute($baseUrl, $poster);
         }
 
-        // The player script builds the poster as /moviepages/<id>/images/poster_en.jpg (see the page's inline script).
-        $hasPosterScript = $crawler->filter('script')->reduce(static fn(Crawler $script): bool => str_contains($script->text(''), "/images/poster_en.jpg"))->count() > 0;
+        // The player script builds the poster as /moviepages/<id>/images/<file> (see the page's inline script).
+        foreach ($this->profile->posterFiles as $file) {
+            $hasPosterScript = $crawler->filter('script')->reduce(static fn(Crawler $script): bool => str_contains($script->text(''), '/images/' . $file))->count() > 0;
+            if ($hasPosterScript && $externalId !== null) {
+                return $this->absolute($baseUrl, '/moviepages/' . $externalId . '/images/' . $file);
+            }
+        }
 
-        return $hasPosterScript && $externalId !== null ? $this->absolute($baseUrl, '/moviepages/' . $externalId . '/images/poster_en.jpg') : null;
+        return null;
     }
 
     private function sampleVideo(Crawler $crawler, string $baseUrl): ?string
@@ -163,7 +190,7 @@ final class Detail extends AbstractHtmlType implements TypeInterface
     {
         $downloads = [];
         $crawler->filter('.download-section')->each(function (Crawler $section) use (&$downloads, $baseUrl): void {
-            $url = $this->firstAttribute($section, 'a.invisible-cta, a#dl-btn', 'href');
+            $url = $this->firstAttribute($section, $this->profile->downloadLinkSelector, 'href');
             $quality = $this->firstText($section, '.quality');
             $quality = $quality === null ? null : preg_replace('/^(\d+p)(?=\S)/', '$1 ', $quality);
             $size = $this->firstText($section, '.filesize');
@@ -213,13 +240,71 @@ final class Detail extends AbstractHtmlType implements TypeInterface
     {
         $other = [];
         foreach ($specs as $title => $cell) {
-            $text = in_array($title, self::KNOWN_SPECS, true) ? null : $this->normalizeText($cell->text(''));
+            $text = array_key_exists($title, $this->profile->specLabels) ? null : $this->normalizeText($cell->text(''));
             if ($text !== null) {
                 $other[$title] = $text;
             }
         }
 
         return $other;
+    }
+
+    /**
+     * Purchase and rental price plus the resolutions on sale (sites with a purchase box only).
+     *
+     * @return array<string, mixed>
+     */
+    private function purchase(Crawler $crawler): array
+    {
+        if ($this->profile->purchaseSelector === null) {
+            return [];
+        }
+
+        $box = $crawler->filter($this->profile->purchaseSelector);
+        if ($box->count() === 0) {
+            return [];
+        }
+
+        return [
+            MovieMeta::PRICE => $this->sectionPrice($box, '.is-cart-download'),
+            'rental_price' => $this->sectionPrice($box, '.is-cart-rental, .is-cart-streaming'),
+            'available_resolutions' => $this->texts($box, '.is-resolution dd'),
+        ];
+    }
+
+    /** @return array{amount: ?float, currency: ?string, label: ?string}|null */
+    private function sectionPrice(Crawler $box, string $section): ?array
+    {
+        $section = $box->filter($section)->first();
+        if ($section->count() === 0) {
+            return null;
+        }
+
+        $price = Price::parse($this->firstText($section, '.is-original-price'));
+
+        return $price === null ? null : MovieMeta::price($price['amount'], $price['currency'], $this->firstText($section, '.purchase-type'));
+    }
+
+    /**
+     * The site's numeric movie id and availability flags from the player JSON (sites that opt in only).
+     *
+     * @param  array<string, mixed>  $player
+     * @return array<string, mixed>
+     */
+    private function playerExtras(array $player): array
+    {
+        if (! $this->profile->playerFlags) {
+            return [];
+        }
+
+        $flags = [];
+        foreach (self::PLAYER_FLAGS as $key) {
+            if (isset($player[$key])) {
+                $flags[$key] = $player[$key] === '1' || $player[$key] === 1 || $player[$key] === true;
+            }
+        }
+
+        return ['movie_seq' => $this->stringValue($player, 'movie_seq'), 'flags' => $flags];
     }
 
     private function externalId(string $url): ?string

@@ -249,7 +249,7 @@ Available methods are `http`, `curl_impersonate`, `playwright`,
 
 ## Supported sites
 
-CrawlerX currently registers 28 adapters. Capabilities below come from each
+CrawlerX currently registers 31 adapters. Capabilities below come from each
 adapter's current manifest.
 
 | Site | Slug | Listing | Detail | Gallery | Performer listing | Performer detail |
@@ -258,6 +258,7 @@ adapter's current manifest.
 | S1 NO.1 STYLE | `s1` | Yes | Yes | — | — | Yes |
 | MOODYZ | `moodyz` | Yes | Yes | — | — | Yes |
 | IDEAPOCKET | `ideapocket` | Yes | Yes | — | — | Yes |
+| Pacopacomama | `pacopacomama` | Yes | Yes | — | — | — |
 | 1Pondo | `onepondo` | Yes | Yes | — | — | — |
 | 10Musume | `10musume` | Yes | Yes | — | — | — |
 | Aisex | `aisex` | — | — | — | Yes | Yes |
@@ -265,6 +266,7 @@ adapter's current manifest.
 | Avfan Profiles | `avfan_profiles` | — | — | — | Yes | Yes |
 | Avjoho | `avjoho` | — | — | — | Yes | Yes |
 | Caribbeancom | `caribbeancom` | Yes | Yes | — | — | — |
+| Caribbeancom Premium | `caribbeancompr` | Yes | Yes | — | — | — |
 | DUGA | `duga` | Yes | Yes | — | — | — |
 | EPORNER | `eporner` | — | — | Yes | — | — |
 | FC2 Content Market | `fc2` | Yes | Yes | — | — | — |

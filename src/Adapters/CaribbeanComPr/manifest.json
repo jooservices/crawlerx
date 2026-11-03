@@ -1,0 +1,31 @@
+{
+    "slug": "caribbeancompr",
+    "name": "Caribbeancom Premium",
+    "version": "1.0.0",
+    "description": "Crawler for Caribbeancom Premium (caribbeancompr.com) English and Japanese movie listings and details",
+    "author": "JOOservices",
+    "requires": {"php": ">=8.5"},
+    "adapter": {"class": "JOOservices\\CrawlerX\\Adapters\\CaribbeanComPr\\CaribbeanComPrCrawler", "capabilities": ["listing", "detail"]},
+    "base_url": "https://en.caribbeancompr.com",
+    "pagination": {"strategy": "path", "param": "page"},
+    "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [".entry"],
+                "detail": ["#moviepages"]
+            },
+            "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
+        },
+        "targetProfiles": {"caribbeanpr_listing": {"label": "Caribbeancom Premium English Listing", "url": "https://en.caribbeancompr.com/eng/listpages/1.html"}},
+        "fixtureSamples": [
+            {"url": "https://en.caribbeancompr.com/eng/listpages/1.html", "name": "listing.html", "type": "listing"},
+            {"url": "https://en.caribbeancompr.com/eng/moviepages/060126_001/index.html", "name": "detail.html", "type": "detail"},
+            {"url": "https://www.caribbeancompr.com/moviepages/060126_001/index.html", "name": "detail-ja.html", "type": "detail"}
+        ],
+        "defaultCrawlConfig": {"timeout": 45},
+        "defaultThrottle": {"default_gap_seconds": 10, "min_gap_seconds": 5, "max_gap_seconds": 60},
+        "playwrightFetchEnabled": false
+    },
+    "type": "site"
+}
