@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Complete shared OnePondoFamily list/detail field extraction, retain full file/category/performer source records, and guard every family fixture against silent field loss and changes to existing DTO values (JOOXCR-360).
+
 - Add the 10musume adapter on the shared 1Pondo-family JSON base (listing + detail) (JOOXCR-308).
 
 ### Changed
