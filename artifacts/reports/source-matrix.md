@@ -2,22 +2,22 @@
 
 ## Run conditions
 
-- Started (UTC): 2026-11-03T06:16:30Z
-- Ended (UTC): 2026-11-03T06:16:40Z
-- Tool git SHA: `d247b8da19f084c91738f10800cf345843f376e7`
+- Started (UTC): 2026-11-03T04:52:33Z
+- Ended (UTC): 2026-11-03T04:52:44Z
+- Tool git SHA: `8042c36a58f19c9317d6a897eae33ef469280e9f`
 - Host CPU count: 16
-- Host load average at start (1/5/15 min): 4.08 4.08 3.57
-- Host load average at end (1/5/15 min): 3.77 4.01 3.56
+- Host load average at start (1/5/15 min): 6.83 4.35 3.05
+- Host load average at end (1/5/15 min): 7.33 4.54 3.12
 - Fetch methods enabled: `http`, `playwright`, `playwright_stealth`, `chrome_stealth`, `puppeteer_stealth`, `flaresolverr`
 - Disabled by CRAWLERX_DISABLED_SITES (not tested): `avfan`
 
-Source coverage: **1/1** (3 matrix rows).
+Source coverage: **1/1** (2 matrix rows).
 
 ## Verdict counts
 
 | Verdict | Count |
 | --- | ---: |
-| working | 3 |
+| working | 2 |
 | degraded | 0 |
 | blocked | 0 |
 
@@ -25,12 +25,11 @@ Source coverage: **1/1** (3 matrix rows).
 
 | Error code | Count |
 | --- | ---: |
-| none | 3 |
+| none | 2 |
 
 ## Source results
 
 | Source | Capability | URL | Method | HTTP | Challenge | Fields | Verdict | Reason |
 | --- | --- | --- | --- | ---: | --- | ---: | --- | --- |
-| madonna | detail | https://madonna-av.com/works/detail/JUR920 | http | 200 | no | 2/2 | working | — |
-| madonna | listing | https://madonna-av.com/works/list/date/2026-11-10 | http | 200 | no | 3/3 | working | — |
-| madonna | performer_detail | https://madonna-av.com/actress/detail/871344 | http | 200 | no | 3/3 | working | — |
+| caribbeancompr | detail | https://en.caribbeancompr.com/eng/moviepages/060126_001/index.html | http | 200 | no | 2/2 | working | — |
+| caribbeancompr | listing | https://en.caribbeancompr.com/eng/listpages/1.html | http | 200 | no | 3/3 | working | — |
