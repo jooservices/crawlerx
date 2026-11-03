@@ -1,0 +1,10 @@
+{
+  "source_url": "https://fitch-av.com/works/list/reserve",
+  "final_url": "https://fitch-av.com/works/list/reserve",
+  "captured_at": "2026-11-03T06:29:22.807465+00:00",
+  "http_status": 200,
+  "content_hash": "1dafada26d567fafccacd567f00eb0895bed2af269d52add532814cce201c83f",
+  "target_type": "listing",
+  "fetch_method": "http",
+  "sanitized": false
+}

@@ -162,7 +162,7 @@ final class FetchStrategyContractTest extends TestCase
     public function test_tc_fs_11_default_profile_is_adaptive_and_legacy_true_is_browser_likely(): void
     {
         $registry = new FileAdapterManifestRegistry();
-        self::assertCount(35, $registry->all());
+        self::assertCount(36, $registry->all());
         foreach ($registry->all() as $manifest) {
             self::assertInstanceOf(FetchProfile::class, $manifest->fetchProfile);
             self::assertNotSame([], $manifest->readyMarkers);
