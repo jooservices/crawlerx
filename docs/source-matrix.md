@@ -33,3 +33,6 @@ Pacopacomama (`pacopacomama`) supplies listing and detail samples through its
 manifest, so both source-matrix and canary discover it automatically. It uses
 public JSON over HTTP. See [the family adapter notes](onepondo-family.md) for
 field mapping, pagination and gallery capture evidence.
+
+Fitch (`fitch`) uses the shared Maker CMS base for public listings, movie details
+and actress profiles. See [field inventory and capture provenance](fitch.md).
