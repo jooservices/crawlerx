@@ -23,6 +23,18 @@ final class SiteTest extends TestCase
         self::assertSame(100, Site::pageSize('https://av-wiki.net/'));
     }
 
+    public function test_listing_per_page_is_clamped_to_the_wordpress_limit_used_for_pagination(): void
+    {
+        self::assertSame(
+            'https://av-wiki.net/wp-json/wp/v2/posts?per_page=100&_embed=1&page=2',
+            Site::listingApiUrl('https://av-wiki.net/wp-json/wp/v2/posts?per_page=200', 2),
+        );
+        self::assertSame(
+            'https://av-wiki.net/wp-json/wp/v2/posts?per_page=100&_embed=1&page=1',
+            Site::listingApiUrl('https://av-wiki.net/wp-json/wp/v2/posts?per_page=0', 1),
+        );
+    }
+
     public function test_builds_detail_api_urls(): void
     {
         self::assertSame(

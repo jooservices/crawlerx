@@ -22,7 +22,7 @@ final class Site
         if (! str_ends_with($path, '/wp-json/wp/v2/posts')) {
             $query = ['per_page' => 100, 'page' => $page, '_embed' => 1];
         } else {
-            $query['per_page'] ??= 100;
+            $query['per_page'] = self::pageSize($sourceUrl);
             $query['_embed'] = 1;
             $query['page'] = $page;
         }

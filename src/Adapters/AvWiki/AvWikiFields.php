@@ -202,7 +202,7 @@ final class AvWikiFields
             }
             $absolute = Site::absoluteUrl($source);
             $host = parse_url($absolute, PHP_URL_HOST);
-            if (is_string($host) && strtolower($host) !== 'av-wiki.net') {
+            if (is_string($host) && ! self::hostIsOrEndsWith($host, ['av-wiki.net'])) {
                 $imageUrls[$absolute] = $absolute;
             }
         });
@@ -229,7 +229,7 @@ final class AvWikiFields
             }
             $absolute = Site::absoluteUrl($href);
             $host = strtolower((string) parse_url($absolute, PHP_URL_HOST));
-            if ($host === '' || $host === 'av-wiki.net' || preg_match('/(?:twitter|x\.com|hatena|pocket|line\.me|facebook)/i', $host) === 1) {
+            if ($host === '' || self::hostIsOrEndsWith($host, ['av-wiki.net', 'twitter.com', 'x.com', 'hatena.ne.jp', 'getpocket.com', 'line.me', 'facebook.com'])) {
                 return;
             }
             $retailerLinks[$absolute] = ['label' => self::cleanText($link->text('')), 'url' => $absolute];
@@ -422,5 +422,22 @@ final class AvWikiFields
     private static function stringId(mixed $value): ?string
     {
         return is_int($value) || (is_string($value) && ctype_digit($value)) ? (string) $value : null;
+    }
+
+    /**
+     * Domain-boundary match: the host equals one of the domains or is a subdomain of it ("ideapocket.com" is not "pocket").
+     *
+     * @param list<string> $domains
+     */
+    private static function hostIsOrEndsWith(string $host, array $domains): bool
+    {
+        $host = strtolower($host);
+        foreach ($domains as $domain) {
+            if ($host === $domain || str_ends_with($host, '.' . $domain)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
