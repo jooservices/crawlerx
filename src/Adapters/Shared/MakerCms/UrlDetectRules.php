@@ -45,6 +45,8 @@ trait UrlDetectRules
                 priority: 80,
                 matcher: static fn(string $url, string $path, string $query): bool => rtrim($path, '/') === $config->datePath
                     || preg_match('#^' . preg_quote($config->listingPath, '#') . '\d{4}-\d{2}-\d{2}/?$#', $path) === 1
+                    || rtrim($path, '/') === $config->searchPath
+                    || preg_match('#^' . preg_quote($config->groupListPath, '#') . '(?:release|reserve)/?$#', $path) === 1
                     || preg_match('#^' . preg_quote($config->groupListPath, '#') . '(?:genre|label|series)/\d+/?$#', $path) === 1,
             ),
         ];

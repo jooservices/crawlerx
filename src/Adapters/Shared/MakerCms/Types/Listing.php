@@ -88,23 +88,42 @@ final class Listing extends AbstractType implements TypeInterface
             }
             $id = $this->config->entityId($links[0]['url'], $this->config->detailPath);
             $url = $this->config->baseUrl . $this->config->detailPath . $id;
+            $itemGroup = $group ?? $this->releaseGroup($card, $fields);
             $items[$id] = MovieDto::item($url, $id, $fields->text($card, '.hover__child .text'), [
                 'code' => $id,
-                'date' => $date,
+                'date' => $itemGroup['date'] ?? $date,
                 'cover_url' => $fields->image($card, 'a.img img'),
                 'performers' => $fields->performers($card),
                 'metadata' => [
                     'maker' => $this->config->maker,
                     'performer_count' => $this->countFromText($fields->text($card, '.ninzu')),
                     'badge' => $fields->text($card, '.c-card__tag'),
-                    'release_group' => $group,
-                    'search_key' => $fields->text($dom, '.p-search__key'),
+                    'release_group' => $itemGroup,
+                    'search_key' => $itemGroup !== null && $group === null ? $itemGroup['name'] : $fields->text($dom, '.p-search__key'),
                     'listing_range' => $fields->text($dom, '.p-search .swiper-pagination-02'),
                 ],
             ]);
         }
 
         return array_values($items);
+    }
+
+    /** @return array{name: string, url: string, external_id: string, date: string, count: int}|null */
+    private function releaseGroup(Crawler $card, Fields $fields): ?array
+    {
+        $heading = $card->ancestors()->filter('.l-wrap')->first()->previousAll()->filter('.p-search__key.-flexBet')->first();
+        $date = $fields->date($fields->text($heading, 'p'));
+        if ($date === null) {
+            return null;
+        }
+
+        return [
+            'name' => $heading->text(),
+            'url' => $this->config->baseUrl . $this->config->listingPath . $date,
+            'external_id' => $date,
+            'date' => $date,
+            'count' => (int) $fields->text($heading, 'p:last-child'),
+        ];
     }
 
     private function countFromText(?string $text): ?int

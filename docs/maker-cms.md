@@ -46,3 +46,9 @@ MOODYZ fixtures (`tests/Fixtures/moodyz`) were captured from the public site on 
 Madonna (`https://madonna-av.com`) fixtures (`tests/Fixtures/madonna`) were captured from the public site on 2026-11-03 without credentials: the date index, the 2026-11-10 and 2026-12-01 date listings, one detail (JUR920) and one actress profile (871344). No shared code was changed; actress profiles may omit the birthday (`birth_date_raw` is then null).
 
 kawaii* (`https://kawaiikawaii.jp`) fixtures (`tests/Fixtures/kawaiikawaii`) were captured from the public site on 2026-11-03 without credentials: the date index, the 2026-12-01 and 2026-11-03 date listings, one detail (KWBD444, DVD + Blu-ray) and one actress profile (876969). No shared code was changed; `metadata.maker` is `kawaii*`.
+DASDAS (`Adapters/Dasdas`, fixtures captured 2026-11-03 from public pages, no
+credentials) needs no base change: the same rows are parsed, the `レーベル` row is
+absent so `metadata.label` is omitted, and an empty `シリーズ` row yields an empty
+series list. The site publishes two actress social links with a doubled host in the
+`href` (`https://x.com/https://x.com/<handle>`); they are kept as published and the
+handle is exposed as the link `external_id`.
