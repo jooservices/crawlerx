@@ -19,7 +19,7 @@ The command reads each adapter capability and its matching `runtime.fixtureSampl
 Muramura's manifest supplies listing and detail fixture samples, so both
 capabilities are included automatically in the source matrix and canary.
 
-Each result contains the fetch method and HTTP status, challenge flag, parsed and required field counts, verdict, and mapped reason. The report does not store fetched HTML or exception text. The summary counts verdicts and `CrawlErrorCode` values and states source coverage; a full run should report `36/36`.
+Each result contains the fetch method and HTTP status, challenge flag, parsed and required field counts, verdict, and mapped reason. The report does not store fetched HTML or exception text. The summary counts verdicts and `CrawlErrorCode` values and states source coverage; a full run should report `37/37`.
 
 Requests run sequentially. The tool caps fetch attempts at three per source and capability, reserving one request for a single timeout/network retry after a 15-second cooldown. It waits at least five seconds between requests to a host, while preserving a larger manifest throttle. A timeout or network error that remains after retry is degraded. Blocked is reserved for authentication requirements, HTTP 401/403, unresolved challenges, and explicit blocked responses. Adapters requiring login are reported as blocked without sending a request. The tool fills the run metadata itself (UTC times, git SHA, CPU count, load averages of the machine that runs PHP) and finalizes the report in the same process; the `CRAWLERX_MATRIX_*` variables still override these values.
 
