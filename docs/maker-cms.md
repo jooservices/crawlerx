@@ -2,9 +2,9 @@
 
 `Adapters/Shared/MakerCms` parses public server-rendered release-date indexes,
 date-group movie cards, movie details and actress profiles. S1 is the first
-consumer. `S1/Site.php` supplies configuration; `S1Crawler` supplies the slug.
-The manifest registers capabilities and URL samples through the existing registry.
-Sister sites are deliberately not registered by this change.
+consumer, MOODYZ (`https://moodyz.com`) the second. Each site is only `Site.php`
+(configuration), a `*Crawler` (slug), a manifest and captured fixtures; the manifest
+registers capabilities and URL samples through the existing registry.
 
 `SiteConfig` controls the origin, maker and date/list/detail/actress route prefixes.
 The shared URL rules use those prefixes, including performer-detail inference.
@@ -14,7 +14,7 @@ index has no later date or the direct group has no next link.
 
 Movies retain site IDs, title, synopsis, ISO release date, duration in minutes,
 ordered gallery images, performers and genre tags. Metadata retains series and
-genre IDs/links, release links, director, each physical format's code/runtime/price,
+genre IDs/links, label links (`labels`, e.g. MOODYZ), release links, director, each physical format's code/runtime/price,
 sample video/poster, purchase links and release caveat. Labeled source rows are
 also retained. Listing metadata preserves withheld ensemble counts, card badges,
 displayed range and date-group counts. Images use lazy-load attributes before src.
@@ -29,3 +29,5 @@ The real HTML fixtures were captured from public S1 pages on 2026-11-03, without
 credentials. Data is rendered in HTML; the inspected work/profile scripts only
 initialize sliders. No authenticated endpoint is supported. Unit/feature field
 assertions cover these captures, an empty biography and another configured host.
+
+MOODYZ fixtures (`tests/Fixtures/moodyz`) were captured from the public site on 2026-11-03 without credentials: the date index, two date-group listings, one detail and one actress profile. MOODYZ profiles may omit the birthday; `birth_date_raw` is then null.

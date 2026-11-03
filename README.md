@@ -249,13 +249,14 @@ Available methods are `http`, `curl_impersonate`, `playwright`,
 
 ## Supported sites
 
-CrawlerX currently registers 27 adapters. Capabilities below come from each
+CrawlerX currently registers 28 adapters. Capabilities below come from each
 adapter's current manifest.
 
 | Site | Slug | Listing | Detail | Gallery | Performer listing | Performer detail |
 | --- | --- | :---: | :---: | :---: | :---: | :---: |
 | 141Jav | `141jav` | Yes | Yes | — | — | — |
 | S1 NO.1 STYLE | `s1` | Yes | Yes | — | — | Yes |
+| MOODYZ | `moodyz` | Yes | Yes | — | — | Yes |
 | 1Pondo | `onepondo` | Yes | Yes | — | — | — |
 | 10Musume | `10musume` | Yes | Yes | — | — | — |
 | Aisex | `aisex` | — | — | — | Yes | Yes |

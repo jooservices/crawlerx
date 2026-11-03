@@ -44,6 +44,7 @@ final class Detail extends AbstractType implements TypeInterface
                 'maker' => $this->config->maker,
                 'genres' => $genres,
                 'series' => isset($rows['シリーズ']) ? $fields->links($rows['シリーズ'], 'a[href]') : [],
+                'labels' => isset($rows['レーベル']) ? $fields->links($rows['レーベル'], 'a[href]') : [],
                 'release_links' => isset($rows['発売日']) ? $fields->links($rows['発売日'], 'a[href]') : [],
                 'director' => isset($rows['監督']) ? $fields->text($rows['監督'], '.td') : null,
                 'formats' => $formats,
