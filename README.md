@@ -266,6 +266,7 @@ adapter's current manifest.
 | Avfan | `avfan` | Yes | Yes | — | — | — |
 | Avfan Profiles | `avfan_profiles` | — | — | — | Yes | Yes |
 | Avjoho | `avjoho` | — | — | — | Yes | Yes |
+| AV-Wiki | `avwiki` | Yes | Yes | — | — | — |
 | Caribbeancom | `caribbeancom` | Yes | Yes | — | — | — |
 | Caribbeancom Premium | `caribbeancompr` | Yes | Yes | — | — | — |
 | DUGA | `duga` | Yes | Yes | — | — | — |
