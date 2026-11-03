@@ -124,7 +124,8 @@ class FieldsTest extends TestCase
         self::assertFalse($movie['metadata']['has_gallery']);
         self::assertSame([], $movie['screenshots']);
         self::assertArrayNotHasKey('series', $movie['metadata']);
-        self::assertArrayNotHasKey('member_files', $movie['metadata']);
+        self::assertIsArray($movie['metadata']['member_files']);
+        self::assertNotEmpty($movie['metadata']['member_files']);
         self::assertArrayNotHasKey('rating', $movie['metadata']);
         self::assertArrayNotHasKey('price', $movie['metadata']);
     }

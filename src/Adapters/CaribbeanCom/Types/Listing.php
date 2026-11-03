@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Adapters\CaribbeanCom\Types;
 
 use JOOservices\CrawlerX\Adapters\AbstractHtmlType;
+use JOOservices\CrawlerX\Adapters\CaribbeanCom\Price;
+use JOOservices\CrawlerX\Adapters\CaribbeanCom\Profile;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
+use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
@@ -15,16 +18,19 @@ use JOOservices\CrawlerX\Exceptions\CrawlParseException;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 
-/** Caribbeancom movie cards: title, thumbnail, release date and the starring performers. */
+/** Caribbeancom-family movie cards: title, thumbnail, release date or starting price, and the starring performers. */
 final class Listing extends AbstractHtmlType implements TypeInterface
 {
     use ParsesHtml;
 
-    private const ROOT_URL = 'https://en.caribbeancom.com/eng/index2.htm';
+    public function __construct(CrawlHttpClient $client, private readonly Profile $profile)
+    {
+        parent::__construct($client);
+    }
 
     protected function siteLabel(): string
     {
-        return 'Caribbeancom';
+        return $this->profile->label;
     }
 
     protected function contextLabel(): string
@@ -35,7 +41,7 @@ final class Listing extends AbstractHtmlType implements TypeInterface
     public function execute(CrawlRequestDto $request): CrawlListResultDto
     {
         $path = parse_url($request->url, PHP_URL_PATH);
-        $fetchUrl = $path === null || $path === '' || $path === '/' ? self::ROOT_URL : $request->url;
+        $fetchUrl = $path === null || $path === '' || $path === '/' ? $this->profile->listingUrl : $request->url;
         $crawler = $this->fetchCrawler(new CrawlRequestDto(url: $fetchUrl, type: $request->type, page: $request->page));
         $items = [];
 
@@ -51,6 +57,9 @@ final class Listing extends AbstractHtmlType implements TypeInterface
             }
 
             $cover = $this->firstAttribute($card, '.media-thum img', 'src');
+            $priceText = $this->firstText($card, '.meta-data .meta-sale-price') ?? $this->firstText($card, '.meta-data');
+            $price = Price::parse($priceText);
+            $original = Price::parse($this->firstText($card, '.meta-data del'));
             $items[$url] = MovieDto::item(
                 url: $url,
                 externalId: $match[1],
@@ -60,12 +69,16 @@ final class Listing extends AbstractHtmlType implements TypeInterface
                     'cover_url' => $cover === null ? null : $this->absolute($fetchUrl, $cover),
                     'date' => MovieMeta::isoDate($this->firstText($card, '.meta-data')),
                     'performers' => $this->performers($card, $fetchUrl),
+                    'metadata' => MovieMeta::filter([
+                        MovieMeta::PRICE => $price === null ? null : MovieMeta::price($price['amount'], $price['currency'], $priceText),
+                        'original_price' => $original === null ? null : MovieMeta::price($original['amount'], $original['currency']),
+                    ]),
                 ]),
             );
         });
 
         if ($items === []) {
-            throw new CrawlParseException('Caribbeancom listing page did not contain movie cards.');
+            throw new CrawlParseException($this->profile->label . ' listing page did not contain movie cards.');
         }
 
         $next = $this->firstAttribute($crawler, 'a[rel="next"][href], .pagination a.next[href]', 'href');
@@ -78,12 +91,22 @@ final class Listing extends AbstractHtmlType implements TypeInterface
             items: array_values($items),
             pagination: new CrawlPaginationDto(
                 currentPage: $request->page,
-                lastPage: null,
+                lastPage: $this->lastPage($crawler),
                 nextPage: $nextUrl === null ? null : $request->page + 1,
                 nextUrl: $nextUrl,
                 hasNextPage: $nextUrl !== null,
             ),
         );
+    }
+
+    private function lastPage(Crawler $crawler): ?int
+    {
+        $pages = array_map('intval', array_filter(
+            $crawler->filter('.pagination a.pagination-item')->each(fn(Crawler $link): string => trim($link->text(''))),
+            ctype_digit(...),
+        ));
+
+        return $pages === [] ? null : max($pages);
     }
 
     /** @return list<array{external_id: ?string, name: string, url: ?string}> */

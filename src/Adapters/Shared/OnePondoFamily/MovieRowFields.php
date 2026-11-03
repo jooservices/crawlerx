@@ -30,7 +30,7 @@ class MovieRowFields
             'duration' => $this->durationMinutes($detail),
             'performers' => $this->performerEntries($detail),
             'tags' => $this->tags($detail),
-            'metadata' => MovieMeta::filter([
+            'metadata' => [...MovieMeta::filter([
                 MovieMeta::MAKER => $this->config->maker,
                 MovieMeta::SERIES => $this->stringField($detail, 'SeriesEn') ?? $this->stringField($detail, 'Series'),
                 'series_titles' => $this->pair($detail, 'Series', 'SeriesEn'),
@@ -49,7 +49,7 @@ class MovieRowFields
                 'meta_movie_id' => $detail['MetaMovieID'] ?? null,
                 'can_stream' => $detail['CanStream'] ?? null,
                 'has_gallery' => $detail[$this->config->galleryFlagField] ?? null,
-            ]),
+            ]), ...SourceFields::metadata($detail)],
         ]);
     }
 

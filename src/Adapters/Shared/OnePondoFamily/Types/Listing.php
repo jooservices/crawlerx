@@ -34,9 +34,15 @@ class Listing extends AbstractType implements TypeInterface
     public function execute(CrawlRequestDto $request): CrawlListResultDto
     {
         $page = max(1, $request->page);
-        $listKind = $this->listKind($request->url);
+        $direct = $this->directListing($request->url);
+        $listKind = $direct['kind'] ?? $this->listKind($request->url);
+        $offset = 0;
 
-        if ($page === 1) {
+        if ($direct !== null && $page === 1) {
+            $offset = $direct['offset'];
+            $payload = $this->fetchListPayload($listKind, $offset);
+            $page = intdiv($offset, $this->splitSize($payload)) + 1;
+        } elseif ($page === 1) {
             $payload = $this->fetchListPayload($listKind, 0);
         } else {
             $probe = $this->fetchListPayload($listKind, 0);
@@ -51,7 +57,6 @@ class Listing extends AbstractType implements TypeInterface
         }
 
         $splitSize = $this->splitSize($payload);
-        $offset = ($page - 1) * $splitSize;
         $totalRows = $this->totalRows($payload);
         $hasNextPage = $offset + $splitSize < $totalRows;
 
@@ -64,7 +69,7 @@ class Listing extends AbstractType implements TypeInterface
                 currentPage: $page,
                 lastPage: $totalRows > 0 ? (int) ceil($totalRows / $splitSize) : null,
                 nextPage: $hasNextPage ? $page + 1 : null,
-                nextUrl: $hasNextPage ? $this->nextListingUrl($request->url, $page + 1) : null,
+                nextUrl: $hasNextPage ? $this->nextListingUrl($request->url, $page + 1, $listKind, $offset + $splitSize) : null,
                 hasNextPage: $hasNextPage,
             ),
         );
@@ -122,6 +127,19 @@ class Listing extends AbstractType implements TypeInterface
         return array_values($items);
     }
 
+    /**
+     * @return array{kind: string, offset: int}|null
+     */
+    private function directListing(string $url): ?array
+    {
+        $path = parse_url($url, PHP_URL_PATH);
+        if (! is_string($path) || preg_match('#^/dyn/phpauto/movie_lists/list_(newest|monthly|weekly|bob|oldest)_(\d+)\.json$#i', $path, $matches) !== 1) {
+            return null;
+        }
+
+        return ['kind' => strtolower($matches[1]), 'offset' => (int) $matches[2]];
+    }
+
     private function listKind(string $url): string
     {
         $query = parse_url($url, PHP_URL_QUERY);
@@ -148,8 +166,12 @@ class Listing extends AbstractType implements TypeInterface
         return rtrim($this->config->baseUrl, '/') . '/dyn/phpauto/movie_lists/list_' . $listKind . '_' . $offset . '.json';
     }
 
-    private function nextListingUrl(string $url, int $page): string
+    private function nextListingUrl(string $url, int $page, string $listKind, int $offset): string
     {
+        if ($this->directListing($url) !== null) {
+            return $this->listJsonUrl($listKind, $offset);
+        }
+
         $parts = parse_url($url);
         if (! is_array($parts) || ! isset($parts['scheme'], $parts['host'])) {
             return $url;

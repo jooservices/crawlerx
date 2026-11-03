@@ -249,12 +249,16 @@ Available methods are `http`, `curl_impersonate`, `playwright`,
 
 ## Supported sites
 
-CrawlerX currently registers 26 adapters. Capabilities below come from each
+CrawlerX currently registers 32 adapters. Capabilities below come from each
 adapter's current manifest.
 
 | Site | Slug | Listing | Detail | Gallery | Performer listing | Performer detail |
 | --- | --- | :---: | :---: | :---: | :---: | :---: |
 | 141Jav | `141jav` | Yes | Yes | — | — | — |
+| S1 NO.1 STYLE | `s1` | Yes | Yes | — | — | Yes |
+| MOODYZ | `moodyz` | Yes | Yes | — | — | Yes |
+| IDEAPOCKET | `ideapocket` | Yes | Yes | — | — | Yes |
+| Pacopacomama | `pacopacomama` | Yes | Yes | — | — | — |
 | 1Pondo | `onepondo` | Yes | Yes | — | — | — |
 | 10Musume | `10musume` | Yes | Yes | — | — | — |
 | Aisex | `aisex` | — | — | — | Yes | Yes |
@@ -262,6 +266,7 @@ adapter's current manifest.
 | Avfan Profiles | `avfan_profiles` | — | — | — | Yes | Yes |
 | Avjoho | `avjoho` | — | — | — | Yes | Yes |
 | Caribbeancom | `caribbeancom` | Yes | Yes | — | — | — |
+| Caribbeancom Premium | `caribbeancompr` | Yes | Yes | — | — | — |
 | DUGA | `duga` | Yes | Yes | — | — | — |
 | EPORNER | `eporner` | — | — | Yes | — | — |
 | FC2 Content Market | `fc2` | Yes | Yes | — | — | — |
@@ -496,3 +501,5 @@ Skipped entries explain missing handlers, budget exhaustion, or an earlier
 non-challenge answer. Methods after success or a terminal error are not visited.
 The fallback order and selection rules are unchanged. Header values are null
 when the handler/service does not expose them; a missing HTTP response is null.
+
+Maker CMS shared parsing and field mapping: [docs/maker-cms.md](docs/maker-cms.md).

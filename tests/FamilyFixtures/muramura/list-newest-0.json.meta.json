@@ -1,0 +1,10 @@
+{
+    "source_url": "https://www.muramura.tv/dyn/phpauto/movie_lists/list_newest_0.json",
+    "final_url": "https://www.muramura.tv/dyn/phpauto/movie_lists/list_newest_0.json",
+    "captured_at": "2026-11-02T22:55:41+00:00",
+    "http_status": 200,
+    "content_hash": "628ee90526c1b415b4237b76e2a659936098be263be4eaec2dc44ca134624cb7",
+    "target_type": "listing",
+    "fetch_method": "http",
+    "sanitized": false
+}
