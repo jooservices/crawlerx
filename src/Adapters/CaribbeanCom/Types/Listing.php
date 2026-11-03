@@ -57,7 +57,9 @@ final class Listing extends AbstractHtmlType implements TypeInterface
             }
 
             $cover = $this->firstAttribute($card, '.media-thum img', 'src');
-            $price = Price::parse($this->firstText($card, '.meta-data'));
+            $priceText = $this->firstText($card, '.meta-data .meta-sale-price') ?? $this->firstText($card, '.meta-data');
+            $price = Price::parse($priceText);
+            $original = Price::parse($this->firstText($card, '.meta-data del'));
             $items[$url] = MovieDto::item(
                 url: $url,
                 externalId: $match[1],
@@ -67,7 +69,10 @@ final class Listing extends AbstractHtmlType implements TypeInterface
                     'cover_url' => $cover === null ? null : $this->absolute($fetchUrl, $cover),
                     'date' => MovieMeta::isoDate($this->firstText($card, '.meta-data')),
                     'performers' => $this->performers($card, $fetchUrl),
-                    'metadata' => $price === null ? [] : [MovieMeta::PRICE => MovieMeta::price($price['amount'], $price['currency'], $this->firstText($card, '.meta-data'))],
+                    'metadata' => MovieMeta::filter([
+                        MovieMeta::PRICE => $price === null ? null : MovieMeta::price($price['amount'], $price['currency'], $priceText),
+                        'original_price' => $original === null ? null : MovieMeta::price($original['amount'], $original['currency']),
+                    ]),
                 ]),
             );
         });

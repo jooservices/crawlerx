@@ -14,5 +14,5 @@ crawler extends `AbstractCaribbeanCrawler` and returns its profile.
 - Detail fields: title, code/id, performers (name and url; the site has no performer ids), ISO date, duration in
   minutes, tags, cover, screenshots, `metadata.downloads`, `sample_video_url`, `price` (purchase),
   `rental_price`, `available_resolutions`, `movie_seq` and `flags` (player availability flags).
-- Listing fields: id, title, cover, `metadata.price` (starting price), next page and last page.
+- Listing fields: id, title, cover, `metadata.price` (starting price, the sale price on discounted cards) and `metadata.original_price` (struck-through price), next page and last page.
 - Related-movie blocks, navigation and help links are not read.

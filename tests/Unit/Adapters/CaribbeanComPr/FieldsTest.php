@@ -134,7 +134,12 @@ class FieldsTest extends TestCase
         self::assertSame('A cosplay delivery health girl who will let you cum inside her : Cheer Leader', $first['title']);
         self::assertSame('https://en.caribbeancompr.com/moviepages/110226_001/images/main_s.jpg', $first['cover_url']);
         self::assertSame(['amount' => 6.15, 'currency' => 'USD', 'label' => '$6.15 ~'], $first['metadata']['price']);
+        self::assertArrayNotHasKey('original_price', $first['metadata']);
         self::assertSame('https://en.caribbeancompr.com/eng/moviepages/110226_001/index.html', $result->items[0]->url);
+
+        $sale = array_values(array_filter($result->items, static fn($item): bool => $item->meta['movie']['external_id'] === '102826_001'))[0]->meta['movie'];
+        self::assertSame(['amount' => 5.95, 'currency' => 'USD', 'label' => '$5.95 ~'], $sale['metadata']['price']);
+        self::assertSame(['amount' => 6.73, 'currency' => 'USD', 'label' => null], $sale['metadata']['original_price']);
         self::assertSame(174, $result->pagination?->lastPage);
         self::assertSame(2, $result->pagination->nextPage);
         self::assertSame('https://en.caribbeancompr.com/eng/listpages/2.html', $result->pagination->nextUrl);
