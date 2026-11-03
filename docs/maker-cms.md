@@ -42,3 +42,5 @@ actress work URLs drop `page_from`/`sys_code`. Besides date pages, URL inference
 and listing pagination (`rel="next"`) cover `/works/list/{genre,label,series}/<id>`.
 
 MOODYZ fixtures (`tests/Fixtures/moodyz`) were captured from the public site on 2026-11-03 without credentials: the date index, two date-group listings, one detail and one actress profile. MOODYZ profiles may omit the birthday; `birth_date_raw` is then null.
+
+Madonna (`https://madonna-av.com`) fixtures (`tests/Fixtures/madonna`) were captured from the public site on 2026-11-03 without credentials: the date index, the 2026-11-10 and 2026-12-01 date listings, one detail (JUR920) and one actress profile (871344). No shared code was changed; actress profiles may omit the birthday (`birth_date_raw` is then null).

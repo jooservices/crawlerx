@@ -260,6 +260,7 @@ adapter's current manifest.
 | Fitch | `fitch` | Yes | Yes | — | — | Yes |
 | ATTACKERS | `attackers` | Yes | Yes | — | — | Yes |
 | IDEAPOCKET | `ideapocket` | Yes | Yes | — | — | Yes |
+| Madonna | `madonna` | Yes | Yes | — | — | Yes |
 | Pacopacomama | `pacopacomama` | Yes | Yes | — | — | — |
 | 1Pondo | `onepondo` | Yes | Yes | — | — | — |
 | 10Musume | `10musume` | Yes | Yes | — | — | — |
