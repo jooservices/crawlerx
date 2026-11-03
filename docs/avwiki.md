@@ -18,7 +18,11 @@ the full `200` response arrives. The adapter therefore issues the minimum:
   for the fields the REST payload lacks: the cover image (`awsimgsrc.dmm.co.jp`
   `...pl.jpg`, injected by the theme and absent from `content.rendered`), sample
   images, `h1.entry-title` page heading and the page date. A REST detail URL
-  (`...posts?slug=...` or `.../posts/<id>`) is a single request in total.
+  (`...posts?slug=...` or `.../posts/<id>`) is a single request in total; the JSON
+  body is never treated as page HTML. Images are then read from `content.rendered`
+  and the cover from the embedded `wp:featuredmedia` `source_url` when present. The
+  live REST payload currently carries neither, so a REST-only detail has no cover;
+  use the page URL (`/slug/`, `?p=<id>`) when the cover is needed.
 
 Timeouts and pacing: `defaultCrawlConfig.timeout` and `connect_timeout` are 45 s
 (the ~10.4 s hold counts as connection wait, and a fixed 5 s connect timeout used
@@ -52,6 +56,12 @@ needs one extra `/tags?include=` request per page, which the per-request delay
 makes too costly. The excerpt is empty for the sampled posts, and AV-Wiki offers
 no synopsis or duration, so those DTO fields stay absent. Listing items have no
 cover/sample images because the REST payload has none.
+
+Future release dates: the site publishes posts with release dates ahead of their
+publication. The captured listing fixture has REST `date`/`date_gmt` of
+`2026-11-06` while `captured_at` is `2026-11-02T22:59:43Z`; the capture clock was
+verified correct, so the data is kept unaltered (see `provenance_note` in
+`tests/Fixtures/avwiki/listing-page1.json.meta.json`).
 
 `tests/Fixtures/avwiki/` contains captured public JSON and HTML. The REST detail
 response is registered as a supporting fixture and does not become a

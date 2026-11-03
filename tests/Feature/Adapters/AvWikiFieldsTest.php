@@ -216,6 +216,55 @@ final class AvWikiFieldsTest extends CrawlerXTestCase
         self::assertNull($result->meta['movie']['cover_url']);
     }
 
+    public function test_detail_by_rest_url_reads_images_from_rendered_content_not_from_the_json_body(): void
+    {
+        $url = 'https://av-wiki.net/wp-json/wp/v2/posts/1691411';
+        $post = $this->fixturePost();
+        $post['content']['rendered'] .= '<p><img src="https://pics.example.com/cover.jpg"><img data-src="https://pics.example.com/shot-1.jpg" src="data:image/gif;base64,AAAA"></p>';
+        FixtureResponder::for('GET', $url)->body((string) json_encode($post), 200);
+        FixtureResponder::for('GET', $url . '?_embed=1')->body((string) json_encode($post), 200);
+
+        $result = CrawlerX::url($url)->crawl();
+
+        self::assertInstanceOf(CrawlItemResultDto::class, $result);
+        self::assertSame([$url, $url . '?_embed=1'], $this->requestedUrls());
+        self::assertSame('https://pics.example.com/cover.jpg', $result->meta['movie']['cover_url']);
+        self::assertSame('https://pics.example.com/shot-1.jpg', $result->meta['movie']['screenshots'][0]['url']);
+    }
+
+    public function test_detail_by_rest_url_prefers_the_embedded_featured_media_as_cover(): void
+    {
+        $url = 'https://av-wiki.net/wp-json/wp/v2/posts/1691411';
+        $post = $this->fixturePost();
+        $post['content']['rendered'] .= '<p><img src="https://pics.example.com/shot-1.jpg"></p>';
+        $post['_embedded']['wp:featuredmedia'] = [['id' => 9, 'source_url' => 'https://av-wiki.net/wp-content/uploads/2026/11/cover.jpg']];
+        FixtureResponder::for('GET', $url)->body((string) json_encode($post), 200);
+        FixtureResponder::for('GET', $url . '?_embed=1')->body((string) json_encode($post), 200);
+
+        $result = CrawlerX::url($url)->crawl();
+
+        self::assertInstanceOf(CrawlItemResultDto::class, $result);
+        self::assertSame('https://av-wiki.net/wp-content/uploads/2026/11/cover.jpg', $result->meta['movie']['cover_url']);
+        self::assertSame('https://pics.example.com/shot-1.jpg', $result->meta['movie']['screenshots'][0]['url']);
+    }
+
+    public function test_detail_by_page_url_still_takes_the_cover_from_the_article_page(): void
+    {
+        $this->detailFixtures();
+        $result = CrawlerX::url(self::DETAIL_URL)->crawl();
+
+        self::assertInstanceOf(CrawlItemResultDto::class, $result);
+        self::assertSame('https://image.mgstage.com/images/nanpatv/200gana/3482/pb_p_200gana-3482.jpg', $result->meta['movie']['cover_url']);
+    }
+
+    /** @return array<string, mixed> */
+    private function fixturePost(): array
+    {
+        $records = json_decode((string) file_get_contents(__DIR__ . '/../../Fixtures/avwiki/detail-200gana-3482.json'), true, 512, JSON_THROW_ON_ERROR);
+
+        return array_is_list($records) ? $records[0] : $records;
+    }
+
     public function test_listing_with_no_matches_returns_an_empty_page(): void
     {
         $url = 'https://av-wiki.net/wp-json/wp/v2/posts?search=nothing&per_page=2&page=1&_embed=1';

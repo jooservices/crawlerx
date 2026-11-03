@@ -14,5 +14,6 @@
     "X-WP-TotalPages": [
       "95882"
     ]
-  }
+  },
+  "provenance_note": "Site publishes with future release dates: REST date/date_gmt of the captured posts (2026-11-06) are later than captured_at (2026-11-02T22:59:43Z). Captured data is unaltered and the capture clock was verified correct (UTC)."
 }

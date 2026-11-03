@@ -27,8 +27,10 @@ final class AvWikiFields
         $externalId = self::stringId($post['id'] ?? null);
         $content = self::associative($post['content'] ?? null);
         $contentHtml = self::string($content['rendered'] ?? null) ?? '';
+        // A REST/JSON body is never page HTML: images then come from `content.rendered` and the embedded featured media.
+        $pageHtml = self::htmlPage($pageHtml);
         $articleMarkup = self::pageArticle($pageHtml) ?? $contentHtml;
-        $article = self::article($articleMarkup, $pageHtml);
+        $article = self::article($articleMarkup, $pageHtml, self::featuredMediaUrl($post));
         $fields = self::articleFields($articleMarkup);
         $tagRows = self::linkedTerms($post['tags'] ?? [], $tags);
         $categoryRows = self::linkedTerms($post['categories'] ?? [], $categories);
@@ -110,6 +112,32 @@ final class AvWikiFields
         ]);
     }
 
+    private static function htmlPage(?string $body): ?string
+    {
+        if ($body === null) {
+            return null;
+        }
+
+        $trimmed = ltrim($body);
+
+        return $trimmed === '' || str_starts_with($trimmed, '{') || str_starts_with($trimmed, '[') ? null : $body;
+    }
+
+    /** @param array<string, mixed> $post */
+    private static function featuredMediaUrl(array $post): ?string
+    {
+        $embedded = $post['_embedded'] ?? null;
+        $media = is_array($embedded) && is_array($embedded['wp:featuredmedia'] ?? null) ? $embedded['wp:featuredmedia'] : [];
+        foreach ($media as $item) {
+            $source = is_array($item) ? self::string($item['source_url'] ?? null) : null;
+            if ($source !== null && $source !== '') {
+                return Site::absoluteUrl($source);
+            }
+        }
+
+        return null;
+    }
+
     private static function pageArticle(?string $html): ?string
     {
         if ($html === null || trim($html) === '') {
@@ -151,7 +179,7 @@ final class AvWikiFields
     }
 
     /** @return array{cover_url: ?string, screenshots: list<array{url: string, thumbnail_url: ?string, position: int}>, retailer_links: list<array{label: string, url: string}>, text: ?string} */
-    private static function article(string $html, ?string $pageHtml): array
+    private static function article(string $html, ?string $pageHtml, ?string $featuredCover = null): array
     {
         $crawler = new Crawler('<div>' . $html . '</div>', Site::BASE_URL);
         $crawler->filter('.cat-link, .border-left, .share, .share-buttons, .social-buttons')->each(static function (Crawler $node): void {
@@ -179,11 +207,11 @@ final class AvWikiFields
             }
         });
 
-        $cover = array_values($imageUrls)[0] ?? null;
+        $cover = $featuredCover ?? array_values($imageUrls)[0] ?? null;
         $coverHost = is_string($cover) ? strtolower((string) parse_url($cover, PHP_URL_HOST)) : null;
         $screenshots = [];
         foreach (array_values($imageUrls) as $url) {
-            if ($url === $cover || $coverHost === null || strtolower((string) parse_url($url, PHP_URL_HOST)) !== $coverHost) {
+            if ($url === $cover || $coverHost === null || ($featuredCover === null && strtolower((string) parse_url($url, PHP_URL_HOST)) !== $coverHost)) {
                 continue;
             }
             $screenshots[] = [
