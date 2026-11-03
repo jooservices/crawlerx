@@ -14,7 +14,6 @@ use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
-use JOOservices\CrawlerX\Exceptions\CrawlParseException;
 
 final class Listing extends AbstractType implements TypeInterface
 {
@@ -28,10 +27,6 @@ final class Listing extends AbstractType implements TypeInterface
         $response = $this->client->get(Site::listingApiUrl($request->url, $page))->toPsrResponse();
         $payload = AvWikiJson::decode($response, 'listing');
         $posts = AvWikiJson::records($payload, 'listing');
-        if ($posts === []) {
-            throw new CrawlParseException('AV-Wiki listing response did not contain posts.');
-        }
-
         $items = [];
         foreach ($posts as $post) {
             $item = AvWikiFields::movie(

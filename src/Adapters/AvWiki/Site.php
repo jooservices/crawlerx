@@ -60,9 +60,20 @@ final class Site
             if (is_string($parts['query'] ?? null)) {
                 parse_str($parts['query'], $query);
             }
+            if (is_string($query['id'] ?? null) && ctype_digit($query['id'])) {
+                return self::POSTS_URL . '/' . $query['id'] . '?_embed=1';
+            }
             $query['_embed'] = 1;
 
             return self::POSTS_URL . '?' . self::queryString($query);
+        }
+
+        $query = [];
+        if (is_array($parts) && is_string($parts['query'] ?? null)) {
+            parse_str($parts['query'], $query);
+        }
+        if (is_string($query['p'] ?? null) && ctype_digit($query['p'])) {
+            return self::POSTS_URL . '/' . $query['p'] . '?_embed=1';
         }
 
         $slug = rawurldecode(trim(basename($path), '/'));

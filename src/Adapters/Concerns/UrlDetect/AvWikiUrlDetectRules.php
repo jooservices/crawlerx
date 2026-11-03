@@ -47,6 +47,7 @@ trait AvWikiUrlDetectRules
                         'av-actress',
                         'category',
                         'fanza-video',
+                        'list',
                         'mgstage',
                         'page',
                         'tag',

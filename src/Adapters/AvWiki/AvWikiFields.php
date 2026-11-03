@@ -280,16 +280,16 @@ final class AvWikiFields
         }
 
         $content = self::associative($post['content'] ?? null);
-        $wordpress['content'] = [
+        $wordpress['content'] = array_merge($content, [
             'rendered_text' => $articleText,
             'protected' => $content['protected'] ?? null,
-        ];
+        ]);
         $wordpress['content_protected'] = $content['protected'] ?? null;
         $excerpt = self::associative($post['excerpt'] ?? null);
-        $wordpress['excerpt'] = [
+        $wordpress['excerpt'] = array_merge($excerpt, [
             'rendered_text' => self::cleanText(self::rendered($post['excerpt'] ?? null) ?? ''),
             'protected' => $excerpt['protected'] ?? null,
-        ];
+        ]);
         $wordpress['excerpt_protected'] = $excerpt['protected'] ?? null;
 
         return $wordpress;

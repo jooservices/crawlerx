@@ -11,6 +11,7 @@ use JOOservices\CrawlerX\CrawlerXFactory;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Tests\CrawlerXTestCase;
+use JOOservices\CrawlerX\Tests\Support\FixtureResponder;
 
 final class AvWikiFieldsTest extends CrawlerXTestCase
 {
@@ -213,6 +214,29 @@ final class AvWikiFieldsTest extends CrawlerXTestCase
         self::assertSame([self::DETAIL_API_URL], $this->requestedUrls());
         self::assertSame(['倉科みくる'], $result->meta['movie']['tags']);
         self::assertNull($result->meta['movie']['cover_url']);
+    }
+
+    public function test_listing_with_no_matches_returns_an_empty_page(): void
+    {
+        $url = 'https://av-wiki.net/wp-json/wp/v2/posts?search=nothing&per_page=2&page=1&_embed=1';
+        FixtureResponder::for('GET', $url)->body('[]', 200, ['X-WP-Total' => '0', 'X-WP-TotalPages' => '0']);
+        $result = CrawlerX::url($url)->crawl();
+
+        self::assertInstanceOf(CrawlListResultDto::class, $result);
+        self::assertSame([], $result->items);
+        self::assertFalse($result->pagination->hasNextPage);
+    }
+
+    public function test_wordpress_metadata_keeps_the_original_rendered_html(): void
+    {
+        $this->listingFixtures();
+        $result = CrawlerX::url(self::LIST_URL)->crawl();
+
+        self::assertInstanceOf(CrawlListResultDto::class, $result);
+        $wordpress = $result->items[1]->meta['movie']['metadata']['wordpress'];
+        self::assertStringContainsString('<dl class="dltable">', $wordpress['content']['rendered']);
+        self::assertNotSame('', $wordpress['content']['rendered_text']);
+        self::assertArrayHasKey('rendered', $wordpress['excerpt']);
     }
 
     /** @return list<string> */

@@ -35,6 +35,33 @@ final class SiteTest extends TestCase
         );
     }
 
+    public function test_maps_numeric_post_id_queries_to_the_single_post_endpoint(): void
+    {
+        self::assertSame('https://av-wiki.net/wp-json/wp/v2/posts/123?_embed=1', Site::detailApiUrl('https://av-wiki.net/?p=123'));
+        self::assertSame(
+            'https://av-wiki.net/wp-json/wp/v2/posts/456?_embed=1',
+            Site::detailApiUrl('https://av-wiki.net/wp-json/wp/v2/posts?id=456'),
+        );
+        self::assertSame(
+            'https://av-wiki.net/wp-json/wp/v2/posts?slug=abc&_embed=1',
+            Site::detailApiUrl('https://av-wiki.net/wp-json/wp/v2/posts?slug=abc'),
+        );
+    }
+
+    public function test_list_path_is_a_listing_not_a_detail_slug(): void
+    {
+        $manifests = new \JOOservices\CrawlerX\Registry\FileAdapterManifestRegistry();
+        $registry = new \JOOservices\CrawlerX\Registry\AdapterRegistry(new \JOOservices\CrawlerX\Services\ClientFactory(), $manifests);
+        $registry->registerFromManifests($manifests);
+        $adapter = $registry->resolve('avwiki');
+        self::assertInstanceOf(\JOOservices\CrawlerX\Contracts\UrlDetectCapable::class, $adapter);
+
+        self::assertSame(
+            \JOOservices\CrawlerX\Enums\CrawlType::Listing,
+            $adapter->detectUrl('https://av-wiki.net/list/')->crawlType,
+        );
+    }
+
     public function test_resolves_absolute_and_relative_links(): void
     {
         self::assertSame('https://av-wiki.net/path', Site::absoluteUrl('/path'));
