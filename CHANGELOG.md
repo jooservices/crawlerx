@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add the Fitch adapter on the shared Maker CMS base with complete movie, date/label/genre/series listing and actress fields, captured fixtures and URL inference (JOOXCR-356).
+- Add the Fitch adapter on the shared Maker CMS base with complete movie, date/label/genre/series/release/reserve/search listing and actress fields, captured fixtures and URL inference (JOOXCR-356).
 
 - Add the Pacopacomama listing/detail adapter on the shared 1Pondo-family base with real JSON fixtures and public sample galleries (JOOXCR-309).
 - Add the caribbeancompr adapter (English and Japanese detail, English listing) on the shared Caribbeancom listing/detail parsers through a per-site `Profile`; `caribbeancom` output is unchanged (JOOXCR-351).

@@ -1,9 +1,12 @@
 # Fitch Maker CMS adapter
 
-Fitch uses the existing `Shared/MakerCms` parsers without overrides. Its Site
+Fitch uses the existing `Shared/MakerCms` parsers without overrides. The shared
+listing mapper additionally associates release-catalog cards with their own
+dated section headings; URL rules include release/reserve and keyword search. Its Site
 configuration supplies only the canonical host and maker. Manifest discovery
 registers `fitch`; shared detection supports date indexes, date/genre/label/series
-listings, movie details and actress profiles without overrides.
+listings, release/reserve catalogs, keyword search, movie details and actress
+profiles without overrides.
 
 ## Field inventory
 
@@ -31,7 +34,8 @@ destinations. Navigation and recommended movies are excluded.
 | Card URL, ID, title, thumbnail and actresses | url, external_id, code, title, cover_url, performers |
 | Card badge and aggregate performer count | metadata.badge / performer_count |
 | Date group name, date, ID, URL and work count | metadata.release_group |
-| Search label and visible/total range | metadata.search_key / listing_range |
+| Search label, reserve release period, visible/total range | metadata.search_key / listing_range |
+| Release section date, label and count for each card | date (ISO), metadata.release_group, metadata.search_key |
 | Next link and date groups | pagination |
 | Actress Japanese/Latin names and ID | name_japanese, name, aliases, external_id, url |
 | Actress photos | profile_image_url, metadata.images |
@@ -71,3 +75,10 @@ the independent URL-driven comparison together stay within three requests.
 | `detail-FPRE247.html` | https://fitch-av.com/works/detail/FPRE247 | `9c1fb53f8794926524fa31f2e36832e3453c17d0992abba36adc974ef32c281f` |
 | `list-2026-12-01.html` | https://fitch-av.com/works/list/date/2026-12-01 | `975d0adb42a0e2347e387d7c78e5547e059a84085049ab7dd887b638af354061` |
 | `list-label-10123.html` | https://fitch-av.com/works/list/label/10123 | `68135ce6805628ad22c4cdd502539d1e5342cb039350cdeea3b1affd38ce4080` |
+| `list-release.html` | https://fitch-av.com/works/list/release | `178b70d29d5d896d86d3fdcfdbf137ae5f2de27d860adf242aa2a3f961854663` |
+| `list-reserve.html` | https://fitch-av.com/works/list/reserve | `1dafada26d567fafccacd567f00eb0895bed2af269d52add532814cce201c83f` |
+| `list-search.html` | https://fitch-av.com/search/list?keyword=DEAB010 | `01f626891badc4fbceae0589dd3ec0980bc9c997d42dc63597db9054b318cf64` |
+
+Release-catalog fixtures cover three independent date groups (7, 4 and 4 works).
+Reserve captures retain the displayed period without inventing a date for each
+card; keyword captures preserve the query label and matching work.

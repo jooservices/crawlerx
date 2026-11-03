@@ -29,6 +29,9 @@ class FitchTest extends TestCase
         yield 'debut' => ['detail-DEAB010.html', '/works/detail/DEAB010', Detail::class];
         yield 'second release' => ['detail-FPRE247.html', '/works/detail/FPRE247', Detail::class];
         yield 'date cards' => ['list-2026-12-01.html', '/works/list/date/2026-12-01', Listing::class];
+        yield 'release sections' => ['list-release.html', '/works/list/release', Listing::class];
+        yield 'reserve cards' => ['list-reserve.html', '/works/list/reserve', Listing::class];
+        yield 'keyword cards' => ['list-search.html', '/search/list?keyword=DEAB010', Listing::class];
         yield 'label cards' => ['list-label-10123.html', '/works/list/label/10123', Listing::class];
         yield 'empty bio' => ['actress-876895.html', '/actress/detail/876895', PerformerDetail::class];
         yield 'measurements' => ['actress-869733.html', '/actress/detail/869733', PerformerDetail::class];
@@ -89,6 +92,20 @@ class FitchTest extends TestCase
         self::assertSame($dom->filter('.p-accordion .genre a[href*="/works/list/date/"]')->count(), $result->pagination->lastPage);
     }
 
+    public function test_release_sections_keep_their_own_dates_and_counts(): void
+    {
+        $result = (new Listing($this->clientWithHtml($this->capture('list-release.html')), Site::config()))->execute(new CrawlRequestDto(url: self::BASE . '/works/list/release'));
+        self::assertCount(15, $result->items);
+        foreach ([0 => ['2026-11-03', 7], 7 => ['2026-10-20', 4], 11 => ['2026-10-06', 4]] as $index => [$date, $count]) {
+            $movie = $result->items[$index]->meta['movie'];
+            self::assertSame($date, $movie['date']);
+            self::assertSame($date, $movie['metadata']['release_group']['date']);
+            self::assertSame($count, $movie['metadata']['release_group']['count']);
+            self::assertSame(self::BASE . '/works/list/date/' . $date, $movie['metadata']['release_group']['url']);
+            self::assertSame($movie['metadata']['release_group']['name'], $movie['metadata']['search_key']);
+        }
+    }
+
     public function test_registry_and_url_inference(): void
     {
         $manifests = new FileAdapterManifestRegistry();
@@ -99,6 +116,9 @@ class FitchTest extends TestCase
         self::assertSame('fitch', $crawler->name());
         foreach ([
             '/works/date' => CrawlType::Listing,
+            '/works/list/release' => CrawlType::Listing,
+            '/works/list/reserve' => CrawlType::Listing,
+            '/search/list?keyword=DEAB010' => CrawlType::Listing,
             '/works/list/date/2026-12-01' => CrawlType::Listing,
             '/works/list/genre/315' => CrawlType::Listing,
             '/works/list/label/10123' => CrawlType::Listing,

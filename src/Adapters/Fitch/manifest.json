@@ -2,7 +2,7 @@
     "slug": "fitch",
     "name": "Fitch",
     "version": "1.0.0",
-    "description": "Public Fitch maker CMS date/genre/label/series listings, movie details and actress profiles",
+    "description": "Public Fitch maker CMS date/group/release/reserve/search listings, movie details and actress profiles",
     "author": "JOOservices",
     "requires": {
         "php": ">=8.5",
