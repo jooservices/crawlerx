@@ -7,10 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-11-03
+
 ### Added
 
 - Add the Fitch adapter on the shared Maker CMS base with complete movie, date/label/genre/series/release/reserve/search listing and actress fields, captured fixtures and URL inference (JOOXCR-356).
-
 - Add the ATTACKERS adapter on the shared Maker CMS base (date index, date/genre/label/series listings, movie detail, actress profile) with captured-fixture field assertions (JOOXCR-355).
 - Add the Pacopacomama listing/detail adapter on the shared 1Pondo-family base with real JSON fixtures and public sample galleries (JOOXCR-309).
 - Add the caribbeancompr adapter (English and Japanese detail, English listing) on the shared Caribbeancom listing/detail parsers through a per-site `Profile`; `caribbeancom` output is unchanged (JOOXCR-351).
@@ -30,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Extract configurable 1Pondo-family JSON parsing and crawler base while preserving OnePondo DTO output (JOOXCR-307).
+
+### Security
+
+- Upgrade `phpunit/phpunit` to 13.4.6 (CVE-2026-119193), override the `minimatch` npm dependency to 11.0.4, and ignore only the unfixable `deepmerge` advisory (GHSA-gcqx-w48m-w2h4) in `osv-scanner.toml` until 2026-12-31 (JOOXCR-320).
 
 ## [1.4.3] - 2026-10-26
 
