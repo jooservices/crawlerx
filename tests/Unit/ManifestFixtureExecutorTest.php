@@ -74,6 +74,10 @@ final class ManifestFixtureExecutorTest extends CrawlerXTestCase
             FixtureResponder::for('GET', 'https://madonna-av.com/works/list/date/2026-12-01')->file('madonna/list-2026-12-01.html');
         }
 
+        if ($slug === 'kawaiikawaii' && $sample->name === 'dates.html') {
+            FixtureResponder::for('GET', 'https://kawaiikawaii.jp/works/list/date/2026-12-01')->file('kawaiikawaii/list-2026-12-01.html');
+        }
+
         FixtureResponder::for('GET', $sample->url)->file($fixtureRelativePath, $blocked ? 403 : 200);
         ManifestFixtureCatalog::registerSupportingResponses($slug);
 
