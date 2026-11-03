@@ -11,7 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add the 10musume adapter on the shared 1Pondo-family JSON base (listing + detail) (JOOXCR-308).
 - Add configurable Maker CMS family parsing with the S1 adapter, complete movie/actress metadata and captured-fixture field assertions (JOOXCR-348).
-- Add the MOODYZ adapter on the shared Maker CMS base (date index, date listing, detail, actress) and expose the detail label link list as `metadata.labels` (JOOXCR-352).
+- Add the MOODYZ adapter on the shared Maker CMS base (date index, date listing, detail, actress) using the shared `metadata.label` field (JOOXCR-352).
+- Add the IDEAPOCKET adapter on the shared Maker CMS base (date index, date/genre/label/series listings, movie detail with label, actress profile) with captured-fixture field assertions (JOOXCR-353).
 
 ### Changed
 

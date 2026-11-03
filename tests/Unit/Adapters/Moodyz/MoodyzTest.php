@@ -41,7 +41,7 @@ final class MoodyzTest extends TestCase
         self::assertSame('MOODYZ', $meta['maker']);
         self::assertSame('うさぴょん。', $meta['director']);
         self::assertSame([], $meta['series']);
-        self::assertSame([['name' => 'MOODYZ　DIVA', 'url' => self::BASE . '/works/list/label/5048', 'external_id' => '5048']], $meta['labels']);
+        self::assertSame([['name' => 'MOODYZ　DIVA', 'url' => self::BASE . '/works/list/label/5048', 'external_id' => '5048']], $meta['label']);
         self::assertSame([['name' => '2026年11月3日', 'url' => self::BASE . '/works/list/date/2026-11-03', 'external_id' => '2026-11-03']], $meta['release_links']);
         self::assertSame(['330', '329', '113', '118', '315'], array_column($meta['genres'], 'external_id'));
         self::assertSame(self::BASE . '/works/list/genre/330', $meta['genres'][0]['url']);

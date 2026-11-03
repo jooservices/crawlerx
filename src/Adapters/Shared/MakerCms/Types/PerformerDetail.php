@@ -36,6 +36,7 @@ final class PerformerDetail extends AbstractType implements TypeInterface
         $works = $fields->links($dom, '.p-profile a[href*="' . $this->config->detailPath . '"]');
         $cards = $dom->filter('.p-profile a[href*="' . $this->config->detailPath . '"]');
         foreach (array_keys($works) as $index) {
+            $works[$index]['url'] = explode('?', $works[$index]['url'], 2)[0];
             $works[$index]['cover_url'] = $fields->image($cards->eq($index), 'img');
         }
         $item = PerformerDto::item($request->url, $id, $latin ?? $japanese, [

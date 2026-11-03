@@ -86,8 +86,8 @@ final class Listing extends AbstractType implements TypeInterface
             if ($links === []) {
                 continue;
             }
-            $url = $links[0]['url'];
-            $id = $this->config->entityId($url, $this->config->detailPath);
+            $id = $this->config->entityId($links[0]['url'], $this->config->detailPath);
+            $url = $this->config->baseUrl . $this->config->detailPath . $id;
             $items[$id] = MovieDto::item($url, $id, $fields->text($card, '.hover__child .text'), [
                 'code' => $id,
                 'date' => $date,
@@ -98,6 +98,7 @@ final class Listing extends AbstractType implements TypeInterface
                     'performer_count' => $this->countFromText($fields->text($card, '.ninzu')),
                     'badge' => $fields->text($card, '.c-card__tag'),
                     'release_group' => $group,
+                    'search_key' => $fields->text($dom, '.p-search__key'),
                     'listing_range' => $fields->text($dom, '.p-search .swiper-pagination-02'),
                 ],
             ]);
