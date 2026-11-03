@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Adapters\OnePondo;
 
 use JOOservices\CrawlerX\Adapters\Concerns\DetectsUrls;
-use JOOservices\CrawlerX\Adapters\Concerns\UrlDetect\OnePondoUrlDetectRules;
 use JOOservices\CrawlerX\Adapters\Shared\OnePondoFamily\FamilyCrawler;
 use JOOservices\CrawlerX\Adapters\Shared\OnePondoFamily\SiteConfig;
+use JOOservices\CrawlerX\Adapters\Shared\OnePondoFamily\UrlDetectRules;
 use JOOservices\CrawlerX\Contracts\UrlDetectCapable;
 
 final class OnePondoCrawler extends FamilyCrawler implements UrlDetectCapable
 {
     use DetectsUrls;
-    use OnePondoUrlDetectRules;
+    use UrlDetectRules;
 
     protected function siteConfig(): SiteConfig
     {

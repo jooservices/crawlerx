@@ -19,11 +19,11 @@ use JOOservices\CrawlerX\Registry\FileAdapterManifestRegistry;
 use JOOservices\CrawlerX\Tests\Support\ManifestFixtureCatalog;
 use JOOservices\CrawlerX\Tests\Support\FixtureResponder;
 use JOOservices\CrawlerX\Tools\Canary\RequiredFields;
-use PHPUnit\Framework\TestCase;
+use JOOservices\CrawlerX\Tests\CrawlerXTestCase;
 
 require_once dirname(__DIR__, 3) . '/tools/canary/RequiredFields.php';
 
-final class SnapshotParseTest extends TestCase
+final class SnapshotParseTest extends CrawlerXTestCase
 {
     protected function tearDown(): void
     {
