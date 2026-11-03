@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add the caribbeancompr adapter (English and Japanese detail, English listing) on the shared Caribbeancom listing/detail parsers through a per-site `Profile`; `caribbeancom` output is unchanged (JOOXCR-351).
 - Add the 10musume adapter on the shared 1Pondo-family JSON base (listing + detail) (JOOXCR-308).
 
 ### Changed
