@@ -17,6 +17,7 @@ final readonly class SiteConfig
         public string $detailPath = '/works/detail/',
         public string $actressPath = '/actress/detail/',
         public int $dateGapSeconds = 5,
+        public string $searchPath = '/search/list',
     ) {
     }
 
