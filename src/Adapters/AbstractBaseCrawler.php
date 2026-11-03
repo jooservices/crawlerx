@@ -179,6 +179,11 @@ abstract class AbstractBaseCrawler implements SiteAdapter
             $options['timeout'] = (int) $timeout;
         }
 
+        $connectTimeout = $manifest->defaultCrawlConfig['connect_timeout'] ?? null;
+        if (is_numeric($connectTimeout) && (float) $connectTimeout > 0) {
+            $options['connect_timeout'] = (int) $connectTimeout;
+        }
+
         return $options;
     }
 }
