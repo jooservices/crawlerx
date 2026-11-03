@@ -62,6 +62,10 @@ final class AllAdaptersCrawlTest extends CrawlerXTestCase
             FixtureResponder::for('GET', 'https://moodyz.com/works/list/date/2026-12-01')->file('moodyz/list-2026-12-01.html');
         }
 
+        if ($fixtureRelativePath === 'madonna/dates.html') {
+            FixtureResponder::for('GET', 'https://madonna-av.com/works/list/date/2026-12-01')->file('madonna/list-2026-12-01.html');
+        }
+
         FixtureResponder::for('GET', $sample->url)->file($fixtureRelativePath, $blocked ? 403 : 200);
         ManifestFixtureCatalog::registerSupportingResponses($slug);
 
