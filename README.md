@@ -258,6 +258,7 @@ below come from each adapter's current manifest. To add a source, see
 | 141Jav | `141jav` | Yes | Yes | — | — | — |
 | S1 NO.1 STYLE | `s1` | Yes | Yes | — | — | Yes |
 | MOODYZ | `moodyz` | Yes | Yes | — | — | Yes |
+| Tameike Goro | `tameikegoro` | Yes | Yes | — | — | Yes |
 | Fitch | `fitch` | Yes | Yes | — | — | Yes |
 | ATTACKERS | `attackers` | Yes | Yes | — | — | Yes |
 | IDEAPOCKET | `ideapocket` | Yes | Yes | — | — | Yes |
