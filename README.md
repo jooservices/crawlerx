@@ -265,6 +265,7 @@ below come from each adapter's current manifest. To add a source, see
 | DASDAS | `dasdas` | Yes | Yes | — | — | Yes |
 | Madonna | `madonna` | Yes | Yes | — | — | Yes |
 | kawaii* | `kawaiikawaii` | Yes | Yes | — | — | Yes |
+| kira*kira | `kirakira` | Yes | Yes | — | — | Yes |
 | Pacopacomama | `pacopacomama` | Yes | Yes | — | — | — |
 | 1Pondo | `onepondo` | Yes | Yes | — | — | — |
 | 10Musume | `10musume` | Yes | Yes | — | — | — |
