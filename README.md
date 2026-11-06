@@ -259,6 +259,7 @@ below come from each adapter's current manifest. To add a source, see
 | S1 NO.1 STYLE | `s1` | Yes | Yes | — | — | Yes |
 | MOODYZ | `moodyz` | Yes | Yes | — | — | Yes |
 | WANZ FACTORY | `wanz` | Yes | Yes | — | — | Yes |
+| BeFreeBe | `befreebe` | Yes | Yes | — | — | Yes |
 | Tameike Goro | `tameikegoro` | Yes | Yes | — | — | Yes |
 | Fitch | `fitch` | Yes | Yes | — | — | Yes |
 | ATTACKERS | `attackers` | Yes | Yes | — | — | Yes |
