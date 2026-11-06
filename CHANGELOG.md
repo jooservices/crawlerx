@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add the Next11 (`next11`) adapter with its own parser: month and label/series/genre/cast listings with pagination, and movie detail with every labelled row, all jacket and sample-still images, sample-video embed and purchase links (JOOXCR-421).
+- Add the Hajime Kikaku (`hajimekikaku`) adapter on the shared Maker CMS base with complete public movie and listing fields, captured fixtures and URL inference (JOOXCR-407).
+- Add the OPERA (`opera`) maker-CMS source with complete movie and listing fields, captured fixtures and URL inference; the site exposes no actress profile fields, so performer detail is not declared (JOOXCR-404).
 - Add the BeFreeBe adapter on the shared Maker CMS base with complete public movie, listing and actress fields, captured fixtures and URL inference (JOOXCR-405).
 - Add the E-BODY (`ebody`) maker-CMS source with complete movie, listing and actress fields (JOOXCR-403).
 - Add the WANZ FACTORY adapter on the shared Maker CMS base with complete public movie, listing and actress fields, captured fixtures and URL inference (JOOXCR-398).
