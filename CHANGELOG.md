@@ -9,9 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add the MUKU (`muku`) maker-CMS source with complete movie and listing fields (JOOXCR-410).
+- Add the MKO LABO (`mko`) adapter on the shared Maker CMS base with complete public movie, listing and actress fields, captured fixtures and URL inference (JOOXCR-409).
+- Add the MIMAN (`miman`) adapter on the shared Maker CMS base with complete movie and date-listing fields, captured fixtures and URL inference (JOOXCR-408).
+- Add the Hajime Kikaku (`hajimekikaku`) adapter on the shared Maker CMS base with complete public movie and listing fields, captured fixtures and URL inference (JOOXCR-407).
+- Add the OPERA (`opera`) maker-CMS source with complete movie and listing fields, captured fixtures and URL inference; the site exposes no actress profile fields, so performer detail is not declared (JOOXCR-404).
+- Add the BeFreeBe adapter on the shared Maker CMS base with complete public movie, listing and actress fields, captured fixtures and URL inference (JOOXCR-405).
+- Add the E-BODY (`ebody`) maker-CMS source with complete movie, listing and actress fields (JOOXCR-403).
 - Add the WANZ FACTORY adapter on the shared Maker CMS base with complete public movie, listing and actress fields, captured fixtures and URL inference (JOOXCR-398).
 - Add the To-Satsu adapter on the shared Maker CMS base with complete public movie and listing fields, captured fixtures and URL inference (JOOXCR-412).
 - Add the Tameike Goro (`tameikegoro`) maker-CMS source with complete movie, listing and actress fields.
+- Add the Honnaka adapter on the shared Maker CMS base (date index, date listings, movie detail with every labelled row, actress profile) with captured-fixture field assertions (JOOXCR-402).
 ### Added
 
 - Add the kira*kira adapter on the shared Maker CMS base (date index, date/genre/label/series listings, movie detail with label, actress profile) with captured-fixture field assertions (JOOXCR-399).
@@ -47,8 +55,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add the MVG adapter on the shared Maker CMS base (date index, date/genre/series listings, movie detail with plain-text performers, formats, purchase links) with captured-fixture field assertions (JOOXCR-395).
 - Add the kawaii* adapter on the shared Maker CMS base (date index, date listings, detail with label/series/formats/purchase links, actress profile) with captured-fixture field assertions (JOOXCR-358).
 - Add the OPPAI adapter on the shared Maker CMS base (date index, date/genre listings, detail with label/formats/purchase links, actress profile) with captured-fixture field assertions (JOOXCR-396).
+- Add the Nanpa Japan adapter on the shared Maker CMS base (date index, date/genre/series listings, movie detail with every labelled row, series, director, formats, sample video and purchase links) with captured-fixture field assertions (JOOXCR-411).
 - AV-Wiki listing and detail support, using one `_embed=1` REST request per listing page or detail post (categories and tags come from `_embedded['wp:term']`), a 45 s timeout and a 12 s host throttle for the site's per-request delay, plus captured source fixtures (JOOXCR-349).
 - Configurable `connect_timeout` (manifest `defaultCrawlConfig`) for hosts that delay the connection phase; it defaults to the previous fixed 5 s.
+- Add the BIBIAN (ビビアン) adapter on the shared Maker CMS base (date index, date/genre/label/series listings, movie detail with every labelled row, actress profile) with captured-fixture field assertions (JOOXCR-406).
 
 ### Changed
 
