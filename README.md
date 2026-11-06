@@ -258,10 +258,17 @@ below come from each adapter's current manifest. To add a source, see
 | 141Jav | `141jav` | Yes | Yes | — | — | — |
 | S1 NO.1 STYLE | `s1` | Yes | Yes | — | — | Yes |
 | MOODYZ | `moodyz` | Yes | Yes | — | — | Yes |
+| FALENO GROUP | `falenogroup` | Yes | Yes | — | — | — |
 | HONNAKA | `honnaka` | Yes | Yes | — | — | Yes |
 | WANZ FACTORY | `wanz` | Yes | Yes | — | — | Yes |
 | Indies | `indies` | Yes | Yes | — | Yes | Yes |
+| MKO LABO | `mko` | Yes | Yes | — | — | Yes |
+| MIMAN | `miman` | Yes | Yes | — | — | — |
+| OPERA | `opera` | Yes | Yes | — | — | — |
+| BeFreeBe | `befreebe` | Yes | Yes | — | — | Yes |
 | Tameike Goro | `tameikegoro` | Yes | Yes | — | — | Yes |
+| ROCKET | `rocket` | Yes | Yes | — | — | — |
+| Hajime Kikaku | `hajimekikaku` | Yes | Yes | — | — | — |
 | Fitch | `fitch` | Yes | Yes | — | — | Yes |
 | ATTACKERS | `attackers` | Yes | Yes | — | — | Yes |
 | IDEAPOCKET | `ideapocket` | Yes | Yes | — | — | Yes |
@@ -269,14 +276,21 @@ below come from each adapter's current manifest. To add a source, see
 | MVG | `mvg` | Yes | Yes | — | — | — |
 | ROOKIE | `rookie` | Yes | Yes | — | — | Yes |
 | BI | `bi` | Yes | Yes | — | — | Yes |
+| BIBIAN | `bibian` | Yes | Yes | — | — | Yes |
 | Premium Beauty | `premiumbeauty` | Yes | Yes | — | — | Yes |
 | DASDAS | `dasdas` | Yes | Yes | — | — | Yes |
 | Madonna | `madonna` | Yes | Yes | — | — | Yes |
 | HHH | `hhh` | Yes | Yes | — | — | — |
+| V-AV | `vav` | Yes | Yes | — | — | — |
+| To-Satsu | `tosatsu` | Yes | Yes | — | — | — |
+| Nanpa Japan | `nanpajapan` | Yes | Yes | — | — | — |
 | kawaii* | `kawaiikawaii` | Yes | Yes | — | — | Yes |
 | kira*kira | `kirakira` | Yes | Yes | — | — | Yes |
+| DEEP'S | `deeps` | Yes | Yes | — | — | — |
 | OPPAI | `oppai` | Yes | Yes | — | — | Yes |
+| MUKU | `muku` | Yes | Yes | — | — | — |
 | Pacopacomama | `pacopacomama` | Yes | Yes | — | — | — |
+| PLUM | `plum` | Yes | Yes | — | — | — |
 | 1Pondo | `onepondo` | Yes | Yes | — | — | — |
 | 10Musume | `10musume` | Yes | Yes | — | — | — |
 | Aisex | `aisex` | — | — | — | Yes | Yes |
