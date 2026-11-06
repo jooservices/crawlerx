@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Register follow-up fixtures from manifests (`runtime.fixtureSamples[].followUps`) and derive adapter-count assertions from the manifest directory, so adding a source no longer edits shared tests or docs (JOOXCR-392).
+
 ## [1.5.0] - 2026-11-03
 
 ### Added

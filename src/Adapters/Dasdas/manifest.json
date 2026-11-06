@@ -104,7 +104,13 @@
             {
                 "url": "https://dasdas.jp/works/date",
                 "name": "dates.html",
-                "type": "listing"
+                "type": "listing",
+                "followUps": [
+                    {
+                        "url": "https://dasdas.jp/works/list/date/2026-11-24",
+                        "name": "list-2026-11-24.html"
+                    }
+                ]
             },
             {
                 "url": "https://dasdas.jp/works/list/genre/335",
