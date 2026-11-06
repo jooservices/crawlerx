@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add the WANZ FACTORY adapter on the shared Maker CMS base with complete public movie, listing and actress fields, captured fixtures and URL inference (JOOXCR-398).
+
 ### Security
 
 - Upgrade `symfony/config`, `symfony/filesystem` and `symfony/yaml` to 8.1.11 for the 2026-11-04 advisories (PKSA-9myg-zzdn-22rg, PKSA-g499-cm4q-v35y, PKSA-nktx-f1n1-b4yd); transitive `symfony/process`, `symfony/deprecation-contracts` and `symfony/polyfill-mbstring` move with them (JOOXCR-401).
