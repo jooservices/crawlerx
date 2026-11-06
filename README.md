@@ -260,9 +260,11 @@ below come from each adapter's current manifest. To add a source, see
 | MOODYZ | `moodyz` | Yes | Yes | — | — | Yes |
 | HONNAKA | `honnaka` | Yes | Yes | — | — | Yes |
 | WANZ FACTORY | `wanz` | Yes | Yes | — | — | Yes |
+| OPERA | `opera` | Yes | Yes | — | — | — |
 | BeFreeBe | `befreebe` | Yes | Yes | — | — | Yes |
 | DANDY GROUP | `dandy` | Yes | Yes | — | — | — |
 | Tameike Goro | `tameikegoro` | Yes | Yes | — | — | Yes |
+| Hajime Kikaku | `hajimekikaku` | Yes | Yes | — | — | — |
 | Fitch | `fitch` | Yes | Yes | — | — | Yes |
 | ATTACKERS | `attackers` | Yes | Yes | — | — | Yes |
 | IDEAPOCKET | `ideapocket` | Yes | Yes | — | — | Yes |
