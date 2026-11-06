@@ -1,0 +1,142 @@
+{
+    "slug": "opera",
+    "name": "OPERA",
+    "version": "1.0.0",
+    "description": "Public OPERA maker CMS release-date listings and movie details",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\Opera\\OperaCrawler",
+        "capabilities": [
+            "listing",
+            "detail"
+        ]
+    },
+    "base_url": "https://av-opera.jp",
+    "pagination": {
+        "strategy": "query",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 2,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 3600,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        },
+        {
+            "key": "performer_movie_crawl_enabled",
+            "type": "bool",
+            "default": false,
+            "tier": "operational",
+            "label": "Performer Movie Crawl Enabled"
+        }
+    ],
+    "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [
+                    ".p-search"
+                ],
+                "detail": [
+                    ".p-workPage"
+                ]
+            },
+            "soft404Markers": [
+                "page not found",
+                "404 not found",
+                "the page you requested was not found"
+            ]
+        },
+        "targetProfiles": {
+            "new": {
+                "label": "Release dates",
+                "url": "https://av-opera.jp/works/date"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "new",
+                "url": "https://av-opera.jp/works/date",
+                "paginated": true,
+                "loop": true,
+                "priority": 0,
+                "max_pages": 3,
+                "status": "paused"
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://av-opera.jp/works/list/date/2023-08-22",
+                "name": "list-2023-08-22.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://av-opera.jp/works/date",
+                "name": "dates.html",
+                "type": "listing",
+                "followUps": [
+                    {
+                        "url": "https://av-opera.jp/works/list/date/2023-08-22",
+                        "name": "list-2023-08-22.html"
+                    }
+                ]
+            },
+            {
+                "url": "https://av-opera.jp/works/detail/OPBD209",
+                "name": "detail-OPBD209.html",
+                "type": "detail"
+            },
+            {
+                "url": "https://av-opera.jp/actress/detail/812985",
+                "name": "actress-812985.html",
+                "type": "supporting"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 10,
+            "detail_delay_seconds": 2,
+            "cycle_delay_seconds": 3600,
+            "performer_movie_crawl_enabled": false
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 5,
+            "min_gap_seconds": 5,
+            "max_gap_seconds": 30
+        },
+        "browserHeaders": {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "Accept": "application/json,text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9,ja;q=0.8"
+        },
+        "playwrightFetchEnabled": false
+    },
+    "type": "site"
+}
