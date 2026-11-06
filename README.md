@@ -266,6 +266,7 @@ below come from each adapter's current manifest. To add a source, see
 | MVG | `mvg` | Yes | Yes | — | — | — |
 | ROOKIE | `rookie` | Yes | Yes | — | — | Yes |
 | BI | `bi` | Yes | Yes | — | — | Yes |
+| BIBIAN | `bibian` | Yes | Yes | — | — | Yes |
 | Premium Beauty | `premiumbeauty` | Yes | Yes | — | — | Yes |
 | DASDAS | `dasdas` | Yes | Yes | — | — | Yes |
 | Madonna | `madonna` | Yes | Yes | — | — | Yes |
