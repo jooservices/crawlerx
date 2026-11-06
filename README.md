@@ -261,6 +261,7 @@ below come from each adapter's current manifest. To add a source, see
 | FALENO GROUP | `falenogroup` | Yes | Yes | — | — | — |
 | HONNAKA | `honnaka` | Yes | Yes | — | — | Yes |
 | WANZ FACTORY | `wanz` | Yes | Yes | — | — | Yes |
+| Indies | `indies` | Yes | Yes | — | Yes | Yes |
 | MKO LABO | `mko` | Yes | Yes | — | — | Yes |
 | MIMAN | `miman` | Yes | Yes | — | — | — |
 | OPERA | `opera` | Yes | Yes | — | — | — |
