@@ -289,6 +289,7 @@ below come from each adapter's current manifest. To add a source, see
 | OPPAI | `oppai` | Yes | Yes | — | — | Yes |
 | MUKU | `muku` | Yes | Yes | — | — | — |
 | Pacopacomama | `pacopacomama` | Yes | Yes | — | — | — |
+| PLUM | `plum` | Yes | Yes | — | — | — |
 | 1Pondo | `onepondo` | Yes | Yes | — | — | — |
 | 10Musume | `10musume` | Yes | Yes | — | — | — |
 | Aisex | `aisex` | — | — | — | Yes | Yes |

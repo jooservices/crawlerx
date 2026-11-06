@@ -1,0 +1,10 @@
+{
+  "source_url": "https://www.plum-web.com/",
+  "final_url": "https://www.plum-web.com/",
+  "captured_at": "2026-11-06T16:23:00.000Z",
+  "http_status": 200,
+  "content_hash": "39a9e2a2cccec877cec3ce8b71b4c2f9b5be517f11a0387501d1a1807377df72",
+  "target_type": "listing",
+  "fetch_method": "http",
+  "sanitized": true
+}
