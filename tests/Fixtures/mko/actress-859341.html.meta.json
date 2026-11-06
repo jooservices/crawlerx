@@ -1,0 +1,10 @@
+{
+  "source_url": "https://mko-labo.net/actress/detail/859341",
+  "final_url": "https://mko-labo.net/actress/detail/859341",
+  "captured_at": "2026-11-06T14:59:57.073240+00:00",
+  "http_status": 200,
+  "content_hash": "0db5b9ef301d91f55ff91445864d7dd4d8b959e02030b9b99be5cf415decc07e",
+  "target_type": "performer_detail",
+  "fetch_method": "http",
+  "sanitized": false
+}
