@@ -249,8 +249,9 @@ Available methods are `http`, `curl_impersonate`, `playwright`,
 
 ## Supported sites
 
-CrawlerX currently registers 39 adapters. Capabilities below come from each
-adapter's current manifest.
+CrawlerX registers one adapter per `src/Adapters/*/manifest.json`. Capabilities
+below come from each adapter's current manifest. To add a source, see
+[docs/adding-a-source.md](docs/adding-a-source.md).
 
 | Site | Slug | Listing | Detail | Gallery | Performer listing | Performer detail |
 | --- | --- | :---: | :---: | :---: | :---: | :---: |

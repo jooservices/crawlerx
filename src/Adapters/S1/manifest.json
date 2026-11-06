@@ -104,7 +104,13 @@
             {
                 "url": "https://s1s1s1.com/works/date",
                 "name": "dates.html",
-                "type": "listing"
+                "type": "listing",
+                "followUps": [
+                    {
+                        "url": "https://s1s1s1.com/works/list/date/2026-11-24",
+                        "name": "list-2026-11-24.html"
+                    }
+                ]
             },
             {
                 "url": "https://s1s1s1.com/works/detail/SNOS524",
