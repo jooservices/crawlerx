@@ -281,6 +281,7 @@ below come from each adapter's current manifest. To add a source, see
 | kawaii* | `kawaiikawaii` | Yes | Yes | — | — | Yes |
 | kira*kira | `kirakira` | Yes | Yes | — | — | Yes |
 | OPPAI | `oppai` | Yes | Yes | — | — | Yes |
+| MUKU | `muku` | Yes | Yes | — | — | — |
 | Pacopacomama | `pacopacomama` | Yes | Yes | — | — | — |
 | 1Pondo | `onepondo` | Yes | Yes | — | — | — |
 | 10Musume | `10musume` | Yes | Yes | — | — | — |
