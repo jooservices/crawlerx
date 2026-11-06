@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Add the Tameike Goro (`tameikegoro`) maker-CMS source with complete movie, listing and actress fields.
 ### Added
 
 - Add the kira*kira adapter on the shared Maker CMS base (date index, date/genre/label/series listings, movie detail with label, actress profile) with captured-fixture field assertions (JOOXCR-399).
