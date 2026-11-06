@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add the WANZ FACTORY adapter on the shared Maker CMS base with complete public movie, listing and actress fields, captured fixtures and URL inference (JOOXCR-398).
+- Add the To-Satsu adapter on the shared Maker CMS base with complete public movie and listing fields, captured fixtures and URL inference (JOOXCR-412).
 - Add the Tameike Goro (`tameikegoro`) maker-CMS source with complete movie, listing and actress fields.
 ### Added
 
