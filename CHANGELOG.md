@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add the Wikimedia Commons (`commons`) adapter on the official MediaWiki API: gravure idol category listing, category and file galleries with every original, thumbnail and licence field, and idol person pages (JOOXCR-424).
+- Add the Indies (`indies`, 桃太郎映像出版) adapter with month, label and genre listings, title details, actress profiles and the actress index, complete field extraction and captured fixtures (JOOXCR-418).
 - Add the PLUM (`plum`) adapter with its own parser: listing cards with pagination and complete movie detail (code, date, duration, cast, categories, series, price, review number, barcode, gallery, sample video, purchase links) from captured fixtures (JOOXCR-417).
 - Add the FALENO GROUP (`falenogroup`) adapter with its own parser: work listing with pagination, maker pages and work detail with every labelled field, captured fixtures and URL inference (JOOXCR-414).
 - Add the V-AV (`vav`) adapter on the shared Maker CMS base with complete public movie and listing fields (the site has no actress pages), captured fixtures and URL inference (JOOXCR-413).
