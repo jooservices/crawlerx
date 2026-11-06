@@ -1,0 +1,10 @@
+{
+  "source_url": "https://muku.tv/works/date",
+  "final_url": "https://muku.tv/works/date",
+  "captured_at": "2026-11-06T00:00:00+00:00",
+  "http_status": 200,
+  "content_hash": "cecb996048320b396a8221e4f575dca1defb8829cf33f4c8e07e6183b7df6e70",
+  "target_type": "listing",
+  "fetch_method": "http",
+  "sanitized": false
+}
