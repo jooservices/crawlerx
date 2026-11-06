@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add the MKO LABO (`mko`) adapter on the shared Maker CMS base with complete public movie, listing and actress fields, captured fixtures and URL inference (JOOXCR-409).
 - Add the MIMAN (`miman`) adapter on the shared Maker CMS base with complete movie and date-listing fields, captured fixtures and URL inference (JOOXCR-408).
 - Add the Hajime Kikaku (`hajimekikaku`) adapter on the shared Maker CMS base with complete public movie and listing fields, captured fixtures and URL inference (JOOXCR-407).
 - Add the OPERA (`opera`) maker-CMS source with complete movie and listing fields, captured fixtures and URL inference; the site exposes no actress profile fields, so performer detail is not declared (JOOXCR-404).
