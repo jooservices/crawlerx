@@ -1,0 +1,10 @@
+{
+  "source_url": "https://rocket-inc.net/works/",
+  "final_url": "https://rocket-inc.net/works/",
+  "captured_at": "2026-11-06T00:00:00+00:00",
+  "http_status": 200,
+  "content_hash": "afebc63a20ce6d75c1606b260b08276e14b64de6dc45d56a4feee1bc9c7f12c5",
+  "target_type": "listing",
+  "fetch_method": "http",
+  "sanitized": false
+}
