@@ -278,6 +278,7 @@ below come from each adapter's current manifest. To add a source, see
 | DASDAS | `dasdas` | Yes | Yes | — | — | Yes |
 | Madonna | `madonna` | Yes | Yes | — | — | Yes |
 | HHH | `hhh` | Yes | Yes | — | — | — |
+| V-AV | `vav` | Yes | Yes | — | — | — |
 | To-Satsu | `tosatsu` | Yes | Yes | — | — | — |
 | Nanpa Japan | `nanpajapan` | Yes | Yes | — | — | — |
 | kawaii* | `kawaiikawaii` | Yes | Yes | — | — | Yes |
