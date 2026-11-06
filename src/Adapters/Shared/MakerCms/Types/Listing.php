@@ -93,7 +93,7 @@ final class Listing extends AbstractType implements TypeInterface
                 'code' => $id,
                 'date' => $itemGroup['date'] ?? $date,
                 'cover_url' => $fields->image($card, 'a.img img'),
-                'performers' => $fields->performers($card),
+                'performers' => $fields->performers($card, '.name'),
                 'metadata' => [
                     'maker' => $this->config->maker,
                     'performer_count' => $this->countFromText($fields->text($card, '.ninzu')),
