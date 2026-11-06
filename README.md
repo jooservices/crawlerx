@@ -269,6 +269,7 @@ below come from each adapter's current manifest. To add a source, see
 | Madonna | `madonna` | Yes | Yes | — | — | Yes |
 | HHH | `hhh` | Yes | Yes | — | — | — |
 | kawaii* | `kawaiikawaii` | Yes | Yes | — | — | Yes |
+| kira*kira | `kirakira` | Yes | Yes | — | — | Yes |
 | OPPAI | `oppai` | Yes | Yes | — | — | Yes |
 | Pacopacomama | `pacopacomama` | Yes | Yes | — | — | — |
 | 1Pondo | `onepondo` | Yes | Yes | — | — | — |
