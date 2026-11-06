@@ -258,6 +258,7 @@ below come from each adapter's current manifest. To add a source, see
 | 141Jav | `141jav` | Yes | Yes | — | — | — |
 | S1 NO.1 STYLE | `s1` | Yes | Yes | — | — | Yes |
 | MOODYZ | `moodyz` | Yes | Yes | — | — | Yes |
+| FALENO GROUP | `falenogroup` | Yes | Yes | — | — | — |
 | HONNAKA | `honnaka` | Yes | Yes | — | — | Yes |
 | WANZ FACTORY | `wanz` | Yes | Yes | — | — | Yes |
 | MKO LABO | `mko` | Yes | Yes | — | — | Yes |
@@ -278,6 +279,8 @@ below come from each adapter's current manifest. To add a source, see
 | DASDAS | `dasdas` | Yes | Yes | — | — | Yes |
 | Madonna | `madonna` | Yes | Yes | — | — | Yes |
 | HHH | `hhh` | Yes | Yes | — | — | — |
+| V-AV | `vav` | Yes | Yes | — | — | — |
+| To-Satsu | `tosatsu` | Yes | Yes | — | — | — |
 | Nanpa Japan | `nanpajapan` | Yes | Yes | — | — | — |
 | BOMB.tv | `bomb` | Yes | — | Yes | — | — |
 | kawaii* | `kawaiikawaii` | Yes | Yes | — | — | Yes |

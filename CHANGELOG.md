@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add the FALENO GROUP (`falenogroup`) adapter with its own parser: work listing with pagination, maker pages and work detail with every labelled field, captured fixtures and URL inference (JOOXCR-414).
+- Add the V-AV (`vav`) adapter on the shared Maker CMS base with complete public movie and listing fields (the site has no actress pages), captured fixtures and URL inference (JOOXCR-413).
 - Add the BOMB.tv (`bomb`) photo/gallery adapter: the public Plus idol index and idol pages with every public pack image (cover, previews, sample still), pack facts and captured Shift_JIS fixtures (JOOXCR-429).
 - Add the MUKU (`muku`) maker-CMS source with complete movie and listing fields (JOOXCR-410).
 - Add the MKO LABO (`mko`) adapter on the shared Maker CMS base with complete public movie, listing and actress fields, captured fixtures and URL inference (JOOXCR-409).
@@ -18,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add the BeFreeBe adapter on the shared Maker CMS base with complete public movie, listing and actress fields, captured fixtures and URL inference (JOOXCR-405).
 - Add the E-BODY (`ebody`) maker-CMS source with complete movie, listing and actress fields (JOOXCR-403).
 - Add the WANZ FACTORY adapter on the shared Maker CMS base with complete public movie, listing and actress fields, captured fixtures and URL inference (JOOXCR-398).
+- Add the To-Satsu adapter on the shared Maker CMS base with complete public movie and listing fields, captured fixtures and URL inference (JOOXCR-412).
 - Add the Tameike Goro (`tameikegoro`) maker-CMS source with complete movie, listing and actress fields.
 - Add the Honnaka adapter on the shared Maker CMS base (date index, date listings, movie detail with every labelled row, actress profile) with captured-fixture field assertions (JOOXCR-402).
 ### Added
