@@ -1,0 +1,127 @@
+{
+    "slug": "deeps",
+    "name": "DEEP'S",
+    "version": "1.0.0",
+    "description": "Public DEEP'S catalog: paginated and filtered listings and movie details with every labelled field",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\Deeps\\DeepsCrawler",
+        "capabilities": [
+            "listing",
+            "detail"
+        ]
+    },
+    "base_url": "https://deeps.net",
+    "pagination": {
+        "strategy": "query"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 2,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 3600,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        }
+    ],
+    "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [
+                    ".product_list_wrap"
+                ],
+                "detail": [
+                    "#item"
+                ]
+            },
+            "soft404Markers": [
+                "page not found",
+                "404 not found",
+                "the page you requested was not found"
+            ]
+        },
+        "targetProfiles": {
+            "new": {
+                "label": "Catalog",
+                "url": "https://deeps.net/item/"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "new",
+                "url": "https://deeps.net/item/",
+                "paginated": true,
+                "loop": true,
+                "priority": 0,
+                "max_pages": 3,
+                "status": "paused"
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://deeps.net/item/",
+                "name": "list.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://deeps.net/item/?s_マジックミラー便／MM便",
+                "name": "list-series-mm-bin.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://deeps.net/item/detail.php?mmgo-020",
+                "name": "detail-mmgo-020.html",
+                "type": "detail"
+            },
+            {
+                "url": "https://deeps.net/item/detail.php?gdjp-012",
+                "name": "detail-gdjp-012.html",
+                "type": "detail"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 10,
+            "detail_delay_seconds": 2,
+            "cycle_delay_seconds": 3600
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 5,
+            "min_gap_seconds": 5,
+            "max_gap_seconds": 30
+        },
+        "browserHeaders": {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "Accept": "application/json,text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9,ja;q=0.8"
+        },
+        "playwrightFetchEnabled": false
+    },
+    "type": "site"
+}
