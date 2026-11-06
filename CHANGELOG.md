@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add the FALENO GROUP (`falenogroup`) adapter with its own parser: work listing with pagination, maker pages and work detail with every labelled field, captured fixtures and URL inference (JOOXCR-414).
 - Add the V-AV (`vav`) adapter on the shared Maker CMS base with complete public movie and listing fields (the site has no actress pages), captured fixtures and URL inference (JOOXCR-413).
 - Add the MUKU (`muku`) maker-CMS source with complete movie and listing fields (JOOXCR-410).
 - Add the MKO LABO (`mko`) adapter on the shared Maker CMS base with complete public movie, listing and actress fields, captured fixtures and URL inference (JOOXCR-409).
