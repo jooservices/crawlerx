@@ -310,6 +310,7 @@ below come from each adapter's current manifest. To add a source, see
 | OneJav | `onejav` | Yes | Yes | — | — | — |
 | Tokyo-Hot | `tokyohot` | Yes | Yes | — | — | — |
 | Warashi | `warashi` | — | — | Yes | Yes | Yes |
+| Wikimedia Commons | `commons` | Yes | — | Yes | — | Yes |
 | XCITY | `xcity` | Yes | Yes | — | Yes | Yes |
 
 DUGA, Tokyo-Hot, Caribbeancom, HEYZO, and JavBus use accepted adult landing

@@ -1,0 +1,10 @@
+{
+  "source_url": "https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&titles=Category%3AYuzuki+Aikawa&prop=categoryinfo%7Cpageprops%7Cpageimages%7Cinfo%7Crevisions%7Ccategories%7Clanglinks%7Cextlinks&inprop=url&piprop=original%7Cthumbnail%7Cname&pithumbsize=320&rvprop=content%7Ctimestamp&rvslots=main&cllimit=max&lllimit=max&ellimit=max",
+  "final_url": "https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&titles=Category%3AYuzuki+Aikawa&prop=categoryinfo%7Cpageprops%7Cpageimages%7Cinfo%7Crevisions%7Ccategories%7Clanglinks%7Cextlinks&inprop=url&piprop=original%7Cthumbnail%7Cname&pithumbsize=320&rvprop=content%7Ctimestamp&rvslots=main&cllimit=max&lllimit=max&ellimit=max",
+  "captured_at": "2026-11-06T18:09:04.000Z",
+  "http_status": 200,
+  "content_hash": "5c762e1339f24e31d43955aada0ed75559f5537149203a22e5ec9ef6a5092aa4",
+  "target_type": "performer_detail",
+  "fetch_method": "http",
+  "sanitized": false
+}
