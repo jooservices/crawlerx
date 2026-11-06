@@ -261,11 +261,15 @@ below come from each adapter's current manifest. To add a source, see
 | Fitch | `fitch` | Yes | Yes | — | — | Yes |
 | ATTACKERS | `attackers` | Yes | Yes | — | — | Yes |
 | IDEAPOCKET | `ideapocket` | Yes | Yes | — | — | Yes |
+| MVG | `mvg` | Yes | Yes | — | — | — |
+| ROOKIE | `rookie` | Yes | Yes | — | — | Yes |
+| BI | `bi` | Yes | Yes | — | — | Yes |
 | Premium Beauty | `premiumbeauty` | Yes | Yes | — | — | Yes |
 | DASDAS | `dasdas` | Yes | Yes | — | — | Yes |
 | Madonna | `madonna` | Yes | Yes | — | — | Yes |
 | HHH | `hhh` | Yes | Yes | — | — | — |
 | kawaii* | `kawaiikawaii` | Yes | Yes | — | — | Yes |
+| OPPAI | `oppai` | Yes | Yes | — | — | Yes |
 | Pacopacomama | `pacopacomama` | Yes | Yes | — | — | — |
 | 1Pondo | `onepondo` | Yes | Yes | — | — | — |
 | 10Musume | `10musume` | Yes | Yes | — | — | — |

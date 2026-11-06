@@ -41,18 +41,22 @@ final class Fields
         });
     }
 
-    /** @return list<array<string, mixed>> */
-    public function performers(Crawler $node): array
+    /**
+     * Performers linked to actress pages; sites without actress pages (plainPerformers) list
+     * bare names, read from $plainSelector.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function performers(Crawler $node, string $plainSelector): array
     {
-        $linked = array_map(static fn(array $link): array => [...$link, 'name_japanese' => $link['name']], $this->links($node, 'a[href*="' . $this->config->actressPath . '"]'));
-        if ($linked !== [] || ! $this->config->unlinkedPerformers) {
-            return $linked;
+        $links = $this->links($node, 'a[href*="' . $this->config->actressPath . '"]');
+        if ($links === [] && $this->config->plainPerformers) {
+            $names = array_filter($node->filter($plainSelector)->each(fn(Crawler $name): ?string => $this->normalizeText($name->text(''))), static fn(?string $name): bool => $name !== null);
+
+            return array_map(static fn(string $name): array => ['name' => $name, 'name_japanese' => $name], array_values(array_unique($names)));
         }
 
-        // Sites without actress profile pages print the names as plain text.
-        $names = $node->filter('span.name, .td .item p')->each(fn(Crawler $name): ?string => $this->normalizeText($name->text('')));
-
-        return array_map(static fn(string $name): array => ['name' => $name, 'name_japanese' => $name], array_values(array_unique(array_filter($names, static fn(?string $name): bool => $name !== null && $name !== ''))));
+        return array_map(static fn(array $link): array => [...$link, 'name_japanese' => $link['name']], $links);
     }
 
     /** @return list<string> */

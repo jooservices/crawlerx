@@ -38,7 +38,7 @@ final class Detail extends AbstractType implements TypeInterface
             'duration' => $formats[0]['duration'] ?? null,
             'cover_url' => $images[0] ?? null,
             'screenshots' => $images,
-            'performers' => isset($rows['女優']) ? $fields->performers($rows['女優']) : [],
+            'performers' => isset($rows['女優']) ? $fields->performers($rows['女優'], '.td .item p') : [],
             'tags' => array_column($genres, 'name'),
             'metadata' => [
                 'maker' => $this->config->maker,

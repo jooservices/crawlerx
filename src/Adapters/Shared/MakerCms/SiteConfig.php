@@ -18,7 +18,7 @@ final readonly class SiteConfig
         public string $actressPath = '/actress/detail/',
         public int $dateGapSeconds = 5,
         public string $searchPath = '/search/list',
-        public bool $unlinkedPerformers = false,
+        public bool $plainPerformers = false,
     ) {
     }
 

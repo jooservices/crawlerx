@@ -10,6 +10,6 @@ final class Site
 {
     public static function config(): SiteConfig
     {
-        return new SiteConfig(baseUrl: 'https://hhh-av.com', maker: 'HHH', unlinkedPerformers: true);
+        return new SiteConfig(baseUrl: 'https://hhh-av.com', maker: 'HHH', plainPerformers: true);
     }
 }
