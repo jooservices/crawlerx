@@ -36,4 +36,22 @@ final class Site
 
         return is_string($path) && preg_match('#^/makers/[^/]+/?$#', $path) === 1;
     }
+
+    /**
+     * The CDN serves cards and covers re-compressed through `output-quality` and `resize` query parameters; dropping
+     * them yields the original upload at full quality.
+     */
+    public static function originalImage(string $url): string
+    {
+        $parts = parse_url($url);
+        if (! is_array($parts) || ! isset($parts['query'])) {
+            return $url;
+        }
+
+        parse_str($parts['query'], $query);
+        unset($query['output-quality'], $query['resize']);
+        $base = explode('?', $url, 2)[0];
+
+        return $query === [] ? $base : $base . '?' . http_build_query($query);
+    }
 }

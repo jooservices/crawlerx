@@ -42,7 +42,7 @@ final class FalenogroupTest extends TestCase
         self::assertSame('fthtd-243', $movie['external_id']);
         self::assertSame('FTHTD-243', $movie['code']);
         self::assertSame('朝起きたら見知らぬ女子大生と全裸密着…微かな記憶を辿りながら思い出した快楽の一夜', $movie['title']);
-        self::assertSame(self::CDN . '/2026/10/FTHTD-243_1200.jpg?output-quality=60', $movie['cover_url']);
+        self::assertSame(self::CDN . '/2026/10/FTHTD-243_1200.jpg', $movie['cover_url']);
         self::assertStringStartsWith('この人は一体誰？衝撃の目覚めから話が進んでいく本作。', $movie['description']);
         self::assertStringEndsWith('天真爛漫JDと冴えないサラリーマンのひと夏の物語。', $movie['description']);
         self::assertSame('2026-10-23', $movie['date']);
@@ -78,7 +78,7 @@ final class FalenogroupTest extends TestCase
         self::assertSame('noskn-106', $movie['external_id']);
         self::assertSame('NOSKN-106', $movie['code']);
         self::assertSame('【ALL無編集】NO cut！NO SKIN！Nakadashi！完全ノーカットで魅せる真性中出しガチイキ映像　由良かな', $movie['title']);
-        self::assertSame(self::CDN . '/2026/11/NOSKN-106_package.jpg?output-quality=60', $movie['cover_url']);
+        self::assertSame(self::CDN . '/2026/11/NOSKN-106_package.jpg', $movie['cover_url']);
         self::assertSame('ALL半中半外！完全ノーカット中出し！圧倒的美女優の最強生痴態を見せるのは由良かなちゃん。合法●リの最高峰・由良かな降臨！！ちっちゃミニマムボディで巨根たちを生抜き倒すっ！！', $movie['description']);
         self::assertSame('2026-12-04', $movie['date']);
         self::assertSame(151, $movie['duration']);
@@ -153,7 +153,7 @@ final class FalenogroupTest extends TestCase
         self::assertSame('vaiav-035', $movie['external_id']);
         self::assertSame('VAIAV-035', $movie['code']);
         self::assertSame('浴衣初デートで突然の雨', $movie['title']);
-        self::assertSame(self::CDN . '/2026/11/VAIAV-035_2125.jpg?resize=470:*&output-quality=60', $movie['cover_url']);
+        self::assertSame(self::CDN . '/2026/11/VAIAV-035_2125.jpg', $movie['cover_url']);
         self::assertSame('2026-12-04', $movie['date']);
         self::assertSame('2026/12/4 発売開始', $movie['metadata']['release_note']);
         self::assertSame(self::CDN . '/2022/05/botan.jpg', $movie['metadata']['maker_logo_url']);
@@ -240,5 +240,13 @@ final class FalenogroupTest extends TestCase
         self::assertFalse($crawler->detectUrl(self::BASE . '/makers/')->matched);
         self::assertFalse($crawler->detectUrl(self::BASE . '/genre/')->matched);
         self::assertSame('falenogroup', $crawler->name());
+    }
+
+    public function test_original_image_drops_the_cdn_recompression_parameters(): void
+    {
+        self::assertSame('https://cdn.example.test/a.jpg', Site::originalImage('https://cdn.example.test/a.jpg?output-quality=60'));
+        self::assertSame('https://cdn.example.test/a.jpg', Site::originalImage('https://cdn.example.test/a.jpg?resize=470:*&output-quality=60'));
+        self::assertSame('https://cdn.example.test/a.jpg?v=2', Site::originalImage('https://cdn.example.test/a.jpg?v=2&output-quality=60'));
+        self::assertSame('https://cdn.example.test/a.jpg', Site::originalImage('https://cdn.example.test/a.jpg'));
     }
 }

@@ -59,7 +59,7 @@ final class Detail extends AbstractHtmlType implements TypeInterface
             title: $this->firstText($crawler, Selectors::DETAIL_TITLE),
             data: [
                 'code' => $externalId === null ? null : Site::code($externalId),
-                'cover_url' => $cover === null ? null : $this->absolute($request->url, $cover),
+                'cover_url' => $cover === null ? null : Site::originalImage($this->absolute($request->url, $cover)),
                 'description' => $this->description($crawler),
                 'date' => $releaseDate ?? $distributionDate,
                 'duration' => MovieMeta::durationMinutes($rows[self::ROW_DURATION] ?? null),

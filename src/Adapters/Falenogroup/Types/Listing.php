@@ -58,7 +58,7 @@ final class Listing extends AbstractHtmlType implements TypeInterface
                 title: $this->firstText($card, Selectors::CARD_TITLE),
                 data: [
                     'code' => Site::code($externalId),
-                    'cover_url' => $cover === null ? null : $this->absolute($request->url, $cover),
+                    'cover_url' => $cover === null ? null : Site::originalImage($this->absolute($request->url, $cover)),
                     'date' => MovieMeta::isoDate($note),
                     'metadata' => MovieMeta::filter([
                         'maker' => $maker['name'] ?? null,
