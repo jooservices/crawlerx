@@ -267,6 +267,7 @@ below come from each adapter's current manifest. To add a source, see
 | Premium Beauty | `premiumbeauty` | Yes | Yes | — | — | Yes |
 | DASDAS | `dasdas` | Yes | Yes | — | — | Yes |
 | Madonna | `madonna` | Yes | Yes | — | — | Yes |
+| HHH | `hhh` | Yes | Yes | — | — | — |
 | kawaii* | `kawaiikawaii` | Yes | Yes | — | — | Yes |
 | OPPAI | `oppai` | Yes | Yes | — | — | Yes |
 | Pacopacomama | `pacopacomama` | Yes | Yes | — | — | — |

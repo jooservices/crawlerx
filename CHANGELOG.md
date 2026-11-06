@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add the BI adapter on the shared Maker CMS base (date index, date listings, movie detail with label, director, formats, sample video and purchase links, actress profile) with captured-fixture field assertions (JOOXCR-393).
 - Add the DASDAS adapter on the shared Maker CMS base (date index, date/genre/label/series listings, movie detail, actress profile) with captured-fixture field assertions (JOOXCR-357).
 - Add the Madonna adapter on the shared Maker CMS base (date index, date listing, detail with label/series/formats/purchase links, actress profile) with captured-fixture field assertions (JOOXCR-354).
+- Add the HHH adapter on the shared Maker CMS base (date index, date listing, detail with label/series/formats/purchase links; unlinked actress names kept) with captured-fixture field assertions (JOOXCR-394).
 - Add the MVG adapter on the shared Maker CMS base (date index, date/genre/series listings, movie detail with plain-text performers, formats, purchase links) with captured-fixture field assertions (JOOXCR-395).
 - Add the kawaii* adapter on the shared Maker CMS base (date index, date listings, detail with label/series/formats/purchase links, actress profile) with captured-fixture field assertions (JOOXCR-358).
 - Add the OPPAI adapter on the shared Maker CMS base (date index, date/genre listings, detail with label/formats/purchase links, actress profile) with captured-fixture field assertions (JOOXCR-396).
