@@ -9,9 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add the E-BODY (`ebody`) maker-CMS source with complete movie, listing and actress fields (JOOXCR-403).
 - Add the WANZ FACTORY adapter on the shared Maker CMS base with complete public movie, listing and actress fields, captured fixtures and URL inference (JOOXCR-398).
 - Add the Tameike Goro (`tameikegoro`) maker-CMS source with complete movie, listing and actress fields.
 - Add the ROCKET (`rocket`) source with own-markup work list (dated and taxonomy archives) and detail parsing of every labelled field, captured fixtures and URL inference (JOOXCR-419).
+- Add the Honnaka adapter on the shared Maker CMS base (date index, date listings, movie detail with every labelled row, actress profile) with captured-fixture field assertions (JOOXCR-402).
 ### Added
 
 - Add the kira*kira adapter on the shared Maker CMS base (date index, date/genre/label/series listings, movie detail with label, actress profile) with captured-fixture field assertions (JOOXCR-399).
