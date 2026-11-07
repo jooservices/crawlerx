@@ -213,6 +213,8 @@ final class ImageAuditTest extends TestCase
               <p class="b"><img src="data:image/gif;base64,R0lGOD" data-lazy-src="//cdn.test/l.jpg"></p>
               <p class="c"><img src="data:image/gif;base64,R0lGOD" srcset="/s1.jpg 320w, /s3.jpg 1280w, /s2.jpg 640w"></p>
               <p class="d"><img data-src="/d.jpg" src="/placeholder.gif"></p>
+              <p class="f"><img srcset="data:image/gif;base64,R0lGOD 1x"></p>
+              <p class="g"><img srcset="data:image/gif;base64,R0lGOD 1x, /s5.jpg 2x"></p>
               <p class="e"><img src="data:image/gif;base64,R0lGOD"></p>
             </div>
             HTML);
@@ -222,6 +224,8 @@ final class ImageAuditTest extends TestCase
         self::assertSame('https://example.test/s3.jpg', $fields->image($dom, '.c img'));
         self::assertSame('https://example.test/d.jpg', $fields->image($dom, '.d img'));
         self::assertNull($fields->image($dom, '.e img'));
+        self::assertNull($fields->image($dom, '.f img'));
+        self::assertSame('https://example.test/s5.jpg', $fields->image($dom, '.g img'));
         self::assertNull($fields->image($dom, '.missing img'));
     }
 

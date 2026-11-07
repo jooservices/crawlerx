@@ -42,6 +42,8 @@ final class Fields
     {
         $best = null;
         $bestWidth = -1.0;
+        // Inline data: URIs carry their own comma; drop them (and their descriptor) before splitting.
+        $srcset = preg_replace('/data:[^\s,]*,[^\s,]*(?:\s+\d+(?:\.\d+)?[wx])?\s*,?/i', '', (string) $srcset);
         foreach (explode(',', (string) $srcset) as $candidate) {
             $parts = preg_split('/\s+/', trim($candidate));
             if ($parts === false || $parts[0] === '') {
