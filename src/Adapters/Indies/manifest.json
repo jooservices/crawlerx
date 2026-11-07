@@ -1,0 +1,159 @@
+{
+    "slug": "indies",
+    "name": "Indies",
+    "version": "1.0.0",
+    "description": "Public Indies (Momotaro Eizou Shuppan) month, label and genre listings, title details and actress pages",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\Indies\\IndiesCrawler",
+        "capabilities": [
+            "listing",
+            "detail",
+            "performer_listing",
+            "performer_detail"
+        ]
+    },
+    "base_url": "https://www.indies-av.co.jp",
+    "pagination": {
+        "strategy": "path",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 2,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 3600,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        },
+        {
+            "key": "performer_movie_crawl_enabled",
+            "type": "bool",
+            "default": false,
+            "tier": "operational",
+            "label": "Performer Movie Crawl Enabled"
+        }
+    ],
+    "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [
+                    "li.package"
+                ],
+                "detail": [
+                    "div.ttl"
+                ],
+                "performer_listing": [
+                    "li.package"
+                ],
+                "performer_detail": [
+                    "ul[itemtype$='schema.org/Person']"
+                ]
+            },
+            "soft404Markers": [
+                "page not found",
+                "404 not found",
+                "the page you requested was not found"
+            ]
+        },
+        "targetProfiles": {
+            "new": {
+                "label": "Release months",
+                "url": "https://www.indies-av.co.jp/ym/202611/"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "new",
+                "url": "https://www.indies-av.co.jp/ym/202611/",
+                "paginated": true,
+                "loop": true,
+                "priority": 0,
+                "max_pages": 3,
+                "status": "paused"
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://www.indies-av.co.jp/ym/202611/",
+                "name": "list-202611.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://www.indies-av.co.jp/lables/dsdp/",
+                "name": "list-lables-dsdp.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://www.indies-av.co.jp/genre/anal/",
+                "name": "list-genre-anal.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://www.indies-av.co.jp/title/dsdp049/",
+                "name": "detail-dsdp049.html",
+                "type": "detail"
+            },
+            {
+                "url": "https://www.indies-av.co.jp/actpage/",
+                "name": "actpage.html",
+                "type": "performer_listing"
+            },
+            {
+                "url": "https://www.indies-av.co.jp/actress/mitsuki_shirayuki/",
+                "name": "actress-mitsuki_shirayuki.html",
+                "type": "performer_detail"
+            },
+            {
+                "url": "https://www.indies-av.co.jp/actress/kana_yura/",
+                "name": "actress-kana_yura.html",
+                "type": "performer_detail"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 10,
+            "detail_delay_seconds": 2,
+            "cycle_delay_seconds": 3600,
+            "performer_movie_crawl_enabled": false
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 5,
+            "min_gap_seconds": 5,
+            "max_gap_seconds": 30
+        },
+        "browserHeaders": {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "Accept": "application/json,text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9,ja;q=0.8"
+        },
+        "playwrightFetchEnabled": false
+    },
+    "type": "site"
+}

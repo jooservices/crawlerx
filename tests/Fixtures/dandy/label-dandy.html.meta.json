@@ -1,0 +1,10 @@
+{
+  "source_url": "https://www.choi-waru.com/dandy/",
+  "final_url": "https://www.choi-waru.com/dandy/",
+  "captured_at": "2026-11-06T16:55:00+00:00",
+  "http_status": 200,
+  "content_hash": "16e6921c43539cb5ed759497d4322566ab7eff8a0ee5387032cced511af22b67",
+  "target_type": "listing",
+  "fetch_method": "http",
+  "sanitized": false
+}

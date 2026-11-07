@@ -1,0 +1,139 @@
+{
+    "slug": "gravurech",
+    "name": "Gravure-ch",
+    "version": "1.0.0",
+    "description": "Crawler for Gravure-ch (Gravure Channel+) photo sets",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\Gravurech\\GravurechCrawler",
+        "capabilities": [
+            "listing",
+            "gallery"
+        ]
+    },
+    "base_url": "https://gravure-ch.com",
+    "pagination": {
+        "strategy": "query",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 2592000,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        }
+    ],
+    "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [
+                    ".products__list .product"
+                ],
+                "gallery": [
+                    ".product-detail h1.title"
+                ]
+            },
+            "soft404Markers": [
+                "page not found",
+                "404 not found",
+                "お探しのページは見つかりません"
+            ]
+        },
+        "targetProfiles": {
+            "gravurech_new_photo": {
+                "label": "Gravure-ch New Photo Index",
+                "url": "https://gravure-ch.com/search/new/photo"
+            },
+            "gravurech_gallery_sample": {
+                "label": "Gravure-ch Photo Set Sample",
+                "url": "https://gravure-ch.com/content/j6R"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "gravurech_new_photo",
+                "url": "https://gravure-ch.com/search/new/photo",
+                "paginated": true,
+                "loop": true,
+                "priority": 0
+            },
+            {
+                "url_type": "gravurech_gallery_sample",
+                "url": "https://gravure-ch.com/content/j6R",
+                "paginated": false,
+                "loop": true,
+                "priority": 1,
+                "status": "paused"
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://gravure-ch.com/search/new/photo",
+                "name": "listing-new-photo.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://gravure-ch.com/search/new/photo?page=6",
+                "name": "listing-new-photo-page-6.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://gravure-ch.com/content/j6R",
+                "name": "detail-j6R.html",
+                "type": "gallery"
+            },
+            {
+                "url": "https://gravure-ch.com/content/0bb",
+                "name": "detail-0bb.html",
+                "type": "gallery"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 10,
+            "detail_delay_seconds": 10,
+            "cycle_delay_seconds": 2592000
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 10,
+            "min_gap_seconds": 5,
+            "max_gap_seconds": 45
+        },
+        "playwrightFetchEnabled": false,
+        "queueSupervisor": {
+            "balance": "simple",
+            "minProcesses": 1,
+            "maxProcesses": 1,
+            "nice": 10
+        }
+    },
+    "type": "site"
+}
