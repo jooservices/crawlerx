@@ -78,12 +78,14 @@ final class Listing extends AbstractHtmlType implements TypeInterface
             throw new CrawlParseException(Site::NAME . ' listing did not contain expected work cards.');
         }
 
+        $pagination = $this->pagination($crawler, $request);
+
         return new CrawlListResultDto(
             url: $request->url,
-            page: $request->page,
+            page: $pagination->currentPage ?? max(1, $request->page),
             entityType: 'movie',
             items: array_values($items),
-            pagination: $this->pagination($crawler, $request),
+            pagination: $pagination,
         );
     }
 

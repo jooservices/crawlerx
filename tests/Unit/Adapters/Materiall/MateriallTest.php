@@ -105,6 +105,15 @@ final class MateriallTest extends TestCase
         }
     }
 
+    public function test_listing_page_comes_from_the_pager_not_from_the_request(): void
+    {
+        $result = (new Listing($this->clientWithFixture('materiall/list-work.html')))
+            ->execute(new CrawlRequestDto(url: self::BASE . '/work/', page: 7));
+
+        self::assertSame($result->pagination->currentPage, $result->page);
+        self::assertSame(1, $result->page);
+    }
+
     public function test_listing_extracts_every_card_field(): void
     {
         $result = (new Listing($this->clientWithFixture('materiall/list-work.html')))
