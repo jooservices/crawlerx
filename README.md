@@ -302,6 +302,7 @@ below come from each adapter's current manifest. To add a source, see
 | AV-Wiki | `avwiki` | Yes | Yes | — | — | — |
 | Caribbeancom | `caribbeancom` | Yes | Yes | — | — | — |
 | Caribbeancom Premium | `caribbeancompr` | Yes | Yes | — | — | — |
+| DAHLIA | `dahlia` | Yes | Yes | — | Yes | Yes |
 | DUGA | `duga` | Yes | Yes | — | — | — |
 | EPORNER | `eporner` | — | — | Yes | — | — |
 | FC2 Content Market | `fc2` | Yes | Yes | — | — | — |
