@@ -55,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add the Pacopacomama listing/detail adapter on the shared 1Pondo-family base with real JSON fixtures and public sample galleries (JOOXCR-309).
 - Add the caribbeancompr adapter (English and Japanese detail, English listing) on the shared Caribbeancom listing/detail parsers through a per-site `Profile`; `caribbeancom` output is unchanged (JOOXCR-351).
 - Complete shared OnePondoFamily list/detail field extraction, retain full file/category/performer source records, and guard every family fixture against silent field loss and changes to existing DTO values (JOOXCR-360).
+- Add the jav321 adapter (listing, detail with cast, genres and all images, performer listing) (JOOXCR-350).
 - Add the 10musume adapter on the shared 1Pondo-family JSON base (listing + detail) (JOOXCR-308).
 - Add the Muramura adapter on the shared 1Pondo-family JSON base (listing + detail) (JOOXCR-310).
 - Add configurable Maker CMS family parsing with the S1 adapter, complete movie/actress metadata and captured-fixture field assertions (JOOXCR-348).

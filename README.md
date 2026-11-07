@@ -312,6 +312,7 @@ below come from each adapter's current manifest. To add a source, see
 | HEYZO | `heyzo` | Yes | Yes | — | — | — |
 | Jable | `jable` | Yes | Yes | — | Yes | Yes |
 | JAV Database | `javdatabase` | — | — | — | Yes | Yes |
+| Jav321 | `jav321` | Yes | Yes | — | Yes | — |
 | JavBTC | `javbtc` | Yes | Yes | — | — | — |
 | JavBus | `javbus` | Yes | Yes | — | Yes | Yes |
 | JavDB | `javdb` | Yes | Yes | — | — | — |
