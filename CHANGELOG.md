@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Complete the images of the uncensored paysite and WordPress/custom maker adapters: Heyzo locked-gallery and special-gallery thumbnails, Tokyo-Hot jacket and package images and the cover of products without a sample, DUGA full-size jacket and sample poster, FC2 original sample files, Rocket origin files instead of Jetpack copies, Aisex actress photos on cards and related actresses, Falenogroup maker logos without CDN recompression (JOOXCR-423).
 - Add the AV-Actress (`avactress`) adapter: paged actress rankings and lists (popular, bust, young, new) and actress profiles with measurements, birthday, blood type, birthplace, hobbies and every listed work with its large and thumbnail covers and sample movie (JOOXCR-454).
 - Add the DAHLIA (`dahlia`) adapter with its own parser: work listing with pagination, work detail with every labelled row, cover, all gallery stills with thumbnails, sample video and store links, performer roster and performer profiles (JOOXCR-415).
 - Add the Wikimedia Commons (`commons`) adapter on the official MediaWiki API: gravure idol category listing, category and file galleries with every original, thumbnail and licence field, and idol person pages (JOOXCR-424).

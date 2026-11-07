@@ -59,7 +59,7 @@ final class Detail extends AbstractHtmlType implements TypeInterface
             'description' => $this->introduction($article, $fields),
             'date' => MovieMeta::isoDate($releaseText),
             'duration' => MovieMeta::durationMinutes($textOf('収録時間')),
-            'cover_url' => $fields->image($article, 'article > header img'),
+            'cover_url' => $fields->image($article, 'article > header img', true),
             'screenshots' => $this->screenshots($article, $fields),
             'performers' => isset($rows['女優名']) ? $fields->performers($rows['女優名']) : [],
             'tags' => array_column($genres, 'name'),
@@ -98,7 +98,7 @@ final class Detail extends AbstractHtmlType implements TypeInterface
     private function screenshots(Crawler $article, Fields $fields): array
     {
         $thumbnails = $fields->images($article, '.work-sample-images img');
-        $full = $fields->images($article, '#modal-sample-images .slide img');
+        $full = $fields->images($article, '#modal-sample-images .slide img', true);
         $screenshots = [];
         foreach ($thumbnails as $index => $thumbnail) {
             $screenshots[] = ['url' => $full[$index] ?? $thumbnail, 'thumbnail_url' => $thumbnail];

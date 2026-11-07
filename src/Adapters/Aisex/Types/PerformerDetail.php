@@ -7,6 +7,7 @@ namespace JOOservices\CrawlerX\Adapters\Aisex\Types;
 use JOOservices\CrawlerX\Adapters\AbstractType;
 use JOOservices\CrawlerX\Adapters\Concerns\NormalizesUrls;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
+use JOOservices\CrawlerX\Adapters\Aisex\Photo;
 use JOOservices\CrawlerX\Adapters\Aisex\Selectors;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
@@ -241,7 +242,7 @@ final class PerformerDetail extends AbstractType implements TypeInterface
         return $works;
     }
 
-    /** @return list<array{external_id: ?string, name: string, url: ?string}> "related actresses" cards */
+    /** @return list<array{external_id: ?string, name: string, url: ?string, profile_image_url: ?string}> "related actresses" cards */
     private function related(Crawler $crawler, string $baseUrl): array
     {
         $related = [];
@@ -250,7 +251,8 @@ final class PerformerDetail extends AbstractType implements TypeInterface
             $name = $this->firstText($card, 'h3');
             $id = preg_match('#/actress/(\d+)/#', $href, $match) === 1 ? $match[1] : null;
             if ($name !== null && $id !== null) {
-                $related[$id] ??= MovieMeta::performer($name, $id, $this->absolute($baseUrl, $href));
+                $related[$id] ??= MovieMeta::performer($name, $id, $this->absolute($baseUrl, $href))
+                    + ['profile_image_url' => (new Photo())->url($card, $baseUrl)];
             }
         });
 
@@ -277,16 +279,8 @@ final class PerformerDetail extends AbstractType implements TypeInterface
     private function profileImage(Crawler $crawler, string $baseUrl): ?string
     {
         $node = $crawler->filter(Selectors::PROFILE_IMAGE);
-        if ($node->count() === 0) {
-            return null;
-        }
 
-        $src = $node->first()->attr('src');
-        if (! is_string($src) || trim($src) === '') {
-            return null;
-        }
-
-        return $this->absolute($baseUrl, $src);
+        return $node->count() === 0 ? null : (new Photo())->url($node->first(), $baseUrl);
     }
 
     private function externalId(string $url): ?string

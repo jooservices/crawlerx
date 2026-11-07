@@ -62,6 +62,8 @@ final class Detail extends AbstractHtmlType implements TypeInterface
                     MovieMeta::SERIES => $series === null || preg_match('/^-+$/', $series) === 1 ? null : $series,
                     MovieMeta::RATING => $this->rating($ld, $this->cellText($rows, 'Review(s)')),
                     MovieMeta::SAMPLE_VIDEO_URL => $this->sampleVideo($crawler, $request->url),
+                    'locked_gallery_thumbnails' => $this->imageUrls($crawler, '#section_gallery img.nonmember[src]', 'src', $request->url),
+                    'special_gallery_thumbnails' => $this->imageUrls($crawler, '#superGallery img[data-original]', 'data-original', $request->url),
                     MovieMeta::DOWNLOADS => $this->downloads($crawler),
                     MovieMeta::RELEASE_DATE_RAW => $this->cellText($rows, 'Released'),
                     'original_release_date' => MovieMeta::isoDate($this->stringOf($ld, 'dateCreated')),
@@ -392,6 +394,24 @@ final class Detail extends AbstractHtmlType implements TypeInterface
         }
 
         return [];
+    }
+
+    /**
+     * Gallery pictures the page shows only as thumbnails to a guest (the full-size files need a membership), in page order.
+     *
+     * @return list<string>
+     */
+    private function imageUrls(Crawler $crawler, string $selector, string $attribute, string $baseUrl): array
+    {
+        $urls = [];
+        $crawler->filter($selector)->each(function (Crawler $image) use (&$urls, $attribute, $baseUrl): void {
+            $src = trim((string) $image->attr($attribute));
+            if ($src !== '') {
+                $urls[$src] = $this->absolute($baseUrl, $src);
+            }
+        });
+
+        return array_values($urls);
     }
 
     /** @return list<array{time_seconds: ?int, label: ?string, image_url: ?string}> */

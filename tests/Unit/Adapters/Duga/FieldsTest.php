@@ -24,7 +24,7 @@ class FieldsTest extends TestCase
         self::assertSame('完食の美学 どうして女は女の爆盛りウンコを爆喰いするのか？', $movie['title']);
         self::assertStringStartsWith('前代未聞の食糞モンスター爆誕！', $movie['description']);
         self::assertStringNotContainsString('DUGAは', $movie['description']);
-        self::assertSame('https://pic.duga.jp/unsecure/vrpandemic/0023/noauth/jacket_240.jpg', $movie['cover_url']);
+        self::assertSame('https://pic.duga.jp/unsecure/vrpandemic/0023/noauth/jacket.jpg', $movie['cover_url']);
         self::assertSame('2026-08-14', $movie['date']);
         self::assertSame(49, $movie['duration']);
         self::assertSame(['あだちねね', '狛稚あやめ'], array_column($movie['performers'], 'name'));

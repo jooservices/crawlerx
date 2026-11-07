@@ -47,6 +47,7 @@ final class Detail extends AbstractHtmlType implements TypeInterface
         $release = $this->cellText($rows, 'Release Date');
         $digest = $this->images($crawler, '.vcap a[rel="cap"]', $request->url);
         $photos = $this->images($crawler, '.scap a[rel="cap"]', $request->url);
+        $package = $this->packageImages($crawler, $request->url);
 
         $item = MovieDto::item(
             url: $request->url,
@@ -70,6 +71,8 @@ final class Detail extends AbstractHtmlType implements TypeInterface
                     MovieMeta::RELEASE_DATE_RAW => $release,
                     'tag_groups' => $tagGroups,
                     'label_url' => $this->labelUrl($rows, $request->url),
+                    'jacket_url' => $package['jacket'],
+                    'package_images' => $package['package'],
                     'photo_gallery' => $this->numbered($photos),
                     'movie_digest' => $this->numbered($digest),
                     MovieMeta::FIELDS => $this->otherRows($rows),
@@ -186,7 +189,38 @@ final class Detail extends AbstractHtmlType implements TypeInterface
     /** The sample player's poster is the real cover; `og:image` is the site logo. */
     private function poster(Crawler $crawler, string $baseUrl): ?string
     {
-        return $this->attribute($crawler, 'data-poster', $baseUrl);
+        $poster = $this->attribute($crawler, 'data-poster', $baseUrl);
+        if ($poster !== null) {
+            return $poster;
+        }
+
+        // Products without a sample video show their cover inside the (empty) player instead.
+        $cover = $this->firstAttribute($crawler, '.flowplayer img[src]', 'src');
+
+        return $cover === null ? null : $this->url($baseUrl, $cover);
+    }
+
+    /**
+     * The package links under the player: the jacket and the box shots, each an image file.
+     *
+     * @return array{jacket: ?string, package: list<string>}
+     */
+    private function packageImages(Crawler $crawler, string $baseUrl): array
+    {
+        $jacket = null;
+        $package = [];
+        $crawler->filter('li.package a[href]')->each(function (Crawler $link) use (&$jacket, &$package, $baseUrl): void {
+            $url = $this->url($baseUrl, (string) $link->attr('href'));
+            if ($jacket === null && str_contains($url, '/jacket/')) {
+                $jacket = $url;
+
+                return;
+            }
+
+            $package[$url] = $url;
+        });
+
+        return ['jacket' => $jacket, 'package' => array_values($package)];
     }
 
     private function attribute(Crawler $crawler, string $name, string $baseUrl): ?string

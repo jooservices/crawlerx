@@ -43,6 +43,8 @@ final class Detail extends AbstractHtmlType implements TypeInterface
         $sku = $this->cellText($rows, '作品ID');
         $productNumber = $this->cellText($rows, 'メーカー品番') ?? $this->cellText($rows, '品番');
         $prices = $this->prices($crawler);
+        // og:image is the 240px jacket; the zoom link carries the full-size one.
+        $thumbnail = $this->firstAttribute($crawler, 'meta[property="og:image"]', 'content');
 
         $item = MovieDto::item(
             url: $request->url,
@@ -50,7 +52,7 @@ final class Detail extends AbstractHtmlType implements TypeInterface
             title: $this->firstText($crawler, 'h1.title, h1[itemprop="name"]') ?? $externalId,
             data: MovieMeta::filter([
                 'code' => $productNumber ?? $sku ?? $externalId,
-                'cover_url' => $this->firstAttribute($crawler, 'meta[property="og:image"]', 'content'),
+                'cover_url' => $this->firstAttribute($crawler, 'a[itemprop="image"][href]', 'href') ?? $thumbnail,
                 'description' => $this->firstText($crawler, 'p.introduction'),
                 'date' => $this->dateOf($rows, '発売日'),
                 'duration' => $this->duration($crawler),
@@ -67,6 +69,8 @@ final class Detail extends AbstractHtmlType implements TypeInterface
                     MovieMeta::PRICE => $prices[0] ?? null,
                     'prices' => $prices,
                     MovieMeta::SAMPLE_VIDEO_URL => $this->firstAttribute($crawler, 'meta[property="og:video:url"]', 'content'),
+                    'cover_thumbnail_url' => $thumbnail,
+                    'sample_video_poster_url' => $this->firstAttribute($crawler, '.sample-rapper img[src]', 'src'),
                     MovieMeta::DOWNLOADS => $this->files($crawler),
                     MovieMeta::RELEASE_DATE_RAW => $this->cellText($rows, '発売日'),
                     'distribution_start_date' => $this->dateOf($rows, '配信開始日'),
