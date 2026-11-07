@@ -261,11 +261,14 @@ below come from each adapter's current manifest. To add a source, see
 | FALENO GROUP | `falenogroup` | Yes | Yes | — | — | — |
 | HONNAKA | `honnaka` | Yes | Yes | — | — | Yes |
 | WANZ FACTORY | `wanz` | Yes | Yes | — | — | Yes |
+| Indies | `indies` | Yes | Yes | — | Yes | Yes |
 | MKO LABO | `mko` | Yes | Yes | — | — | Yes |
 | MIMAN | `miman` | Yes | Yes | — | — | — |
 | OPERA | `opera` | Yes | Yes | — | — | — |
 | BeFreeBe | `befreebe` | Yes | Yes | — | — | Yes |
+| DANDY GROUP | `dandy` | Yes | Yes | — | — | — |
 | Tameike Goro | `tameikegoro` | Yes | Yes | — | — | Yes |
+| ROCKET | `rocket` | Yes | Yes | — | — | — |
 | Hajime Kikaku | `hajimekikaku` | Yes | Yes | — | — | — |
 | Fitch | `fitch` | Yes | Yes | — | — | Yes |
 | ATTACKERS | `attackers` | Yes | Yes | — | — | Yes |
@@ -282,11 +285,14 @@ below come from each adapter's current manifest. To add a source, see
 | V-AV | `vav` | Yes | Yes | — | — | — |
 | To-Satsu | `tosatsu` | Yes | Yes | — | — | — |
 | Nanpa Japan | `nanpajapan` | Yes | Yes | — | — | — |
+| BOMB.tv | `bomb` | Yes | — | Yes | — | — |
 | kawaii* | `kawaiikawaii` | Yes | Yes | — | — | Yes |
 | kira*kira | `kirakira` | Yes | Yes | — | — | Yes |
+| DEEP'S | `deeps` | Yes | Yes | — | — | — |
 | OPPAI | `oppai` | Yes | Yes | — | — | Yes |
 | MUKU | `muku` | Yes | Yes | — | — | — |
 | Pacopacomama | `pacopacomama` | Yes | Yes | — | — | — |
+| PLUM | `plum` | Yes | Yes | — | — | — |
 | 1Pondo | `onepondo` | Yes | Yes | — | — | — |
 | 10Musume | `10musume` | Yes | Yes | — | — | — |
 | Aisex | `aisex` | — | — | — | Yes | Yes |
@@ -300,6 +306,7 @@ below come from each adapter's current manifest. To add a source, see
 | EPORNER | `eporner` | — | — | Yes | — | — |
 | FC2 Content Market | `fc2` | Yes | Yes | — | — | — |
 | FFJav | `ffjav` | Yes | Yes | — | — | — |
+| Gravure-ch | `gravurech` | Yes | — | Yes | — | — |
 | HEYZO | `heyzo` | Yes | Yes | — | — | — |
 | Jable | `jable` | Yes | Yes | — | Yes | Yes |
 | JAV Database | `javdatabase` | — | — | — | Yes | Yes |
@@ -311,6 +318,7 @@ below come from each adapter's current manifest. To add a source, see
 | Minnano AV | `minnanoav` | Yes | Yes | — | Yes | Yes |
 | MissAV | `missav` | Yes | Yes | — | — | — |
 | Muramura | `muramura` | Yes | Yes | — | — | — |
+| Next11 | `next11` | Yes | Yes | — | — | — |
 | OneJav | `onejav` | Yes | Yes | — | — | — |
 | Smart FLASH | `smartflash` | Yes | — | Yes | — | — |
 | Tokyo-Hot | `tokyohot` | Yes | Yes | — | — | — |

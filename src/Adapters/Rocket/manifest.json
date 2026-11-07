@@ -1,0 +1,128 @@
+{
+    "slug": "rocket",
+    "name": "ROCKET",
+    "version": "1.0.0",
+    "description": "Public ROCKET work lists (dated and taxonomy archives), work details and URL detection",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\Rocket\\RocketCrawler",
+        "capabilities": [
+            "listing",
+            "detail"
+        ]
+    },
+    "base_url": "https://rocket-inc.net",
+    "pagination": {
+        "strategy": "path",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 2,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 3600,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        }
+    ],
+    "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [
+                    ".works-item"
+                ],
+                "detail": [
+                    "article.single-works"
+                ]
+            },
+            "soft404Markers": [
+                "page not found",
+                "404 not found",
+                "the page you requested was not found"
+            ]
+        },
+        "targetProfiles": {
+            "new": {
+                "label": "Latest works",
+                "url": "https://rocket-inc.net/works/"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "new",
+                "url": "https://rocket-inc.net/works/",
+                "paginated": true,
+                "loop": true,
+                "priority": 0,
+                "max_pages": 3,
+                "status": "paused"
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://rocket-inc.net/works/",
+                "name": "works.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://rocket-inc.net/works_actress/%e8%99%b9%e6%9d%91%e3%82%86%e3%81%bf/",
+                "name": "works-actress-nijimura-yumi.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://rocket-inc.net/works/rctd-774/",
+                "name": "detail-rctd-774.html",
+                "type": "detail"
+            },
+            {
+                "url": "https://rocket-inc.net/works/rctd-683/",
+                "name": "detail-rctd-683.html",
+                "type": "detail"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 10,
+            "detail_delay_seconds": 2,
+            "cycle_delay_seconds": 3600
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 5,
+            "min_gap_seconds": 5,
+            "max_gap_seconds": 30
+        },
+        "browserHeaders": {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "Accept": "application/json,text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9,ja;q=0.8"
+        },
+        "playwrightFetchEnabled": false
+    },
+    "type": "site"
+}
