@@ -259,6 +259,7 @@ below come from each adapter's current manifest. To add a source, see
 | S1 NO.1 STYLE | `s1` | Yes | Yes | — | — | Yes |
 | MOODYZ | `moodyz` | Yes | Yes | — | — | Yes |
 | FALENO GROUP | `falenogroup` | Yes | Yes | — | — | — |
+| Materiall | `materiall` | Yes | Yes | — | — | — |
 | HONNAKA | `honnaka` | Yes | Yes | — | — | Yes |
 | WANZ FACTORY | `wanz` | Yes | Yes | — | — | Yes |
 | Indies | `indies` | Yes | Yes | — | Yes | Yes |
