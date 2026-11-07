@@ -71,10 +71,12 @@ final class PerformerListing extends AbstractType implements TypeInterface
                     return;
                 }
 
+                $image = $this->cardImage($node, $request->url);
                 $items[$url] = PerformerDto::item(
                     url: $url,
                     externalId: $externalId,
                     title: $name,
+                    data: $image === null ? [] : ['profile_image_url' => $image],
                 );
             });
 
@@ -95,6 +97,15 @@ final class PerformerListing extends AbstractType implements TypeInterface
                 hasNextPage: $nextUrl !== null,
             ),
         );
+    }
+
+    /** The portrait is the image link of the same `<figure>` as the name link. */
+    private function cardImage(Crawler $name, string $baseUrl): ?string
+    {
+        $card = $name->closest('figure');
+        $src = $card === null ? null : $this->firstAttribute($card, Selectors::PERFORMER_CARD_IMAGE, 'src');
+
+        return $src === null ? null : UriResolver::resolve($src, $baseUrl);
     }
 
     private function performerNameFromNode(Crawler $node): string

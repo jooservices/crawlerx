@@ -51,6 +51,8 @@ final class Gallery extends AbstractHtmlType implements TypeInterface
                 'photos' => $photos,
                 'metadata' => [
                     'source' => $this->firstText($crawler, Selectors::GALLERY_SOURCE_LINK),
+                    'cover_url' => $this->imageAttribute($crawler, Selectors::GALLERY_COVER, 'content', $request->url),
+                    'performer_image_url' => $this->imageAttribute($crawler, Selectors::GALLERY_PERFORMER_IMAGE, 'src', $request->url),
                     'performer_url' => $this->firstAttribute($crawler, Selectors::GALLERY_PERFORMER_LINK, 'href'),
                     'source_url' => $this->firstAttribute($crawler, Selectors::GALLERY_SOURCE_LINK, 'href'),
                     'related_content' => $this->relatedContent($crawler, $request->url),
@@ -59,6 +61,13 @@ final class Gallery extends AbstractHtmlType implements TypeInterface
         );
 
         return $item;
+    }
+
+    private function imageAttribute(Crawler $crawler, string $selector, string $attribute, string $baseUrl): ?string
+    {
+        $value = $this->firstAttribute($crawler, $selector, $attribute);
+
+        return $value === null ? null : $this->absolute($baseUrl, $value);
     }
 
     /** @return array{title: ?string, original_title: ?string, code: ?string, date: ?string, studio: ?string, url: ?string, cover_url: ?string}|null the web scene the pictures belong to */

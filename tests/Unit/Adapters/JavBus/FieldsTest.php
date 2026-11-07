@@ -124,7 +124,7 @@ class FieldsTest extends TestCase
         $result = (new Listing($this->clientWithHtml((string) file_get_contents(self::FIXTURES . 'listing-live.html'))))
             ->execute(new CrawlRequestDto(url: 'https://www.javbus.com/en/', type: CrawlType::Listing));
 
-        self::assertCount(23, $result->items);
+        self::assertCount(30, $result->items);
         $first = $result->items[0]->meta['movie'];
         self::assertSame('PPR-010', $first['code']);
         self::assertSame('河合あすな 8時間 BEST PRESTIGE PREMIUM RESTRICTED vol.13', $first['title']);
