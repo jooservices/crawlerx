@@ -285,6 +285,7 @@ below come from each adapter's current manifest. To add a source, see
 | V-AV | `vav` | Yes | Yes | — | — | — |
 | To-Satsu | `tosatsu` | Yes | Yes | — | — | — |
 | Nanpa Japan | `nanpajapan` | Yes | Yes | — | — | — |
+| BOMB.tv | `bomb` | Yes | — | Yes | — | — |
 | kawaii* | `kawaiikawaii` | Yes | Yes | — | — | Yes |
 | kira*kira | `kirakira` | Yes | Yes | — | — | Yes |
 | DEEP'S | `deeps` | Yes | Yes | — | — | — |
