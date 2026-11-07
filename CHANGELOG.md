@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add the DAHLIA (`dahlia`) adapter with its own parser: work listing with pagination, work detail with every labelled row, cover, all gallery stills with thumbnails, sample video and store links, performer roster and performer profiles (JOOXCR-415).
+- Add the Smart FLASH (`smartflash`) gravure adapter with paged listing and gallery crawls (every article photo from the article and its photo viewer, tags, source, author, credits, dates), captured fixtures and URL inference (JOOXCR-425).
 - Add the Gravure-ch (`gravurech`) photo-set adapter with a paged listing and gallery detail (title, cast, tags, magazine and issue date, page count, cover image, labelled fields); the photo pages are member-only and are not crawled (JOOXCR-428).
 - Add the DANDY GROUP (`dandy`: Dandy, Cosmos, Yuuyake and sister labels) adapter with complete listing and detail fields, captured fixtures and URL inference (JOOXCR-422).
 - Add the Next11 (`next11`) adapter with its own parser: month and label/series/genre/cast listings with pagination, and movie detail with every labelled row, all jacket and sample-still images, sample-video embed and purchase links (JOOXCR-421).
