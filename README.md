@@ -259,6 +259,7 @@ below come from each adapter's current manifest. To add a source, see
 | S1 NO.1 STYLE | `s1` | Yes | Yes | — | — | Yes |
 | MOODYZ | `moodyz` | Yes | Yes | — | — | Yes |
 | FALENO GROUP | `falenogroup` | Yes | Yes | — | — | — |
+| Materiall | `materiall` | Yes | Yes | — | — | — |
 | HONNAKA | `honnaka` | Yes | Yes | — | — | Yes |
 | WANZ FACTORY | `wanz` | Yes | Yes | — | — | Yes |
 | Indies | `indies` | Yes | Yes | — | Yes | Yes |
@@ -299,6 +300,7 @@ below come from each adapter's current manifest. To add a source, see
 | Avfan | `avfan` | Yes | Yes | — | — | — |
 | Avfan Profiles | `avfan_profiles` | — | — | — | Yes | Yes |
 | Avjoho | `avjoho` | — | — | — | Yes | Yes |
+| AV-Actress | `avactress` | — | — | — | Yes | Yes |
 | AV-Wiki | `avwiki` | Yes | Yes | — | — | — |
 | Caribbeancom | `caribbeancom` | Yes | Yes | — | — | — |
 | Caribbeancom Premium | `caribbeancompr` | Yes | Yes | — | — | — |
@@ -311,6 +313,7 @@ below come from each adapter's current manifest. To add a source, see
 | HEYZO | `heyzo` | Yes | Yes | — | — | — |
 | Jable | `jable` | Yes | Yes | — | Yes | Yes |
 | JAV Database | `javdatabase` | — | — | — | Yes | Yes |
+| Jav321 | `jav321` | Yes | Yes | — | Yes | — |
 | JavBTC | `javbtc` | Yes | Yes | — | — | — |
 | JavBus | `javbus` | Yes | Yes | — | Yes | Yes |
 | JavDB | `javdb` | Yes | Yes | — | — | — |

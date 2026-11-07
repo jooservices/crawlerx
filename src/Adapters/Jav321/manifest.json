@@ -1,0 +1,144 @@
+{
+    "slug": "jav321",
+    "name": "Jav321",
+    "version": "1.0.0",
+    "description": "Crawler for Jav321 (dmm mirror)",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\Jav321\\Jav321Crawler",
+        "capabilities": [
+            "listing",
+            "detail",
+            "performer_listing"
+        ]
+    },
+    "base_url": "https://www.jav321.com",
+    "pagination": {
+        "strategy": "path",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 2592000,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        },
+        {
+            "key": "performer_movie_crawl_enabled",
+            "type": "bool",
+            "default": true,
+            "tier": "operational",
+            "label": "Performer Movie Crawl Enabled"
+        }
+    ],
+    "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": ["a[href^='/video/']"],
+                "detail": [".panel-heading h3"],
+                "performer_listing": ["a[href^='/star/']"]
+            },
+            "soft404Markers": ["page not found", "404 not found", "the page you requested was not found"]
+        },
+        "targetProfiles": {
+            "new": {
+                "label": "Latest",
+                "url": "https://www.jav321.com/list/release_date/1"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "new",
+                "url": "https://www.jav321.com/list/release_date/1",
+                "paginated": true,
+                "loop": true,
+                "priority": 0,
+                "max_pages": 5,
+                "status": "paused"
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://www.jav321.com/video/118rtp00020",
+                "name": "detail-118rtp00020.html",
+                "type": "detail"
+            },
+            {
+                "url": "https://www.jav321.com/video/ssis00001",
+                "name": "detail-ssis00001.html",
+                "type": "detail"
+            },
+            {
+                "url": "https://en.jav321.com/video/118rtp00020",
+                "name": "detail-en-118rtp00020.html",
+                "type": "detail"
+            },
+            {
+                "url": "https://www.jav321.com/genre/1018/1",
+                "name": "listing-genre-1018.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://www.jav321.com/list/release_date/1",
+                "name": "listing-release-date-1.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://www.jav321.com/stars/1",
+                "name": "performer-listing-stars-1.html",
+                "type": "performer_listing"
+            },
+            {
+                "url": "https://www.jav321.com/star/1012844/1",
+                "name": "listing-star-1012844.html",
+                "type": "listing"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 10,
+            "detail_delay_seconds": 10,
+            "cycle_delay_seconds": 2592000,
+            "performer_movie_crawl_enabled": true
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 8,
+            "min_gap_seconds": 3,
+            "max_gap_seconds": 45
+        },
+        "browserHeaders": {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9,ja;q=0.8"
+        },
+        "playwrightFetchEnabled": false
+    },
+    "type": "site"
+}
