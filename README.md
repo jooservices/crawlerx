@@ -305,6 +305,7 @@ below come from each adapter's current manifest. To add a source, see
 | EPORNER | `eporner` | — | — | Yes | — | — |
 | FC2 Content Market | `fc2` | Yes | Yes | — | — | — |
 | FFJav | `ffjav` | Yes | Yes | — | — | — |
+| Gravure-ch | `gravurech` | Yes | — | Yes | — | — |
 | HEYZO | `heyzo` | Yes | Yes | — | — | — |
 | Jable | `jable` | Yes | Yes | — | Yes | Yes |
 | JAV Database | `javdatabase` | — | — | — | Yes | Yes |
