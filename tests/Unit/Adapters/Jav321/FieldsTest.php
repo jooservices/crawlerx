@@ -172,6 +172,13 @@ class FieldsTest extends TestCase
         self::assertSame('1024002', $first['external_id']);
         self::assertSame('桃谷エリカ', $first['name']);
         self::assertSame('http://pics.dmm.co.jp/mono/actjpgs/momotani_erika.jpg', $first['profile_image_url']);
+
+        $placeholder = array_values(array_filter(
+            $result->items,
+            static fn($item): bool => $item->meta['performer']['external_id'] === '1020504',
+        ));
+        self::assertCount(1, $placeholder);
+        self::assertNull($placeholder[0]->meta['performer']['profile_image_url']);
     }
 
     public function test_performer_works_page_is_a_movie_listing(): void

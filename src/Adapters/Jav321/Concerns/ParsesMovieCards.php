@@ -66,9 +66,11 @@ trait ParsesMovieCards
             return null;
         }
 
-        return preg_replace('#(?<!:)/{2,}#', '/', $url) ?? $url;
-    }
+        $clean = preg_replace('#(?<!:)/{2,}#', '/', $url) ?? $url;
 
+        // The site renders "/.jpg" for performers without a photo; that is a placeholder, not an image.
+        return str_ends_with($clean, '/.jpg') ? null : $clean;
+    }
 
     protected function hasDownloadBadge(Crawler $node): bool
     {
