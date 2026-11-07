@@ -20,11 +20,41 @@ final class Fields
         return $this->firstText($node, $selector);
     }
 
+    /**
+     * First usable image URL of the first matching node: lazy-load attributes first (the CMS
+     * serves data-src), then src (never an inline data: placeholder), then the largest srcset
+     * candidate.
+     */
     public function image(Crawler $node, string $selector): ?string
     {
-        $url = $this->firstAttribute($node, $selector, 'data-src') ?? $this->firstAttribute($node, $selector, 'src');
+        foreach (['data-src', 'data-original', 'data-lazy-src', 'src'] as $attribute) {
+            $url = $this->firstAttribute($node, $selector, $attribute);
+            if ($url !== null && ! str_starts_with($url, 'data:')) {
+                return $this->config->absolute($url);
+            }
+        }
+        $url = $this->largestSrcsetCandidate($this->firstAttribute($node, $selector, 'data-srcset') ?? $this->firstAttribute($node, $selector, 'srcset'));
 
         return $url !== null ? $this->config->absolute($url) : null;
+    }
+
+    private function largestSrcsetCandidate(?string $srcset): ?string
+    {
+        $best = null;
+        $bestWidth = -1.0;
+        foreach (explode(',', (string) $srcset) as $candidate) {
+            $parts = preg_split('/\s+/', trim($candidate));
+            if ($parts === false || $parts[0] === '') {
+                continue;
+            }
+            $width = (float) rtrim($parts[1] ?? '0', 'wx');
+            if ($width > $bestWidth) {
+                $best = $parts[0];
+                $bestWidth = $width;
+            }
+        }
+
+        return $best;
     }
 
     /** @return list<array{name: string, url: string, external_id: string}> */
