@@ -1,0 +1,10 @@
+{
+  "source_url": "https://javmenu.com/censored/actor",
+  "final_url": "https://javmenu.com/censored/actor",
+  "captured_at": "2026-11-07T00:00:00+00:00",
+  "http_status": 200,
+  "content_hash": "a558b5e4f3ee245a1b772096ad8253eb3403b09b8f1ce7eb34314dc46ba3581b",
+  "target_type": "performer_listing",
+  "fetch_method": "http",
+  "sanitized": true
+}

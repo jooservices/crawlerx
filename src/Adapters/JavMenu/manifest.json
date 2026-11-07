@@ -1,0 +1,159 @@
+{
+    "slug": "javmenu",
+    "name": "JAVMenu",
+    "version": "1.0.0",
+    "description": "Crawler for JAVMenu (javmenu.com): work listings, work detail with magnets and stream lines, performer index and performer pages",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\JavMenu\\JavMenuCrawler",
+        "capabilities": [
+            "listing",
+            "detail",
+            "performer_listing",
+            "performer_detail"
+        ]
+    },
+    "base_url": "https://javmenu.com",
+    "pagination": {
+        "strategy": "query",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 2,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 3600,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        }
+    ],
+    "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [
+                    ".category-page.video-list-item"
+                ],
+                "detail": [
+                    ".left-wrapper"
+                ],
+                "performer_listing": [
+                    ".category-page.video-list-item"
+                ],
+                "performer_detail": [
+                    ".bg-archive"
+                ]
+            },
+            "soft404Markers": [
+                "page not found",
+                "404 not found",
+                "the page you requested was not found"
+            ]
+        },
+        "targetProfiles": {
+            "censored": {
+                "label": "Censored works",
+                "url": "https://javmenu.com/censored"
+            },
+            "uncensored": {
+                "label": "Uncensored works",
+                "url": "https://javmenu.com/uncensored"
+            },
+            "actors": {
+                "label": "Censored performers",
+                "url": "https://javmenu.com/censored/actor"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "censored",
+                "url": "https://javmenu.com/censored",
+                "paginated": true,
+                "loop": true,
+                "priority": 0,
+                "max_pages": 3,
+                "status": "paused"
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://javmenu.com/censored?page=2",
+                "name": "list-censored-page2.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://javmenu.com/censored/maker/440",
+                "name": "list-maker-440.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://javmenu.com/ABF-386",
+                "name": "detail-ABF-386.html",
+                "type": "detail"
+            },
+            {
+                "url": "https://javmenu.com/DSOD-078",
+                "name": "detail-DSOD-078.html",
+                "type": "detail"
+            },
+            {
+                "url": "https://javmenu.com/en/DSOD-078",
+                "name": "detail-DSOD-078-en.html",
+                "type": "detail"
+            },
+            {
+                "url": "https://javmenu.com/censored/actor",
+                "name": "actor-list.html",
+                "type": "performer_listing"
+            },
+            {
+                "url": "https://javmenu.com/actor/83V",
+                "name": "actor-83V.html",
+                "type": "performer_detail"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 10,
+            "detail_delay_seconds": 5,
+            "cycle_delay_seconds": 3600
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 5,
+            "min_gap_seconds": 5,
+            "max_gap_seconds": 30
+        },
+        "browserHeaders": {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "Accept": "application/json,text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "zh-TW,zh;q=0.9,en;q=0.8"
+        },
+        "playwrightFetchEnabled": false
+    },
+    "type": "site"
+}
