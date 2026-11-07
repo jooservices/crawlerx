@@ -1,0 +1,10 @@
+{
+  "source_url": "https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&titles=Category%3AOto+Abe&prop=categoryinfo%7Cpageprops%7Cpageimages%7Cinfo%7Crevisions%7Ccategories%7Clanglinks%7Cextlinks&inprop=url&piprop=original%7Cthumbnail%7Cname&pithumbsize=320&rvprop=content%7Ctimestamp&rvslots=main&cllimit=max&lllimit=max&ellimit=max&list=categorymembers&cmtitle=Category%3AOto+Abe&cmtype=file&cmlimit=50&cmprop=ids%7Ctitle%7Ctype%7Ctimestamp%7Csortkeyprefix",
+  "final_url": "https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&titles=Category%3AOto+Abe&prop=categoryinfo%7Cpageprops%7Cpageimages%7Cinfo%7Crevisions%7Ccategories%7Clanglinks%7Cextlinks&inprop=url&piprop=original%7Cthumbnail%7Cname&pithumbsize=320&rvprop=content%7Ctimestamp&rvslots=main&cllimit=max&lllimit=max&ellimit=max&list=categorymembers&cmtitle=Category%3AOto+Abe&cmtype=file&cmlimit=50&cmprop=ids%7Ctitle%7Ctype%7Ctimestamp%7Csortkeyprefix",
+  "captured_at": "2026-11-06T18:08:51.000Z",
+  "http_status": 200,
+  "content_hash": "d43e443049a327ea51daba93022f39408c7570807cc778af16cd0475c05c6db6",
+  "target_type": "gallery",
+  "fetch_method": "http",
+  "sanitized": false
+}

@@ -1,0 +1,10 @@
+{
+  "source_url": "https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&pageids=101986220%7C84315014%7C85911091&prop=imageinfo%7Ccategoryinfo%7Cpageprops%7Cpageimages%7Cinfo%7Ccategories&iiprop=timestamp%7Cuser%7Cuserid%7Ccomment%7Cparsedcomment%7Ccanonicaltitle%7Curl%7Csize%7Cdimensions%7Csha1%7Cmime%7Cmediatype%7Cbitdepth%7Cextmetadata&iiurlwidth=320&iiextmetadatalanguage=en&piprop=original%7Cthumbnail%7Cname&pithumbsize=320&inprop=url&cllimit=max",
+  "final_url": "https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&pageids=101986220%7C84315014%7C85911091&prop=imageinfo%7Ccategoryinfo%7Cpageprops%7Cpageimages%7Cinfo%7Ccategories&iiprop=timestamp%7Cuser%7Cuserid%7Ccomment%7Cparsedcomment%7Ccanonicaltitle%7Curl%7Csize%7Cdimensions%7Csha1%7Cmime%7Cmediatype%7Cbitdepth%7Cextmetadata&iiurlwidth=320&iiextmetadatalanguage=en&piprop=original%7Cthumbnail%7Cname&pithumbsize=320&inprop=url&cllimit=max",
+  "captured_at": "2026-11-06T20:25:40.000Z",
+  "http_status": 200,
+  "content_hash": "c053a9b77b61a64bf2669d7bd1475776ea8ad48e2c0434875f200a439ed863b9",
+  "target_type": "supporting",
+  "fetch_method": "http",
+  "sanitized": false
+}

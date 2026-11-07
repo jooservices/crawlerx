@@ -1,0 +1,135 @@
+{
+    "slug": "bomb",
+    "name": "BOMB.tv",
+    "version": "1.0.0",
+    "description": "Crawler for BOMB.tv Plus idol photo packs (public cover, preview and sample images)",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\Bomb\\BombCrawler",
+        "capabilities": [
+            "listing",
+            "gallery"
+        ]
+    },
+    "base_url": "https://www.bomb.tv",
+    "pagination": {
+        "strategy": "static",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 5,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 2592000,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        }
+    ],
+    "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [
+                    "a[href*=\"idolindex/\"] img"
+                ],
+                "gallery": [
+                    "img[width=\"500\"][height=\"430\"]"
+                ]
+            },
+            "soft404Markers": [
+                "page not found",
+                "404 not found",
+                "the page you requested was not found"
+            ]
+        },
+        "targetProfiles": {
+            "bomb_plus_index": {
+                "label": "BOMB.tv Plus Idol Index",
+                "url": "https://www.bomb.tv/plus/index.html"
+            },
+            "bomb_idol_sample": {
+                "label": "BOMB.tv Plus Idol Page Sample",
+                "url": "https://www.bomb.tv/plus/idolindex/mita.html"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "bomb_plus_index",
+                "url": "https://www.bomb.tv/plus/index.html",
+                "paginated": false,
+                "loop": true,
+                "priority": 0,
+                "status": "paused"
+            },
+            {
+                "url_type": "bomb_idol_sample",
+                "url": "https://www.bomb.tv/plus/idolindex/mita.html",
+                "paginated": false,
+                "loop": true,
+                "priority": 1,
+                "status": "paused"
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://www.bomb.tv/plus/index.html",
+                "name": "index.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://www.bomb.tv/plus/idolindex/mita.html",
+                "name": "idol-mita.html",
+                "type": "gallery"
+            },
+            {
+                "url": "https://www.bomb.tv/plus/idolindex/tani.html",
+                "name": "idol-tani.html",
+                "type": "gallery"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 10,
+            "detail_delay_seconds": 5,
+            "cycle_delay_seconds": 2592000
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 10,
+            "min_gap_seconds": 5,
+            "max_gap_seconds": 60
+        },
+        "playwrightFetchEnabled": false,
+        "queueSupervisor": {
+            "balance": "simple",
+            "minProcesses": 1,
+            "maxProcesses": 1,
+            "nice": 10
+        }
+    },
+    "type": "site"
+}

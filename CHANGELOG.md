@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add the DAHLIA (`dahlia`) adapter with its own parser: work listing with pagination, work detail with every labelled row, cover, all gallery stills with thumbnails, sample video and store links, performer roster and performer profiles (JOOXCR-415).
+- Add the Wikimedia Commons (`commons`) adapter on the official MediaWiki API: gravure idol category listing, category and file galleries with every original, thumbnail and licence field, and idol person pages (JOOXCR-424).
+- Add the Smart FLASH (`smartflash`) gravure adapter with paged listing and gallery crawls (every article photo from the article and its photo viewer, tags, source, author, credits, dates), captured fixtures and URL inference (JOOXCR-425).
 - Add the Gravure-ch (`gravurech`) photo-set adapter with a paged listing and gallery detail (title, cast, tags, magazine and issue date, page count, cover image, labelled fields); the photo pages are member-only and are not crawled (JOOXCR-428).
 - Add the Materiall (`materiall`) adapter with its own parser: work listing with pagination (cover, cast, reservation and distribution dates, store links) and work detail with every labelled row, cover, sample-video link and store links, captured fixtures and URL inference (JOOXCR-416).
 - Add the DANDY GROUP (`dandy`: Dandy, Cosmos, Yuuyake and sister labels) adapter with complete listing and detail fields, captured fixtures and URL inference (JOOXCR-422).
@@ -17,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add the PLUM (`plum`) adapter with its own parser: listing cards with pagination and complete movie detail (code, date, duration, cast, categories, series, price, review number, barcode, gallery, sample video, purchase links) from captured fixtures (JOOXCR-417).
 - Add the FALENO GROUP (`falenogroup`) adapter with its own parser: work listing with pagination, maker pages and work detail with every labelled field, captured fixtures and URL inference (JOOXCR-414).
 - Add the V-AV (`vav`) adapter on the shared Maker CMS base with complete public movie and listing fields (the site has no actress pages), captured fixtures and URL inference (JOOXCR-413).
+- Add the BOMB.tv (`bomb`) photo/gallery adapter: the public Plus idol index and idol pages with every public pack image (cover, previews, sample still), pack facts and captured Shift_JIS fixtures (JOOXCR-429).
 - Add the MUKU (`muku`) maker-CMS source with complete movie and listing fields (JOOXCR-410).
 - Add the MKO LABO (`mko`) adapter on the shared Maker CMS base with complete public movie, listing and actress fields, captured fixtures and URL inference (JOOXCR-409).
 - Add the MIMAN (`miman`) adapter on the shared Maker CMS base with complete movie and date-listing fields, captured fixtures and URL inference (JOOXCR-408).

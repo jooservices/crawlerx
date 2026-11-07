@@ -1,0 +1,140 @@
+{
+    "slug": "dahlia",
+    "name": "DAHLIA",
+    "version": "1.0.0",
+    "description": "Crawler for DAHLIA (FALENO group official catalog): work listing, work detail, performer roster and profiles",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\Dahlia\\DahliaCrawler",
+        "capabilities": [
+            "listing",
+            "detail",
+            "performer_listing",
+            "performer_detail"
+        ]
+    },
+    "base_url": "https://dahlia-av.jp",
+    "pagination": {
+        "strategy": "path",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 2,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 3600,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        }
+    ],
+    "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [
+                    ".new-works-wrapper"
+                ],
+                "detail": [
+                    ".box_works01_list"
+                ],
+                "performer_listing": [
+                    "li.actress-box"
+                ],
+                "performer_detail": [
+                    ".box_actress02_list"
+                ]
+            },
+            "soft404Markers": [
+                "page not found",
+                "404 not found",
+                "the page you requested was not found"
+            ]
+        },
+        "targetProfiles": {
+            "new": {
+                "label": "All works",
+                "url": "https://dahlia-av.jp/work/"
+            },
+            "actress": {
+                "label": "Performer roster",
+                "url": "https://dahlia-av.jp/actress/"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "new",
+                "url": "https://dahlia-av.jp/work/",
+                "paginated": true,
+                "loop": true,
+                "priority": 0,
+                "max_pages": 3,
+                "status": "paused"
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://dahlia-av.jp/work/",
+                "name": "list-work.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://dahlia-av.jp/works/dldss573/",
+                "name": "detail-DLDSS-573.html",
+                "type": "detail"
+            },
+            {
+                "url": "https://dahlia-av.jp/actress/",
+                "name": "actress-list.html",
+                "type": "performer_listing"
+            },
+            {
+                "url": "https://dahlia-av.jp/actress/naho_ozawa/",
+                "name": "actress-naho_ozawa.html",
+                "type": "performer_detail"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 10,
+            "detail_delay_seconds": 5,
+            "cycle_delay_seconds": 3600
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 5,
+            "min_gap_seconds": 5,
+            "max_gap_seconds": 30
+        },
+        "browserHeaders": {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "Accept": "application/json,text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9,ja;q=0.8"
+        },
+        "playwrightFetchEnabled": false
+    },
+    "type": "site"
+}

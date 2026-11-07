@@ -286,6 +286,7 @@ below come from each adapter's current manifest. To add a source, see
 | V-AV | `vav` | Yes | Yes | — | — | — |
 | To-Satsu | `tosatsu` | Yes | Yes | — | — | — |
 | Nanpa Japan | `nanpajapan` | Yes | Yes | — | — | — |
+| BOMB.tv | `bomb` | Yes | — | Yes | — | — |
 | kawaii* | `kawaiikawaii` | Yes | Yes | — | — | Yes |
 | kira*kira | `kirakira` | Yes | Yes | — | — | Yes |
 | DEEP'S | `deeps` | Yes | Yes | — | — | — |
@@ -302,6 +303,7 @@ below come from each adapter's current manifest. To add a source, see
 | AV-Wiki | `avwiki` | Yes | Yes | — | — | — |
 | Caribbeancom | `caribbeancom` | Yes | Yes | — | — | — |
 | Caribbeancom Premium | `caribbeancompr` | Yes | Yes | — | — | — |
+| DAHLIA | `dahlia` | Yes | Yes | — | Yes | Yes |
 | DUGA | `duga` | Yes | Yes | — | — | — |
 | EPORNER | `eporner` | — | — | Yes | — | — |
 | FC2 Content Market | `fc2` | Yes | Yes | — | — | — |
@@ -320,8 +322,10 @@ below come from each adapter's current manifest. To add a source, see
 | Muramura | `muramura` | Yes | Yes | — | — | — |
 | Next11 | `next11` | Yes | Yes | — | — | — |
 | OneJav | `onejav` | Yes | Yes | — | — | — |
+| Smart FLASH | `smartflash` | Yes | — | Yes | — | — |
 | Tokyo-Hot | `tokyohot` | Yes | Yes | — | — | — |
 | Warashi | `warashi` | — | — | Yes | Yes | Yes |
+| Wikimedia Commons | `commons` | Yes | — | Yes | — | Yes |
 | XCITY | `xcity` | Yes | Yes | — | Yes | Yes |
 
 DUGA, Tokyo-Hot, Caribbeancom, HEYZO, and JavBus use accepted adult landing

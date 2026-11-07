@@ -1,0 +1,10 @@
+{
+  "source_url": "https://www.bomb.tv/plus/idolindex/mita.html",
+  "final_url": "https://www.bomb.tv/plus/idolindex/mita.html",
+  "captured_at": "2026-11-07T01:07:00.000Z",
+  "http_status": 200,
+  "content_hash": "482caf7e002348253b66ea2a79103cdbc626c4c72ddcc6dee839551852e0f105",
+  "target_type": "gallery",
+  "fetch_method": "http",
+  "sanitized": false
+}
