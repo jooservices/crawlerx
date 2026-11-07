@@ -1,0 +1,10 @@
+{
+  "source_url": "https://www.bomb.tv/plus/index.html",
+  "final_url": "https://www.bomb.tv/plus/index.html",
+  "captured_at": "2026-11-07T01:07:00.000Z",
+  "http_status": 200,
+  "content_hash": "e56b8a82ede4a85f3cf9ca5d0bcea7f7c64518fd855874e351354468b8817203",
+  "target_type": "listing",
+  "fetch_method": "http",
+  "sanitized": false
+}
