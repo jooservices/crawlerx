@@ -1,0 +1,174 @@
+{
+    "slug": "commons",
+    "name": "Wikimedia Commons",
+    "version": "1.0.0",
+    "description": "Crawler for Wikimedia Commons gravure idol categories and photo files through the official MediaWiki API",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\Commons\\CommonsCrawler",
+        "capabilities": [
+            "listing",
+            "gallery",
+            "performer_detail"
+        ]
+    },
+    "base_url": "https://commons.wikimedia.org",
+    "pagination": {
+        "strategy": "query",
+        "param": "cmcontinue"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 45,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 6,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 6,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 2592000,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        }
+    ],
+    "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [
+                    "body"
+                ],
+                "gallery": [
+                    "body"
+                ],
+                "performer_detail": [
+                    "body"
+                ]
+            },
+            "soft404Markers": [
+                "\"missing\":true"
+            ]
+        },
+        "targetProfiles": {
+            "gravure_idols": {
+                "label": "Gravure idols from Japan",
+                "url": "https://commons.wikimedia.org/wiki/Category:Gravure_idols_from_Japan"
+            },
+            "gallery_sample": {
+                "label": "Idol gallery sample",
+                "url": "https://commons.wikimedia.org/wiki/Category:Oto_Abe"
+            },
+            "file_sample": {
+                "label": "Photo file sample",
+                "url": "https://commons.wikimedia.org/wiki/File:Oto_Abe_2021.jpg"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "gravure_idols",
+                "url": "https://commons.wikimedia.org/wiki/Category:Gravure_idols_from_Japan",
+                "paginated": true,
+                "loop": true,
+                "priority": 0,
+                "max_pages": 20,
+                "status": "paused"
+            },
+            {
+                "url_type": "gallery_sample",
+                "url": "https://commons.wikimedia.org/wiki/Category:Oto_Abe",
+                "paginated": true,
+                "loop": true,
+                "priority": 1,
+                "status": "paused"
+            },
+            {
+                "url_type": "file_sample",
+                "url": "https://commons.wikimedia.org/wiki/File:Oto_Abe_2021.jpg",
+                "paginated": false,
+                "loop": true,
+                "priority": 2,
+                "status": "paused"
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&list=categorymembers&cmtitle=Category%3AGravure+idols+from+Japan&cmtype=subcat%7Cfile&cmlimit=5&cmprop=ids%7Ctitle%7Ctype%7Ctimestamp%7Csortkeyprefix",
+                "name": "listing-root.json",
+                "type": "listing"
+            },
+            {
+                "url": "https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&list=categorymembers&cmtitle=Category%3AOto+Abe&cmtype=subcat%7Cfile&cmlimit=2&cmprop=ids%7Ctitle%7Ctype%7Ctimestamp%7Csortkeyprefix",
+                "name": "listing-oto-abe.json",
+                "type": "listing"
+            },
+            {
+                "url": "https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&titles=Category%3AOto+Abe&prop=categoryinfo%7Cpageprops%7Cpageimages%7Cinfo%7Crevisions%7Ccategories%7Clanglinks%7Cextlinks&inprop=url&piprop=original%7Cthumbnail%7Cname&pithumbsize=320&rvprop=content%7Ctimestamp&rvslots=main&cllimit=max&lllimit=max&ellimit=max&list=categorymembers&cmtitle=Category%3AOto+Abe&cmtype=file&cmlimit=50&cmprop=ids%7Ctitle%7Ctype%7Ctimestamp%7Csortkeyprefix",
+                "name": "gallery-oto-abe.json",
+                "type": "gallery"
+            },
+            {
+                "url": "https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&titles=File%3AOto+Abe+2021.jpg&prop=imageinfo%7Ccategoryinfo%7Cpageprops%7Cpageimages%7Cinfo%7Ccategories&iiprop=timestamp%7Cuser%7Cuserid%7Ccomment%7Cparsedcomment%7Ccanonicaltitle%7Curl%7Csize%7Cdimensions%7Csha1%7Cmime%7Cmediatype%7Cbitdepth%7Cextmetadata&iiurlwidth=320&iiextmetadatalanguage=en&piprop=original%7Cthumbnail%7Cname&pithumbsize=320&inprop=url&cllimit=max",
+                "name": "gallery-file-oto-abe-2021.json",
+                "type": "gallery"
+            },
+            {
+                "url": "https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&titles=Category%3AYuzuki+Aikawa&prop=categoryinfo%7Cpageprops%7Cpageimages%7Cinfo%7Crevisions%7Ccategories%7Clanglinks%7Cextlinks&inprop=url&piprop=original%7Cthumbnail%7Cname&pithumbsize=320&rvprop=content%7Ctimestamp&rvslots=main&cllimit=max&lllimit=max&ellimit=max",
+                "name": "performer-yuzuki-aikawa.json",
+                "type": "performer_detail"
+            },
+            {
+                "url": "https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&pageids=121848656%7C201394750%7C85911169%7C185188568%7C34599022&prop=imageinfo%7Ccategoryinfo%7Cpageprops%7Cpageimages%7Cinfo%7Ccategories&iiprop=timestamp%7Cuser%7Cuserid%7Ccomment%7Cparsedcomment%7Ccanonicaltitle%7Curl%7Csize%7Cdimensions%7Csha1%7Cmime%7Cmediatype%7Cbitdepth%7Cextmetadata&iiurlwidth=320&iiextmetadatalanguage=en&piprop=original%7Cthumbnail%7Cname&pithumbsize=320&inprop=url&cllimit=max",
+                "name": "listing-root-pages.json",
+                "type": "supporting"
+            },
+            {
+                "url": "https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&pageids=101986220%7C84315014%7C85911091&prop=imageinfo%7Ccategoryinfo%7Cpageprops%7Cpageimages%7Cinfo%7Ccategories&iiprop=timestamp%7Cuser%7Cuserid%7Ccomment%7Cparsedcomment%7Ccanonicaltitle%7Curl%7Csize%7Cdimensions%7Csha1%7Cmime%7Cmediatype%7Cbitdepth%7Cextmetadata&iiurlwidth=320&iiextmetadatalanguage=en&piprop=original%7Cthumbnail%7Cname&pithumbsize=320&inprop=url&cllimit=max",
+                "name": "gallery-oto-abe-pages.json",
+                "type": "supporting"
+            },
+            {
+                "url": "https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&pageids=101986220%7C84315014&prop=imageinfo%7Ccategoryinfo%7Cpageprops%7Cpageimages%7Cinfo%7Ccategories&iiprop=timestamp%7Cuser%7Cuserid%7Ccomment%7Cparsedcomment%7Ccanonicaltitle%7Curl%7Csize%7Cdimensions%7Csha1%7Cmime%7Cmediatype%7Cbitdepth%7Cextmetadata&iiurlwidth=320&iiextmetadatalanguage=en&piprop=original%7Cthumbnail%7Cname&pithumbsize=320&inprop=url&cllimit=max",
+                "name": "listing-oto-abe-pages.json",
+                "type": "supporting"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 45,
+            "connect_timeout": 45,
+            "page_delay_seconds": 6,
+            "detail_delay_seconds": 6,
+            "cycle_delay_seconds": 2592000
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 6,
+            "min_gap_seconds": 5,
+            "max_gap_seconds": 60
+        },
+        "browserHeaders": {
+            "User-Agent": "CrawlerX/1.0 (+https://github.com/jooservices; soulevilx@gmail.com)",
+            "Accept": "application/json"
+        },
+        "playwrightFetchEnabled": false
+    },
+    "type": "site"
+}
