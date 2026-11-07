@@ -266,6 +266,7 @@ below come from each adapter's current manifest. To add a source, see
 | MIMAN | `miman` | Yes | Yes | — | — | — |
 | OPERA | `opera` | Yes | Yes | — | — | — |
 | BeFreeBe | `befreebe` | Yes | Yes | — | — | Yes |
+| DANDY GROUP | `dandy` | Yes | Yes | — | — | — |
 | Tameike Goro | `tameikegoro` | Yes | Yes | — | — | Yes |
 | ROCKET | `rocket` | Yes | Yes | — | — | — |
 | Hajime Kikaku | `hajimekikaku` | Yes | Yes | — | — | — |

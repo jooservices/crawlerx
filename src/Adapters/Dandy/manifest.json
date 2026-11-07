@@ -1,0 +1,133 @@
+{
+    "slug": "dandy",
+    "name": "DANDY GROUP",
+    "version": "1.0.0",
+    "description": "Public DANDY GROUP (Dandy, Cosmos, Yuuyake and sister labels) work listings and detail pages",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\Dandy\\DandyCrawler",
+        "capabilities": [
+            "listing",
+            "detail"
+        ]
+    },
+    "base_url": "https://www.choi-waru.com",
+    "pagination": {
+        "strategy": "path",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 2,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 3600,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        }
+    ],
+    "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [
+                    ".works_list"
+                ],
+                "detail": [
+                    "#product"
+                ]
+            },
+            "soft404Markers": [
+                "page not found",
+                "404 not found",
+                "the page you requested was not found"
+            ]
+        },
+        "targetProfiles": {
+            "new": {
+                "label": "DANDY works",
+                "url": "https://www.choi-waru.com/dandy/works/"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "new",
+                "url": "https://www.choi-waru.com/dandy/works/",
+                "paginated": true,
+                "loop": true,
+                "priority": 0,
+                "max_pages": 3,
+                "status": "paused"
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://www.choi-waru.com/dandy/",
+                "name": "label-dandy.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://www.choi-waru.com/dandy/works/",
+                "name": "works-dandy.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://www.choi-waru.com/dandy/genre/%e4%b8%bb%e8%a6%b3/",
+                "name": "genre-dandy-shukan.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://www.choi-waru.com/dandy/dandy-880/",
+                "name": "detail-dandy-880.html",
+                "type": "detail"
+            },
+            {
+                "url": "https://www.choi-waru.com/cosmos/hawa-389/",
+                "name": "detail-hawa-389.html",
+                "type": "detail"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 10,
+            "detail_delay_seconds": 2,
+            "cycle_delay_seconds": 3600
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 5,
+            "min_gap_seconds": 5,
+            "max_gap_seconds": 30
+        },
+        "browserHeaders": {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9,ja;q=0.8"
+        },
+        "playwrightFetchEnabled": false
+    },
+    "type": "site"
+}
