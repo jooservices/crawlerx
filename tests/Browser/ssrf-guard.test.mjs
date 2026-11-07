@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer, request as httpRequest } from 'node:http';
 import { createSsrfGuard, SsrfBlockedError } from '../../scripts/ssrf-guard.mjs';
-import { createSsrfProxyServer } from '../../scripts/ssrf-proxy.mjs';
+import { createSsrfProxyServer, pinnedLookup } from '../../scripts/ssrf-proxy.mjs';
 
 function guardFor(addresses, options = {}) {
     return createSsrfGuard({
@@ -14,6 +14,53 @@ function guardFor(addresses, options = {}) {
 test('SSRF guard allows a public host when DNS returns only public addresses', async () => {
     const assertSafeUrl = guardFor(['93.184.216.34']);
     await assert.doesNotReject(assertSafeUrl('https://example.com/movie'));
+});
+
+test('SSRF guard allows public Cloudflare addresses mixed with loopback decoy records', async () => {
+    // Production input from JOOXCR-399 / JOOXCR-363: en.jable.tv answers include
+    // 127.0.0.1 and 0.0.0.0 next to real Cloudflare A records.
+    const assertSafeUrl = guardFor(['127.0.0.1', '0.0.0.0', '104.20.42.172', '172.66.167.218']);
+    const resolved = await assertSafeUrl.resolve('https://en.jable.tv/models/example/');
+    assert.deepEqual(
+        resolved.addresses.map(({ address }) => address).sort(),
+        ['104.20.42.172', '172.66.167.218'],
+    );
+});
+
+test('SSRF proxy lookup uses only the public pins and does not resolve DNS again', async () => {
+    let lookupCalls = 0;
+    const assertSafeUrl = createSsrfGuard({
+        lookupHost: async () => {
+            lookupCalls += 1;
+            return ['127.0.0.1', '104.20.42.172', '0.0.0.0', '172.66.167.218']
+                .map((address) => ({ address }));
+        },
+    });
+    const resolved = await assertSafeUrl.resolve('https://decoys.example/movie');
+    const connectionAddresses = await new Promise((resolve, reject) => {
+        pinnedLookup(resolved.addresses)(resolved.hostname, { all: true }, (error, addresses) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            resolve(addresses);
+        });
+    });
+
+    assert.deepEqual(connectionAddresses, [
+        { address: '104.20.42.172', family: 4 },
+        { address: '172.66.167.218', family: 4 },
+    ]);
+    assert.equal(lookupCalls, 1);
+});
+
+test('SSRF guard allows missav-style public answers and still drops unspecified decoys', async () => {
+    const assertSafeUrl = guardFor(['104.20.31.186', '172.66.167.65', '0.0.0.0', '127.0.0.1']);
+    const resolved = await assertSafeUrl.resolve('https://missav.ws/en/new');
+    assert.deepEqual(
+        resolved.addresses.map(({ address }) => address).sort(),
+        ['104.20.31.186', '172.66.167.65'],
+    );
 });
 
 test('SSRF guard keeps loopback, link-local, and metadata addresses blocked in the lab', async () => {
@@ -50,14 +97,63 @@ test('SSRF guard allows RFC1918 and ULA only with the lab option', async () => {
     }
 });
 
-test('SSRF guard rejects DNS names with any private answer', async () => {
-    const assertSafeUrl = guardFor(['93.184.216.34', '10.10.0.1']);
-    await assert.rejects(assertSafeUrl('https://rebound.example/'), SsrfBlockedError);
+test('SSRF guard blocks hosts whose DNS answers are only private or special-use', async () => {
+    for (const addresses of [
+        ['10.0.0.1'],
+        ['172.16.1.1'],
+        ['192.168.1.1'],
+        ['127.0.0.1', '::1'],
+        ['169.254.169.254'],
+        ['100.64.0.1'],
+        ['100.127.255.254'],
+        ['198.18.0.1'],
+        ['198.19.255.254'],
+        ['::'],
+        ['::1'],
+        ['::ffff:127.0.0.1'],
+        ['::ffff:192.168.1.1'],
+        ['::ffff:169.254.169.254'],
+        ['fc00::1'],
+        ['fdff:ffff::1'],
+        ['fe80::1'],
+        ['febf:ffff::1'],
+        ['fd00:ec2::254'],
+        ['0.0.0.0', '127.0.0.1'],
+    ]) {
+        const assertSafeUrl = guardFor(addresses);
+        await assert.rejects(
+            assertSafeUrl('https://sinkhole.example/'),
+            (error) => error instanceof SsrfBlockedError
+                && error.reason === 'no_public_address'
+                && typeof error.address === 'string',
+            `expected no_public_address for ${addresses.join(',')}`,
+        );
+    }
 });
 
 test('SSRF guard fails closed when hostname resolution fails', async () => {
     const assertSafeUrl = createSsrfGuard({ lookupHost: async () => { throw new Error('NXDOMAIN'); } });
-    await assert.rejects(assertSafeUrl('https://missing.example/'), SsrfBlockedError);
+    await assert.rejects(
+        assertSafeUrl('https://missing.example/'),
+        (error) => error instanceof SsrfBlockedError && error.reason === 'dns_failed',
+    );
+});
+
+test('SSRF guard re-checks a second resolution in the DNS-rebinding style', async () => {
+    let calls = 0;
+    const assertSafeUrl = createSsrfGuard({
+        lookupHost: async () => {
+            calls += 1;
+            return calls === 1
+                ? [{ address: '93.184.216.34' }]
+                : [{ address: '127.0.0.1' }];
+        },
+    });
+    await assert.doesNotReject(assertSafeUrl('https://rebind.example/'));
+    await assert.rejects(
+        assertSafeUrl('https://rebind.example/'),
+        (error) => error instanceof SsrfBlockedError && error.reason === 'no_public_address' && error.address === '127.0.0.1',
+    );
 });
 
 test('host allowlist supports exact and wildcard hosts without matching the wildcard apex', async () => {
@@ -73,9 +169,19 @@ test('host allowlist never overrides address checks and rejects malformed entrie
     assert.throws(() => createSsrfGuard({ allowedHosts: 'https://example.com/path' }), /Invalid CRAWLERX_BROWSER_ALLOWED_HOSTS/);
 });
 
-test('SSRF guard rejects credentials and non-network protocols', async () => {
+test('SSRF guard rejects numeric IP encodings, userinfo tricks, and non-network protocols', async () => {
     const assertSafeUrl = guardFor(['93.184.216.34']);
-    await assert.rejects(assertSafeUrl('https://user:pass@example.com/'), SsrfBlockedError);
+    for (const url of [
+        'http://2130706433/',
+        'http://0177.0.0.1/',
+        'http://0x7f000001/',
+        'http://127.1/',
+        'https://user:pass@example.com/',
+        'https://127.0.0.1@example.com/',
+        'https://example.com@127.0.0.1/',
+    ]) {
+        await assert.rejects(assertSafeUrl(url), SsrfBlockedError, `URL should be rejected: ${url}`);
+    }
     await assert.rejects(assertSafeUrl('file:///etc/passwd'), SsrfBlockedError);
 });
 
@@ -102,6 +208,117 @@ test('SSRF proxy rejects private HTTP targets before opening an outbound connect
         assert.equal(proxy.wasBlocked(), true);
     } finally {
         await proxy.close();
+    }
+});
+
+test('SSRF proxy allows a decoy-record host and pins only the public address', async () => {
+    let upstreamHost = null;
+    const upstream = createServer((request, response) => {
+        upstreamHost = request.socket.localAddress;
+        response.writeHead(200, { 'content-length': '2' });
+        response.end('ok');
+    });
+    await new Promise((resolve, reject) => {
+        upstream.once('error', reject);
+        upstream.listen(0, '127.0.0.1', resolve);
+    });
+    const upstreamPort = upstream.address().port;
+
+    const assertSafeUrl = Object.assign(async () => {}, {
+        resolve: async (value) => {
+            const target = new URL(value);
+            return {
+                target,
+                hostname: target.hostname,
+                // Mimic guard output after decoy filtering: only public pin remains.
+                addresses: [{ address: '127.0.0.1' }],
+            };
+        },
+    });
+    // Lab fixture: the proxy receives already-filtered public pins. Here we use
+    // loopback only as the upstream fixture host, which the caller intentionally allows.
+    const proxy = await createSsrfProxyServer({ assertSafeUrl });
+
+    try {
+        const proxyUrl = new URL(proxy.url);
+        const target = new URL(`http://decoy.example:${upstreamPort}/pin`);
+        const { body } = await new Promise((resolve, reject) => {
+            const request = httpRequest({
+                hostname: proxyUrl.hostname,
+                port: Number(proxyUrl.port),
+                method: 'GET',
+                path: target.href,
+                headers: { host: target.host },
+            }, (incoming) => {
+                const chunks = [];
+                incoming.on('data', (chunk) => chunks.push(chunk));
+                incoming.once('end', () => resolve({ response: incoming, body: Buffer.concat(chunks).toString() }));
+            });
+            request.once('error', reject);
+            request.end();
+        });
+        assert.equal(body, 'ok');
+        assert.ok(upstreamHost === '127.0.0.1' || upstreamHost === '::ffff:127.0.0.1');
+    } finally {
+        await proxy.close();
+        await new Promise((resolve) => upstream.close(() => resolve()));
+    }
+});
+
+test('SSRF proxy applies the same guard to a redirected request', async () => {
+    const server = createServer((_request, response) => {
+        response.writeHead(302, { location: 'http://127.0.0.1:1/private' });
+        response.end();
+    });
+    await new Promise((resolve, reject) => {
+        server.once('error', reject);
+        server.listen(0, '127.0.0.1', resolve);
+    });
+
+    const checkedUrls = [];
+    const strictGuard = createSsrfGuard();
+    const assertSafeUrl = Object.assign(async (value) => strictGuard(value), {
+        resolve: async (value) => {
+            checkedUrls.push(value);
+            const target = new URL(value);
+            if (target.hostname === 'redirect.example') {
+                return {
+                    target,
+                    hostname: target.hostname,
+                    addresses: [{ address: '127.0.0.1' }],
+                };
+            }
+            return strictGuard.resolve(value);
+        },
+    });
+    const proxy = await createSsrfProxyServer({ assertSafeUrl });
+    const proxyUrl = new URL(proxy.url);
+    const startUrl = `http://redirect.example:${server.address().port}/start`;
+    const redirectedUrl = 'http://127.0.0.1:1/private';
+
+    const requestThroughProxy = (target) => new Promise((resolve, reject) => {
+        const request = httpRequest({
+            hostname: proxyUrl.hostname,
+            port: Number(proxyUrl.port),
+            method: 'GET',
+            path: target,
+            headers: { host: new URL(target).host },
+        }, (response) => {
+            response.resume();
+            response.once('end', () => resolve(response.statusCode));
+        });
+        request.once('error', reject);
+        request.end();
+    });
+
+    try {
+        assert.equal(await requestThroughProxy(startUrl), 302);
+        assert.equal(await requestThroughProxy(redirectedUrl), 403);
+        assert.deepEqual(checkedUrls, [startUrl, redirectedUrl]);
+        assert.equal(proxy.wasBlocked(), true);
+    } finally {
+        await proxy.close();
+        await new Promise((resolve) => server.close(() => resolve()));
     }
 });
 

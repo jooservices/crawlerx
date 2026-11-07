@@ -265,7 +265,7 @@ export async function createSsrfProxyServer({ assertSafeUrl = assertSafeBrowserU
     };
 }
 
-function pinnedLookup(addresses) {
+export function pinnedLookup(addresses) {
     return (_hostname, options, callback) => {
         if (typeof options === 'function') {
             callback = options;
