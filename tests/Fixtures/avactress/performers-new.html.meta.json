@@ -1,0 +1,10 @@
+{
+  "source_url": "https://av-actress.com/new",
+  "final_url": "https://av-actress.com/new",
+  "captured_at": "2026-11-07T00:00:00+00:00",
+  "http_status": 200,
+  "content_hash": "cc6ce8827ae765de131a6ad72dc2ae26c3eb35219ed73e8958d585d7602287a3",
+  "target_type": "performer_listing",
+  "fetch_method": "http",
+  "sanitized": false
+}

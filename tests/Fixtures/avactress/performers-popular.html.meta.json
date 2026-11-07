@@ -1,0 +1,10 @@
+{
+  "source_url": "https://av-actress.com/popular",
+  "final_url": "https://av-actress.com/popular",
+  "captured_at": "2026-11-07T00:00:00+00:00",
+  "http_status": 200,
+  "content_hash": "364132659969aa0f3b275eee562de867d184844ead7891206e0f787b2e3fb50e",
+  "target_type": "performer_listing",
+  "fetch_method": "http",
+  "sanitized": false
+}

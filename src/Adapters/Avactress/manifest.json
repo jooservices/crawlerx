@@ -1,0 +1,135 @@
+{
+    "slug": "avactress",
+    "name": "AV-Actress",
+    "version": "1.0.0",
+    "description": "Crawler for AV-Actress (av-actress.com): actress rankings and lists, and actress profiles with measurements, birthday, works and cover images",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\Avactress\\AvactressCrawler",
+        "capabilities": [
+            "performer_listing",
+            "performer_detail"
+        ]
+    },
+    "base_url": "https://av-actress.com",
+    "pagination": {
+        "strategy": "query",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 86400,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        }
+    ],
+    "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "performer_listing": [
+                    "main section h3"
+                ],
+                "performer_detail": [
+                    "main h1"
+                ]
+            },
+            "soft404Markers": [
+                "page not found",
+                "404 not found",
+                "the page you requested was not found"
+            ]
+        },
+        "targetProfiles": {
+            "new": {
+                "label": "New actresses",
+                "url": "https://av-actress.com/new"
+            },
+            "popular": {
+                "label": "Popular actresses",
+                "url": "https://av-actress.com/popular"
+            },
+            "bust": {
+                "label": "Big bust actresses",
+                "url": "https://av-actress.com/bust"
+            },
+            "young": {
+                "label": "Young actresses",
+                "url": "https://av-actress.com/young"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "new",
+                "url": "https://av-actress.com/new",
+                "paginated": true,
+                "loop": true,
+                "priority": 0,
+                "max_pages": 3,
+                "status": "paused"
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://av-actress.com/popular",
+                "name": "performers-popular.html",
+                "type": "performer_listing"
+            },
+            {
+                "url": "https://av-actress.com/new",
+                "name": "performers-new.html",
+                "type": "performer_listing"
+            },
+            {
+                "url": "https://av-actress.com/1044864/%E6%B2%B3%E5%8C%97%E5%BD%A9%E8%8A%B1%EF%BC%88%E6%B2%B3%E5%8C%97%E5%BD%A9%E4%BC%8A%EF%BC%89",
+                "name": "performer-1044864.html",
+                "type": "performer_detail"
+            },
+            {
+                "url": "https://av-actress.com/26225/%E6%B3%A2%E5%A4%9A%E9%87%8E%E7%B5%90%E8%A1%A3",
+                "name": "performer-26225.html",
+                "type": "performer_detail"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 10,
+            "detail_delay_seconds": 10,
+            "cycle_delay_seconds": 86400
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 6,
+            "min_gap_seconds": 5,
+            "max_gap_seconds": 30
+        },
+        "playwrightFetchEnabled": false
+    },
+    "type": "site"
+}
