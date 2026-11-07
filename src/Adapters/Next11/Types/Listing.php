@@ -52,13 +52,26 @@ final class Listing extends AbstractHtmlType implements TypeInterface
             throw new CrawlParseException('Next11 listing page did not contain expected movie fields.');
         }
 
+        $page = $this->requestedPage($request);
+
         return new CrawlListResultDto(
             url: $request->url,
-            page: $request->page,
+            page: $page,
             entityType: 'movie',
             items: $items,
-            pagination: $this->pagination($crawler, $request->page),
+            pagination: $this->pagination($crawler, $page),
         );
+    }
+
+    /**
+     * The page a listing URL points at: the site's own `pageno` query parameter when present, else the requested page.
+     */
+    private function requestedPage(CrawlRequestDto $request): int
+    {
+        parse_str((string) parse_url($request->url, PHP_URL_QUERY), $query);
+        $pageno = $query['pageno'] ?? null;
+
+        return is_numeric($pageno) && (int) $pageno > 0 ? (int) $pageno : max($request->page, 1);
     }
 
     private function card(Crawler $card): ?CrawlItemResultDto

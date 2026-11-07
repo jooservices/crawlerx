@@ -177,4 +177,21 @@ final class Next11Test extends TestCase
         self::assertFalse($crawler->detectUrl(self::BASE . '/user_data/ranking.php')->matched);
         self::assertSame('next11', $crawler->name());
     }
+
+    public function test_listing_page_follows_the_pageno_query_parameter(): void
+    {
+        $result = (new Listing($this->clientWithFixture('next11/list-label-4343.html')))
+            ->execute(new CrawlRequestDto(url: self::BASE . '/products/list.php?category_id=4343&pageno=2', type: CrawlType::Listing));
+
+        self::assertSame(2, $result->page);
+    }
+
+    public function test_labels_ending_in_a_multibyte_character_keep_their_last_character(): void
+    {
+        $rows = (new \JOOservices\CrawlerX\Adapters\Next11\Fields())->rows(
+            new \Symfony\Component\DomCrawler\Crawler('<dl><dt>ブレンダー：</dt><dd>x</dd><dt>メーカー:</dt><dd>y</dd></dl>'),
+        );
+
+        self::assertSame(['ブレンダー', 'メーカー'], array_keys($rows));
+    }
 }

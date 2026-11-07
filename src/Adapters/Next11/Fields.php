@@ -40,7 +40,7 @@ final class Fields
     {
         $rows = [];
         foreach ($list->filter('dt') as $term) {
-            $label = rtrim((string) $this->normalizeText($term->textContent), '：: ');
+            $label = preg_replace('/[：: ]+$/u', '', (string) $this->normalizeText($term->textContent)) ?? '';
             $value = (new Crawler($term))->nextAll()->first();
             if ($label !== '' && $value->count() > 0 && $value->nodeName() === 'dd') {
                 $rows[$label] = $value;
