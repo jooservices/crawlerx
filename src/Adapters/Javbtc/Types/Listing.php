@@ -59,15 +59,16 @@ final class Listing extends AbstractType implements TypeInterface
                 ? $this->normalizeText($node->filter('img')->first()->attr('alt') ?? '')
                 : $this->normalizeText($node->text(''));
 
+            $thumbnail = is_string($cover) && $cover !== '' ? $this->normalizer->absolute($request->url, $cover) : null;
+            $fullCover = $thumbnail === null ? null : $this->fullCover($thumbnail);
             $items[$absolute] = MovieDto::item(
                 url: $absolute,
                 externalId: $externalId,
                 title: $title,
                 data: array_filter([
-                    'cover_url' => is_string($cover) && $cover !== ''
-                        ? $this->normalizer->absolute($request->url, $cover)
-                        : null,
+                    'cover_url' => $fullCover,
                     'metadata' => array_filter([
+                        'thumbnail_url' => $thumbnail !== $fullCover ? $thumbnail : null,
                         'clip_duration_label' => $this->cardDurationLabel($node),
                     ], static fn(mixed $value): bool => is_string($value) && $value !== ''),
                 ], static fn(mixed $value): bool => $value !== null && $value !== []),
@@ -85,6 +86,12 @@ final class Listing extends AbstractType implements TypeInterface
             items: array_values($items),
             pagination: $this->parsePagination($crawler, $request->url, $request->page),
         );
+    }
+
+    /** The cards show `1-480.jpg`; the original `1.jpg` (the detail page's poster) sits next to it on the same CDN path. */
+    private function fullCover(string $thumbnail): string
+    {
+        return (string) preg_replace('#/(\d+)-480\.jpg(?=$|\?)#', '/$1.jpg', $thumbnail);
     }
 
     private function parsePagination(Crawler $crawler, string $url, int $currentPage): CrawlPaginationDto

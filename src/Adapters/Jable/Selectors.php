@@ -26,6 +26,9 @@ final class Selectors
 
     public const DETAIL_COVER = 'meta[property="og:image"]';
 
+    /** A model's photo (`/contents/models/`); the avatar placeholder and the video screenshots are not photos. */
+    public const MODEL_PHOTO = 'img[src*="/contents/models/"], img[data-src*="/contents/models/"]';
+
     public const DETAIL_KEYWORDS = 'meta[name="keywords"]';
 
     public const DETAIL_MODELS = '.models a.model';
