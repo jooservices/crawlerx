@@ -1,0 +1,10 @@
+{
+  "source_url": "https://materiall.jp/work/",
+  "final_url": "https://materiall.jp/work/",
+  "captured_at": "2026-11-07T00:00:00+00:00",
+  "http_status": 200,
+  "content_hash": "0596a9eb86785ce3d0ae86a40ce0ca88489d14dd73cb9aabdff3bc66f2206e7d",
+  "target_type": "listing",
+  "fetch_method": "http",
+  "sanitized": true
+}

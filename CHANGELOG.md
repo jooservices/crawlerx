@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add the Materiall (`materiall`) adapter with its own parser: work listing with pagination (cover, cast, reservation and distribution dates, store links) and work detail with every labelled row, cover, sample-video link and store links, captured fixtures and URL inference (JOOXCR-416).
 - Add the DANDY GROUP (`dandy`: Dandy, Cosmos, Yuuyake and sister labels) adapter with complete listing and detail fields, captured fixtures and URL inference (JOOXCR-422).
 - Add the Next11 (`next11`) adapter with its own parser: month and label/series/genre/cast listings with pagination, and movie detail with every labelled row, all jacket and sample-still images, sample-video embed and purchase links (JOOXCR-421).
 - Add the Indies (`indies`, 桃太郎映像出版) adapter with month, label and genre listings, title details, actress profiles and the actress index, complete field extraction and captured fixtures (JOOXCR-418).
