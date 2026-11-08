@@ -296,6 +296,7 @@ below come from each adapter's current manifest. To add a source, see
 | PLUM | `plum` | Yes | Yes | — | — | — |
 | 1Pondo | `onepondo` | Yes | Yes | — | — | — |
 | 10Musume | `10musume` | Yes | Yes | — | — | — |
+| Asagei Plus | `asagei` | Yes | — | Yes | — | — |
 | Aisex | `aisex` | — | — | — | Yes | Yes |
 | Avfan | `avfan` | Yes | Yes | — | — | — |
 | Avfan Profiles | `avfan_profiles` | — | — | — | Yes | Yes |
