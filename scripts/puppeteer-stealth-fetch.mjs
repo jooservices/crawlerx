@@ -45,7 +45,14 @@ try {
     await assertSafeBrowserUrl(url);
 } catch (error) {
     if (error instanceof SsrfBlockedError) {
-        console.log(JSON.stringify({ error: 'ssrf_blocked', errorCode: 'ssrf_blocked', status: 403, challenge: false }));
+        console.log(JSON.stringify({
+            error: 'ssrf_blocked',
+            errorCode: 'ssrf_blocked',
+            status: 403,
+            challenge: false,
+            ssrfReason: error.reason,
+            ssrfHostname: error.hostname,
+        }));
         process.exit(1);
     }
     throw error;
@@ -53,6 +60,7 @@ try {
 
 const ssrfProxy = await createSsrfProxyServer();
 let ssrfViolation = false;
+let ssrfError = null;
 let browser = null;
 
 try {
@@ -81,8 +89,11 @@ try {
                 await assertSafeBrowserUrl(requestUrl);
                 allowed = true;
             }
-        } catch {
+        } catch (error) {
             ssrfViolation = true;
+            if (error instanceof SsrfBlockedError) {
+                ssrfError = error;
+            }
             if (!request.isInterceptResolutionHandled()) {
                 await request.abort('blockedbyclient').catch(() => {});
             }
@@ -107,7 +118,7 @@ try {
         timeout: config.navigationTimeoutMs ?? 90000,
     });
     if (ssrfViolation) {
-        throw new SsrfBlockedError();
+        throw ssrfError ?? ssrfProxy.blockedError() ?? new SsrfBlockedError();
     }
 
     try {
@@ -161,7 +172,7 @@ try {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     const html = await page.content();
     if (ssrfViolation) {
-        throw new SsrfBlockedError();
+        throw ssrfError ?? ssrfProxy.blockedError() ?? new SsrfBlockedError();
     }
     const pageTitle = await page.title();
     const normalizedTitle = pageTitle.toLowerCase();
@@ -185,9 +196,16 @@ try {
     }));
 } catch (error) {
     const ssrfBlocked = ssrfViolation || error instanceof SsrfBlockedError;
+    const blockedError = error instanceof SsrfBlockedError
+        ? error
+        : ssrfError ?? ssrfProxy.blockedError();
     console.log(JSON.stringify({
         error: ssrfBlocked ? 'ssrf_blocked' : (error instanceof Error ? error.message : String(error)),
-        ...(ssrfBlocked ? { errorCode: 'ssrf_blocked' } : {}),
+        ...(ssrfBlocked ? {
+            errorCode: 'ssrf_blocked',
+            ssrfReason: blockedError?.reason ?? 'blocked',
+            ssrfHostname: blockedError?.hostname ?? null,
+        } : {}),
         status: ssrfBlocked ? 403 : 1,
         elapsedMs: Date.now() - started,
         challenge: false,

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Browser SSRF guard drops loopback/unspecified decoy DNS answers and pins only remaining public addresses, so hosts such as Jable/MissAV with Cloudflare A records plus `127.0.0.1`/`0.0.0.0` decoys fetch normally while private-only answers stay blocked; blocked responses carry a clear `ssrfReason` into the fetch exception message (JOOXCR-399 / JOOXCR-363).
+
 ## [1.6.0] - 2026-11-08
 
 ### Added
