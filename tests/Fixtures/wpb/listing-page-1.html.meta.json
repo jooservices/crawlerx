@@ -1,0 +1,10 @@
+{
+  "source_url": "https://wpb.shueisha.co.jp/gravure/list/",
+  "final_url": "https://wpb.shueisha.co.jp/gravure/list/",
+  "captured_at": "2026-11-08T21:17:33.408Z",
+  "http_status": 200,
+  "content_hash": "d13ebc8cace6531fde16938e1a14f5614ddbfda5277913239d6bb52d2f075a39",
+  "target_type": "listing",
+  "fetch_method": "http",
+  "sanitized": true
+}

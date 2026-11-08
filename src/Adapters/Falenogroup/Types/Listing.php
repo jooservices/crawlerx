@@ -62,7 +62,7 @@ final class Listing extends AbstractHtmlType implements TypeInterface
                     'date' => MovieMeta::isoDate($note),
                     'metadata' => MovieMeta::filter([
                         'maker' => $maker['name'] ?? null,
-                        'maker_logo_url' => $badge ?? ($maker['logo_url'] ?? null),
+                        'maker_logo_url' => $badge === null ? ($maker['logo_url'] ?? null) : Site::originalImage($this->absolute($request->url, $badge)),
                         MovieMeta::SAMPLE_VIDEO_URL => $sample === null ? null : $this->absolute($request->url, $sample),
                         'release_note' => $note,
                         'purchase_links' => $fields->purchaseLinks($card, Selectors::CARD_PURCHASE_LINKS),
@@ -95,7 +95,7 @@ final class Listing extends AbstractHtmlType implements TypeInterface
 
         return [
             'name' => $this->firstText($crawler, Selectors::MAKER_NAME),
-            'logo_url' => $logo === null ? null : $this->absolute($url, $logo),
+            'logo_url' => $logo === null ? null : Site::originalImage($this->absolute($url, $logo)),
         ];
     }
 

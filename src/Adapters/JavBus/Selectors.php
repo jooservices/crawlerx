@@ -22,6 +22,8 @@ final class Selectors
 
     public const DETAIL_PERFORMER_LINKS = '#star-name a[href*="/star/"], .star-name a[href*="/star/"]';
 
+    public const DETAIL_PERFORMER_PHOTOS = '.star-box a[href*="/star/"] img';
+
     public const DETAIL_SAMPLE_LINKS = '#sample-waterfall a.sample-box';
 
     public const PERFORMER_LINKS = '#waterfall a[href*="/star/"]';

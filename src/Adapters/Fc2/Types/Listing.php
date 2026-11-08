@@ -12,6 +12,7 @@ use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
+use JOOservices\CrawlerX\Support\ImageUrl;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 
@@ -65,9 +66,10 @@ final class Listing extends AbstractHtmlType implements TypeInterface
                 title: $this->firstAttribute($card, 'a.c-cntCard-110-f_thumb_link', 'title') ?? $match[1],
                 data: MovieMeta::filter([
                     'code' => 'FC2-PPV-' . $match[1],
-                    'cover_url' => $thumb === null ? null : $this->absolute($fetchUrl, $thumb),
+                    'cover_url' => $thumb === null ? null : ImageUrl::original($this->absolute($fetchUrl, $thumb)),
                     'duration' => MovieMeta::durationMinutes($this->firstText($card, '.c-cntCard-110-f_thumb_num')),
                     'metadata' => MovieMeta::filter([
+                        'thumbnail_url' => $thumb === null ? null : $this->absolute($fetchUrl, $thumb),
                         MovieMeta::PRICE => $current === null ? null : MovieMeta::price($current, 'pt', $salePrice ?? $listPrice),
                         'list_price' => $salePrice !== null && $this->points($listPrice) !== null ? MovieMeta::price($this->points($listPrice), 'pt', $listPrice) : null,
                         'discount_percent' => $discount !== null && preg_match('/(\d+)/', $discount, $d) === 1 ? (int) $d[1] : null,

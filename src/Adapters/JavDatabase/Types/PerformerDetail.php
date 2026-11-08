@@ -115,6 +115,36 @@ final class PerformerDetail extends AbstractType implements TypeInterface
         return array_values($works);
     }
 
+    /**
+     * Lightbox stills of the performer: full-size `data-image-src` plus the grid thumbnail, with the movie they come from.
+     *
+     * @return list<array{url: string, thumbnail_url: ?string, movie_url: ?string, movie_code: ?string, position: int}>
+     */
+    private function galleryImages(Crawler $crawler, string $baseUrl): array
+    {
+        $images = [];
+        $crawler->filter(Selectors::GALLERY_LINKS)->each(function (Crawler $link) use (&$images, $baseUrl): void {
+            $full = trim((string) $link->attr('data-image-src'));
+            if ($full === '') {
+                return;
+            }
+
+            $url = UriResolver::resolve($full, $baseUrl);
+            $thumbnail = $link->filter('img')->count() > 0 ? trim((string) $link->filter('img')->first()->attr('src')) : '';
+            $movie = trim((string) $link->attr('data-post-link'));
+            $code = $this->cleanText((string) $link->attr('data-post-title'));
+            $images[$url] ??= [
+                'url' => $url,
+                'thumbnail_url' => $thumbnail === '' ? null : UriResolver::resolve($thumbnail, $baseUrl),
+                'movie_url' => $movie === '' ? null : UriResolver::resolve($movie, $baseUrl),
+                'movie_code' => $code === '' ? null : $code,
+                'position' => count($images),
+            ];
+        });
+
+        return array_values($images);
+    }
+
     private function nextPage(Crawler $crawler, string $baseUrl): ?string
     {
         $next = $crawler->filter('ul.pagination a[aria-label="Next Page"]');
@@ -229,6 +259,7 @@ final class PerformerDetail extends AbstractType implements TypeInterface
             'social_links' => $this->socialLinks($crawler),
             'movie_count' => $this->movieCount($crawler),
             'filmography' => $this->filmography($crawler),
+            'gallery_images' => $this->galleryImages($crawler, $request->url),
             'filmography_next_url' => $this->nextPage($crawler, $request->url),
         ], fn(mixed $value): bool => $value !== null && $value !== '' && $value !== []);
 

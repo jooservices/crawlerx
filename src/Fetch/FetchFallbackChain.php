@@ -203,8 +203,13 @@ final class FetchFallbackChain
             $sawChallenge = $sawChallenge || $result->challengeDetected;
 
             if ($result->error === CrawlErrorCode::SsrfBlocked->value) {
+                $ssrfDetail = '';
+                if (is_string($result->ssrfReason) && $result->ssrfReason !== '') {
+                    $ssrfDetail .= ' reason=' . $result->ssrfReason;
+                }
+
                 throw new CrawlFetchException(
-                    message: 'Fetch blocked by SSRF policy for URL [' . $url . '].',
+                    message: 'Fetch blocked by SSRF policy.' . $ssrfDetail,
                     errorCode: CrawlErrorCode::SsrfBlocked,
                     retryable: false,
                     retryAfterSeconds: null,

@@ -83,6 +83,7 @@ final class Detail extends AbstractType implements TypeInterface
                     MovieMeta::FAVORITE_COUNT => $this->intValue($rows['favorites']['value'] ?? null),
                     MovieMeta::RATING => $this->rating($rows['rating']['value'] ?? null),
                     MovieMeta::SAMPLE_VIDEO_URL => $this->firstAttribute($crawler, Selectors::DETAIL_SOURCE, 'src'),
+                    'sample_video_poster_url' => $poster === null ? null : $this->cleanImageUrl($poster),
                     'cover_thumbnail_url' => $thumbnail !== $cover ? $thumbnail : null,
                     'source_fields' => $this->sourceFields($rows),
                 ]),

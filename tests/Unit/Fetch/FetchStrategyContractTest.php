@@ -207,6 +207,7 @@ final class FetchStrategyContractTest extends TestCase
             FetchMethod::Playwright->value => $this->handler(
                 status: 403,
                 error: 'ssrf_blocked',
+                ssrfReason: 'no_public_address',
             ),
             FetchMethod::PuppeteerStealth->value => $this->handler(
                 ok: true,
@@ -218,7 +219,7 @@ final class FetchStrategyContractTest extends TestCase
 
         try {
             $chain->fetch(
-                'https://example.test',
+                'https://user-marker:credential-marker@example.test/path-marker?token=query-marker#fragment-marker',
                 $this->profile(),
                 [FetchMethod::Playwright, FetchMethod::PuppeteerStealth],
             );
@@ -227,6 +228,17 @@ final class FetchStrategyContractTest extends TestCase
             self::assertSame('ssrf_blocked', $exception->errorCode->value);
             self::assertFalse($exception->retryable);
             self::assertCount(1, $exception->fetch?->attempts ?? []);
+            self::assertSame(
+                'Fetch blocked by SSRF policy. reason=no_public_address',
+                $exception->getMessage(),
+            );
+            self::assertStringContainsString('reason=no_public_address', $exception->getMessage());
+            self::assertStringNotContainsString('127.0.0.1', $exception->getMessage());
+            self::assertStringNotContainsString('user-marker', $exception->getMessage());
+            self::assertStringNotContainsString('credential-marker', $exception->getMessage());
+            self::assertStringNotContainsString('path-marker', $exception->getMessage());
+            self::assertStringNotContainsString('query-marker', $exception->getMessage());
+            self::assertStringNotContainsString('fragment-marker', $exception->getMessage());
         }
 
         self::assertSame(0, $calls->fallback);
@@ -326,8 +338,9 @@ final class FetchStrategyContractTest extends TestCase
         ?string $error = null,
         ?\stdClass $calls = null,
         ?string $callProperty = null,
+        ?string $ssrfReason = null,
     ): FetchMethodHandler {
-        return new class ($ok, $status, $body, $error, $calls, $callProperty) implements FetchMethodHandler {
+        return new class ($ok, $status, $body, $error, $calls, $callProperty, $ssrfReason) implements FetchMethodHandler {
             public function __construct(
                 private readonly bool $ok,
                 private readonly int $status,
@@ -335,6 +348,7 @@ final class FetchStrategyContractTest extends TestCase
                 private readonly ?string $error,
                 private readonly ?\stdClass $calls,
                 private readonly ?string $callProperty,
+                private readonly ?string $ssrfReason,
             ) {
             }
 
@@ -362,6 +376,7 @@ final class FetchStrategyContractTest extends TestCase
                     challengeDetected: ChallengeDetector::isChallenge($this->body, $this->status),
                     finalUrl: $url,
                     error: $this->error ?? ($this->ok ? null : 'failed'),
+                    ssrfReason: $this->ssrfReason,
                 );
             }
         };

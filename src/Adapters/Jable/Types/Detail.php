@@ -132,7 +132,7 @@ final class Detail extends AbstractType implements TypeInterface
      * The name is the avatar tooltip (`title`) so models with a hashed url slug are not dropped; the slug is the id.
      *
      * @param  list<string>  $keywords
-     * @return list<array{external_id: ?string, name: string, url: ?string}>
+     * @return list<array{external_id: ?string, name: string, url: ?string, profile_image_url?: string}>
      */
     private function performers(Crawler $crawler, array $keywords, string $baseUrl): array
     {
@@ -151,7 +151,13 @@ final class Detail extends AbstractType implements TypeInterface
             $name = $tooltip === null ? null : $this->normalizeText($tooltip);
             $name ??= $this->isRomanModelSlug($slug) ? $this->slugToRomanName($slug) : null;
             if ($name !== null && $name !== '') {
-                $performers[$slug] ??= MovieMeta::performer($name, $slug, $this->normalizer->absolute($baseUrl, $href));
+                $performer = MovieMeta::performer($name, $slug, $this->normalizer->absolute($baseUrl, $href));
+                $photo = $this->firstAttribute($node, Selectors::MODEL_PHOTO, 'data-src') ?? $this->firstAttribute($node, Selectors::MODEL_PHOTO, 'src');
+                if ($photo !== null) {
+                    $performer['profile_image_url'] = $this->normalizer->absolute($baseUrl, $photo);
+                }
+
+                $performers[$slug] ??= $performer;
             }
         });
 

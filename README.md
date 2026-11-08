@@ -296,6 +296,7 @@ below come from each adapter's current manifest. To add a source, see
 | PLUM | `plum` | Yes | Yes | — | — | — |
 | 1Pondo | `onepondo` | Yes | Yes | — | — | — |
 | 10Musume | `10musume` | Yes | Yes | — | — | — |
+| Asagei Plus | `asagei` | Yes | — | Yes | — | — |
 | Aisex | `aisex` | — | — | — | Yes | Yes |
 | Avfan | `avfan` | Yes | Yes | — | — | — |
 | Avfan Profiles | `avfan_profiles` | — | — | — | Yes | Yes |
@@ -326,6 +327,7 @@ below come from each adapter's current manifest. To add a source, see
 | Next11 | `next11` | Yes | Yes | — | — | — |
 | OneJav | `onejav` | Yes | Yes | — | — | — |
 | Smart FLASH | `smartflash` | Yes | — | Yes | — | — |
+| WPB Web Gravure | `wpb` | Yes | — | Yes | — | — |
 | Tokyo-Hot | `tokyohot` | Yes | Yes | — | — | — |
 | Warashi | `warashi` | — | — | Yes | Yes | Yes |
 | Wikimedia Commons | `commons` | Yes | — | Yes | — | Yes |
@@ -424,14 +426,15 @@ COMPOSE_FILE=docker-compose.yml:docker-compose.no-ports.yml make fetch-up
 
 The browser sidecar sends all browser egress through a loopback-only proxy and
 rejects private, loopback, link-local, and metadata addresses, including every
-redirect hop. It resolves and pins the destination address before connecting,
-and fails closed when DNS resolution fails. Set
+redirect hop. It resolves DNS, drops loopback/private/unspecified decoy answers,
+and pins only the remaining public addresses before connecting. Hosts with no
+public address left (or a failed DNS lookup) are blocked. Set
 `CRAWLERX_BROWSER_ALLOWED_HOSTS` on the `node` service to restrict fetches
 further; use comma-separated exact hosts or `*.example.org` patterns. The
 allowlist does not override address blocking. Private-network access is enabled
 only by the dedicated `docker-compose.fetch-lab.yml` test overlay. Requests
-blocked by this policy return the non-retryable `ssrf_blocked` error and stop
-the fetch fallback chain.
+blocked by this policy return the non-retryable `ssrf_blocked` error (with
+`ssrfReason` when known) and stop the fetch fallback chain.
 
 The browser image is built with `CRAWLERX_VERSION` set to the matching
 CrawlerX package release (for example, `1.3.1`); the sidecar reports that value

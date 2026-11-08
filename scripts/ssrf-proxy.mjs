@@ -40,6 +40,7 @@ function stripHopByHopHeaders(headers) {
 export async function createSsrfProxyServer({ assertSafeUrl = assertSafeBrowserUrl } = {}) {
     const sockets = new Set();
     let blocked = false;
+    let blockedError = null;
     let closed = false;
     const server = createServer((request, response) => {
         void forwardHttpRequest(request, response);
@@ -72,6 +73,7 @@ export async function createSsrfProxyServer({ assertSafeUrl = assertSafeBrowserU
         } catch (error) {
             if (error instanceof SsrfBlockedError) {
                 blocked = true;
+                blockedError ??= error;
             }
             throw error;
         }
@@ -256,6 +258,7 @@ export async function createSsrfProxyServer({ assertSafeUrl = assertSafeBrowserU
     return {
         url: `http://127.0.0.1:${address.port}`,
         wasBlocked: () => blocked,
+        blockedError: () => blockedError,
         close: async () => {
             if (closed) return;
             closed = true;

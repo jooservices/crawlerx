@@ -20,6 +20,22 @@ final class Site
         return UriResolver::resolve($url, self::BASE_URL . '/');
     }
 
+    /**
+     * The site serves its uploads through the Jetpack image CDN (`i0.wp.com/<host>/<path>?fit=...`), which resizes and
+     * recompresses them. The origin file is the same path on the site host without the query.
+     */
+    public static function original(string $url): string
+    {
+        $parts = parse_url($url);
+        $host = is_array($parts) ? ($parts['host'] ?? '') : '';
+        $path = is_array($parts) ? ($parts['path'] ?? '') : '';
+        if (preg_match('/^i[0-3]\.wp\.com$/', $host) !== 1 || ! str_starts_with($path, '/' . parse_url(self::BASE_URL, PHP_URL_HOST) . '/')) {
+            return $url;
+        }
+
+        return 'https:/' . $path;
+    }
+
     public static function detailUrl(string $id): string
     {
         return self::BASE_URL . self::DETAIL_PATH . $id . '/';

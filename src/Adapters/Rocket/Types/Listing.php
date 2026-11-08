@@ -53,7 +53,7 @@ final class Listing extends AbstractHtmlType implements TypeInterface
             $group = $this->releaseGroup($card, $fields);
             $items[$id] = MovieDto::item(Site::detailUrl($id), $id, $this->commentedTitle($card), MovieMeta::filter([
                 'date' => $group['date'] ?? null,
-                'cover_url' => $fields->image($card, 'img'),
+                'cover_url' => $fields->image($card, 'img', true),
                 'metadata' => MovieMeta::filter([
                     MovieMeta::MAKER => Site::MAKER,
                     'release_group' => $group,

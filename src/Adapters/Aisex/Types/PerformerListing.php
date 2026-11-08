@@ -7,6 +7,7 @@ namespace JOOservices\CrawlerX\Adapters\Aisex\Types;
 use JOOservices\CrawlerX\Adapters\AbstractType;
 use JOOservices\CrawlerX\Adapters\Concerns\NormalizesUrls;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
+use JOOservices\CrawlerX\Adapters\Aisex\Photo;
 use JOOservices\CrawlerX\Adapters\Aisex\Selectors;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
@@ -51,6 +52,7 @@ final class PerformerListing extends AbstractType implements TypeInterface
                 url: $url,
                 externalId: $externalId,
                 title: $title,
+                data: ['profile_image_url' => (new Photo())->url($node, $request->url)],
             );
         });
 

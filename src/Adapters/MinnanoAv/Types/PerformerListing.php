@@ -63,6 +63,8 @@ final class PerformerListing extends AbstractType implements TypeInterface
             $items = $this->itemsFromLinks($crawler, $request->url);
         }
 
+        $items = $this->withPhotos($items, $this->cardPhotos($crawler, $request->url));
+
         $nextUrl = $this->nextPageUrl($crawler, $request->url);
         $lastPage = $this->lastPageNumber($crawler, $html);
 
@@ -79,6 +81,49 @@ final class PerformerListing extends AbstractType implements TypeInterface
                 hasNextPage: $nextUrl !== null,
             ),
         );
+    }
+
+    /**
+     * First photo of every actress row, keyed by canonical actress URL (a row may repeat the same actress with a newer photo).
+     *
+     * @return array<string, string>
+     */
+    private function cardPhotos(Crawler $crawler, string $baseUrl): array
+    {
+        $photos = [];
+        $crawler->filter(Selectors::PERFORMER_LIST_PHOTOS)->each(function (Crawler $image) use (&$photos, $baseUrl): void {
+            $href = $image->closest('a')?->attr('href');
+            $src = $image->attr('src');
+            if (! is_string($href) || ! is_string($src) || trim($src) === '') {
+                return;
+            }
+
+            $url = $this->normalizer->canonicalActressUrl($this->normalizer->absolute($baseUrl, $href));
+            $photos[$url] ??= $this->normalizer->absolute($baseUrl, $src);
+        });
+
+        return $photos;
+    }
+
+    /**
+     * @param  array<string, CrawlItemResultDto>  $items
+     * @param  array<string, string>  $photos
+     * @return array<string, CrawlItemResultDto>
+     */
+    private function withPhotos(array $items, array $photos): array
+    {
+        foreach ($items as $url => $item) {
+            $performer = $item->meta['performer'] ?? null;
+            if (isset($photos[$url]) && is_array($performer)) {
+                $items[$url] = new CrawlItemResultDto(
+                    url: $item->url,
+                    entityType: $item->entityType,
+                    meta: ['performer' => ['profile_image_url' => $photos[$url]] + $performer],
+                );
+            }
+        }
+
+        return $items;
     }
 
     /**
