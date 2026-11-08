@@ -68,6 +68,7 @@ final class Detail extends AbstractHtmlType implements TypeInterface
                     'prices' => $prices,
                     'thumbnail_url' => $this->firstAttribute($crawler, '#productjpg', 'src') ?? $this->firstAttribute($crawler, 'meta[property="og:image"]', 'content'),
                     MovieMeta::SAMPLE_VIDEO_URL => $this->firstAttribute($crawler, 'meta[property="og:video:url"]', 'content'),
+                    'sample_video_poster_url' => $this->firstAttribute($crawler, '.sample-rapper img[src]', 'src'),
                     MovieMeta::DOWNLOADS => $this->files($crawler),
                     MovieMeta::RELEASE_DATE_RAW => $this->cellText($rows, '発売日'),
                     'distribution_start_date' => $this->dateOf($rows, '配信開始日'),

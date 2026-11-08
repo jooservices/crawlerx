@@ -38,21 +38,25 @@ final class Fields
         );
     }
 
-    public function image(Crawler $node, string $selector): ?string
+    public function image(Crawler $node, string $selector, bool $original = false): ?string
     {
         $url = $this->firstAttribute($node, $selector, 'src');
+        if ($url === null) {
+            return null;
+        }
 
-        return $url !== null ? Site::absolute($url) : null;
+        return $original ? Site::original(Site::absolute($url)) : Site::absolute($url);
     }
 
     /** @return list<string> */
-    public function images(Crawler $node, string $selector): array
+    public function images(Crawler $node, string $selector, bool $original = false): array
     {
         $urls = [];
         foreach ($node->filter($selector) as $element) {
             $src = (new Crawler($element))->attr('src');
             if (is_string($src) && trim($src) !== '') {
-                $urls[] = Site::absolute(trim($src));
+                $url = Site::absolute(trim($src));
+                $urls[] = $original ? Site::original($url) : $url;
             }
         }
 

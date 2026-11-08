@@ -195,7 +195,7 @@ final class FalenogroupTest extends TestCase
         ), 0, 2));
         $metadata = $result->items[0]->meta['movie']['metadata'];
         self::assertSame('ノースキンズ', $metadata['maker']);
-        self::assertSame(self::CDN . '/2022/05/noskins.jpg?resize=520:*&output-quality=60', $metadata['maker_logo_url']);
+        self::assertSame(self::CDN . '/2022/05/noskins.jpg', $metadata['maker_logo_url']);
         self::assertFalse($result->pagination->hasNextPage);
         self::assertNull($result->pagination->nextUrl);
         self::assertSame(1, $result->pagination->lastPage);

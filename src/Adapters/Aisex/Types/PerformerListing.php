@@ -7,6 +7,7 @@ namespace JOOservices\CrawlerX\Adapters\Aisex\Types;
 use JOOservices\CrawlerX\Adapters\AbstractType;
 use JOOservices\CrawlerX\Adapters\Concerns\NormalizesUrls;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
+use JOOservices\CrawlerX\Adapters\Aisex\Photo;
 use JOOservices\CrawlerX\Adapters\Aisex\Selectors;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
@@ -15,7 +16,6 @@ use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
-use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class PerformerListing extends AbstractType implements TypeInterface
@@ -48,15 +48,11 @@ final class PerformerListing extends AbstractType implements TypeInterface
                 return;
             }
 
-            $photo = $node->filter(Selectors::PERFORMER_PHOTO);
-            $src = $photo->count() > 0 ? trim((string) $photo->first()->attr('src')) : '';
             $items[$url] = PerformerDto::item(
                 url: $url,
                 externalId: $externalId,
                 title: $title,
-                data: MovieMeta::filter([
-                    'profile_image_url' => $src === '' || str_contains($src, Selectors::NO_IMAGE) ? null : $this->absolute($request->url, $src),
-                ]),
+                data: ['profile_image_url' => (new Photo())->url($node, $request->url)],
             );
         });
 

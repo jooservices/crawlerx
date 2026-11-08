@@ -239,7 +239,18 @@ final class Detail extends AbstractHtmlType implements TypeInterface
         return ['name' => $name, 'url' => $url === null ? null : $this->absolute($baseUrl, $url)];
     }
 
-    /** @return list<array{url: string, thumbnail_url: ?string, position: int}> */
+    /**
+     * The sample URLs go through the `contents-thumbnail2` resizer (`/w1280/<storage host>/<path>`); the original file
+     * is the same path on the storage host, which is also where the cover (`og:image`) points.
+     */
+    private function originalImage(string $url): ?string
+    {
+        return preg_match('#^https://contents-thumbnail2\.fc2\.com/w\d+(?:h\d+)?/(storage[^/]*\.contents\.fc2\.com/.+)$#', $url, $match) === 1
+            ? 'https://' . $match[1]
+            : null;
+    }
+
+    /** @return list<array{url: string, thumbnail_url: ?string, position: int, original_url: ?string}> */
     private function samples(Crawler $crawler, string $baseUrl): array
     {
         $images = [];
@@ -250,10 +261,12 @@ final class Detail extends AbstractHtmlType implements TypeInterface
             }
 
             $thumb = $link->filter('img')->count() > 0 ? $link->filter('img')->first()->attr('src') : null;
+            $url = $this->absolute($baseUrl, $href);
             $images[$href] = [
-                'url' => $this->absolute($baseUrl, $href),
+                'url' => $url,
                 'thumbnail_url' => is_string($thumb) && $thumb !== '' ? $this->absolute($baseUrl, $thumb) : null,
                 'position' => count($images),
+                'original_url' => $this->originalImage($url),
             ];
         });
 
