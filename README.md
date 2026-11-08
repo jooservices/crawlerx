@@ -318,6 +318,7 @@ below come from each adapter's current manifest. To add a source, see
 | JavBus | `javbus` | Yes | Yes | — | Yes | Yes |
 | JavDB | `javdb` | Yes | Yes | — | — | — |
 | JAVLibrary | `javlibrary` | Yes | Yes | — | Yes | Yes |
+| JAVMenu | `javmenu` | Yes | Yes | — | Yes | Yes |
 | JavPhotos | `javphotos` | Yes | — | Yes | — | — |
 | Minnano AV | `minnanoav` | Yes | Yes | — | Yes | Yes |
 | MissAV | `missav` | Yes | Yes | — | — | — |
