@@ -51,7 +51,6 @@ try {
             status: 403,
             challenge: false,
             ssrfReason: error.reason,
-            ssrfAddress: error.address,
             ssrfHostname: error.hostname,
         }));
         process.exit(1);
@@ -205,7 +204,6 @@ try {
         ...(ssrfBlocked ? {
             errorCode: 'ssrf_blocked',
             ssrfReason: blockedError?.reason ?? 'blocked',
-            ssrfAddress: blockedError?.address ?? null,
             ssrfHostname: blockedError?.hostname ?? null,
         } : {}),
         status: ssrfBlocked ? 403 : 1,

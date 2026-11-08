@@ -123,7 +123,6 @@ final class PlaywrightFamilyFetchHandler implements FetchMethodHandler
             userAgent: $userAgent,
             error: $ok ? null : (is_string($decoded['error'] ?? null) ? $decoded['error'] : 'playwright fetch failed'),
             ssrfReason: is_string($decoded['ssrfReason'] ?? null) ? $decoded['ssrfReason'] : null,
-            ssrfAddress: is_string($decoded['ssrfAddress'] ?? null) ? $decoded['ssrfAddress'] : null,
         );
     }
 

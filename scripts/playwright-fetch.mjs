@@ -366,7 +366,6 @@ export async function fetchWithBrowser(config, browser) {
                 elapsedMs: Date.now() - started,
                 challenge: false,
                 ssrfReason: blockedError?.reason ?? 'blocked',
-                ssrfAddress: blockedError?.address ?? null,
                 ssrfHostname: blockedError?.hostname ?? null,
             };
         }

@@ -432,7 +432,7 @@ further; use comma-separated exact hosts or `*.example.org` patterns. The
 allowlist does not override address blocking. Private-network access is enabled
 only by the dedicated `docker-compose.fetch-lab.yml` test overlay. Requests
 blocked by this policy return the non-retryable `ssrf_blocked` error (with
-`ssrfReason` / `ssrfAddress` when known) and stop the fetch fallback chain.
+`ssrfReason` when known) and stop the fetch fallback chain.
 
 The browser image is built with `CRAWLERX_VERSION` set to the matching
 CrawlerX package release (for example, `1.3.1`); the sidecar reports that value

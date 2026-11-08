@@ -90,7 +90,6 @@ final class PuppeteerStealthFetchHandler implements FetchMethodHandler
             cookies: $cookies,
             error: $ok ? null : (is_string($decoded['error'] ?? null) ? $decoded['error'] : 'puppeteer fetch failed'),
             ssrfReason: is_string($decoded['ssrfReason'] ?? null) ? $decoded['ssrfReason'] : null,
-            ssrfAddress: is_string($decoded['ssrfAddress'] ?? null) ? $decoded['ssrfAddress'] : null,
         );
     }
 

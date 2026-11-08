@@ -78,7 +78,6 @@ function respond(response, status, body) {
 
 function respondBlocked(response, error = null) {
     const ssrfReason = error instanceof SsrfBlockedError ? error.reason : 'blocked';
-    const ssrfAddress = error instanceof SsrfBlockedError ? error.address : null;
     const ssrfHostname = error instanceof SsrfBlockedError ? error.hostname : null;
     respond(response, 200, {
         exitCode: 1,
@@ -89,7 +88,6 @@ function respondBlocked(response, error = null) {
             status: 403,
             challenge: false,
             ssrfReason,
-            ssrfAddress,
             ssrfHostname,
         }),
     });
