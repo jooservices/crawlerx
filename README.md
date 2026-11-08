@@ -326,6 +326,7 @@ below come from each adapter's current manifest. To add a source, see
 | Next11 | `next11` | Yes | Yes | — | — | — |
 | OneJav | `onejav` | Yes | Yes | — | — | — |
 | Smart FLASH | `smartflash` | Yes | — | Yes | — | — |
+| WPB Web Gravure | `wpb` | Yes | — | Yes | — | — |
 | Tokyo-Hot | `tokyohot` | Yes | Yes | — | — | — |
 | Warashi | `warashi` | — | — | Yes | Yes | Yes |
 | Wikimedia Commons | `commons` | Yes | — | Yes | — | Yes |
