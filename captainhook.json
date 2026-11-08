@@ -6,7 +6,7 @@
       {
         "action": "\\CaptainHook\\App\\Hook\\Message\\Action\\Regex",
         "options": {
-          "regex": "/^(feat|fix|docs|style|refactor|perf|test|chore|ci|build|revert)(\\(.+\\))?!?:\\s[A-Z].{0,99}$/",
+          "regex": "/\\A(feat|fix|docs|style|refactor|perf|test|chore|ci|build|revert)(\\(.+\\))?!?:\\s[A-Z].{0,99}$/m",
           "error": "Commit message must follow Conventional Commits with an uppercase subject: <type>(<scope>): Subject"
         }
       }
