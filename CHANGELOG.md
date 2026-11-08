@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Raise the composer process timeout to 1800 seconds so the release gate (`composer ci`, full coverage run) is not cut off at the 300 second default (the v1.6.0 Release workflow failed on it) (JOOXCR-457).
+
 ## [1.6.0] - 2026-11-08
 
 ### Added
