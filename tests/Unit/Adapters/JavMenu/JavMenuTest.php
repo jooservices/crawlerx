@@ -315,4 +315,24 @@ final class JavMenuTest extends TestCase
             }
         }
     }
+
+    public function test_next_link_is_the_page_right_after_the_current_one_not_the_last_icon_link(): void
+    {
+        $html = '<ul class="pagination">'
+            . '<li class="page-item active"><a class="page-link" href="/censored?page=2">2</a></li>'
+            . '<li class="page-item"><a class="page-link" href="/censored?page=3"><i class="fa fa-angle-right"></i></a></li>'
+            . '<li class="page-item"><a class="page-link" href="/censored?page=9"><i class="fa fa-angle-double-right"></i></a></li>'
+            . '</ul>';
+
+        $pagination = (new \JOOservices\CrawlerX\Adapters\JavMenu\Cards())->pagination(
+            new \Symfony\Component\DomCrawler\Crawler($html),
+            self::BASE . '/censored?page=2',
+            2,
+        );
+
+        self::assertSame(2, $pagination->currentPage);
+        self::assertSame(3, $pagination->nextPage);
+        self::assertSame(self::BASE . '/censored?page=3', $pagination->nextUrl);
+        self::assertSame(9, $pagination->lastPage);
+    }
 }

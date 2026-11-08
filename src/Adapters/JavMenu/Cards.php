@@ -75,7 +75,7 @@ final class Cards
             $url = $this->absolute($requestUrl, (string) $link->attr('href'));
             $page = Site::pageNumber($url) ?? 0;
             $last = max($last, $page);
-            if ($page > $current && $this->normalizeText($link->text('')) === null) {
+            if ($page === $current + 1 && $this->normalizeText($link->text('')) === null) {
                 $nextUrl = $url;
             }
         });

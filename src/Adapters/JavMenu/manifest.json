@@ -40,7 +40,7 @@
         {
             "key": "detail_delay_seconds",
             "type": "int",
-            "default": 2,
+            "default": 5,
             "tier": "operational",
             "label": "Detail Delay Seconds"
         },
