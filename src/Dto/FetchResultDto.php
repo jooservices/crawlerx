@@ -29,6 +29,8 @@ final class FetchResultDto extends Dto
         public readonly ?string $error = null,
         public readonly ?array $storageState = null,
         public readonly ?string $userAgent = null,
+        public readonly ?string $ssrfReason = null,
+        public readonly ?string $ssrfAddress = null,
     ) {
     }
 
@@ -61,6 +63,8 @@ final class FetchResultDto extends Dto
             storageState: $this->storageState,
             userAgent: $this->userAgent,
             error: $this->error,
+            ssrfReason: $this->ssrfReason,
+            ssrfAddress: $this->ssrfAddress,
         );
     }
 }
