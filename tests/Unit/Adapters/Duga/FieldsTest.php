@@ -25,6 +25,7 @@ class FieldsTest extends TestCase
         self::assertStringStartsWith('前代未聞の食糞モンスター爆誕！', $movie['description']);
         self::assertStringNotContainsString('DUGAは', $movie['description']);
         self::assertSame('https://pic.duga.jp/unsecure/vrpandemic/0023/noauth/jacket.jpg', $movie['cover_url']);
+        self::assertSame('https://pic.duga.jp/unsecure/vrpandemic/0023/noauth/jacket_240.jpg', $movie['metadata']['thumbnail_url']);
         self::assertSame('2026-08-14', $movie['date']);
         self::assertSame(49, $movie['duration']);
         self::assertSame(['あだちねね', '狛稚あやめ'], array_column($movie['performers'], 'name'));
@@ -103,7 +104,8 @@ class FieldsTest extends TestCase
         $first = $result->items[0]->meta['movie'];
         self::assertSame('flower-0835', $first['external_id']);
         self::assertSame('エロ顔ノーハンドフェラ61', $first['title']);
-        self::assertSame('https://pic.duga.jp/unsecure/flower/0835/noauth/jacket_120.jpg', $first['cover_url']);
+        self::assertSame('https://pic.duga.jp/unsecure/flower/0835/noauth/jacket.jpg', $first['cover_url']);
+        self::assertSame('https://pic.duga.jp/unsecure/flower/0835/noauth/jacket_120.jpg', $first['metadata']['thumbnail_url']);
         self::assertSame(1, $first['metadata']['rank']);
         self::assertSame(13, $first['metadata']['favorite_count']);
         self::assertSame(400.0, $first['metadata']['price']['amount']);

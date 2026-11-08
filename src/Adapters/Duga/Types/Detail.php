@@ -43,8 +43,6 @@ final class Detail extends AbstractHtmlType implements TypeInterface
         $sku = $this->cellText($rows, '作品ID');
         $productNumber = $this->cellText($rows, 'メーカー品番') ?? $this->cellText($rows, '品番');
         $prices = $this->prices($crawler);
-        // og:image is the 240px jacket; the zoom link carries the full-size one.
-        $thumbnail = $this->firstAttribute($crawler, 'meta[property="og:image"]', 'content');
 
         $item = MovieDto::item(
             url: $request->url,
@@ -52,7 +50,7 @@ final class Detail extends AbstractHtmlType implements TypeInterface
             title: $this->firstText($crawler, 'h1.title, h1[itemprop="name"]') ?? $externalId,
             data: MovieMeta::filter([
                 'code' => $productNumber ?? $sku ?? $externalId,
-                'cover_url' => $this->firstAttribute($crawler, 'a[itemprop="image"][href]', 'href') ?? $thumbnail,
+                'cover_url' => $this->fullJacket($crawler, $request->url) ?? $this->firstAttribute($crawler, 'meta[property="og:image"]', 'content'),
                 'description' => $this->firstText($crawler, 'p.introduction'),
                 'date' => $this->dateOf($rows, '発売日'),
                 'duration' => $this->duration($crawler),
@@ -68,8 +66,8 @@ final class Detail extends AbstractHtmlType implements TypeInterface
                     MovieMeta::FAVORITE_COUNT => $this->count($this->firstText($crawler, '.mylistcount .count')),
                     MovieMeta::PRICE => $prices[0] ?? null,
                     'prices' => $prices,
+                    'thumbnail_url' => $this->firstAttribute($crawler, '#productjpg', 'src') ?? $this->firstAttribute($crawler, 'meta[property="og:image"]', 'content'),
                     MovieMeta::SAMPLE_VIDEO_URL => $this->firstAttribute($crawler, 'meta[property="og:video:url"]', 'content'),
-                    'cover_thumbnail_url' => $thumbnail,
                     'sample_video_poster_url' => $this->firstAttribute($crawler, '.sample-rapper img[src]', 'src'),
                     MovieMeta::DOWNLOADS => $this->files($crawler),
                     MovieMeta::RELEASE_DATE_RAW => $this->cellText($rows, '発売日'),
@@ -311,6 +309,14 @@ final class Detail extends AbstractHtmlType implements TypeInterface
         });
 
         return $files;
+    }
+
+    /** The jacket's full-size image: the page links the 240px jacket to `jacket.jpg`. */
+    private function fullJacket(Crawler $crawler, string $baseUrl): ?string
+    {
+        $href = $this->firstAttribute($crawler, 'a[itemprop="image"][href]', 'href');
+
+        return $href === null ? null : $this->absolute($baseUrl, $href);
     }
 
     /** @return list<array{url: string, thumbnail_url: ?string, position: int}> */

@@ -7,12 +7,14 @@ namespace JOOservices\CrawlerX\Adapters\Jable\Types;
 use JOOservices\CrawlerX\Adapters\AbstractType;
 use JOOservices\CrawlerX\Adapters\Concerns\NormalizesUrls;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
+use JOOservices\CrawlerX\Adapters\Jable\Selectors;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
+use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class PerformerListing extends AbstractType implements TypeInterface
@@ -56,10 +58,15 @@ final class PerformerListing extends AbstractType implements TypeInterface
                 return;
             }
 
+            $photo = $link->filter(Selectors::MODEL_PHOTO);
+            $src = $photo->count() > 0 ? ($photo->first()->attr('data-src') ?? $photo->first()->attr('src')) : null;
             $items[$url] = PerformerDto::item(
                 url: $url,
                 externalId: $externalId,
                 title: $name,
+                data: MovieMeta::filter([
+                    'profile_image_url' => is_string($src) && trim($src) !== '' ? $this->absolute($request->url, trim($src)) : null,
+                ]),
             )->withNextCrawlType('performer_detail');
         });
 

@@ -1,0 +1,10 @@
+{
+  "source_url": "https://javmenu.com/actor/83V",
+  "final_url": "https://javmenu.com/actor/83V",
+  "captured_at": "2026-11-07T00:00:00+00:00",
+  "http_status": 200,
+  "content_hash": "cc710746464a5918e2d81e16c3a15cf98b334ab961dd172c97f794da9f3b5b3e",
+  "target_type": "performer_detail",
+  "fetch_method": "http",
+  "sanitized": true
+}

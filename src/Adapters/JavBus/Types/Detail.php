@@ -118,7 +118,8 @@ final class Detail extends AbstractType implements TypeInterface
     private function performers(Crawler $crawler, string $baseUrl): array
     {
         $performers = [];
-        $crawler->filter(Selectors::DETAIL_PERFORMER_LINKS)->each(function (Crawler $link) use (&$performers, $baseUrl): void {
+        $photos = $this->performerPhotos($crawler, $baseUrl);
+        $crawler->filter(Selectors::DETAIL_PERFORMER_LINKS)->each(function (Crawler $link) use (&$performers, $photos, $baseUrl): void {
             $href = $link->attr('href');
             $name = $this->normalizeText($link->text(''));
             if (! is_string($href) || $name === null) {
@@ -127,10 +128,31 @@ final class Detail extends AbstractType implements TypeInterface
 
             $url = $this->normalizer->absoluteAndCanonical($baseUrl, $href);
             $id = preg_match('~/star/([^/?#]+)~i', $url, $match) === 1 ? $match[1] : null;
-            $performers[$url] ??= MovieMeta::performer($name, $id, $url);
+            $performers[$url] ??= MovieMeta::performer($name, $id, $url) + (isset($photos[$url]) ? ['profile_image_url' => $photos[$url]] : []);
         });
 
         return array_values($performers);
+    }
+
+    /**
+     * Actress photo shown next to each name in the "star-box" block, keyed by the canonical star URL.
+     *
+     * @return array<string, string>
+     */
+    private function performerPhotos(Crawler $crawler, string $baseUrl): array
+    {
+        $photos = [];
+        $crawler->filter(Selectors::DETAIL_PERFORMER_PHOTOS)->each(function (Crawler $image) use (&$photos, $baseUrl): void {
+            $href = $image->closest('a')?->attr('href');
+            $src = $image->attr('src');
+            if (! is_string($href) || ! is_string($src) || trim($src) === '') {
+                return;
+            }
+
+            $photos[$this->normalizer->absoluteAndCanonical($baseUrl, $href)] ??= $this->normalizer->absoluteAndCanonical($baseUrl, $src);
+        });
+
+        return $photos;
     }
 
     /**

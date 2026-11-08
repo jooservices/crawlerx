@@ -212,7 +212,7 @@ final class Listing extends AbstractHtmlType implements TypeInterface
             return null;
         }
 
-        if (preg_match('#^/(?:en/)?([A-Za-z0-9-]+)/?$#i', $path, $match) !== 1) {
+        if (preg_match('#^/(?:en/)?([A-Za-z0-9_-]+)/?$#i', $path, $match) !== 1) {
             return null;
         }
 

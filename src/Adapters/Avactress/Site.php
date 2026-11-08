@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\Avactress;
 
+use JOOservices\CrawlerX\Support\DmmCover;
+
 final class Site
 {
     public const NAME = 'AV-Actress';
@@ -11,8 +13,6 @@ final class Site
     public const BASE_URL = 'https://av-actress.com';
 
     private const PERFORMER_PATH = '#^/(\d+)/[^/]+/?$#u';
-
-    private const THUMBNAIL_SUFFIX = '#ps(\.jpg)$#';
 
     /** The site's own performer id: the first path segment of `/<id>/<name>`, for example `26225`. */
     public static function performerId(string $url): ?string
@@ -27,7 +27,7 @@ final class Site
      */
     public static function largeCover(string $thumbnail): string
     {
-        return (string) preg_replace(self::THUMBNAIL_SUFFIX, 'pl$1', $thumbnail);
+        return DmmCover::large($thumbnail);
     }
 
     /** The FANZA content id of a work link: the `id` of the `lurl` target of the affiliate URL, for example `snos00422`. */

@@ -146,7 +146,7 @@ final class ImageCompletenessAuditTest extends CrawlerXTestCase
         $movie = $this->movie('duga', 'detail.html');
 
         self::assertSame('https://pic.duga.jp/unsecure/vrpandemic/0023/noauth/jacket.jpg', $movie['cover_url']);
-        self::assertSame('https://pic.duga.jp/unsecure/vrpandemic/0023/noauth/jacket_240.jpg', $movie['metadata']['cover_thumbnail_url']);
+        self::assertSame('https://pic.duga.jp/unsecure/vrpandemic/0023/noauth/jacket_240.jpg', $movie['metadata']['thumbnail_url']);
         self::assertSame('https://pic.duga.jp/unsecure/vrpandemic/0023/noauth/flvcap.jpg', $movie['metadata']['sample_video_poster_url']);
     }
 

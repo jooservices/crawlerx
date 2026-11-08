@@ -76,11 +76,20 @@ function respond(response, status, body) {
     response.end(JSON.stringify(body));
 }
 
-function respondBlocked(response) {
+function respondBlocked(response, error = null) {
+    const ssrfReason = error instanceof SsrfBlockedError ? error.reason : 'blocked';
+    const ssrfHostname = error instanceof SsrfBlockedError ? error.hostname : null;
     respond(response, 200, {
         exitCode: 1,
         stderr: 'ssrf_blocked',
-        stdout: JSON.stringify({ error: 'ssrf_blocked', errorCode: 'ssrf_blocked', status: 403, challenge: false }),
+        stdout: JSON.stringify({
+            error: 'ssrf_blocked',
+            errorCode: 'ssrf_blocked',
+            status: 403,
+            challenge: false,
+            ssrfReason,
+            ssrfHostname,
+        }),
     });
 }
 
@@ -479,7 +488,7 @@ async function handleRequest(request, response) {
                 await assertSafeBrowserUrl(targetUrl);
             } catch (error) {
                 if (error instanceof SsrfBlockedError) {
-                    respondBlocked(response);
+                    respondBlocked(response, error);
                     return;
                 }
                 throw error;

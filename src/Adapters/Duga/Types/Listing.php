@@ -51,7 +51,9 @@ final class Listing extends AbstractHtmlType implements TypeInterface
                 return;
             }
 
-            $cover = $this->firstAttribute($card, '.image img', 'src');
+            $thumbnail = $this->firstAttribute($card, '.image img', 'src');
+            $thumbnail = $thumbnail === null ? null : $this->absolute($fetchUrl, $thumbnail);
+            $cover = $thumbnail === null ? null : $this->fullJacket($thumbnail);
             $money = $this->firstText($card, '.money');
             $amount = $money !== null && preg_match('/([\d,]+)/', $money, $moneyMatch) === 1 ? (float) str_replace(',', '', $moneyMatch[1]) : null;
             $score = $this->firstAttribute($card, '.ratingstar img', 'alt');
@@ -69,8 +71,9 @@ final class Listing extends AbstractHtmlType implements TypeInterface
                 title: $this->firstAttribute($card, '.image img', 'alt') ?? $this->firstText($card, '.title') ?? $match[1],
                 data: MovieMeta::filter([
                     'code' => $match[1],
-                    'cover_url' => $cover === null ? null : $this->absolute($fetchUrl, $cover),
+                    'cover_url' => $cover,
                     'metadata' => MovieMeta::filter([
+                        'thumbnail_url' => $thumbnail !== $cover ? $thumbnail : null,
                         MovieMeta::RATING => $score !== null && preg_match('/(\d+(?:\.\d+)?)/', $score, $scoreMatch) === 1 && (float) $scoreMatch[1] > 0 ? MovieMeta::rating((float) $scoreMatch[1], 5.0) : null,
                         MovieMeta::FAVORITE_COUNT => $favorites !== null && ctype_digit(str_replace(',', '', $favorites)) ? (int) str_replace(',', '', $favorites) : null,
                         MovieMeta::PRICE => $amount === null ? null : MovieMeta::price($amount, 'JPY', $money),
@@ -109,5 +112,11 @@ final class Listing extends AbstractHtmlType implements TypeInterface
         $text = $this->firstText($card, '.rankprev');
 
         return $text !== null && preg_match('/前週\s*(\d+)\s*位/u', $text, $match) === 1 ? (int) $match[1] : null;
+    }
+
+    /** The cards show `jacket_120.jpg`; the full-size `jacket.jpg` (the link on the detail page's jacket) sits beside it. */
+    private function fullJacket(string $thumbnail): string
+    {
+        return (string) preg_replace('#/jacket_\d+\.jpg(?=$|\?)#', '/jacket.jpg', $thumbnail);
     }
 }

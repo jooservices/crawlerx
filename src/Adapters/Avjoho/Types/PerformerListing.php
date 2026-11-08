@@ -15,6 +15,7 @@ use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
+use JOOservices\CrawlerX\Support\DmmCover;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class PerformerListing extends AbstractType implements TypeInterface
@@ -47,10 +48,15 @@ final class PerformerListing extends AbstractType implements TypeInterface
                 return;
             }
 
+            $thumbnail = $this->cardImage($node, $request->url);
             $items[$url] = PerformerDto::item(
                 url: $url,
                 externalId: $externalId,
                 title: $title,
+                data: $thumbnail === null ? [] : [
+                    'profile_image_url' => DmmCover::large($thumbnail),
+                    'thumbnail_url' => $thumbnail,
+                ],
             );
         });
 
@@ -75,6 +81,15 @@ final class PerformerListing extends AbstractType implements TypeInterface
                 hasNextPage: $nextUrl !== null,
             ),
         );
+    }
+
+    /** The card shows the newest work of the performer as a small package thumbnail. */
+    private function cardImage(Crawler $title, string $baseUrl): ?string
+    {
+        $post = $title->closest('.post');
+        $src = $post === null ? null : $this->firstAttribute($post, Selectors::CARD_IMAGE, 'src');
+
+        return $src === null ? null : $this->absolute($baseUrl, $src);
     }
 
     private function currentPage(Crawler $crawler): ?int

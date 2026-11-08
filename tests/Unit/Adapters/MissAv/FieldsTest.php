@@ -75,7 +75,8 @@ class FieldsTest extends TestCase
             $byId[$item->meta['movie']['external_id']] = $item->meta['movie'];
         }
 
-        self::assertSame('https://fourhoi.com/ihd-010/cover-t.jpg', $byId['ihd-010']['cover_url']);
+        self::assertSame('https://fourhoi.com/ihd-010/cover-n.jpg', $byId['ihd-010']['cover_url']);
+        self::assertSame('https://fourhoi.com/ihd-010/cover-t.jpg', $byId['ihd-010']['metadata']['thumbnail_url']);
         self::assertSame(66, $byId['ihd-010']['duration']);
         self::assertSame('https://fourhoi.com/ihd-010/preview.mp4', $byId['ihd-010']['metadata']['preview_video_url']);
     }
