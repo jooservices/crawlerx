@@ -216,6 +216,7 @@ final class ImageAuditTest extends TestCase
               <p class="f"><img srcset="data:image/gif;base64,R0lGOD 1x"></p>
               <p class="g"><img srcset="data:image/gif;base64,R0lGOD 1x, /s5.jpg 2x"></p>
               <p class="e"><img src="data:image/gif;base64,R0lGOD"></p>
+              <p class="h"><img data-srcset="data:image/gif;base64,R0lGOD 1x" srcset="/s6.jpg 2x"></p>
             </div>
             HTML);
 
@@ -226,6 +227,7 @@ final class ImageAuditTest extends TestCase
         self::assertNull($fields->image($dom, '.e img'));
         self::assertNull($fields->image($dom, '.f img'));
         self::assertSame('https://example.test/s5.jpg', $fields->image($dom, '.g img'));
+        self::assertSame('https://example.test/s6.jpg', $fields->image($dom, '.h img'));
         self::assertNull($fields->image($dom, '.missing img'));
     }
 
