@@ -1,0 +1,139 @@
+{
+    "slug": "asagei",
+    "name": "Asagei Plus",
+    "version": "1.0.0",
+    "description": "Crawler for Asagei Plus (Tokuma) gravure and entertainment photo articles",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\Asagei\\AsageiCrawler",
+        "capabilities": [
+            "listing",
+            "gallery"
+        ]
+    },
+    "base_url": "https://www.asagei.com",
+    "pagination": {
+        "strategy": "query",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 2592000,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        }
+    ],
+    "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [
+                    "main.main-area .content-area > .content-list"
+                ],
+                "gallery": [
+                    "h1.entry-title",
+                    "#entry-content"
+                ]
+            },
+            "soft404Markers": [
+                "page not found",
+                "404 not found",
+                "お探しのページは見つかりません"
+            ]
+        },
+        "targetProfiles": {
+            "asagei_gravure_listing": {
+                "label": "Asagei Plus Gravure Tag Listing",
+                "url": "https://www.asagei.com/tag/%E3%82%B0%E3%83%A9%E3%83%93%E3%82%A2"
+            },
+            "asagei_gallery_sample": {
+                "label": "Asagei Plus Gravure Sample Article",
+                "url": "https://www.asagei.com/excerpt/349499"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "asagei_gravure_listing",
+                "url": "https://www.asagei.com/tag/%E3%82%B0%E3%83%A9%E3%83%93%E3%82%A2",
+                "paginated": true,
+                "loop": true,
+                "priority": 0,
+                "status": "paused"
+            },
+            {
+                "url_type": "asagei_gallery_sample",
+                "url": "https://www.asagei.com/excerpt/349499",
+                "paginated": false,
+                "loop": true,
+                "priority": 1,
+                "status": "paused"
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://www.asagei.com/tag/%E3%82%B0%E3%83%A9%E3%83%93%E3%82%A2",
+                "name": "listing-gravure-page1.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://www.asagei.com/excerpt/349499",
+                "name": "gallery-349499.html",
+                "type": "gallery"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 10,
+            "detail_delay_seconds": 10,
+            "cycle_delay_seconds": 2592000
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 10,
+            "min_gap_seconds": 5,
+            "max_gap_seconds": 60
+        },
+        "browserHeaders": {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+            "Accept-Language": "ja,en;q=0.8",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Connection": "keep-alive",
+            "Upgrade-Insecure-Requests": "1"
+        },
+        "playwrightFetchEnabled": false,
+        "queueSupervisor": {
+            "balance": "simple",
+            "minProcesses": 1,
+            "maxProcesses": 1,
+            "nice": 10
+        }
+    },
+    "type": "site"
+}
