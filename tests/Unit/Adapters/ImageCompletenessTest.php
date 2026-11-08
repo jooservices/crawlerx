@@ -219,14 +219,15 @@ class ImageCompletenessTest extends TestCase
 
         self::assertCount(20, $result->items);
         self::assertCount(20, array_filter($photos));
-        self::assertSame('https://pics.dmm.co.jp/digital/video/snos00299/snos00299ps.jpg', $photos[0]);
+        self::assertSame('https://pics.dmm.co.jp/digital/video/snos00299/snos00299pl.jpg', $photos[0]);
+        self::assertSame('https://pics.dmm.co.jp/digital/video/snos00299/snos00299ps.jpg', $result->items[0]->meta['performer']['metadata']['thumbnail_url'] ?? null);
     }
 
     public function test_avjoho_performer_detail_has_the_photo_and_the_work_covers(): void
     {
         $item = $this->crawl(AvjohoPerformerDetail::class, 'avjoho/detail-ichise-airi.html', 'https://db.avjoho.com/%e5%b8%82%e7%80%ac%e3%81%82%e3%81%84%e3%82%8a/', CrawlType::PerformerDetail);
 
-        self::assertSame('https://pics.dmm.co.jp/digital/video/pred00822/pred00822ps.jpg', $item->meta['performer']['profile_image_url']);
+        self::assertSame('https://pics.dmm.co.jp/digital/video/pred00822/pred00822pl.jpg', $item->meta['performer']['profile_image_url']);
         self::assertCount(2, $item->meta['performer']['metadata']['notable_works']);
     }
 

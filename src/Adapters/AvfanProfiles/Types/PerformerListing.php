@@ -15,7 +15,6 @@ use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
-use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class PerformerListing extends AbstractType implements TypeInterface
@@ -48,14 +47,12 @@ final class PerformerListing extends AbstractType implements TypeInterface
                 return;
             }
 
-            $item = $node->closest('li');
-            $photo = $item === null ? null : $item->filter(Selectors::CARD_PHOTO);
-            $src = $photo !== null && $photo->count() > 0 ? trim((string) $photo->first()->attr('src')) : '';
+            $image = $this->cardImage($node, $request->url);
             $items[$url] = PerformerDto::item(
                 url: $url,
                 externalId: $externalId,
                 title: $title,
-                data: MovieMeta::filter(['profile_image_url' => $src === '' ? null : $this->absolute($request->url, $src)]),
+                data: $image === null ? [] : ['profile_image_url' => $image],
             );
         });
 
@@ -76,6 +73,15 @@ final class PerformerListing extends AbstractType implements TypeInterface
                 hasNextPage: false,
             ),
         );
+    }
+
+    /** The round portrait sits in the same `<li>` as the name link. */
+    private function cardImage(Crawler $title, string $baseUrl): ?string
+    {
+        $card = $title->closest('li');
+        $src = $card === null ? null : $this->firstAttribute($card, Selectors::PERFORMER_CARD_IMAGE, 'src');
+
+        return $src === null ? null : $this->absolute($baseUrl, $src);
     }
 
     private function externalId(string $url): ?string

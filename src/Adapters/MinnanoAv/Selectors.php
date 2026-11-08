@@ -22,6 +22,12 @@ final class Selectors
 
     public const PERFORMER_IMAGE = '.act-area .thumb img, img.actressThumb';
 
+    public const FILMOGRAPHY_JACKETS = 'td.jacket';
+
+    public const PERFORMER_LIST_PHOTOS = 'table.tbllist.actress td a[href*="actress"] img';
+
+    public const AV_PERFORMER_PHOTO = '.actress-photo img, img.actress-img';
+
     public const RATING_TABLE = '.rate-table';
 
     public const FILMOGRAPHY_MOVIE_LINKS = 'a[href*="av"][href$=".html"]';
