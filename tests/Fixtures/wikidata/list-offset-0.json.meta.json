@@ -1,0 +1,10 @@
+{
+  "source_url": "https://query.wikidata.org/sparql?query=SELECT%20%3Fp%20WHERE%20%7B%20%3Fp%20wdt%3AP106%20wd%3AQ488111%3B%20wdt%3AP27%20wd%3AQ17.%20%7D%20ORDER%20BY%20%3Fp%20LIMIT%205%20OFFSET%200&format=json",
+  "final_url": "https://query.wikidata.org/sparql?query=SELECT%20%3Fp%20WHERE%20%7B%20%3Fp%20wdt%3AP106%20wd%3AQ488111%3B%20wdt%3AP27%20wd%3AQ17.%20%7D%20ORDER%20BY%20%3Fp%20LIMIT%205%20OFFSET%200&format=json",
+  "captured_at": "2026-11-08T02:01:55.700436+00:00",
+  "http_status": 200,
+  "content_hash": "69ad6779478ea1e9d6b24371c59f10837807b84d53a67fcced105668e9dc6b58",
+  "target_type": "listing",
+  "fetch_method": "http",
+  "sanitized": false
+}
