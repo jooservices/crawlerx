@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-11-08
+
 ### Added
 
 - Add the JAVMenu (`javmenu`) adapter with its own parser: paged work listings (sections, code prefixes, makers, series, genres, directors), work detail with code, dates, duration, director, maker, series, genres, idols, poster, magnets and stream lines, the paged performer index and performer pages with their work grid, in every interface language (JOOXCR-453).
@@ -36,8 +38,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add the DEEP'S (`deeps`) adapter with its own parser: paginated and filtered listings and movie details with every labelled field, captured fixtures and URL inference (JOOXCR-420).
 - Add the ROCKET (`rocket`) source with own-markup work list (dated and taxonomy archives) and detail parsing of every labelled field, captured fixtures and URL inference (JOOXCR-419).
 - Add the Honnaka adapter on the shared Maker CMS base (date index, date listings, movie detail with every labelled row, actress profile) with captured-fixture field assertions (JOOXCR-402).
-### Added
-
 - Add the kira*kira adapter on the shared Maker CMS base (date index, date/genre/label/series listings, movie detail with label, actress profile) with captured-fixture field assertions (JOOXCR-399).
 
 ### Security
