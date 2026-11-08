@@ -282,7 +282,7 @@ final class PerformerDetail extends AbstractType implements TypeInterface
         }
 
         $src = $node->first()->attr('src');
-        if (! is_string($src) || trim($src) === '') {
+        if (! is_string($src) || trim($src) === '' || str_contains($src, Selectors::NO_IMAGE)) {
             return null;
         }
 

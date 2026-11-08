@@ -8,6 +8,11 @@ final class Selectors
 {
     public const PERFORMER_CARDS = 'a.actress-card-link[href*="/actress/"]';
 
+    public const PERFORMER_PHOTO = '.actress-card-image img[src]';
+
+    /** The site's stand-in picture for a performer without a photo; it is not an image of the performer. */
+    public const NO_IMAGE = 'no-image';
+
     public const PERFORMER_NAME = '.actress-card-name';
 
     public const PAGINATION_NAV = 'nav.pagination';

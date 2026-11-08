@@ -68,7 +68,9 @@ final class Listing extends AbstractHtmlType implements TypeInterface
 
             $title = $this->itemTitle($node);
             $card = $this->card($node);
-            $cover = $card === null ? null : $this->firstAttribute($card, 'img', 'src');
+            $thumbnail = $card === null ? null : $this->lazyImage($card);
+            $thumbnail = $thumbnail === null ? null : $this->absolute($request->url, $thumbnail);
+            $cover = $thumbnail === null ? null : $this->fullCover($thumbnail);
             $preview = $card === null ? null : $this->firstAttribute($card, 'video[data-src]', 'data-src');
             $items[$absolute] = MovieDto::item(
                 url: $absolute,
@@ -76,9 +78,12 @@ final class Listing extends AbstractHtmlType implements TypeInterface
                 title: $title,
                 data: MovieMeta::filter([
                     'code' => CodeNormalizer::canonical($title, $externalId),
-                    'cover_url' => $cover === null ? null : $this->absolute($request->url, $cover),
+                    'cover_url' => $cover,
                     'duration' => $card === null ? null : $this->cardDuration($card),
-                    'metadata' => MovieMeta::filter(['preview_video_url' => $preview === null ? null : $this->absolute($request->url, $preview)]),
+                    'metadata' => MovieMeta::filter([
+                        'thumbnail_url' => $thumbnail !== $cover ? $thumbnail : null,
+                        'preview_video_url' => $preview === null ? null : $this->absolute($request->url, $preview),
+                    ]),
                 ]),
             );
         });
@@ -90,6 +95,33 @@ final class Listing extends AbstractHtmlType implements TypeInterface
             items: array_values($items),
             pagination: $this->parsePagination($crawler, $request->url, $request->page),
         );
+    }
+
+    /** The card image's real URL: `data-src` of a lazy-loaded image, else its `src` unless that is an inline placeholder. */
+    private function lazyImage(Crawler $card): ?string
+    {
+        $image = $card->filter('img')->first();
+        if ($image->count() === 0) {
+            return null;
+        }
+
+        foreach (['data-src', 'src'] as $attribute) {
+            $value = trim((string) $image->attr($attribute));
+            if ($value !== '' && ! str_starts_with($value, 'data:')) {
+                return $value;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The cards show the small `cover-t.jpg`; the full-size `cover-n.jpg` (the one the detail page uses) sits next to
+     * it on the same CDN path.
+     */
+    private function fullCover(string $thumbnail): string
+    {
+        return (string) preg_replace('#/cover-t\.jpg(?=$|\?)#', '/cover-n.jpg', $thumbnail);
     }
 
     /** The `.thumbnail` box that holds this link's cover, duration badge and hover preview. */

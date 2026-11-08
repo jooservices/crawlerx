@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\Shared\OnejavTheme;
 
+use JOOservices\CrawlerX\Support\ImageUrl;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use JOOservices\CrawlerX\Support\SizeParser;
 use Symfony\Component\DomCrawler\Crawler;
@@ -40,7 +41,7 @@ final class TorrentCardFields
         }
 
         return MovieMeta::filter([
-            'cover_url' => $cover === null ? null : $absolute($baseUrl, $cover),
+            'cover_url' => $cover === null ? null : ImageUrl::original($absolute($baseUrl, $cover)),
             'description' => self::text($scope, 'p.level.has-text-grey-dark, div.level.has-text-grey-dark'),
             'date' => MovieMeta::isoDate((string) $dateHref) ?? MovieMeta::isoDate((string) $dateText) ?? self::monthDate($dateText),
             'tags' => self::texts($scope, 'a.tag.is-light'),

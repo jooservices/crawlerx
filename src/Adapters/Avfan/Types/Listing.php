@@ -13,6 +13,7 @@ use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Support\CodeNormalizer;
+use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class Listing extends AbstractHtmlType implements TypeInterface
@@ -48,11 +49,12 @@ final class Listing extends AbstractHtmlType implements TypeInterface
             }
 
             $code = $this->itemCode($node, $title, $externalId);
+            $cover = $this->cover($node, $request->url);
             $items[$url] = MovieDto::item(
                 url: $url,
                 externalId: $externalId,
                 title: $this->titleWithoutCode($title, $code),
-                data: ['code' => $code],
+                data: MovieMeta::filter(['code' => $code, 'cover_url' => $cover]),
             );
         });
 
@@ -111,6 +113,20 @@ final class Listing extends AbstractHtmlType implements TypeInterface
         $path = parse_url($url, PHP_URL_PATH);
 
         return is_string($path) && preg_match('#/en/movies/([^/]+)#', $path, $match) === 1 ? $match[1] : null;
+    }
+
+    /** The card's cover: an `img` in the cover link, which sits next to the title link in the same card box. */
+    private function cover(Crawler $titleLink, string $baseUrl): ?string
+    {
+        $card = $titleLink->ancestors()->first();
+        $image = $card->filter('img[src], img[data-src]');
+        if ($image->count() === 0) {
+            return null;
+        }
+
+        $src = $image->first()->attr('data-src') ?? $image->first()->attr('src');
+
+        return is_string($src) && trim($src) !== '' ? $this->absolute($baseUrl, trim($src)) : null;
     }
 
     private function itemTitle(Crawler $node): ?string
