@@ -162,6 +162,7 @@ export async function fetchWithBrowser(config, browser) {
     let context = null;
     let ssrfProxy = null;
     let ssrfViolation = false;
+    let ssrfError = null;
 
     const closePhase = (id, label, startMs, status = 'ok') => {
         phases.push({
@@ -214,8 +215,11 @@ export async function fetchWithBrowser(config, browser) {
             }
             try {
                 await assertSafeBrowserUrl(requestUrl);
-            } catch {
+            } catch (error) {
                 ssrfViolation = true;
+                if (error instanceof SsrfBlockedError) {
+                    ssrfError = error;
+                }
                 await route.abort('blockedbyclient').catch(() => {});
                 return;
             }
@@ -255,13 +259,13 @@ export async function fetchWithBrowser(config, browser) {
             timeout: navigationTimeoutMs,
         });
         if (ssrfViolation || ssrfProxy.wasBlocked()) {
-            throw new SsrfBlockedError();
+            throw ssrfError ?? ssrfProxy.blockedError() ?? new SsrfBlockedError();
         }
         closePhase('navigation', 'Load page (domcontentloaded)', navigationStarted);
 
         await dismissInterstitials(page, context, url);
         if (ssrfViolation || ssrfProxy.wasBlocked()) {
-            throw new SsrfBlockedError();
+            throw ssrfError ?? ssrfProxy.blockedError() ?? new SsrfBlockedError();
         }
 
         const waitStarted = Date.now();
@@ -306,7 +310,7 @@ export async function fetchWithBrowser(config, browser) {
         const extractStarted = Date.now();
         const html = await page.content();
         if (ssrfProxy.wasBlocked()) {
-            throw new SsrfBlockedError();
+            throw ssrfError ?? ssrfProxy.blockedError() ?? new SsrfBlockedError();
         }
         const finalUrl = page.url();
         const pageTitle = await page.title();
@@ -352,12 +356,17 @@ export async function fetchWithBrowser(config, browser) {
         };
     } catch (error) {
         if (ssrfViolation || ssrfProxy?.wasBlocked() || error instanceof SsrfBlockedError) {
+            const blockedError = error instanceof SsrfBlockedError
+                ? error
+                : ssrfError ?? ssrfProxy?.blockedError();
             return {
                 error: 'ssrf_blocked',
                 errorCode: 'ssrf_blocked',
                 status: 403,
                 elapsedMs: Date.now() - started,
                 challenge: false,
+                ssrfReason: blockedError?.reason ?? 'blocked',
+                ssrfHostname: blockedError?.hostname ?? null,
             };
         }
         return {
