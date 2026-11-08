@@ -104,7 +104,13 @@
             {
                 "url": "https://attackers.net/works/date",
                 "name": "dates.html",
-                "type": "listing"
+                "type": "listing",
+                "followUps": [
+                    {
+                        "url": "https://attackers.net/works/list/date/2026-12-01",
+                        "name": "list-2026-12-01.html"
+                    }
+                ]
             },
             {
                 "url": "https://attackers.net/works/list/genre/128",

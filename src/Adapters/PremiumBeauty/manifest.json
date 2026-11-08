@@ -104,7 +104,13 @@
             {
                 "url": "https://premium-beauty.com/works/date",
                 "name": "dates.html",
-                "type": "listing"
+                "type": "listing",
+                "followUps": [
+                    {
+                        "url": "https://premium-beauty.com/works/list/date/2026-11-17",
+                        "name": "list-2026-11-17.html"
+                    }
+                ]
             },
             {
                 "url": "https://premium-beauty.com/works/list/genre/218",

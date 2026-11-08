@@ -38,13 +38,13 @@ final class Detail extends AbstractType implements TypeInterface
             'duration' => $formats[0]['duration'] ?? null,
             'cover_url' => $images[0] ?? null,
             'screenshots' => $images,
-            'performers' => isset($rows['女優']) ? $fields->performers($rows['女優']) : [],
+            'performers' => isset($rows['女優']) ? $fields->performers($rows['女優'], '.td .item p') : [],
             'tags' => array_column($genres, 'name'),
             'metadata' => [
                 'maker' => $this->config->maker,
                 'genres' => $genres,
                 'series' => isset($rows['シリーズ']) ? $fields->links($rows['シリーズ'], 'a[href]') : [],
-                ...(isset($rows['レーベル']) ? ['label' => $fields->links($rows['レーベル'], 'a[href]')] : []),
+                ...$this->label($rows, $fields),
                 'release_links' => isset($rows['発売日']) ? $fields->links($rows['発売日'], 'a[href]') : [],
                 'director' => $this->director($rows, $fields),
                 'formats' => $formats,
@@ -80,6 +80,17 @@ final class Detail extends AbstractType implements TypeInterface
         }
 
         return array_values($formats);
+    }
+
+    /** @param array<string, Crawler> $rows
+     * @return array<string, list<array<string, string>>>
+     */
+    private function label(array $rows, Fields $fields): array
+    {
+        // Most maker sites name the row レーベル; HHH names the same row メーカー.
+        $row = $rows['レーベル'] ?? $rows['メーカー'] ?? null;
+
+        return $row !== null ? ['label' => $fields->links($row, 'a[href]')] : [];
     }
 
     /** @param array<string, Crawler> $rows */

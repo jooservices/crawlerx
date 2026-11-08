@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-11-08
+
+### Added
+
+- Add the JAVMenu (`javmenu`) adapter with its own parser: paged work listings (sections, code prefixes, makers, series, genres, directors), work detail with code, dates, duration, director, maker, series, genres, idols, poster, magnets and stream lines, the paged performer index and performer pages with their work grid, in every interface language (JOOXCR-453).
+- Add the AV-Actress (`avactress`) adapter: paged actress rankings and lists (popular, bust, young, new) and actress profiles with measurements, birthday, blood type, birthplace, hobbies and every listed work with its large and thumbnail covers and sample movie (JOOXCR-454).
+- Add the DAHLIA (`dahlia`) adapter with its own parser: work listing with pagination, work detail with every labelled row, cover, all gallery stills with thumbnails, sample video and store links, performer roster and performer profiles (JOOXCR-415).
+- Add the Wikimedia Commons (`commons`) adapter on the official MediaWiki API: gravure idol category listing, category and file galleries with every original, thumbnail and licence field, and idol person pages (JOOXCR-424).
+- Add the Smart FLASH (`smartflash`) gravure adapter with paged listing and gallery crawls (every article photo from the article and its photo viewer, tags, source, author, credits, dates), captured fixtures and URL inference (JOOXCR-425).
+- Add the Gravure-ch (`gravurech`) photo-set adapter with a paged listing and gallery detail (title, cast, tags, magazine and issue date, page count, cover image, labelled fields); the photo pages are member-only and are not crawled (JOOXCR-428).
+- Add the Materiall (`materiall`) adapter with its own parser: work listing with pagination (cover, cast, reservation and distribution dates, store links) and work detail with every labelled row, cover, sample-video link and store links, captured fixtures and URL inference (JOOXCR-416).
+- Add the DANDY GROUP (`dandy`: Dandy, Cosmos, Yuuyake and sister labels) adapter with complete listing and detail fields, captured fixtures and URL inference (JOOXCR-422).
+- Add the Next11 (`next11`) adapter with its own parser: month and label/series/genre/cast listings with pagination, and movie detail with every labelled row, all jacket and sample-still images, sample-video embed and purchase links (JOOXCR-421).
+- Add the Indies (`indies`, 桃太郎映像出版) adapter with month, label and genre listings, title details, actress profiles and the actress index, complete field extraction and captured fixtures (JOOXCR-418).
+- Add the PLUM (`plum`) adapter with its own parser: listing cards with pagination and complete movie detail (code, date, duration, cast, categories, series, price, review number, barcode, gallery, sample video, purchase links) from captured fixtures (JOOXCR-417).
+- Add the FALENO GROUP (`falenogroup`) adapter with its own parser: work listing with pagination, maker pages and work detail with every labelled field, captured fixtures and URL inference (JOOXCR-414).
+- Add the V-AV (`vav`) adapter on the shared Maker CMS base with complete public movie and listing fields (the site has no actress pages), captured fixtures and URL inference (JOOXCR-413).
+- Add the BOMB.tv (`bomb`) photo/gallery adapter: the public Plus idol index and idol pages with every public pack image (cover, previews, sample still), pack facts and captured Shift_JIS fixtures (JOOXCR-429).
+- Add the MUKU (`muku`) maker-CMS source with complete movie and listing fields (JOOXCR-410).
+- Add the MKO LABO (`mko`) adapter on the shared Maker CMS base with complete public movie, listing and actress fields, captured fixtures and URL inference (JOOXCR-409).
+- Add the MIMAN (`miman`) adapter on the shared Maker CMS base with complete movie and date-listing fields, captured fixtures and URL inference (JOOXCR-408).
+- Add the Hajime Kikaku (`hajimekikaku`) adapter on the shared Maker CMS base with complete public movie and listing fields, captured fixtures and URL inference (JOOXCR-407).
+- Add the OPERA (`opera`) maker-CMS source with complete movie and listing fields, captured fixtures and URL inference; the site exposes no actress profile fields, so performer detail is not declared (JOOXCR-404).
+- Add the BeFreeBe adapter on the shared Maker CMS base with complete public movie, listing and actress fields, captured fixtures and URL inference (JOOXCR-405).
+- Add the E-BODY (`ebody`) maker-CMS source with complete movie, listing and actress fields (JOOXCR-403).
+- Add the WANZ FACTORY adapter on the shared Maker CMS base with complete public movie, listing and actress fields, captured fixtures and URL inference (JOOXCR-398).
+- Add the To-Satsu adapter on the shared Maker CMS base with complete public movie and listing fields, captured fixtures and URL inference (JOOXCR-412).
+- Add the Tameike Goro (`tameikegoro`) maker-CMS source with complete movie, listing and actress fields.
+- Add the DEEP'S (`deeps`) adapter with its own parser: paginated and filtered listings and movie details with every labelled field, captured fixtures and URL inference (JOOXCR-420).
+- Add the ROCKET (`rocket`) source with own-markup work list (dated and taxonomy archives) and detail parsing of every labelled field, captured fixtures and URL inference (JOOXCR-419).
+- Add the Honnaka adapter on the shared Maker CMS base (date index, date listings, movie detail with every labelled row, actress profile) with captured-fixture field assertions (JOOXCR-402).
+- Add the kira*kira adapter on the shared Maker CMS base (date index, date/genre/label/series listings, movie detail with label, actress profile) with captured-fixture field assertions (JOOXCR-399).
+
+### Security
+
+- Upgrade `symfony/config`, `symfony/filesystem` and `symfony/yaml` to 8.1.11 for the 2026-11-04 advisories (PKSA-9myg-zzdn-22rg, PKSA-g499-cm4q-v35y, PKSA-nktx-f1n1-b4yd); transitive `symfony/process`, `symfony/deprecation-contracts` and `symfony/polyfill-mbstring` move with them (JOOXCR-401).
+
+### Changed
+
+- Register follow-up fixtures from manifests (`runtime.fixtureSamples[].followUps`) and derive adapter-count assertions from the manifest directory, so adding a source no longer edits shared tests or docs (JOOXCR-392).
+
 ## [1.5.0] - 2026-11-03
 
 ### Added
@@ -16,17 +57,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add the Pacopacomama listing/detail adapter on the shared 1Pondo-family base with real JSON fixtures and public sample galleries (JOOXCR-309).
 - Add the caribbeancompr adapter (English and Japanese detail, English listing) on the shared Caribbeancom listing/detail parsers through a per-site `Profile`; `caribbeancom` output is unchanged (JOOXCR-351).
 - Complete shared OnePondoFamily list/detail field extraction, retain full file/category/performer source records, and guard every family fixture against silent field loss and changes to existing DTO values (JOOXCR-360).
+- Add the jav321 adapter (listing, detail with cast, genres and all images, performer listing) (JOOXCR-350).
 - Add the 10musume adapter on the shared 1Pondo-family JSON base (listing + detail) (JOOXCR-308).
 - Add the Muramura adapter on the shared 1Pondo-family JSON base (listing + detail) (JOOXCR-310).
 - Add configurable Maker CMS family parsing with the S1 adapter, complete movie/actress metadata and captured-fixture field assertions (JOOXCR-348).
 - Add the MOODYZ adapter on the shared Maker CMS base (date index, date listing, detail, actress) using the shared `metadata.label` field (JOOXCR-352).
 - Add the Premium Beauty adapter on the shared Maker CMS base (date index, date/genre/label/series listings, movie detail with label, actress profile) with captured-fixture field assertions (JOOXCR-359).
 - Add the IDEAPOCKET adapter on the shared Maker CMS base (date index, date/genre/label/series listings, movie detail with label, actress profile) with captured-fixture field assertions (JOOXCR-353).
+- Add the ROOKIE adapter on the shared Maker CMS base (date index, date listings, movie detail with every labelled row, actress profile) with captured-fixture field assertions (JOOXCR-400).
+- Add the BI adapter on the shared Maker CMS base (date index, date listings, movie detail with label, director, formats, sample video and purchase links, actress profile) with captured-fixture field assertions (JOOXCR-393).
 - Add the DASDAS adapter on the shared Maker CMS base (date index, date/genre/label/series listings, movie detail, actress profile) with captured-fixture field assertions (JOOXCR-357).
 - Add the Madonna adapter on the shared Maker CMS base (date index, date listing, detail with label/series/formats/purchase links, actress profile) with captured-fixture field assertions (JOOXCR-354).
+- Add the HHH adapter on the shared Maker CMS base (date index, date listing, detail with label/series/formats/purchase links; unlinked actress names kept) with captured-fixture field assertions (JOOXCR-394).
+- Add the MVG adapter on the shared Maker CMS base (date index, date/genre/series listings, movie detail with plain-text performers, formats, purchase links) with captured-fixture field assertions (JOOXCR-395).
 - Add the kawaii* adapter on the shared Maker CMS base (date index, date listings, detail with label/series/formats/purchase links, actress profile) with captured-fixture field assertions (JOOXCR-358).
+- Add the OPPAI adapter on the shared Maker CMS base (date index, date/genre listings, detail with label/formats/purchase links, actress profile) with captured-fixture field assertions (JOOXCR-396).
+- Add the Nanpa Japan adapter on the shared Maker CMS base (date index, date/genre/series listings, movie detail with every labelled row, series, director, formats, sample video and purchase links) with captured-fixture field assertions (JOOXCR-411).
 - AV-Wiki listing and detail support, using one `_embed=1` REST request per listing page or detail post (categories and tags come from `_embedded['wp:term']`), a 45 s timeout and a 12 s host throttle for the site's per-request delay, plus captured source fixtures (JOOXCR-349).
 - Configurable `connect_timeout` (manifest `defaultCrawlConfig`) for hosts that delay the connection phase; it defaults to the previous fixed 5 s.
+- Add the BIBIAN (ビビアン) adapter on the shared Maker CMS base (date index, date/genre/label/series listings, movie detail with every labelled row, actress profile) with captured-fixture field assertions (JOOXCR-406).
 
 ### Changed
 

@@ -1,0 +1,130 @@
+{
+    "slug": "next11",
+    "name": "Next11",
+    "version": "1.0.0",
+    "description": "Crawler for Next11 (Next Group official catalog)",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\Next11\\Next11Crawler",
+        "capabilities": [
+            "listing",
+            "detail"
+        ]
+    },
+    "base_url": "https://next11.co.jp",
+    "pagination": {
+        "strategy": "query",
+        "param": "pageno"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 3600,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        }
+    ],
+    "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [
+                    "ul.listarea > li"
+                ],
+                "detail": [
+                    "article.product"
+                ]
+            },
+            "soft404Markers": [
+                "page not found",
+                "404 not found",
+                "the page you requested was not found"
+            ]
+        },
+        "targetProfiles": {
+            "new_month": {
+                "label": "Next11 Month Releases",
+                "url": "https://next11.co.jp/products/list.php?ym=202611"
+            },
+            "label_kirei": {
+                "label": "Next11 Label KIRei",
+                "url": "https://next11.co.jp/products/list.php?category_id=4343"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "label_kirei",
+                "url": "https://next11.co.jp/products/list.php?category_id=4343",
+                "paginated": true,
+                "loop": true,
+                "priority": 3,
+                "status": "paused"
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://next11.co.jp/products/list.php?ym=202611",
+                "name": "list-ym-202611.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://next11.co.jp/products/list.php?category_id=4343",
+                "name": "list-label-4343.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://next11.co.jp/products/detail.php?product_id=13788",
+                "name": "detail-KIR-080.html",
+                "type": "detail"
+            },
+            {
+                "url": "https://next11.co.jp/products/detail.php?product_id=13814",
+                "name": "detail-KANZ-354.html",
+                "type": "detail"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 10,
+            "detail_delay_seconds": 10,
+            "cycle_delay_seconds": 3600
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 10,
+            "min_gap_seconds": 5,
+            "max_gap_seconds": 45
+        },
+        "playwrightFetchEnabled": false,
+        "queueSupervisor": {
+            "minProcesses": 1,
+            "maxProcesses": 1
+        }
+    },
+    "type": "site"
+}

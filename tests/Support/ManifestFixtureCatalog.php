@@ -75,6 +75,16 @@ final class ManifestFixtureCatalog
         };
     }
 
+    /**
+     * Registers the manifest-declared follow-up pages (`followUps`) of one sample.
+     */
+    public static function registerFollowUps(string $slug, FixtureSampleDto $sample): void
+    {
+        foreach ($sample->followUps as $followUp) {
+            FixtureResponder::for('GET', $followUp->url)->file(self::fixtureRelativePath($slug, $followUp->name));
+        }
+    }
+
     public static function registerSupportingResponses(string $slug): void
     {
         $manifest = (new FileAdapterManifestRegistry())->get($slug);

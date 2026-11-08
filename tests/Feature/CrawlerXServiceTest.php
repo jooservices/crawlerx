@@ -50,6 +50,8 @@ final class CrawlerXServiceTest extends TestCase
     public function test_factory_registers_all_manifest_adapters(): void
     {
         $manifests = new FileAdapterManifestRegistry();
-        self::assertCount(39, $manifests->slugs());
+        $manifestFiles = glob(__DIR__ . '/../../src/Adapters/*/manifest.json');
+        self::assertNotEmpty($manifestFiles);
+        self::assertCount(count($manifestFiles), $manifests->slugs());
     }
 }

@@ -104,7 +104,13 @@
             {
                 "url": "https://ideapocket.com/works/date",
                 "name": "dates.html",
-                "type": "listing"
+                "type": "listing",
+                "followUps": [
+                    {
+                        "url": "https://ideapocket.com/works/list/date/2026-12-01",
+                        "name": "list-2026-12-01.html"
+                    }
+                ]
             },
             {
                 "url": "https://ideapocket.com/works/list/genre/315",

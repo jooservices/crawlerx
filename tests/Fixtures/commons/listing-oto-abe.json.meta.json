@@ -1,0 +1,10 @@
+{
+  "source_url": "https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&list=categorymembers&cmtitle=Category%3AOto+Abe&cmtype=subcat%7Cfile&cmlimit=2&cmprop=ids%7Ctitle%7Ctype%7Ctimestamp%7Csortkeyprefix",
+  "final_url": "https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&list=categorymembers&cmtitle=Category%3AOto+Abe&cmtype=subcat%7Cfile&cmlimit=2&cmprop=ids%7Ctitle%7Ctype%7Ctimestamp%7Csortkeyprefix",
+  "captured_at": "2026-11-06T20:45:57.000Z",
+  "http_status": 200,
+  "content_hash": "f6009adb4e227bc8ede44173be361c50c929c44a18002614bce78a3f9436f813",
+  "target_type": "listing",
+  "fetch_method": "http",
+  "sanitized": false
+}

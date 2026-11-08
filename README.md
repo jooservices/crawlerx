@@ -249,49 +249,86 @@ Available methods are `http`, `curl_impersonate`, `playwright`,
 
 ## Supported sites
 
-CrawlerX currently registers 39 adapters. Capabilities below come from each
-adapter's current manifest.
+CrawlerX registers one adapter per `src/Adapters/*/manifest.json`. Capabilities
+below come from each adapter's current manifest. To add a source, see
+[docs/adding-a-source.md](docs/adding-a-source.md).
 
 | Site | Slug | Listing | Detail | Gallery | Performer listing | Performer detail |
 | --- | --- | :---: | :---: | :---: | :---: | :---: |
 | 141Jav | `141jav` | Yes | Yes | — | — | — |
 | S1 NO.1 STYLE | `s1` | Yes | Yes | — | — | Yes |
 | MOODYZ | `moodyz` | Yes | Yes | — | — | Yes |
+| FALENO GROUP | `falenogroup` | Yes | Yes | — | — | — |
+| Materiall | `materiall` | Yes | Yes | — | — | — |
+| HONNAKA | `honnaka` | Yes | Yes | — | — | Yes |
+| WANZ FACTORY | `wanz` | Yes | Yes | — | — | Yes |
+| Indies | `indies` | Yes | Yes | — | Yes | Yes |
+| MKO LABO | `mko` | Yes | Yes | — | — | Yes |
+| MIMAN | `miman` | Yes | Yes | — | — | — |
+| OPERA | `opera` | Yes | Yes | — | — | — |
+| BeFreeBe | `befreebe` | Yes | Yes | — | — | Yes |
+| DANDY GROUP | `dandy` | Yes | Yes | — | — | — |
+| Tameike Goro | `tameikegoro` | Yes | Yes | — | — | Yes |
+| ROCKET | `rocket` | Yes | Yes | — | — | — |
+| Hajime Kikaku | `hajimekikaku` | Yes | Yes | — | — | — |
 | Fitch | `fitch` | Yes | Yes | — | — | Yes |
 | ATTACKERS | `attackers` | Yes | Yes | — | — | Yes |
 | IDEAPOCKET | `ideapocket` | Yes | Yes | — | — | Yes |
+| E-BODY | `ebody` | Yes | Yes | — | — | Yes |
+| MVG | `mvg` | Yes | Yes | — | — | — |
+| ROOKIE | `rookie` | Yes | Yes | — | — | Yes |
+| BI | `bi` | Yes | Yes | — | — | Yes |
+| BIBIAN | `bibian` | Yes | Yes | — | — | Yes |
 | Premium Beauty | `premiumbeauty` | Yes | Yes | — | — | Yes |
 | DASDAS | `dasdas` | Yes | Yes | — | — | Yes |
 | Madonna | `madonna` | Yes | Yes | — | — | Yes |
+| HHH | `hhh` | Yes | Yes | — | — | — |
+| V-AV | `vav` | Yes | Yes | — | — | — |
+| To-Satsu | `tosatsu` | Yes | Yes | — | — | — |
+| Nanpa Japan | `nanpajapan` | Yes | Yes | — | — | — |
+| BOMB.tv | `bomb` | Yes | — | Yes | — | — |
 | kawaii* | `kawaiikawaii` | Yes | Yes | — | — | Yes |
+| kira*kira | `kirakira` | Yes | Yes | — | — | Yes |
+| DEEP'S | `deeps` | Yes | Yes | — | — | — |
+| OPPAI | `oppai` | Yes | Yes | — | — | Yes |
+| MUKU | `muku` | Yes | Yes | — | — | — |
 | Pacopacomama | `pacopacomama` | Yes | Yes | — | — | — |
+| PLUM | `plum` | Yes | Yes | — | — | — |
 | 1Pondo | `onepondo` | Yes | Yes | — | — | — |
 | 10Musume | `10musume` | Yes | Yes | — | — | — |
 | Aisex | `aisex` | — | — | — | Yes | Yes |
 | Avfan | `avfan` | Yes | Yes | — | — | — |
 | Avfan Profiles | `avfan_profiles` | — | — | — | Yes | Yes |
 | Avjoho | `avjoho` | — | — | — | Yes | Yes |
+| AV-Actress | `avactress` | — | — | — | Yes | Yes |
 | AV-Wiki | `avwiki` | Yes | Yes | — | — | — |
 | Caribbeancom | `caribbeancom` | Yes | Yes | — | — | — |
 | Caribbeancom Premium | `caribbeancompr` | Yes | Yes | — | — | — |
+| DAHLIA | `dahlia` | Yes | Yes | — | Yes | Yes |
 | DUGA | `duga` | Yes | Yes | — | — | — |
 | EPORNER | `eporner` | — | — | Yes | — | — |
 | FC2 Content Market | `fc2` | Yes | Yes | — | — | — |
 | FFJav | `ffjav` | Yes | Yes | — | — | — |
+| Gravure-ch | `gravurech` | Yes | — | Yes | — | — |
 | HEYZO | `heyzo` | Yes | Yes | — | — | — |
 | Jable | `jable` | Yes | Yes | — | Yes | Yes |
 | JAV Database | `javdatabase` | — | — | — | Yes | Yes |
+| Jav321 | `jav321` | Yes | Yes | — | Yes | — |
 | JavBTC | `javbtc` | Yes | Yes | — | — | — |
 | JavBus | `javbus` | Yes | Yes | — | Yes | Yes |
 | JavDB | `javdb` | Yes | Yes | — | — | — |
 | JAVLibrary | `javlibrary` | Yes | Yes | — | Yes | Yes |
+| JAVMenu | `javmenu` | Yes | Yes | — | Yes | Yes |
 | JavPhotos | `javphotos` | Yes | — | Yes | — | — |
 | Minnano AV | `minnanoav` | Yes | Yes | — | Yes | Yes |
 | MissAV | `missav` | Yes | Yes | — | — | — |
 | Muramura | `muramura` | Yes | Yes | — | — | — |
+| Next11 | `next11` | Yes | Yes | — | — | — |
 | OneJav | `onejav` | Yes | Yes | — | — | — |
+| Smart FLASH | `smartflash` | Yes | — | Yes | — | — |
 | Tokyo-Hot | `tokyohot` | Yes | Yes | — | — | — |
 | Warashi | `warashi` | — | — | Yes | Yes | Yes |
+| Wikimedia Commons | `commons` | Yes | — | Yes | — | Yes |
 | XCITY | `xcity` | Yes | Yes | — | Yes | Yes |
 
 DUGA, Tokyo-Hot, Caribbeancom, HEYZO, and JavBus use accepted adult landing
