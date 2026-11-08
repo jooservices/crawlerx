@@ -1,0 +1,131 @@
+{
+    "slug": "wikidata",
+    "name": "Wikidata",
+    "version": "1.0.0",
+    "description": "Crawler for Japanese pornographic film actors on Wikidata (CC0) through the official Query Service and wbgetentities API",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\Wikidata\\WikidataCrawler",
+        "capabilities": [
+            "listing",
+            "performer_detail"
+        ]
+    },
+    "base_url": "https://www.wikidata.org",
+    "pagination": {
+        "strategy": "query",
+        "param": "query"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 60,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 6,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 6,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 2592000,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        }
+    ],
+    "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [
+                    "body"
+                ],
+                "performer_detail": [
+                    "body"
+                ]
+            },
+            "soft404Markers": [
+                "\"missing\""
+            ]
+        },
+        "targetProfiles": {
+            "wikidata_japanese_actors": {
+                "label": "Japanese pornographic film actors",
+                "url": "https://query.wikidata.org/sparql?query=SELECT%20%3Fp%20WHERE%20%7B%20%3Fp%20wdt%3AP106%20wd%3AQ488111%3B%20wdt%3AP27%20wd%3AQ17.%20%7D%20ORDER%20BY%20%3Fp%20LIMIT%2050%20OFFSET%200&format=json"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "wikidata_japanese_actors",
+                "url": "https://query.wikidata.org/sparql?query=SELECT%20%3Fp%20WHERE%20%7B%20%3Fp%20wdt%3AP106%20wd%3AQ488111%3B%20wdt%3AP27%20wd%3AQ17.%20%7D%20ORDER%20BY%20%3Fp%20LIMIT%2050%20OFFSET%200&format=json",
+                "paginated": true,
+                "loop": false,
+                "priority": 0,
+                "max_pages": 20,
+                "status": "paused"
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://query.wikidata.org/sparql?query=SELECT%20%3Fp%20WHERE%20%7B%20%3Fp%20wdt%3AP106%20wd%3AQ488111%3B%20wdt%3AP27%20wd%3AQ17.%20%7D%20ORDER%20BY%20%3Fp%20LIMIT%205%20OFFSET%200&format=json",
+                "name": "list-offset-0.json",
+                "type": "listing"
+            },
+            {
+                "url": "https://www.wikidata.org/w/api.php?action=wbgetentities&ids=Q100715228%7CQ102247563%7CQ10295539%7CQ10313825%7CQ10358931&props=labels%7Cdescriptions%7Caliases%7Cclaims%7Csitelinks%2Furls&languages=ja%7Cen&sitefilter=jawiki%7Cenwiki&format=json",
+                "name": "entities-list.json",
+                "type": "supporting"
+            },
+            {
+                "url": "https://www.wikidata.org/w/api.php?action=wbgetentities&ids=Q22128111&props=labels%7Cdescriptions%7Caliases%7Cclaims%7Csitelinks%2Furls&languages=ja%7Cen&sitefilter=jawiki%7Cenwiki&format=json",
+                "name": "entity-Q22128111.json",
+                "type": "performer_detail"
+            },
+            {
+                "url": "https://www.wikidata.org/w/api.php?action=wbgetentities&ids=P31%7CQ5%7CP21%7CQ6581072%7CP569%7CP1853%7CQ19831453%7CP2003%7CP2002%7CP3579%7CP18%7CP106%7CQ226008%7CQ1079215%7CQ55155641%7CP2397%7CP2048%7CQ174728%7CP856%7CQ5287%7CP27%7CQ17%7CP373%7CP19%7CQ11751%7CP109%7CP434%7CP553%7CQ11251593%7CP1412%7CP1559%7CP463%7CQ181519%7CQ50821732%7CP973%7CQ1860%7CP6262%7CP2031%7CP3790%7CP1477%7CP2671%7CP8687%7CP9781%7CP7085%7CP9885%7CP214%7CP213%7CP349%7CP5246%7CP5540&props=labels&languages=ja%7Cen&format=json",
+                "name": "labels-Q22128111-1.json",
+                "type": "supporting"
+            },
+            {
+                "url": "https://www.wikidata.org/w/api.php?action=wbgetentities&ids=P8720%7CP1581%7CP1814%7CP734%7CQ21491961%7CP735%7CQ118395755%7CP136%7CQ131578%7CQ20965835%7CP1303%7CQ17172850%7CP103%7CP1449%7CP2032%7CP4985%7CP1875%7CQ7388219%7CP345%7CP12038%7CP11408%7CP11245%7CP5436%7CQ63185508%7CP11892%7CP14031%7CP14167%7CP14246%7CP14286%7CP12836%7CP14324%7CP14374%7CP14380%7CP14419%7CP452%7CQ4373046%7CP13337%7CP3913%7CP1651%7CQ11574%7CP14681&props=labels&languages=ja%7Cen&format=json",
+                "name": "labels-Q22128111-2.json",
+                "type": "supporting"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 45,
+            "connect_timeout": 45,
+            "page_delay_seconds": 6,
+            "detail_delay_seconds": 6,
+            "cycle_delay_seconds": 2592000
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 6,
+            "min_gap_seconds": 5,
+            "max_gap_seconds": 60
+        },
+        "browserHeaders": {
+            "User-Agent": "CrawlerX/1.0 (+https://github.com/jooservices; soulevilx@gmail.com)",
+            "Accept": "application/json"
+        },
+        "playwrightFetchEnabled": false
+    },
+    "type": "site"
+}

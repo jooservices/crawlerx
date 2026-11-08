@@ -187,7 +187,7 @@ final class Detail extends AbstractHtmlType implements TypeInterface
         return $src === null ? null : $this->normalizer->absolute($baseUrl, $src);
     }
 
-    /** @return list<array{external_id: string, name: string, url: string}> */
+    /** @return list<array{external_id: string, name: string, url: string, profile_image_url?: string}> */
     private function performers(Crawler $crawler, string $baseUrl): array
     {
         $performers = [];
@@ -202,11 +202,16 @@ final class Detail extends AbstractHtmlType implements TypeInterface
                 return;
             }
 
-            $performers[$match[1]] = [
+            $performer = [
                 'external_id' => $match[1],
                 'name' => $name,
                 'url' => $this->normalizer->canonicalActressUrl($this->normalizer->absolute($baseUrl, $href)),
             ];
+            $photo = $this->firstAttribute($node, Selectors::AV_PERFORMER_PHOTO, 'src');
+            if ($photo !== null) {
+                $performer['profile_image_url'] = $this->normalizer->absolute($baseUrl, $photo);
+            }
+            $performers[$match[1]] = $performer;
         });
 
         return array_values($performers);

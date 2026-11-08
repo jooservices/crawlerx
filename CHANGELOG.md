@@ -7,9 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-11-08
+
 ### Added
 
 - Audit Maker CMS family images (28 adapters, JOOXCR-423): lazy `data-original`/`data-lazy-src`/`srcset` fallbacks in the shared image reader and per-adapter regression counts for every slider, profile and listing cover image.
+- Add the Wikidata (`wikidata`) performer adapter on the official Query Service and wbgetentities API: paged listing of Japanese pornographic film actors and item detail with ja/en labels, descriptions and aliases, birth date, height, Commons image (original and thumbnail), Wikipedia sitelinks and every statement (typed values, ranks, qualifiers, property and item labels), 2 requests a listing page and 1 + ceil(ids/50) per item (JOOXCR-456).
+- Add the JAVMenu (`javmenu`) adapter with its own parser: paged work listings (sections, code prefixes, makers, series, genres, directors), work detail with code, dates, duration, director, maker, series, genres, idols, poster, magnets and stream lines, the paged performer index and performer pages with their work grid, in every interface language (JOOXCR-453).
 - Add the AV-Actress (`avactress`) adapter: paged actress rankings and lists (popular, bust, young, new) and actress profiles with measurements, birthday, blood type, birthplace, hobbies and every listed work with its large and thumbnail covers and sample movie (JOOXCR-454).
 - Add the DAHLIA (`dahlia`) adapter with its own parser: work listing with pagination, work detail with every labelled row, cover, all gallery stills with thumbnails, sample video and store links, performer roster and performer profiles (JOOXCR-415).
 - Add the Wikimedia Commons (`commons`) adapter on the official MediaWiki API: gravure idol category listing, category and file galleries with every original, thumbnail and licence field, and idol person pages (JOOXCR-424).
@@ -36,8 +40,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add the DEEP'S (`deeps`) adapter with its own parser: paginated and filtered listings and movie details with every labelled field, captured fixtures and URL inference (JOOXCR-420).
 - Add the ROCKET (`rocket`) source with own-markup work list (dated and taxonomy archives) and detail parsing of every labelled field, captured fixtures and URL inference (JOOXCR-419).
 - Add the Honnaka adapter on the shared Maker CMS base (date index, date listings, movie detail with every labelled row, actress profile) with captured-fixture field assertions (JOOXCR-402).
-### Added
-
 - Add the kira*kira adapter on the shared Maker CMS base (date index, date/genre/label/series listings, movie detail with label, actress profile) with captured-fixture field assertions (JOOXCR-399).
 
 ### Security
@@ -46,7 +48,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Complete the images of the torrent/streaming indexes and remaining adapters (Missav, Jable, Javbtc, Onejav family, Avfan, Aisex, Avjoho, AvfanProfiles, Duga, FC2): resolve lazy-loaded covers, give the full-size cover next to its thumbnail, add the listing covers and performer photos the pages show, drop CDN re-compression and stop using a work screenshot as a performer photo (JOOXCR-423).
 - Register follow-up fixtures from manifests (`runtime.fixtureSamples[].followUps`) and derive adapter-count assertions from the manifest directory, so adding a source no longer edits shared tests or docs (JOOXCR-392).
+- Complete the images of the community-database and photo/gallery adapters (JOOXCR-423): JavBus cast photos and listing ids with an underscore, JavLibrary preview stills, JavDatabase and MinnanoAv portraits, lightbox stills and works jackets, Avjoho/AV-Fan/XCITY/Warashi card portraits, Warashi gallery cover and cast photo, Jav321 sample-video poster, with image-count tests over every real fixture.
 
 ## [1.5.0] - 2026-11-03
 

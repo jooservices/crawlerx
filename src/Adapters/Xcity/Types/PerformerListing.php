@@ -19,6 +19,8 @@ final class PerformerListing extends AbstractType implements TypeInterface
 {
     use ParsesHtml;
 
+    private const CARD_IMAGES = '#avidol a[href*="detail/"] img[src]';
+
     public function __construct(
         private readonly CrawlHttpClient $client,
     ) {
@@ -30,9 +32,10 @@ final class PerformerListing extends AbstractType implements TypeInterface
         $html = $this->htmlFromResponse($response->toPsrResponse(), 'xcity', 'performer_listing');
         $crawler = new Crawler($html, $request->url);
         $items = [];
+        $images = $this->cardImages($crawler, $request->url);
 
         $crawler->filter('#avidol a[href*="/idol/detail/"], #avidol a[href*="/idol/?id="], #avidol a[href*="detail/"]')
-            ->each(function (Crawler $node) use (&$items, $request): void {
+            ->each(function (Crawler $node) use (&$items, $images, $request): void {
                 $href = $node->attr('href');
                 $name = $this->listingName($node);
                 if (! is_string($href) || $href === '' || $name === '') {
@@ -49,6 +52,7 @@ final class PerformerListing extends AbstractType implements TypeInterface
                     url: $url,
                     externalId: $externalId,
                     title: $name,
+                    data: isset($images[$url]) ? ['profile_image_url' => $images[$url]] : [],
                 )->withNextCrawlType('performer_detail');
             });
 
@@ -67,6 +71,25 @@ final class PerformerListing extends AbstractType implements TypeInterface
                 hasNextPage: $nextUrl !== null,
             ),
         );
+    }
+
+    /**
+     * Portrait of every card, keyed by detail URL: the card has an image link and a name link to the same page.
+     *
+     * @return array<string, string>
+     */
+    private function cardImages(Crawler $crawler, string $baseUrl): array
+    {
+        $images = [];
+        $crawler->filter(self::CARD_IMAGES)->each(function (Crawler $image) use (&$images, $baseUrl): void {
+            $href = $image->closest('a')?->attr('href');
+            $src = $image->attr('src');
+            if (is_string($href) && $href !== '' && is_string($src) && trim($src) !== '') {
+                $images[UriResolver::resolve($href, $baseUrl)] ??= UriResolver::resolve($src, $baseUrl);
+            }
+        });
+
+        return $images;
     }
 
     private function listingName(Crawler $node): string
