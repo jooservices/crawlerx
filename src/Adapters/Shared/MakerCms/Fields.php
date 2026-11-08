@@ -33,9 +33,14 @@ final class Fields
                 return $this->config->absolute($url);
             }
         }
-        $url = $this->largestSrcsetCandidate($this->firstAttribute($node, $selector, 'data-srcset') ?? $this->firstAttribute($node, $selector, 'srcset'));
+        foreach (['data-srcset', 'srcset'] as $attribute) {
+            $url = $this->largestSrcsetCandidate($this->firstAttribute($node, $selector, $attribute));
+            if ($url !== null) {
+                return $this->config->absolute($url);
+            }
+        }
 
-        return $url !== null ? $this->config->absolute($url) : null;
+        return null;
     }
 
     private function largestSrcsetCandidate(?string $srcset): ?string
