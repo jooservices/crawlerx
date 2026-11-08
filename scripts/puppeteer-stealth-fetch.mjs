@@ -45,7 +45,15 @@ try {
     await assertSafeBrowserUrl(url);
 } catch (error) {
     if (error instanceof SsrfBlockedError) {
-        console.log(JSON.stringify({ error: 'ssrf_blocked', errorCode: 'ssrf_blocked', status: 403, challenge: false }));
+        console.log(JSON.stringify({
+            error: 'ssrf_blocked',
+            errorCode: 'ssrf_blocked',
+            status: 403,
+            challenge: false,
+            ssrfReason: error.reason,
+            ssrfAddress: error.address,
+            ssrfHostname: error.hostname,
+        }));
         process.exit(1);
     }
     throw error;
@@ -187,7 +195,12 @@ try {
     const ssrfBlocked = ssrfViolation || error instanceof SsrfBlockedError;
     console.log(JSON.stringify({
         error: ssrfBlocked ? 'ssrf_blocked' : (error instanceof Error ? error.message : String(error)),
-        ...(ssrfBlocked ? { errorCode: 'ssrf_blocked' } : {}),
+        ...(ssrfBlocked ? {
+            errorCode: 'ssrf_blocked',
+            ssrfReason: error instanceof SsrfBlockedError ? error.reason : 'blocked',
+            ssrfAddress: error instanceof SsrfBlockedError ? error.address : null,
+            ssrfHostname: error instanceof SsrfBlockedError ? error.hostname : null,
+        } : {}),
         status: ssrfBlocked ? 403 : 1,
         elapsedMs: Date.now() - started,
         challenge: false,

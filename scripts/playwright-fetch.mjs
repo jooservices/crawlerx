@@ -358,6 +358,9 @@ export async function fetchWithBrowser(config, browser) {
                 status: 403,
                 elapsedMs: Date.now() - started,
                 challenge: false,
+                ssrfReason: error instanceof SsrfBlockedError ? error.reason : 'blocked',
+                ssrfAddress: error instanceof SsrfBlockedError ? error.address : null,
+                ssrfHostname: error instanceof SsrfBlockedError ? error.hostname : null,
             };
         }
         return {

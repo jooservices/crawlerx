@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.1] - 2026-11-08
+
+### Fixed
+
+- Allow public pins beside decoy DNS answers in the browser SSRF guard (JOOXCR-399)
+
 ## [1.6.0] - 2026-11-08
 
 ### Added

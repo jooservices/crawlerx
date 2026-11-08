@@ -53,10 +53,16 @@ const blockedHostnames = new Set([
 ]);
 
 export class SsrfBlockedError extends Error {
-    constructor() {
+    /**
+     * @param {{reason?: string, address?: string|null, hostname?: string|null}} [details]
+     */
+    constructor({ reason = 'blocked', address = null, hostname = null } = {}) {
         super('ssrf_blocked');
         this.name = 'SsrfBlockedError';
         this.code = 'ssrf_blocked';
+        this.reason = reason;
+        this.address = address;
+        this.hostname = hostname;
     }
 }
 
@@ -129,8 +135,11 @@ function isBlockedAddress(address, allowPrivate) {
 }
 
 /**
- * Create a request policy for the browser sidecar. All DNS answers must be
- * public (unless the dedicated Fetch Lab opt-in allows private networks).
+ * Create a request policy for the browser sidecar.
+ *
+ * DNS may include loopback/unspecified decoy records next to real public
+ * answers (JOOXCR-363 / JOOXCR-399). Drop every blocked answer and pin only
+ * the remaining public addresses. Fail closed when no public address remains.
  *
  * @param {{allowPrivate?: boolean, allowedHosts?: string|string[], lookupHost?: (hostname: string) => Promise<Array<{address: string}>>}} options
  */
@@ -142,13 +151,13 @@ export function createSsrfGuard({ allowPrivate = false, allowedHosts = '', looku
         try {
             target = new URL(value);
         } catch {
-            throw new SsrfBlockedError();
+            throw new SsrfBlockedError({ reason: 'invalid_url' });
         }
 
         if (!['http:', 'https:', 'ws:', 'wss:'].includes(target.protocol)
             || target.username !== ''
             || target.password !== '') {
-            throw new SsrfBlockedError();
+            throw new SsrfBlockedError({ reason: 'invalid_url', hostname: target.hostname || null });
         }
 
         const hostname = normalizeHostname(target.hostname);
@@ -156,9 +165,11 @@ export function createSsrfGuard({ allowPrivate = false, allowedHosts = '', looku
             || blockedHostnames.has(hostname)
             || hostname.endsWith('.localhost')
             || hostname.endsWith('.local')
-            || hostname.endsWith('.internal')
-            || !hostIsAllowed(hostname, hosts)) {
-            throw new SsrfBlockedError();
+            || hostname.endsWith('.internal')) {
+            throw new SsrfBlockedError({ reason: 'blocked_hostname', hostname });
+        }
+        if (!hostIsAllowed(hostname, hosts)) {
+            throw new SsrfBlockedError({ reason: 'host_not_allowed', hostname });
         }
 
         const literalVersion = isIP(hostname);
@@ -169,15 +180,38 @@ export function createSsrfGuard({ allowPrivate = false, allowedHosts = '', looku
             try {
                 addresses = await lookupHost(hostname);
             } catch {
-                throw new SsrfBlockedError();
+                throw new SsrfBlockedError({ reason: 'dns_failed', hostname });
             }
         }
 
-        if (addresses.length === 0 || addresses.some(({ address }) => isBlockedAddress(address, allowPrivate))) {
-            throw new SsrfBlockedError();
+        if (!Array.isArray(addresses) || addresses.length === 0) {
+            throw new SsrfBlockedError({ reason: 'dns_failed', hostname });
         }
 
-        return { target, hostname, addresses };
+        const publicAddresses = [];
+        let firstBlocked = null;
+        for (const entry of addresses) {
+            const address = entry?.address;
+            if (typeof address !== 'string' || address === '') {
+                firstBlocked ??= 'invalid';
+                continue;
+            }
+            if (isBlockedAddress(address, allowPrivate)) {
+                firstBlocked ??= address;
+                continue;
+            }
+            publicAddresses.push({ address });
+        }
+
+        if (publicAddresses.length === 0) {
+            throw new SsrfBlockedError({
+                reason: 'no_public_address',
+                address: firstBlocked,
+                hostname,
+            });
+        }
+
+        return { target, hostname, addresses: publicAddresses };
     };
 
     const assertSafeUrl = async (value) => {
