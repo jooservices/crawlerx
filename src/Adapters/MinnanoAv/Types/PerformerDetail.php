@@ -66,7 +66,7 @@ final class PerformerDetail extends AbstractType implements TypeInterface
         $aliases = $this->aliases($heading, $fields);
         $tags = $this->tags($crawler);
         $rawProfile = $this->rawProfile($crawler);
-        $metadata = $this->metadata($crawler, $fields, $heading);
+        $metadata = $this->metadata($crawler, $fields, $heading, $request->url);
 
         $data = array_filter([
             'external_id' => $externalId,
@@ -253,7 +253,7 @@ final class PerformerDetail extends AbstractType implements TypeInterface
      * @param  array{name?: string, name_japanese?: string, name_romaji?: string}  $heading
      * @return array<string, mixed>
      */
-    private function metadata(Crawler $crawler, array $fields, array $heading): array
+    private function metadata(Crawler $crawler, array $fields, array $heading, string $baseUrl): array
     {
         $metadata = array_filter([
             'nickname' => $fields['nickname'] ?? null,
@@ -265,6 +265,11 @@ final class PerformerDetail extends AbstractType implements TypeInterface
             'name_reading' => $heading['name_japanese'] ?? null,
             'name_romaji' => $heading['name_romaji'] ?? null,
         ], static fn(mixed $value): bool => $value !== null && $value !== '');
+
+        $filmography = $this->filmography($crawler, $baseUrl);
+        if ($filmography !== []) {
+            $metadata['filmography'] = $filmography;
+        }
 
         $crawler->filter(Selectors::RATING_TABLE . ' tr')->each(function (Crawler $row) use (&$metadata): void {
             $cells = $row->filter('td');
@@ -284,6 +289,35 @@ final class PerformerDetail extends AbstractType implements TypeInterface
         }
 
         return $metadata;
+    }
+
+    /**
+     * Works table of the page: the jacket is lazy-loaded (`data-src`), `src` is only the blank placeholder.
+     *
+     * @return list<array{url: string, title: ?string, cover_url: ?string}>
+     */
+    private function filmography(Crawler $crawler, string $baseUrl): array
+    {
+        $works = [];
+        $crawler->filter(Selectors::FILMOGRAPHY_JACKETS)->each(function (Crawler $cell) use (&$works, $baseUrl): void {
+            $href = $this->firstAttribute($cell, 'a[href]', 'href');
+            $image = $cell->filter('img');
+            $src = $image->count() > 0 ? ($image->attr('data-src') ?? $image->attr('src')) : null;
+            if ($href === null || $image->count() === 0) {
+                return;
+            }
+
+            $url = $this->normalizer->absolute($baseUrl, $href);
+            $works[$url] ??= [
+                'url' => $url,
+                'title' => $this->normalizeText((string) $image->attr('alt')),
+                'cover_url' => is_string($src) && trim($src) !== '' && ! str_ends_with($src, 'blank.gif') && ! str_starts_with($src, 'data:')
+                    ? $this->normalizer->absolute($baseUrl, $src)
+                    : null,
+            ];
+        });
+
+        return array_values($works);
     }
 
     private function profileImageUrl(Crawler $crawler, string $baseUrl): ?string

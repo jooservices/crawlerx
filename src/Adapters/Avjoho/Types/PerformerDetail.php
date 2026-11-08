@@ -14,6 +14,7 @@ use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
+use JOOservices\CrawlerX\Support\DmmCover;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class PerformerDetail extends AbstractType implements TypeInterface
@@ -200,7 +201,7 @@ final class PerformerDetail extends AbstractType implements TypeInterface
             return null;
         }
 
-        return $this->absolute($baseUrl, $src);
+        return DmmCover::large($this->absolute($baseUrl, $src));
     }
 
     private function externalId(string $url): ?string

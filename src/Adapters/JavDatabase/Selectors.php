@@ -16,5 +16,9 @@ final class Selectors
 
     public const PERFORMER_IMAGE = '.idol-portrait img';
 
+    public const PERFORMER_CARD_IMAGE = '.idol-thumb img';
+
+    public const GALLERY_LINKS = 'a[data-image-src]';
+
     public const FAVORITE_BUTTON = 'button.simplefavorite-button';
 }
