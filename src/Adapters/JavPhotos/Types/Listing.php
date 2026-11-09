@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\JavPhotos\Types;
 
+use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 use JOOservices\CrawlerX\Adapters\AbstractType;
 use JOOservices\CrawlerX\Adapters\Concerns\NormalizesUrls;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
@@ -19,6 +20,7 @@ use Symfony\Component\DomCrawler\Crawler;
 
 final class Listing extends AbstractType implements TypeInterface
 {
+    use ParsesUrlParts;
     use NormalizesUrls;
     use ParsesHtml;
 
@@ -132,14 +134,9 @@ final class Listing extends AbstractType implements TypeInterface
 
     private function externalId(string $url): ?string
     {
-        $path = parse_url($url, PHP_URL_PATH);
-        if (is_string($path) && preg_match('#^/free/([^/]+)/?$#i', $path, $match) === 1) {
-            $slug = $match[1];
+        $slug = $this->pathMatch($url, '#^/free/([^/]+)/?$#i');
 
-            return ! is_numeric($slug) ? $slug : null;
-        }
-
-        return null;
+        return $slug !== null && ! is_numeric($slug) ? $slug : null;
     }
 
     private function attribute(Crawler $crawler, string $selector, string $attribute): ?string

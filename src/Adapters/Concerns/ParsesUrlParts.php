@@ -62,4 +62,24 @@ trait ParsesUrlParts
 
         return $value !== null && ctype_digit($value) && (int) $value > 0 ? (int) $value : null;
     }
+
+    /** The first present query-string parameter among $names (aliases of one value) as a trimmed string, or null. */
+    protected function firstQueryParam(string $url, string ...$names): ?string
+    {
+        $query = parse_url($url, PHP_URL_QUERY);
+        if (! is_string($query) || $query === '') {
+            return null;
+        }
+
+        parse_str($query, $params);
+        $value = null;
+        foreach ($names as $name) {
+            $value = $params[$name] ?? null;
+            if ($value !== null) {
+                break;
+            }
+        }
+
+        return is_string($value) && trim($value) !== '' ? trim($value) : null;
+    }
 }

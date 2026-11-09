@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\JavBus\Types;
 
+use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Adapters\AbstractType;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
@@ -19,6 +20,7 @@ use Symfony\Component\DomCrawler\Crawler;
 
 final class Detail extends AbstractType implements TypeInterface
 {
+    use CoercesValues;
     use ParsesHtml;
 
     /** Info labels in the other site languages (zh, ja) and older names, mapped to the English label used below. */
@@ -236,16 +238,5 @@ final class Detail extends AbstractType implements TypeInterface
         }
 
         return $match[1];
-    }
-
-    private function titleWithoutCode(?string $title, string $code): ?string
-    {
-        if ($title === null) {
-            return null;
-        }
-
-        $stripped = preg_replace('/^' . preg_quote($code, '/') . '\s*/i', '', $title);
-
-        return is_string($stripped) && trim($stripped) !== '' ? trim($stripped) : $title;
     }
 }

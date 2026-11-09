@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\Jable\Types;
 
+use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Adapters\AbstractType;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
@@ -21,6 +22,7 @@ use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 
 final class Detail extends AbstractType implements TypeInterface
 {
+    use CoercesValues;
     use ParsesUrlParts;
     use ParsesHtml;
 
@@ -70,17 +72,6 @@ final class Detail extends AbstractType implements TypeInterface
         $this->assertUsableDetail($item, 'Jable');
 
         return $item;
-    }
-
-    private function titleWithoutCode(?string $title, string $code): ?string
-    {
-        if ($title === null) {
-            return null;
-        }
-
-        $stripped = preg_replace('/^' . preg_quote($code, '/') . '\s*/i', '', $title);
-
-        return is_string($stripped) && trim($stripped) !== '' ? trim($stripped) : $title;
     }
 
     private function coverUrl(Crawler $crawler, string $baseUrl): ?string
@@ -196,13 +187,6 @@ final class Detail extends AbstractType implements TypeInterface
             'age_label' => $age,
             MovieMeta::VIEWS => $views !== null && preg_match('/^\d[\d,\s.]*$/', $views) === 1 ? $this->integerStat($views) : null,
         ];
-    }
-
-    private function integerStat(string $value): int
-    {
-        $normalized = str_replace([',', ' '], '', $value);
-
-        return is_numeric($normalized) ? (int) $normalized : 0;
     }
 
     private function isRomanModelSlug(string $slug): bool
