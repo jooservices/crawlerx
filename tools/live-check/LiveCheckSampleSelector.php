@@ -95,23 +95,21 @@ final class LiveCheckSampleSelector
      */
     private function fixtureSample(array $samples, string $role, array $capabilities): ?array
     {
-        foreach ($samples as $sample) {
-            if (! is_array($sample)
-                || ! is_string($sample['url'] ?? null)
-                || trim($sample['url']) === ''
-                || ! is_string($sample['type'] ?? null)
-                || ! is_string($sample['name'] ?? null)
-                || trim($sample['name']) === ''
-            ) {
-                continue;
-            }
+        foreach ($this->roleTypes($role) as $preferredType) {
+            foreach ($samples as $sample) {
+                if (! is_array($sample)
+                    || ! is_string($sample['url'] ?? null)
+                    || trim($sample['url']) === ''
+                    || ! is_string($sample['type'] ?? null)
+                    || ! is_string($sample['name'] ?? null)
+                    || trim($sample['name']) === ''
+                ) {
+                    continue;
+                }
 
-            $type = CrawlType::tryFrom($sample['type']);
-            if ($type !== null
-                && in_array($type, $this->roleTypes($role), true)
-                && in_array($type->value, $capabilities, true)
-            ) {
-                return ['name' => trim($sample['name']), 'type' => $type, 'url' => trim($sample['url'])];
+                if ($sample['type'] === $preferredType->value && in_array($preferredType->value, $capabilities, true)) {
+                    return ['name' => trim($sample['name']), 'type' => $preferredType, 'url' => trim($sample['url'])];
+                }
             }
         }
 
