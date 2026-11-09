@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add a changed-file test runner with adapter, fetch and fixture targeting plus full-suite fallback (`composer test:changed`, `make test-changed`) (JOOXCR-473).
 - Add `composer check:fixtures-meta` to validate captured fixture provenance metadata, with a baseline for known legacy offenders (JOOXCR-485).
 - Add `composer check:readme-sites` to verify README supported-site rows match adapter manifests (JOOXCR-482).
 - Add `composer check:manifests` to check adapter manifest keys, slugs, base URLs, classes and capabilities (JOOXCR-483).
