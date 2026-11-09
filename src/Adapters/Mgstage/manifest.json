@@ -1,0 +1,119 @@
+{
+    "slug": "mgstage",
+    "name": "MGStage",
+    "version": "1.0.0",
+    "description": "Crawler for MGStage (Prestige group store); the site geo-blocks non-Japan addresses, so fetch it through a Japan exit (CRAWLERX_HTTP_PROXY)",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\Mgstage\\MgstageCrawler",
+        "capabilities": [
+            "listing",
+            "detail"
+        ]
+    },
+    "base_url": "https://www.mgstage.com",
+    "pagination": {
+        "strategy": "query",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 10,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 2592000,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        }
+    ],
+    "runtime": {
+        "fetch": {
+            "profile": "http_only",
+            "readyMarkers": {
+                "listing": ["li.product_list_item"],
+                "detail": ["h1.tag"]
+            },
+            "soft404Markers": ["page not found", "404 not found"]
+        },
+        "targetProfiles": {
+            "new": {
+                "label": "New releases",
+                "url": "https://www.mgstage.com/search/cSearch.php?search_word=&sort=new&list_cnt=30&type=top"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "new",
+                "url": "https://www.mgstage.com/search/cSearch.php?search_word=&sort=new&list_cnt=30&type=top",
+                "paginated": true,
+                "loop": true,
+                "priority": 0,
+                "max_pages": 5,
+                "status": "paused"
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://www.mgstage.com/search/cSearch.php?search_word=&sort=new&list_cnt=30&type=top",
+                "name": "listing-new.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://www.mgstage.com/product/product_detail/259LUXU-1000/",
+                "name": "detail-259luxu-1000.html",
+                "type": "detail"
+            },
+            {
+                "url": "https://www.mgstage.com/product/product_detail/SIRO-5767/",
+                "name": "detail-siro-5767.html",
+                "type": "detail",
+                "followUps": [
+                    {
+                        "url": "https://www.mgstage.com/sampleplayer/sampleRespons.php?pid=56d253a6-5c48-40c5-8859-6a848f9f16f0",
+                        "name": "sample-siro-5767.json"
+                    }
+                ]
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 10,
+            "detail_delay_seconds": 10,
+            "cycle_delay_seconds": 2592000
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 8,
+            "min_gap_seconds": 5,
+            "max_gap_seconds": 45
+        },
+        "browserHeaders": {
+            "Cookie": "adc=1",
+            "Accept-Language": "ja,en;q=0.8"
+        },
+        "playwrightFetchEnabled": false
+    },
+    "type": "site"
+}
