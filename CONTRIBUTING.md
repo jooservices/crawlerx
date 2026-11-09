@@ -104,6 +104,8 @@ Also:
 
 ## Live crawling and fixtures
 
+When adding an adapter, run `composer check:manifests` to validate every adapter manifest.
+
 Live crawls are never run in CI. Capture real DOM fixtures with:
 
 ```bash
@@ -112,6 +114,7 @@ make live-check SITE=--site=javbus   # crawl one live target for an adapter
 ```
 
 See [tools/fixtures/README.md](tools/fixtures/README.md) for the capture procedure.
+Run `composer check:fixtures-meta` after capture to validate each fixture's provenance metadata.
 
 ## Reporting issues
 
