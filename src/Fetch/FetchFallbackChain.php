@@ -55,6 +55,8 @@ final class FetchFallbackChain
         private readonly int $maxTransientRetries = TransientRetry::MAX_RETRIES,
         /** @var Closure(): (int|float)|null */
         private readonly ?Closure $budgetClock = null,
+        /** @var Closure(string): bool|null */
+        private readonly ?Closure $beforeOutboundRequest = null,
     ) {
         $this->sessions = $sessions ?? new SessionStore();
         $this->circuit = new HostCircuitReporter($hostCircuit);
@@ -68,7 +70,8 @@ final class FetchFallbackChain
         return $this->cookies;
     }
 
-    /**
+    /** Runs the ordered fetch methods and returns the first acceptable result.
+     *
      * @param  list<FetchMethod>  $plan
      */
     public function fetch(
@@ -99,7 +102,12 @@ final class FetchFallbackChain
             $robotsDelaySeconds = $this->robotsGuard->crawlDelaySeconds($url, $request->userAgent ?? '');
         }
 
-        $runner = new MethodAttemptRunner(new PreFetchGuard($this->hostThrottle, $this->hostCircuit, $robotsDelaySeconds), $this->retrySleeper, $this->maxTransientRetries);
+        $runner = new MethodAttemptRunner(
+            new PreFetchGuard($this->hostThrottle, $this->hostCircuit, $robotsDelaySeconds),
+            $this->retrySleeper,
+            $this->maxTransientRetries,
+            $this->beforeOutboundRequest,
+        );
 
         foreach ($plan as $method) {
             // FlareSolverr is the expensive last resort. It is skipped only when an earlier method got a real
