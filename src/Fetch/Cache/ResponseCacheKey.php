@@ -13,9 +13,9 @@ final class ResponseCacheKey
     {
         $normalized = [];
         foreach ($headers as $name => $value) {
-            $normalized[] = [strtolower(trim($name)), trim($value)];
+            $normalized[strtolower(trim($name))] = trim($value);
         }
-        sort($normalized);
+        ksort($normalized);
 
         return 'crawlerx.response.' . substr(hash('sha256', serialize([$method->value, $url, $normalized])), 0, 46);
     }

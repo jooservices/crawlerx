@@ -44,6 +44,16 @@ final class ChallengeDetector
             && str_contains($body, 'Just a moment...');
     }
 
+    public static function isCaptchaChallenge(string $body): bool
+    {
+        if (preg_match('/<(?:form|iframe)\b[^>]*(?:captcha|recaptcha|hcaptcha|funcaptcha)/i', $body) === 1) {
+            return true;
+        }
+
+        return strlen($body) < 20000
+            && preg_match('/\b(?:captcha|recaptcha|hcaptcha|funcaptcha)\b/i', $body) === 1;
+    }
+
     /** @param list<string> $readyMarkers */
     public static function isUsableBody(string $body, int $status, array $readyMarkers = []): bool
     {

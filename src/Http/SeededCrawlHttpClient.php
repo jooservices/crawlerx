@@ -31,17 +31,16 @@ final readonly class SeededCrawlHttpClient implements CrawlHttpClient
     private function fetch(string $url, array $headers): CrawlHttpResponse
     {
         if ($this->matches($url)) {
-            $responseHeaders = ['Content-Type' => $this->contentType()];
-            foreach ($this->fetch->headers as $name => $values) {
-                // Keep every value: a page can set several cookies (Set-Cookie) that a follow-up request needs.
-                $responseHeaders[$name] = $values === [] ? '' : $values;
+            $seed = $this->seededResponse();
+            if (
+                RequestScopedResponseMemo::isCacheable(
+                    $seed->toPsrResponse(),
+                    $this->fetch->body,
+                    $this->fetch->challengeDetected,
+                )
+            ) {
+                return $seed;
             }
-
-            return new PsrCrawlHttpResponse(new Response(
-                $this->fetch->status > 0 ? $this->fetch->status : 200,
-                $responseHeaders,
-                $this->fetch->body,
-            ));
         }
 
         try {
@@ -49,6 +48,21 @@ final readonly class SeededCrawlHttpClient implements CrawlHttpClient
         } catch (NetworkConnectionException) {
             return new PsrCrawlHttpResponse(new Response(404, ['Content-Type' => 'text/plain'], ''));
         }
+    }
+
+    private function seededResponse(): CrawlHttpResponse
+    {
+        $responseHeaders = ['Content-Type' => $this->contentType()];
+        foreach ($this->fetch->headers as $name => $values) {
+            // Keep every value: a page can set several cookies (Set-Cookie) that a follow-up request needs.
+            $responseHeaders[$name] = $values === [] ? '' : $values;
+        }
+
+        return new PsrCrawlHttpResponse(new Response(
+            $this->fetch->status > 0 ? $this->fetch->status : 200,
+            $responseHeaders,
+            $this->fetch->body,
+        ));
     }
 
     private function matches(string $url): bool

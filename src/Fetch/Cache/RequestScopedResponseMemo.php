@@ -40,13 +40,13 @@ final class RequestScopedResponseMemo
         $body = (string) $psrResponse->getBody();
         $snapshot = [
             'body' => $body,
-            'headers' => $this->headers($psrResponse),
+            'headers' => self::headers($psrResponse),
             'reason' => $psrResponse->getReasonPhrase(),
             'status' => $psrResponse->getStatusCode(),
             'version' => $psrResponse->getProtocolVersion(),
         ];
 
-        if ($this->isCacheable($psrResponse, $body)) {
+        if (self::isCacheable($psrResponse, $body)) {
             $this->responses[$key] = $snapshot;
         }
 
@@ -73,18 +73,19 @@ final class RequestScopedResponseMemo
         ));
     }
 
-    private function isCacheable(ResponseInterface $response, string $body): bool
+    public static function isCacheable(ResponseInterface $response, string $body, bool $challengeDetected = false): bool
     {
         $status = $response->getStatusCode();
 
-        return $status >= 200
+        return ! $challengeDetected
+            && $status >= 200
             && $status < 300
-            && ! ChallengeDetector::isChallenge($body, $status, $this->headers($response))
-            && preg_match('/\b(?:captcha|recaptcha|hcaptcha|funcaptcha)\b/i', $body) !== 1;
+            && ! ChallengeDetector::isChallenge($body, $status, self::headers($response))
+            && ! ChallengeDetector::isCaptchaChallenge($body);
     }
 
     /** @return array<string, list<string>> */
-    private function headers(ResponseInterface $response): array
+    private static function headers(ResponseInterface $response): array
     {
         $headers = [];
         foreach ($response->getHeaders() as $name => $values) {

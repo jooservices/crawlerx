@@ -62,6 +62,48 @@ final class RequestScopedResponseMemoTest extends TestCase
         self::assertCount(3, ClientBuilder::recorded());
     }
 
+    public function test_response_keys_use_last_case_insensitive_header_value(): void
+    {
+        ClientBuilder::fake();
+        $url = 'https://example.test/follow-up';
+        ClientBuilder::respond('GET', $url, (new TestResponseSequence())
+            ->push(TestResponse::make(200, [], 'first effective header response'))
+            ->push(TestResponse::make(200, [], 'second effective header response')));
+        $client = $this->client();
+
+        $first = $client->get($url, ['X-Test' => 'a', 'x-test' => 'b'])->toPsrResponse();
+        $second = $client->get($url, ['x-test' => 'b', 'X-Test' => 'a'])->toPsrResponse();
+
+        self::assertSame('first effective header response', (string) $first->getBody());
+        self::assertSame('second effective header response', (string) $second->getBody());
+        self::assertCount(2, ClientBuilder::recorded());
+    }
+
+    public function test_non_cacheable_seed_responses_fall_back_to_the_inner_client(): void
+    {
+        ClientBuilder::fake();
+        $cases = [
+            ['captcha', 200, false, '<html>captcha page</html>'],
+            ['challenge', 200, true, '<html>challenge page</html>'],
+            ['unavailable', 503, false, 'temporary unavailable'],
+        ];
+
+        foreach ($cases as [$path, $status, $challengeDetected, $body]) {
+            $url = 'https://example.test/' . $path;
+            ClientBuilder::respond('GET', $url, (new TestResponseSequence())
+                ->push(TestResponse::make(200, [], 'fresh inner response')));
+            $client = $this->client($url, $body, $status, $challengeDetected);
+
+            $first = $client->get($url)->toPsrResponse();
+            $second = $client->get($url)->toPsrResponse();
+
+            self::assertSame('fresh inner response', (string) $first->getBody());
+            self::assertSame('fresh inner response', (string) $second->getBody());
+        }
+
+        self::assertCount(3, ClientBuilder::recorded());
+    }
+
     public function test_non_success_and_challenge_responses_are_not_memoized(): void
     {
         ClientBuilder::fake();
@@ -106,16 +148,20 @@ final class RequestScopedResponseMemoTest extends TestCase
         self::assertCount(2, ClientBuilder::recorded());
     }
 
-    private function client(): SeededCrawlHttpClient
-    {
+    private function client(
+        string $url = 'https://example.test/seed',
+        string $body = 'seeded fixture response body',
+        int $status = 200,
+        bool $challengeDetected = false,
+    ): SeededCrawlHttpClient {
         $fetch = new FetchResultDto(
             ok: true,
-            body: 'seeded fixture response body',
-            status: 200,
+            body: $body,
+            status: $status,
             methodUsed: FetchMethod::Http,
             elapsedMs: 1,
-            challengeDetected: false,
-            finalUrl: 'https://example.test/seed',
+            challengeDetected: $challengeDetected,
+            finalUrl: $url,
         );
 
         return new SeededCrawlHttpClient((new ClientFactory())->factory(), $fetch);

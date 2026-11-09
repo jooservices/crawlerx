@@ -101,7 +101,7 @@ final class ResponseCache implements CacheAwareFetchMethodHandler
             && $result->status < 300
             && ! $result->challengeDetected
             && ! ChallengeDetector::isChallenge($result->body, $result->status, $result->headers)
-            && preg_match('/\b(?:captcha|recaptcha|hcaptcha|funcaptcha)\b/i', $result->body) !== 1;
+            && ! ChallengeDetector::isCaptchaChallenge($result->body);
     }
 
     /** @param array<string, string> $headers */
