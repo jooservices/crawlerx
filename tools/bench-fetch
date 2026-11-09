@@ -10,23 +10,38 @@ use JOOservices\CrawlerX\CrawlerX;
 use JOOservices\CrawlerX\CrawlerXFactory;
 use JOOservices\CrawlerX\Enums\CrawlType;
 use JOOservices\CrawlerX\Enums\FetchMethod;
+use JOOservices\CrawlerX\Fetch\FetchPlanResolver;
 use JOOservices\CrawlerX\Fetch\FetchFallbackChain;
 use JOOservices\CrawlerX\Fetch\Guard\HostThrottle;
 use JOOservices\CrawlerX\Fetch\Handlers\HttpFetchHandler;
 use JOOservices\CrawlerX\Fetch\Session\CookieHandoffStore;
+use JOOservices\CrawlerX\Registry\AdapterRegistry;
+use JOOservices\CrawlerX\Registry\FileAdapterManifestRegistry;
+use JOOservices\CrawlerX\Services\AdapterExecutor;
 use JOOservices\CrawlerX\Services\ClientFactory;
+use JOOservices\CrawlerX\Services\CrawlOrchestrator;
+use JOOservices\CrawlerX\Services\CrawlerXService;
+use JOOservices\CrawlerX\Services\UrlClassifier;
+use JOOservices\CrawlerX\Tools\Bench\RepeatedFollowUpCrawler;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
+require_once __DIR__ . '/bench/RepeatedFollowUpCrawler.php';
 
-$options = getopt('', ['site::', 'sample::', 'help']);
+$options = getopt('', ['site::', 'sample::', 'repeat-follow-up', 'memo::', 'help']);
 if (isset($options['help'])) {
-    fwrite(STDOUT, "Usage: tools/bench-fetch [--site=slug] [--sample=fixture-name]\n");
+    fwrite(STDOUT, "Usage: tools/bench-fetch [--site=slug] [--sample=fixture-name] [--repeat-follow-up [--memo=on|off]]\n");
     fwrite(STDOUT, "Defaults to the Smart FLASH gallery fixture. All HTTP responses are faked from tests/Fixtures.\n");
+    fwrite(STDOUT, "The repeat mode crawls a gallery fixture and reads its first follow-up twice.\n");
     exit(0);
 }
 
 $site = is_string($options['site'] ?? null) ? $options['site'] : 'smartflash';
 $sampleName = is_string($options['sample'] ?? null) ? $options['sample'] : 'gallery-432913.html';
+$repeatFollowUp = isset($options['repeat-follow-up']);
+$memo = is_string($options['memo'] ?? null) ? strtolower($options['memo']) : 'on';
+if (! in_array($memo, ['on', 'off'], true) || (! $repeatFollowUp && isset($options['memo']))) {
+    throw new RuntimeException('--memo=on|off is only valid with --repeat-follow-up.');
+}
 $root = dirname(__DIR__);
 $manifest = null;
 foreach (glob($root . '/src/Adapters/*/manifest.json') ?: [] as $manifestPath) {
@@ -54,6 +69,19 @@ foreach ($samples as $candidate) {
 }
 if (! is_array($sample) || ! is_string($sample['url'] ?? null) || ! is_string($sample['type'] ?? null)) {
     throw new RuntimeException("Fixture sample [{$sampleName}] not found for site [{$site}].");
+}
+
+$followUpUrl = null;
+if ($repeatFollowUp) {
+    if ($sample['type'] !== 'gallery' || ! is_array($sample['followUps'] ?? null)) {
+        throw new RuntimeException("Sample [{$sampleName}] must be a gallery with a declared follow-up.");
+    }
+
+    $followUp = $sample['followUps'][0] ?? null;
+    if (! is_array($followUp) || ! is_string($followUp['url'] ?? null)) {
+        throw new RuntimeException("Sample [{$sampleName}] has no usable follow-up URL.");
+    }
+    $followUpUrl = $followUp['url'];
 }
 
 $crawlType = match ($sample['type']) {
@@ -112,18 +140,38 @@ foreach ($fixtures as $url => $body) {
 }
 
 CrawlerXFactory::reset();
-$httpHandler = new HttpFetchHandler(new ClientFactory(), new CookieHandoffStore());
-CrawlerXFactory::useFetchChain(new FetchFallbackChain(
+$clientFactory = new ClientFactory();
+$httpHandler = new HttpFetchHandler($clientFactory, new CookieHandoffStore());
+$fetchChain = new FetchFallbackChain(
     [FetchMethod::Http->value => $httpHandler],
     hostThrottle: new HostThrottle(sleeper: static function (int $microseconds): void {
         // Fake responses should measure local crawl work, not site throttle delays.
     }),
     maxTransientRetries: 0,
-));
+);
+
+if ($repeatFollowUp) {
+    RepeatedFollowUpCrawler::$followUpUrl = $followUpUrl;
+    RepeatedFollowUpCrawler::$memoEnabled = $memo === 'on';
+    $manifests = new FileAdapterManifestRegistry();
+    $adapters = new AdapterRegistry($clientFactory, $manifests);
+    $adapters->register($site, RepeatedFollowUpCrawler::class);
+    $orchestrator = new CrawlOrchestrator(
+        new UrlClassifier($adapters),
+        new CrawlerXService($adapters, new AdapterExecutor()),
+        $manifests,
+        new FetchPlanResolver(),
+        $fetchChain,
+    );
+    $crawl = static fn() => $orchestrator->url($sample['url'])->site($site)->type($crawlType)->crawl();
+} else {
+    CrawlerXFactory::useFetchChain($fetchChain);
+    $crawl = static fn() => CrawlerX::url($sample['url'])->site($site)->type($crawlType)->crawl();
+}
 
 $startedAt = hrtime(true);
 try {
-    CrawlerX::url($sample['url'])->site($site)->type($crawlType)->crawl();
+    $crawl();
     $wallTimeMs = (hrtime(true) - $startedAt) / 1_000_000;
     $recorded = ClientBuilder::recorded();
     $requests = [];
@@ -143,6 +191,8 @@ try {
         'requests' => count($requests),
         'response_bytes' => $bytes,
         'wall_time_ms' => round($wallTimeMs, 2),
+        'repeat_follow_up' => $repeatFollowUp,
+        'memoization' => $repeatFollowUp ? $memo : null,
         'transport' => 'fixture fakes; throttle sleeps disabled',
         'request_urls' => $requests,
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n");
@@ -152,4 +202,6 @@ try {
 } finally {
     ClientBuilder::clearFake();
     CrawlerXFactory::reset();
+    RepeatedFollowUpCrawler::$followUpUrl = '';
+    RepeatedFollowUpCrawler::$memoEnabled = true;
 }
