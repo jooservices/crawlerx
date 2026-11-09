@@ -10,6 +10,7 @@ use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Enums\CrawlType;
 use JOOservices\CrawlerX\Tests\Unit\Adapters\ImageAuditTestCase;
 use Symfony\Component\DomCrawler\Crawler;
+use Symfony\Component\DomCrawler\UriResolver;
 
 final class ImageCompletenessTest extends ImageAuditTestCase
 {
@@ -21,9 +22,9 @@ final class ImageCompletenessTest extends ImageAuditTestCase
         $viewerFixture = 'smartflash/gallery-432913-image-1.html';
         $article = new Crawler($this->loadFixture($articleFixture));
         $viewer = new Crawler($this->loadFixture($viewerFixture));
-        $expected = count(array_unique([
-            ...$this->imageUrls($article, '#main .newsBlock > .text img'),
-            ...$this->imageUrls($viewer, '#main .imageSlider .item img'),
+        $expected = array_values(array_unique([
+            ...$this->imageUrls($article, '#main .newsBlock > .text img', self::ARTICLE),
+            ...$this->imageUrls($viewer, '#main .imageSlider .item img', self::ARTICLE . 'image/1/'),
         ]));
         $client = $this->clientWithMappedResponses([
             self::ARTICLE => ['body' => $this->loadFixture($articleFixture)],
@@ -31,9 +32,11 @@ final class ImageCompletenessTest extends ImageAuditTestCase
         ]);
         $gallery = (new Gallery($client))->execute(new CrawlRequestDto(url: self::ARTICLE, type: CrawlType::Gallery))->meta['gallery'];
 
-        self::assertGreaterThan(0, $expected);
-        self::assertGreaterThanOrEqual($expected, count($gallery['photos']));
-        self::assertGreaterThanOrEqual($expected, count($this->column($gallery['photos'], 'image_url')));
+        $actual = $this->column($gallery['photos'], 'image_url');
+
+        self::assertNotEmpty($expected);
+        self::assertCount(count(array_unique($actual)), $actual);
+        self::assertEqualsCanonicalizing($expected, $actual);
         self::assertNotEmpty($gallery['metadata']['cover']['url']);
     }
 
@@ -41,25 +44,46 @@ final class ImageCompletenessTest extends ImageAuditTestCase
     {
         $fixture = 'smartflash/listing-idol-page1.html';
         $page = new Crawler($this->loadFixture($fixture));
-        $expected = $page->filter('#main ul.itemList > li')->reduce(
-            static fn(Crawler $card): bool => $card->filter('p.itemImage img')->count() > 0,
-        )->count();
-        $result = $this->list(Listing::class, $fixture, 'https://smart-flash.jp/gravure/idol/', CrawlType::Listing);
-        $covers = array_column(array_column($this->metaOf($result->items, 'gallery'), 'metadata'), 'cover');
+        $expected = [];
+        $page->filter('#main ul.itemList > li')->each(function (Crawler $card) use (&$expected): void {
+            $link = $card->filter('p.itemImage a[href]');
+            $image = $card->filter('p.itemImage img');
+            if ($link->count() === 0 || $image->count() === 0) {
+                return;
+            }
 
-        self::assertGreaterThan(0, $expected);
-        self::assertGreaterThanOrEqual($expected, count($this->column($covers, 'url')));
-        self::assertGreaterThanOrEqual($expected, count($this->column($covers, 'thumbnail_url')));
+            $source = $image->first()->attr('data-src') ?? $image->first()->attr('src');
+            if (is_string($source) && $source !== '') {
+                $itemUrl = UriResolver::resolve((string) $link->attr('href'), self::ARTICLE);
+                $expected[preg_replace('/\?.*$/', '', $itemUrl) ?? $itemUrl] = UriResolver::resolve($source, self::ARTICLE);
+            }
+        });
+        $result = $this->list(Listing::class, $fixture, 'https://smart-flash.jp/gravure/idol/', CrawlType::Listing);
+        $actual = [];
+        foreach ($result->items as $item) {
+            $cover = $item->meta['gallery']['metadata']['cover'] ?? [];
+            $actual[$item->url] = [
+                'url' => $cover['url'] ?? null,
+                'thumbnail_url' => $cover['thumbnail_url'] ?? null,
+            ];
+        }
+
+        self::assertNotEmpty($expected);
+        self::assertSame(array_fill_keys(array_keys($expected), true), array_fill_keys(array_keys($actual), true));
+        foreach ($expected as $url => $thumbnail) {
+            self::assertSame($thumbnail, $actual[$url]['thumbnail_url'], $url);
+            self::assertNotEmpty($actual[$url]['url'], $url);
+        }
     }
 
     /** @return list<string> */
-    private function imageUrls(Crawler $page, string $selector): array
+    private function imageUrls(Crawler $page, string $selector, string $baseUrl): array
     {
-        return array_values(array_filter($page->filter($selector)->each(static function (Crawler $image): ?string {
+        return array_values(array_filter($page->filter($selector)->each(static function (Crawler $image) use ($baseUrl): ?string {
             foreach (['data-src', 'data-original', 'src'] as $attribute) {
                 $url = $image->attr($attribute);
                 if (is_string($url) && $url !== '' && ! str_starts_with($url, 'data:')) {
-                    return $url;
+                    return UriResolver::resolve($url, $baseUrl);
                 }
             }
 

@@ -8,9 +8,11 @@ use JOOservices\CrawlerX\Adapters\JavMenu\Types\Detail;
 use JOOservices\CrawlerX\Adapters\JavMenu\Types\Listing;
 use JOOservices\CrawlerX\Adapters\JavMenu\Types\PerformerDetail;
 use JOOservices\CrawlerX\Adapters\JavMenu\Types\PerformerListing;
+use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Enums\CrawlType;
 use JOOservices\CrawlerX\Tests\Unit\Adapters\ImageAuditTestCase;
 use Symfony\Component\DomCrawler\Crawler;
+use Symfony\Component\DomCrawler\UriResolver;
 
 final class ImageCompletenessTest extends ImageAuditTestCase
 {
@@ -25,16 +27,15 @@ final class ImageCompletenessTest extends ImageAuditTestCase
         ] as [$fixtureName, $path]) {
             $fixture = 'javmenu/' . $fixtureName;
             $page = new Crawler($this->loadFixture($fixture));
-            $imageUrls = [
+            $imageUrls = array_values(array_unique([
                 ...$page->filter('meta[property="og:image"]')->each(static fn(Crawler $node): string => (string) $node->attr('content')),
                 ...$page->filter('video#seo-main-video[poster]')->each(static fn(Crawler $node): string => (string) $node->attr('poster')),
-            ];
-            $expected = count(array_unique(array_filter($imageUrls)));
+            ]));
+            $expected = array_values(array_filter($imageUrls));
             $movie = $this->item(Detail::class, $fixture, self::BASE . $path, CrawlType::Detail)->meta['movie'];
 
-            self::assertGreaterThan(0, $expected, $fixtureName);
-            self::assertNotEmpty($movie['cover_url'], $fixtureName);
-            self::assertGreaterThanOrEqual($expected, count($this->column([$movie], 'cover_url')), $fixtureName);
+            self::assertNotEmpty($expected, $fixtureName);
+            self::assertEqualsCanonicalizing($expected, [$movie['cover_url']], $fixtureName);
         }
     }
 
@@ -45,48 +46,84 @@ final class ImageCompletenessTest extends ImageAuditTestCase
             ['list-maker-440.html', self::BASE . '/censored/maker/440'],
         ] as [$fixtureName, $url]) {
             $fixture = 'javmenu/' . $fixtureName;
-            $expected = $this->realCardImages($fixture);
+            $expected = $this->workCardImages($fixture, $url);
             $result = $this->list(Listing::class, $fixture, $url, CrawlType::Listing);
-            $movies = $this->metaOf($result->items, 'movie');
+            $actual = [];
+            foreach ($result->items as $item) {
+                $actual[$item->url] = $item->meta['movie']['cover_url'] ?? null;
+            }
 
-            self::assertGreaterThan(0, $expected, $fixtureName);
-            self::assertGreaterThanOrEqual($expected, count($this->column($movies, 'cover_url')), $fixtureName);
+            self::assertNotEmpty($expected, $fixtureName);
+            self::assertSame($expected, $actual, $fixtureName);
         }
 
         $fixture = 'javmenu/actor-83V.html';
-        $expected = $this->realCardImages($fixture);
-        $performer = $this->item(PerformerDetail::class, $fixture, self::BASE . '/actor/83V', CrawlType::PerformerDetail)->meta['performer'];
+        $url = self::BASE . '/actor/83V';
+        $expected = $this->workCardImages($fixture, $url);
+        $performer = $this->item(PerformerDetail::class, $fixture, $url, CrawlType::PerformerDetail)->meta['performer'];
+        $actual = [];
+        foreach ($performer['metadata']['works'] as $work) {
+            $actual[$work['url']] = $work['cover_url'] ?? null;
+        }
 
-        self::assertGreaterThan(0, $expected);
-        self::assertGreaterThanOrEqual($expected, count(array_filter(
-            $performer['metadata']['works'],
-            static fn(array $work): bool => is_string($work['cover_url'] ?? null) && $work['cover_url'] !== '',
-        )));
+        self::assertNotEmpty($expected);
+        self::assertSame($expected, $actual);
     }
 
     public function test_performer_listing_keeps_each_real_profile_image_and_ignores_placeholders(): void
     {
         $fixture = 'javmenu/actor-list.html';
-        $expected = $this->realCardImages($fixture);
-        $result = $this->list(PerformerListing::class, $fixture, self::BASE . '/censored/actor', CrawlType::PerformerListing);
-        $performers = $this->metaOf($result->items, 'performer');
+        $url = self::BASE . '/censored/actor';
+        $fixtureHtml = $this->loadFixture($fixture);
+        $page = new Crawler($fixtureHtml);
+        $cards = $page->filter('.category-page.video-list-item');
+        $result = $this->list(PerformerListing::class, $fixture, $url, CrawlType::PerformerListing);
 
-        self::assertGreaterThanOrEqual($expected, count($this->column($performers, 'profile_image_url')));
+        self::assertGreaterThan(0, $cards->count());
+        self::assertCount($cards->count(), $result->items);
+        foreach ($result->items as $item) {
+            self::assertNull($item->meta['performer']['profile_image_url'] ?? null, 'Theme placeholders must be omitted.');
+        }
+
+        $realPhoto = 'https://cdn.example.test/actor-profile.jpg';
+        $modifiedHtml = preg_replace(
+            '/data-src="https:\/\/javmenu\.com\/theme\/javmenu\/images\/actor-placeholder\.jpg"/',
+            'data-src="' . $realPhoto . '"',
+            $fixtureHtml,
+            1,
+            $replacements,
+        );
+        self::assertSame(1, $replacements);
+        self::assertIsString($modifiedHtml);
+        $modified = (new PerformerListing($this->clientWithMappedResponses([
+            $url => ['body' => $modifiedHtml],
+        ])))->execute(new CrawlRequestDto(url: $url, type: CrawlType::PerformerListing));
+
+        self::assertSame($realPhoto, $modified->items[0]->meta['performer']['profile_image_url'] ?? null);
+        foreach (array_slice($modified->items, 1) as $item) {
+            self::assertNull($item->meta['performer']['profile_image_url'] ?? null);
+        }
     }
 
-    private function realCardImages(string $fixture): int
+    /** @return array<string, string> work URL => fixture image URL */
+    private function workCardImages(string $fixture, string $baseUrl): array
     {
+        $images = [];
         $page = new Crawler($this->loadFixture($fixture));
 
-        return $page->filter('.category-page.video-list-item')->reduce(static function (Crawler $card): bool {
-            foreach (['data-src', 'src'] as $attribute) {
-                $url = $card->filter('img.card-img-top')->count() > 0 ? $card->filter('img.card-img-top')->first()->attr($attribute) : null;
-                if (is_string($url) && $url !== '' && ! str_contains($url, '/theme/')) {
-                    return true;
-                }
+        $page->filter('.category-page.video-list-item')->each(function (Crawler $card) use (&$images, $baseUrl): void {
+            $link = $card->filter('.card-body a[href]');
+            $image = $card->filter('img.card-img-top');
+            if ($link->count() === 0 || $image->count() === 0) {
+                return;
             }
 
-            return false;
-        })->count();
+            $source = $image->first()->attr('data-src') ?? $image->first()->attr('src');
+            if (is_string($source) && $source !== '' && ! str_contains($source, '/theme/')) {
+                $images[UriResolver::resolve((string) $link->attr('href'), $baseUrl)] = UriResolver::resolve($source, $baseUrl);
+            }
+        });
+
+        return $images;
     }
 }

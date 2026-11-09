@@ -20,7 +20,7 @@ final class ImageCompletenessTest extends ImageAuditTestCase
         $fixture = 'wikidata/entity-Q22128111.json';
         $payload = $this->decode($fixture);
         $entity = $payload['entities']['Q22128111'];
-        $expected = $this->imageStatements($entity);
+        $expected = $this->imageFiles($entity);
         $performer = (new PerformerDetail($this->clientWithMappedResponses($this->responses(
             $fixture,
             'wikidata/labels-Q22128111-1.json',
@@ -30,31 +30,42 @@ final class ImageCompletenessTest extends ImageAuditTestCase
             type: CrawlType::PerformerDetail,
         ))->meta['performer'];
 
-        self::assertGreaterThan(0, $expected);
-        self::assertGreaterThanOrEqual($expected, count($performer['metadata']['images']));
-        self::assertGreaterThanOrEqual($expected, count($this->column($performer['metadata']['images'], 'url')));
-        self::assertGreaterThanOrEqual($expected, count($this->column($performer['metadata']['images'], 'thumbnail_url')));
-        self::assertNotEmpty($performer['profile_image_url']);
+        $images = $performer['metadata']['images'];
+        self::assertNotEmpty($expected);
+        self::assertSame($expected, array_column($images, 'file'));
+        self::assertSame($images[0]['url'], $performer['profile_image_url']);
+        foreach ($images as $image) {
+            self::assertNotEmpty($image['url']);
+            self::assertNotEmpty($image['thumbnail_url']);
+        }
     }
 
     public function test_listing_keeps_the_images_offered_by_each_listed_entity(): void
     {
         $entities = $this->decode('wikidata/entities-list.json')['entities'];
-        $expected = array_sum(array_map(fn(array $entity): int => $this->imageStatements($entity), array_filter($entities, 'is_array')));
+        $expected = [];
+        foreach ($entities as $id => $entity) {
+            if (is_array($entity)) {
+                $expected[$id] = $this->imageFiles($entity);
+            }
+        }
         $result = (new Listing($this->clientWithMappedResponses($this->responses(
             'wikidata/list-offset-0.json',
             'wikidata/entities-list.json',
         ))))->execute(new CrawlRequestDto(url: Site::listingUrl(0, 5), type: CrawlType::Listing));
-        $performers = $this->metaOf($result->items, 'performer');
-        $images = array_merge(...array_map(
-            static fn(array $performer): array => is_array($performer['metadata']['images'] ?? null) ? $performer['metadata']['images'] : [],
-            $performers,
-        ));
+        $actual = [];
+        foreach ($result->items as $item) {
+            $performer = $item->meta['performer'];
+            $images = $performer['metadata']['images'] ?? [];
+            $actual[$performer['external_id']] = array_column($images, 'file');
+            foreach ($images as $image) {
+                self::assertNotEmpty($image['url']);
+                self::assertNotEmpty($image['thumbnail_url']);
+            }
+        }
 
-        self::assertGreaterThan(0, $expected);
-        self::assertGreaterThanOrEqual($expected, count($images));
-        self::assertGreaterThanOrEqual($expected, count($this->column($images, 'url')));
-        self::assertGreaterThanOrEqual($expected, count($this->column($images, 'thumbnail_url')));
+        self::assertNotEmpty(array_filter($expected));
+        self::assertSame($expected, $actual);
     }
 
     /** @return array<string, array{body: string, headers: array<string, string>}> */
@@ -75,15 +86,17 @@ final class ImageCompletenessTest extends ImageAuditTestCase
         return json_decode($this->loadFixture($fixture), true, flags: JSON_THROW_ON_ERROR);
     }
 
-    /** @param array<string, mixed> $entity */
-    private function imageStatements(array $entity): int
+    /** @param array<string, mixed> $entity
+     *  @return list<string>
+     */
+    private function imageFiles(array $entity): array
     {
         $claims = is_array($entity['claims']['P18'] ?? null) ? $entity['claims']['P18'] : [];
 
-        return count(array_filter($claims, static function (mixed $claim): bool {
+        return array_values(array_filter(array_map(static function (mixed $claim): ?string {
             $value = is_array($claim) ? ($claim['mainsnak']['datavalue']['value'] ?? null) : null;
 
-            return is_string($value) && $value !== '';
-        }));
+            return is_string($value) && $value !== '' ? $value : null;
+        }, $claims)));
     }
 }

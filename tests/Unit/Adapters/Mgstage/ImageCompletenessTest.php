@@ -9,6 +9,7 @@ use JOOservices\CrawlerX\Adapters\Mgstage\Types\Listing;
 use JOOservices\CrawlerX\Enums\CrawlType;
 use JOOservices\CrawlerX\Tests\Unit\Adapters\ImageAuditTestCase;
 use Symfony\Component\DomCrawler\Crawler;
+use Symfony\Component\DomCrawler\UriResolver;
 
 final class ImageCompletenessTest extends ImageAuditTestCase
 {
@@ -19,45 +20,97 @@ final class ImageCompletenessTest extends ImageAuditTestCase
             ['detail-siro-5767.html', 'https://www.mgstage.com/product/product_detail/SIRO-5767/'],
         ] as [$fixtureName, $url]) {
             $fixture = 'mgstage/' . $fixtureName;
-            $page = new Crawler($this->loadFixture($fixture));
-            $expectedStills = $page->filter('dl#sample-photo a.sample_image')->count();
-            $expectedThumbnails = $page->filter('dl#sample-photo a.sample_image img')->count();
+            $expected = $this->detailImages($fixture, $url);
             $movie = $this->item(Detail::class, $fixture, $url, CrawlType::Detail)->meta['movie'];
 
-            self::assertGreaterThan(0, $expectedStills, $fixtureName);
-            self::assertNotEmpty($movie['cover_url'], $fixtureName);
-            self::assertNotEmpty($movie['metadata']['cover_thumbnail_url'], $fixtureName);
-            self::assertGreaterThanOrEqual($expectedStills, count($movie['screenshots']), $fixtureName);
-            self::assertGreaterThanOrEqual($expectedThumbnails, count($this->column($movie['screenshots'], 'thumbnail_url')), $fixtureName);
+            self::assertNotEmpty($expected['screenshots'], $fixtureName);
+            self::assertSame($expected['cover_url'], $movie['cover_url'], $fixtureName . ' large jacket');
+            self::assertSame($expected['cover_thumbnail_url'], $movie['metadata']['cover_thumbnail_url'], $fixtureName . ' jacket thumbnail');
+            self::assertSame($expected['screenshots'], array_map(static fn(array $screenshot): array => [
+                'url' => $screenshot['url'],
+                'thumbnail_url' => $screenshot['thumbnail_url'] ?? null,
+            ], $movie['screenshots']), $fixtureName . ' sample stills');
         }
     }
 
     public function test_listing_keeps_every_card_cover_and_sample_still(): void
     {
         $fixture = 'mgstage/listing-new.html';
-        $page = new Crawler($this->loadFixture($fixture));
-        $expectedCovers = $page->filter('li.product_list_item')->reduce(
-            static fn(Crawler $card): bool => $card->filter('h5 img')->count() > 0,
-        )->count();
-        $expectedStills = 0;
-        $page->filter('li.product_list_item')->each(static function (Crawler $card) use (&$expectedStills): void {
-            $expectedStills += $card->filter('.sample_image_btn a[href]')->reduce(
-                static fn(Crawler $link): bool => str_contains((string) $link->attr('href'), '/cap_e_'),
-            )->count();
-        });
+        $url = 'https://www.mgstage.com/search/cSearch.php?search_word=&sort=new&list_cnt=30&type=top';
+        $expected = $this->listingImages($fixture, $url);
         $result = $this->list(
             Listing::class,
             $fixture,
-            'https://www.mgstage.com/search/cSearch.php?search_word=&sort=new&list_cnt=30&type=top',
+            $url,
             CrawlType::Listing,
         );
-        $movies = $this->metaOf($result->items, 'movie');
-        $metadata = array_column($movies, 'metadata');
-        $screenshots = array_merge(...array_map(static fn(array $movie): array => $movie['screenshots'], $movies));
+        $actual = [];
+        foreach ($result->items as $item) {
+            $movie = $item->meta['movie'];
+            $actual[$item->url] = [
+                'cover_url' => $movie['cover_url'] ?? null,
+                'cover_thumbnail_url' => $movie['metadata']['cover_thumbnail_url'] ?? null,
+                'screenshots' => array_column($movie['screenshots'], 'url'),
+            ];
+        }
 
-        self::assertGreaterThan(0, $expectedCovers);
-        self::assertGreaterThanOrEqual($expectedCovers, count($this->column($movies, 'cover_url')));
-        self::assertGreaterThanOrEqual($expectedCovers, count($this->column($metadata, 'cover_thumbnail_url')));
-        self::assertGreaterThanOrEqual($expectedStills, count($screenshots));
+        self::assertNotEmpty($expected);
+        self::assertSame($expected, $actual);
+    }
+
+    /** @return array{cover_url: string, cover_thumbnail_url: string, screenshots: list<array{url: string, thumbnail_url: string}>} */
+    private function detailImages(string $fixture, string $baseUrl): array
+    {
+        $page = new Crawler($this->loadFixture($fixture));
+        $coverUrl = (string) $page->filter('a#EnlargeImage[href]')->first()->attr('href');
+        $thumbnailUrl = (string) $page->filter('img.enlarge_image[src]')->first()->attr('src');
+        $screenshots = [];
+        $page->filter('dl#sample-photo a.sample_image[href]')->each(static function (Crawler $link) use (&$screenshots, $baseUrl): void {
+            $image = $link->filter('img[src]');
+            if ($image->count() === 0) {
+                return;
+            }
+
+            $screenshots[] = [
+                'url' => UriResolver::resolve((string) $link->attr('href'), $baseUrl),
+                'thumbnail_url' => UriResolver::resolve((string) $image->first()->attr('src'), $baseUrl),
+            ];
+        });
+
+        return [
+            'cover_url' => UriResolver::resolve($coverUrl, $baseUrl),
+            'cover_thumbnail_url' => UriResolver::resolve($thumbnailUrl, $baseUrl),
+            'screenshots' => $screenshots,
+        ];
+    }
+
+    /** @return array<string, array{cover_url: string, cover_thumbnail_url: string, screenshots: list<string>}> */
+    private function listingImages(string $fixture, string $baseUrl): array
+    {
+        $images = [];
+        $page = new Crawler($this->loadFixture($fixture));
+        $page->filter('li.product_list_item')->each(function (Crawler $card) use (&$images, $baseUrl): void {
+            $link = $card->filter('a[href*="/product/product_detail/"]');
+            $thumbnail = $card->filter('h5 img[src]');
+            if ($link->count() === 0 || $thumbnail->count() === 0) {
+                return;
+            }
+
+            $itemUrl = UriResolver::resolve((string) $link->first()->attr('href'), $baseUrl);
+            $thumbnailUrl = UriResolver::resolve((string) $thumbnail->first()->attr('src'), $baseUrl);
+            $largeCover = $card->filter('.sample_image_btn a[href*="pb_e_"]');
+            $screenshots = $card->filter('.sample_image_btn a[href*="cap_e_"]')->each(
+                static fn(Crawler $sample): string => UriResolver::resolve((string) $sample->attr('href'), $baseUrl),
+            );
+            $images[$itemUrl] = [
+                'cover_url' => $largeCover->count() > 0
+                    ? UriResolver::resolve((string) $largeCover->first()->attr('href'), $baseUrl)
+                    : $thumbnailUrl,
+                'cover_thumbnail_url' => $thumbnailUrl,
+                'screenshots' => $screenshots,
+            ];
+        });
+
+        return $images;
     }
 }
