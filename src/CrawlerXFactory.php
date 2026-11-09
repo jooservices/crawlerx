@@ -7,6 +7,7 @@ namespace JOOservices\CrawlerX;
 use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Contracts\LoginCookieProvider;
 use JOOservices\CrawlerX\Fetch\BrowserServiceProcessRunner;
+use JOOservices\CrawlerX\Fetch\Cache\ResponseCache;
 use JOOservices\CrawlerX\Fetch\FetchFallbackChain;
 use JOOservices\CrawlerX\Fetch\FetchPlanResolver;
 use JOOservices\CrawlerX\Fetch\FetchRuntimeConfig;
@@ -39,6 +40,8 @@ final class CrawlerXFactory
 
     private static ?CacheInterface $throttleCache = null;
 
+    private static ?CacheInterface $responseCache = null;
+
     public static function create(): CrawlOrchestrator
     {
         if (self::$orchestrator instanceof CrawlOrchestrator) {
@@ -67,10 +70,14 @@ final class CrawlerXFactory
         self::$orchestrator = null;
     }
 
-    public static function configure(?LoginCookieProvider $logins = null, ?CacheInterface $throttleCache = null): void
-    {
+    public static function configure(
+        ?LoginCookieProvider $logins = null,
+        ?CacheInterface $throttleCache = null,
+        ?CacheInterface $responseCache = null,
+    ): void {
         self::$loginCookieProvider = $logins;
         self::$throttleCache = $throttleCache;
+        self::$responseCache = $responseCache;
         self::$fetchChain = null;
         self::$orchestrator = null;
     }
@@ -81,6 +88,7 @@ final class CrawlerXFactory
         self::$fetchChain = null;
         self::$loginCookieProvider = null;
         self::$throttleCache = null;
+        self::$responseCache = null;
     }
 
     private static function defaultFetchChain(): FetchFallbackChain
@@ -95,9 +103,13 @@ final class CrawlerXFactory
         $clientFactory = new ClientFactory();
 
         $playwright = new PlaywrightFamilyFetchHandler($runtime, $browserRunner);
+        $http = new HttpFetchHandler($clientFactory, $cookies, $sessions, self::$loginCookieProvider);
+        $httpHandler = self::$responseCache !== null && $runtime->responseCacheTtlSeconds > 0
+            ? new ResponseCache($http, self::$responseCache, $runtime->responseCacheTtlSeconds)
+            : $http;
 
         return new FetchFallbackChain([
-            FetchMethod::Http->value => new HttpFetchHandler($clientFactory, $cookies, $sessions, self::$loginCookieProvider),
+            FetchMethod::Http->value => $httpHandler,
             FetchMethod::CurlImpersonate->value => new CurlImpersonateFetchHandler($runtime, $runner, $cookies, $sessions, self::$loginCookieProvider),
             FetchMethod::Playwright->value => $playwright,
             FetchMethod::PlaywrightStealth->value => $playwright,

@@ -39,25 +39,7 @@ final class HttpFetchHandler implements FetchMethodHandler
         ?CrawlOptionsDto $options = null,
     ): FetchResultDto {
         $started = (int) round(microtime(true) * 1000);
-        $headers = $profile->http->headers;
-        $cookie = $this->cookies->cookieHeader($url);
-        if ($cookie !== null) {
-            $headers['Cookie'] = $cookie;
-        }
-
-        if ($options?->http?->headers !== null) {
-            $headers = array_merge($headers, $options->http->headers);
-        }
-
-        $loginCookies = $this->logins?->cookiesFor($profile->slug) ?? [];
-        $sessionCookie = $this->sessions?->cookieHeader($profile->slug, $loginCookies);
-        if ($sessionCookie !== null) {
-            $headers['Cookie'] = $sessionCookie;
-        }
-        $sessionUserAgent = $this->sessions?->userAgent($profile->slug);
-        if ($sessionUserAgent !== null && $sessionUserAgent !== '') {
-            $headers['User-Agent'] = $sessionUserAgent;
-        }
+        $headers = $this->requestHeaders($url, $profile, $options);
 
         $http = $options?->http;
         $clientOptions = [
@@ -105,5 +87,31 @@ final class HttpFetchHandler implements FetchMethodHandler
             headers: $headerMap,
             error: $ok ? null : ($challenge ? 'challenge page' : 'unusable HTTP body'),
         );
+    }
+
+    /** @return array<string, string> */
+    public function requestHeaders(string $url, SiteProfileDto $profile, ?CrawlOptionsDto $options = null): array
+    {
+        $headers = $profile->http->headers;
+        $cookie = $this->cookies->cookieHeader($url);
+        if ($cookie !== null) {
+            $headers['Cookie'] = $cookie;
+        }
+
+        if ($options?->http?->headers !== null) {
+            $headers = array_merge($headers, $options->http->headers);
+        }
+
+        $loginCookies = $this->logins?->cookiesFor($profile->slug) ?? [];
+        $sessionCookie = $this->sessions?->cookieHeader($profile->slug, $loginCookies);
+        if ($sessionCookie !== null) {
+            $headers['Cookie'] = $sessionCookie;
+        }
+        $sessionUserAgent = $this->sessions?->userAgent($profile->slug);
+        if ($sessionUserAgent !== null && $sessionUserAgent !== '') {
+            $headers['User-Agent'] = $sessionUserAgent;
+        }
+
+        return $headers;
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Fetch\Attempt;
 
 use Closure;
+use JOOservices\CrawlerX\Contracts\CacheAwareFetchMethodHandler;
 use JOOservices\CrawlerX\Contracts\FetchMethodHandler;
 use JOOservices\CrawlerX\Dto\FetchResultDto;
 use JOOservices\CrawlerX\Enums\FetchMethod;
@@ -107,6 +108,15 @@ final class MethodAttemptRunner
 
     private function fetchWithHandler(FetchMethodHandler $handler, FetchMethod $method, FetchRequest $request, FetchBudget $budget): FetchResultDto
     {
+        $profile = SessionProfile::apply($request->profile, $request->options, $request->session, $request->loginCookies, $request->userAgent);
+        // A cache hit never reaches the host, so it skips the throttle and circuit guards.
+        $cached = $handler instanceof CacheAwareFetchMethodHandler
+            ? $handler->cachedResponse($request->url, $profile, $method, $request->options)
+            : null;
+        if ($cached !== null) {
+            return ReadyMarkerGate::apply($cached, $request->readyMarkers);
+        }
+
         $blocked = $this->guard->check($request->url, $request->profile, $method, $budget);
         if ($blocked !== null) {
             return $blocked;
@@ -114,11 +124,7 @@ final class MethodAttemptRunner
 
         $result = $handler->fetch(
             $request->url,
-            BudgetBounds::profile(
-                SessionProfile::apply($request->profile, $request->options, $request->session, $request->loginCookies, $request->userAgent),
-                $method,
-                $budget,
-            ),
+            BudgetBounds::profile($profile, $method, $budget),
             $method,
             BudgetBounds::options($request->options, $method, $budget, $request->readyMarkers, $request->session['storageState'] ?? null),
         );
