@@ -73,7 +73,7 @@ final class ResponseCache implements CacheAwareFetchMethodHandler
             return null;
         }
 
-        $key = $this->key($method, $url, $headers);
+        $key = ResponseCacheKey::for($method, $url, $headers);
         try {
             $entry = $this->cache->get($key);
         } catch (Throwable) {
@@ -130,7 +130,7 @@ final class ResponseCache implements CacheAwareFetchMethodHandler
             && ! $result->challengeDetected
             && ! ChallengeDetector::isChallenge($result->body, $result->status, $result->headers)
             && $this->cacheableResponseHeaders($result)
-            && preg_match('/\b(?:captcha|recaptcha|hcaptcha|funcaptcha)\b/i', $result->body) !== 1;
+            && ! ChallengeDetector::isCaptchaChallenge($result->body);
     }
 
     private function wasRedirected(FetchResultDto $result): bool
@@ -220,34 +220,13 @@ final class ResponseCache implements CacheAwareFetchMethodHandler
 
         try {
             $this->cache->set(
-                $this->key($method, $url, $headers),
+                ResponseCacheKey::for($method, $url, $headers),
                 json_encode($entry, JSON_THROW_ON_ERROR),
                 $this->ttlSeconds,
             );
         } catch (Throwable) {
             // A cache outage must not turn a successful HTTP fetch into a failure.
         }
-    }
-
-    /** @param array<string, string> $headers */
-    private function key(FetchMethod $method, string $url, array $headers): string
-    {
-        $normalized = [];
-        foreach ($headers as $name => $value) {
-            $normalized[] = [strtolower(trim($name)), trim($value)];
-        }
-        sort($normalized);
-
-        $parts = [$method->value, $url];
-        foreach ($normalized as [$name, $value]) {
-            $parts[] = strlen($name) . ':' . $name . strlen($value) . ':' . $value;
-        }
-        $material = '';
-        foreach ($parts as $part) {
-            $material .= strlen($part) . ':' . $part;
-        }
-
-        return 'crawlerx.response.' . substr(hash('sha256', $material), 0, 46);
     }
 
     /** @return array<string, list<string>>|null */

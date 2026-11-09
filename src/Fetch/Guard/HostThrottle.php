@@ -63,6 +63,7 @@ final class HostThrottle
             return 1;
         }
 
+        // The slot is reserved at request start, so time spent fetching already reduces this wait.
         $startAt = max($now, $nextAllowedAt ?? $now);
         $waitSeconds = max(0.0, $startAt - $now);
         if ($waitSeconds > 0.0 && $waitSeconds + 1.0 > $budget->remainingSeconds()) {
