@@ -16,19 +16,31 @@ final class ImageCompletenessTest extends ImageAuditTestCase
     public function test_gallery_photos_cover_every_image_in_the_editorial_gallery(): void
     {
         $fixture = 'wpb/gallery-20261108-133432.html';
+        $url = 'https://wpb.shueisha.co.jp/gravure/20261108-133432/';
         $page = new Crawler($this->loadFixture($fixture));
-        $expected = $page->filter('.group-entry-a .body-gravure-a picture img')->each(
-            static fn(Crawler $image): string => UriResolver::resolve((string) $image->attr('src'), 'https://wpb.shueisha.co.jp/gravure/20261108-133432/'),
-        );
+        $picture = $page->filter('.group-entry-a .body-gravure-a picture')->first();
+        $expected = $this->fixtureCover($picture, $url);
+        $expected['thumbnail_url'] = $this->fixtureThumbnail($picture, $url);
         $gallery = $this->item(
             Gallery::class,
             $fixture,
-            'https://wpb.shueisha.co.jp/gravure/20261108-133432/',
+            $url,
             CrawlType::Gallery,
         )->meta['gallery'];
+        $photos = array_map(
+            static fn(array $photo): array => [
+                'url' => $photo['image_url'] ?? null,
+                'thumbnail_url' => $photo['thumbnail_url'] ?? null,
+            ],
+            $gallery['photos'],
+        );
+        $cover = $gallery['metadata']['cover'];
 
-        self::assertNotEmpty($expected);
-        self::assertEqualsCanonicalizing($expected, $this->column($gallery['photos'], 'image_url'));
+        self::assertSame([$expected], $photos);
+        self::assertSame(
+            ['url' => $expected['url'], 'thumbnail_url' => $expected['thumbnail_url']],
+            array_intersect_key($cover, ['url' => true, 'thumbnail_url' => true]),
+        );
     }
 
     public function test_listing_keeps_each_card_cover_and_thumbnail(): void
@@ -84,5 +96,33 @@ final class ImageCompletenessTest extends ImageAuditTestCase
         });
 
         return ['url' => $url, 'thumbnail_url' => $thumbnail];
+    }
+
+    private function fixtureThumbnail(Crawler $picture, string $baseUrl): ?string
+    {
+        $thumbnail = null;
+        $thumbnailWidth = null;
+        $picture->filter('source[srcset], img[srcset]')->each(static function (Crawler $node) use (&$thumbnail, &$thumbnailWidth, $baseUrl): void {
+            $srcset = $node->attr('srcset');
+            if (! is_string($srcset) || $srcset === '') {
+                return;
+            }
+
+            foreach (explode(',', $srcset) as $candidate) {
+                $parts = preg_split('/\s+/', trim($candidate));
+                $candidateUrl = $parts[0] ?? '';
+                if ($candidateUrl === '' || (! str_contains($candidateUrl, '-thumb-') && ! str_contains($candidateUrl, '/assets_c/'))) {
+                    continue;
+                }
+
+                $width = isset($parts[1]) && preg_match('/^(\d+)w$/', $parts[1], $match) === 1 ? (int) $match[1] : null;
+                if ($thumbnail === null || ($width !== null && ($thumbnailWidth === null || $width < $thumbnailWidth))) {
+                    $thumbnail = UriResolver::resolve($candidateUrl, $baseUrl);
+                    $thumbnailWidth = $width;
+                }
+            }
+        });
+
+        return $thumbnail;
     }
 }
