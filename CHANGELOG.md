@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Migrate adapters A–F onto the shared parsing helpers (`ParsesUrlParts`, `CoercesValues`, `ResolvesLinkUrls`) and drop their private duplicates; extend those helpers with `digitPage`, `dateString`, `arrayValue` and `linkUrl` (unit-tested, no behaviour change, JOOXCR-467).
 - Cut CI wall time by caching the PHP image, running security and sharded Unit/Feature suites in parallel after Validate, and keeping the required check names unchanged (JOOXCR-466).
 - Split `FetchFallbackChain` (747 lines) into single-responsibility collaborators under `src/Fetch` (attempt log rows and method runner with transient retry, pre-fetch throttle/circuit guard, session and budget request shaping, ready-marker gate, login-wall detection, rejection builders, circuit reporting); the chain stays a thin orchestrator and fetch behaviour, config keys, exceptions and the SSRF guard are unchanged (JOOXCR-463).
 

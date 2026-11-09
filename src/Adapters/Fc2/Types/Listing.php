@@ -15,10 +15,13 @@ use JOOservices\CrawlerX\Exceptions\CrawlParseException;
 use JOOservices\CrawlerX\Support\ImageUrl;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
+use JOOservices\CrawlerX\Adapters\Fc2\ParsesPoints;
 
 /** FC2 product cards: title, thumbnail, duration, price and discount, stock, favourites, seller. */
 final class Listing extends AbstractHtmlType implements TypeInterface
 {
+    use ParsesPoints;
+
     use ParsesHtml;
 
     private const ROOT_URL = 'https://adult.contents.fc2.com/';
@@ -108,10 +111,6 @@ final class Listing extends AbstractHtmlType implements TypeInterface
         );
     }
 
-    private function points(?string $text): ?float
-    {
-        return $text !== null && preg_match('/([\d,]+)\s*pt/i', $text, $match) === 1 ? (float) str_replace(',', '', $match[1]) : null;
-    }
 
     private function integer(?string $text): ?int
     {

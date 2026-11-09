@@ -17,9 +17,14 @@ use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
 use JOOservices\CrawlerX\Support\DmmCover;
 use Symfony\Component\DomCrawler\Crawler;
+use JOOservices\CrawlerX\Adapters\Avjoho\ParsesAvjohoIds;
+use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 
 final class PerformerListing extends AbstractType implements TypeInterface
 {
+    use ParsesAvjohoIds;
+    use ParsesUrlParts;
+
     use NormalizesUrls;
     use ParsesHtml;
 
@@ -64,7 +69,7 @@ final class PerformerListing extends AbstractType implements TypeInterface
             throw new CrawlParseException('Avjoho listing page did not contain performer cards.');
         }
 
-        $currentPage = $this->currentPage($crawler) ?? $this->pageNumber($request->url) ?? 1;
+        $currentPage = $this->currentPage($crawler) ?? $this->pathNumber($request->url, '#/page/(\d+)/?#') ?? 1;
         $nextUrl = $this->nextUrl($crawler, $request->url, $currentPage);
         $lastPage = $this->lastPage($crawler);
 
@@ -76,7 +81,7 @@ final class PerformerListing extends AbstractType implements TypeInterface
             pagination: new CrawlPaginationDto(
                 currentPage: $currentPage,
                 lastPage: $lastPage,
-                nextPage: $nextUrl === null ? null : $this->pageNumber($nextUrl),
+                nextPage: $nextUrl === null ? null : $this->pathNumber($nextUrl, '#/page/(\d+)/?#'),
                 nextUrl: $nextUrl,
                 hasNextPage: $nextUrl !== null,
             ),
@@ -145,27 +150,5 @@ final class PerformerListing extends AbstractType implements TypeInterface
         });
 
         return $last;
-    }
-
-    private function pageNumber(string $url): ?int
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-        if (is_string($path) && preg_match('#/page/(\d+)/?#', $path, $match) === 1) {
-            return (int) $match[1];
-        }
-
-        return null;
-    }
-
-    private function externalId(string $url): ?string
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-        if (is_string($path) && preg_match('#^/([^/]+)/?$#', $path, $match) === 1) {
-            $slug = $match[1];
-
-            return $slug !== 'sitemap' ? $slug : null;
-        }
-
-        return null;
     }
 }

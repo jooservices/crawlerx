@@ -5,9 +5,13 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Tests\Unit\Adapters\Concerns;
 
 use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
+use JOOservices\CrawlerX\Adapters\Concerns\NormalizesUrls;
+use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
+use JOOservices\CrawlerX\Adapters\Concerns\ResolvesLinkUrls;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\DomCrawler\Crawler;
 
 final class SharedHelpersTest extends TestCase
 {
@@ -17,7 +21,10 @@ final class SharedHelpersTest extends TestCase
     {
         $this->helper = new class {
             use CoercesValues;
+            use NormalizesUrls;
+            use ParsesHtml;
             use ParsesUrlParts;
+            use ResolvesLinkUrls;
 
             public function call(string $method, mixed ...$args): mixed
             {
@@ -70,5 +77,23 @@ final class SharedHelpersTest extends TestCase
         self::assertNull($this->helper->call('positiveInt', 0));
         self::assertNull($this->helper->call('positiveInt', 'x'));
         self::assertSame('A & B c', $this->helper->call('cleanText', "A &amp;\n B\t c "));
+        self::assertSame(1, $this->helper->call('digitPage', '0'));
+        self::assertSame(3, $this->helper->call('digitPage', '3'));
+        self::assertNull($this->helper->call('digitPage', '3x'));
+        self::assertNull($this->helper->call('digitPage', null));
+        self::assertSame('2026-01-02', $this->helper->call('dateString', '2026-01-02'));
+        self::assertNull($this->helper->call('dateString', '  '));
+        self::assertNull($this->helper->call('dateString', null));
+        self::assertSame(['a' => 1], $this->helper->call('arrayValue', ['nested' => ['a' => 1]], 'nested'));
+        self::assertSame([], $this->helper->call('arrayValue', ['x' => 'y'], 'missing'));
+        self::assertSame([], $this->helper->call('arrayValue', ['x' => 'y'], 'x'));
+    }
+
+    public function test_link_url(): void
+    {
+        $crawler = new Crawler('<html><body><a class="next" href="/page/2">next</a></body></html>', 'https://a.test/list');
+
+        self::assertSame('https://a.test/page/2', $this->helper->call('linkUrl', $crawler, 'a.next', 'https://a.test/list'));
+        self::assertNull($this->helper->call('linkUrl', $crawler, 'a.missing', 'https://a.test/list'));
     }
 }
