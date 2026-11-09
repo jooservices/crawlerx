@@ -55,7 +55,12 @@ final class ImageCompletenessTest extends ImageAuditTestCase
             $source = $image->first()->attr('data-src') ?? $image->first()->attr('src');
             if (is_string($source) && $source !== '') {
                 $itemUrl = UriResolver::resolve((string) $link->attr('href'), self::ARTICLE);
-                $expected[preg_replace('/\?.*$/', '', $itemUrl) ?? $itemUrl] = UriResolver::resolve($source, self::ARTICLE);
+                $thumbnail = UriResolver::resolve($source, self::ARTICLE);
+                $original = preg_replace('#-\d+x\d+(\.[a-z]{3,4})$#i', '$1', $thumbnail) ?? $thumbnail;
+                $expected[preg_replace('/\?.*$/', '', $itemUrl) ?? $itemUrl] = [
+                    'url' => $original,
+                    'thumbnail_url' => $thumbnail,
+                ];
             }
         });
         $result = $this->list(Listing::class, $fixture, 'https://smart-flash.jp/gravure/idol/', CrawlType::Listing);
@@ -70,9 +75,9 @@ final class ImageCompletenessTest extends ImageAuditTestCase
 
         self::assertNotEmpty($expected);
         self::assertSame(array_fill_keys(array_keys($expected), true), array_fill_keys(array_keys($actual), true));
-        foreach ($expected as $url => $thumbnail) {
-            self::assertSame($thumbnail, $actual[$url]['thumbnail_url'], $url);
-            self::assertNotEmpty($actual[$url]['url'], $url);
+        foreach ($expected as $url => $images) {
+            self::assertSame($images['url'], $actual[$url]['url'], $url);
+            self::assertSame($images['thumbnail_url'], $actual[$url]['thumbnail_url'], $url);
         }
     }
 

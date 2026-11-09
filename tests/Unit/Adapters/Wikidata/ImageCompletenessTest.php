@@ -46,7 +46,7 @@ final class ImageCompletenessTest extends ImageAuditTestCase
         $expected = [];
         foreach ($entities as $id => $entity) {
             if (is_array($entity)) {
-                $expected[$id] = $this->imageFiles($entity);
+                $expected[$id] = $this->imagePairs($entity);
             }
         }
         $result = (new Listing($this->clientWithMappedResponses($this->responses(
@@ -57,11 +57,7 @@ final class ImageCompletenessTest extends ImageAuditTestCase
         foreach ($result->items as $item) {
             $performer = $item->meta['performer'];
             $images = $performer['metadata']['images'] ?? [];
-            $actual[$performer['external_id']] = array_column($images, 'file');
-            foreach ($images as $image) {
-                self::assertNotEmpty($image['url']);
-                self::assertNotEmpty($image['thumbnail_url']);
-            }
+            $actual[$performer['external_id']] = $images;
         }
 
         self::assertNotEmpty(array_filter($expected));
@@ -98,5 +94,22 @@ final class ImageCompletenessTest extends ImageAuditTestCase
 
             return is_string($value) && $value !== '' ? $value : null;
         }, $claims)));
+    }
+
+    /**
+     * @param array<string, mixed> $entity
+     * @return list<array{url: string, thumbnail_url: string, file: string}>
+     */
+    private function imagePairs(array $entity): array
+    {
+        return array_map(static function (string $file): array {
+            $url = 'https://commons.wikimedia.org/wiki/Special:FilePath/' . rawurlencode(str_replace(' ', '_', $file));
+
+            return [
+                'url' => $url,
+                'thumbnail_url' => $url . '?width=320',
+                'file' => $file,
+            ];
+        }, $this->imageFiles($entity));
     }
 }

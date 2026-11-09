@@ -20,12 +20,17 @@ final class ImageCompletenessTest extends ImageAuditTestCase
         ] as [$fixtureName, $url]) {
             $fixture = 'avactress/' . $fixtureName;
             $expected = $this->workImages($fixture);
+            $expectedImageEntries = array_map(static fn(array $image): array => [
+                'cover_url' => $image['cover_url'],
+                'thumb_url' => $image['thumb_url'],
+            ], $expected);
             $performer = $this->item(PerformerDetail::class, $fixture, $url, CrawlType::PerformerDetail)->meta['performer'];
             $actualWorks = [];
             foreach ($performer['metadata']['works'] as $work) {
                 $actualWorks[$work['external_id']] = [
                     'cover_url' => $work['cover_url'] ?? null,
                     'thumb_url' => $work['thumb_url'] ?? null,
+                    'list_thumb_url' => $work['list_thumb_url'] ?? null,
                 ];
             }
             $actualImages = [];
@@ -38,7 +43,7 @@ final class ImageCompletenessTest extends ImageAuditTestCase
 
             self::assertNotEmpty($expected, $fixtureName);
             self::assertSame($expected, $actualWorks, $fixtureName . ' work covers');
-            self::assertSame($expected, $actualImages, $fixtureName . ' image entries');
+            self::assertSame($expectedImageEntries, $actualImages, $fixtureName . ' image entries');
         }
     }
 
@@ -70,7 +75,7 @@ final class ImageCompletenessTest extends ImageAuditTestCase
         }
     }
 
-    /** @return array<string, array{cover_url: string, thumb_url: string}> */
+    /** @return array<string, array{cover_url: string, thumb_url: string, list_thumb_url: string}> */
     private function workImages(string $fixture): array
     {
         $images = [];
@@ -89,6 +94,37 @@ final class ImageCompletenessTest extends ImageAuditTestCase
             $large = preg_replace('/ps\.jpg$/', 'pl.jpg', $source);
             $images[$id] = ['cover_url' => is_string($large) ? $large : $source, 'thumb_url' => $source];
         });
+
+        $listThumbnails = $this->streamedListThumbnails($fixture);
+        self::assertSame(
+            array_fill_keys(array_keys($images), true),
+            array_fill_keys(array_keys($listThumbnails), true),
+            $fixture . ' streamed thumbnail work ids',
+        );
+        foreach ($images as $id => $image) {
+            $images[$id]['list_thumb_url'] = $listThumbnails[$id];
+        }
+
+        return $images;
+    }
+
+    /** @return array<string, string> */
+    private function streamedListThumbnails(string $fixture): array
+    {
+        $page = new Crawler($this->loadFixture($fixture));
+        $payload = '';
+        $page->filter('script')->each(function (Crawler $script) use (&$payload): void {
+            if (preg_match('/^self\\.__next_f\\.push\\(\\[1,(".*")\\]\\)\\s*;?$/s', trim($script->text('')), $match) === 1) {
+                $chunk = json_decode($match[1], true);
+                $payload .= is_string($chunk) ? $chunk : '';
+            }
+        });
+
+        preg_match_all('/"content_id":"([^"]+)".*?"imageURL":\{"list":"([^"]+)"/s', $payload, $matches, PREG_SET_ORDER);
+        $images = [];
+        foreach ($matches as $match) {
+            $images[$match[1]] = $match[2];
+        }
 
         return $images;
     }
