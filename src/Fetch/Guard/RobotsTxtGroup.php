@@ -17,11 +17,6 @@ final readonly class RobotsTxtGroup
     ) {
     }
 
-    public function allows(string $path): bool
-    {
-        return $this->blockingRule($path) === null;
-    }
-
     public function blockingRule(string $path): ?RobotsTxtRule
     {
         $best = null;
