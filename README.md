@@ -529,6 +529,11 @@ CrawlerX facade
     -> CrawlItemResultDto or CrawlListResultDto
 ```
 
+Layer boundaries for Adapters, Fetch, Dto, Support and Contracts are declared in
+[`deptrac.yaml`](deptrac.yaml). Run `composer lint:deptrac` locally; CI runs the
+same analysis as the report-only `Architecture (Deptrac)` job (not a required
+check yet). See [CONTRIBUTING.md](CONTRIBUTING.md).
+
 Adapter behavior and supported page types are declared under
 `src/Adapters/*/manifest.json`. `CrawlerXFactory::reset()` is available for
 long-running workers that need to release the process-wide runtime instance.
