@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Fetch;
 
 use Closure;
+use JOOservices\CrawlerX\Contracts\CacheAwareFetchMethodHandler;
 use JOOservices\CrawlerX\Contracts\FetchMethodHandler;
 use JOOservices\CrawlerX\Contracts\LoginCookieProvider;
 use JOOservices\CrawlerX\Dto\CrawlOptionsDto;
@@ -423,7 +424,16 @@ final class FetchFallbackChain
         bool &$circuitChecked,
     ): FetchResultDto {
         $host = parse_url($url, PHP_URL_HOST);
-        if ($this->hostThrottle !== null && is_string($host) && $host !== '') {
+        $cachedResult = $handler instanceof CacheAwareFetchMethodHandler
+            ? $handler->cachedResponse(
+                $url,
+                $this->profileWithSession($profile, $options, $session, $loginCookies, $requestUserAgent),
+                $method,
+                $options,
+            )
+            : null;
+
+        if ($cachedResult === null && $this->hostThrottle !== null && is_string($host) && $host !== '') {
             $retryAfter = $this->hostThrottle->waitBeforeFetch(
                 $host,
                 $profile->defaultThrottle,
@@ -445,7 +455,7 @@ final class FetchFallbackChain
             }
         }
 
-        $result = $handler->fetch(
+        $result = $cachedResult ?? $handler->fetch(
             $url,
             $this->boundedProfile(
                 $this->profileWithSession($profile, $options, $session, $loginCookies, $requestUserAgent),

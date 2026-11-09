@@ -17,6 +17,7 @@ final readonly class FetchRuntimeConfig
         /** @var list<string> */
         public array $userAgentPool = [],
         public string $nodeId = 'local',
+        public int $responseCacheTtlSeconds = 0,
     ) {
     }
 
@@ -31,6 +32,7 @@ final readonly class FetchRuntimeConfig
         $userAgent = getenv('CRAWLERX_USER_AGENT');
         $userAgentPool = getenv('CRAWLERX_USER_AGENT_POOL');
         $nodeId = getenv('CRAWLERX_NODE');
+        $responseCacheTtl = getenv('CRAWLERX_RESPONSE_CACHE_TTL');
         $defaultUserAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
         $configuredUserAgent = is_string($userAgent) && trim($userAgent) !== '' ? trim($userAgent) : $defaultUserAgent;
         $pool = is_string($userAgentPool) && trim($userAgentPool) !== ''
@@ -49,6 +51,10 @@ final readonly class FetchRuntimeConfig
             $resolvedNodeId = is_string($hostname) && $hostname !== '' ? $hostname : 'local';
         }
 
+        $responseCacheTtlSeconds = is_string($responseCacheTtl) && ctype_digit(trim($responseCacheTtl))
+            ? (int) trim($responseCacheTtl)
+            : 0;
+
         return new self(
             nodeBinary: 'node',
             playwrightScript: is_string($playwright) && $playwright !== ''
@@ -63,6 +69,7 @@ final readonly class FetchRuntimeConfig
             userAgent: $configuredUserAgent,
             userAgentPool: $pool,
             nodeId: $resolvedNodeId,
+            responseCacheTtlSeconds: $responseCacheTtlSeconds,
         );
     }
 

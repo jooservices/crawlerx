@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add an opt-in PSR-16 HTTP response cache with configurable TTL, challenge/captcha exclusions and throttle bypass on cache hits (JOOXCR-465).
+
 - Add the Asagei Plus (`asagei`) gravure adapter with paged tag/category/home listings and article galleries (every in-article photo, cover, categories, tags, dates, prev/next and source fields), captured fixtures and URL inference (JOOXCR-461).
 - Add the WPB Web Gravure (`wpb`) adapter for Weekly Playboy (週プレNEWS) public gravure listing and gallery pages: cover at full resolution with thumbnails, profile, credits, tags, source fields and captured fixtures (JOOXCR-460).
 
