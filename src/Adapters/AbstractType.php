@@ -7,7 +7,7 @@ namespace JOOservices\CrawlerX\Adapters;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Exceptions\CrawlBlockedException;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
-use JOOservices\CrawlerX\Fetch\ChallengeDetector;
+use JOOservices\CrawlerX\Support\ChallengeResponseDetector;
 use Psr\Http\Message\ResponseInterface;
 
 abstract class AbstractType
@@ -94,7 +94,7 @@ abstract class AbstractType
             $headers[(string) $name] = array_values($values);
         }
 
-        return ChallengeDetector::isChallenge($html, $response->getStatusCode(), $headers);
+        return ChallengeResponseDetector::isChallenge($html, $response->getStatusCode(), $headers);
     }
 
     /** @param array<string, mixed> $data */
