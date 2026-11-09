@@ -106,6 +106,8 @@ Also:
 
 ## Live crawling and fixtures
 
+When adding an adapter, run `composer check:manifests` to validate every adapter manifest.
+
 Live crawls are never run in CI. Capture real DOM fixtures with:
 
 ```bash
