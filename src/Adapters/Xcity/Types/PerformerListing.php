@@ -14,9 +14,11 @@ use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\DomCrawler\UriResolver;
+use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
 
 final class PerformerListing extends AbstractType implements TypeInterface
 {
+    use CoercesValues;
     use ParsesHtml;
 
     private const CARD_IMAGES = '#avidol a[href*="detail/"] img[src]';
@@ -158,10 +160,5 @@ final class PerformerListing extends AbstractType implements TypeInterface
         $value = preg_replace('/\s*All Titles Information\s*$/iu', '', $value) ?? $value;
 
         return $this->cleanText($value);
-    }
-
-    private function cleanText(string $value): string
-    {
-        return trim((string) preg_replace('/\s+/u', ' ', html_entity_decode($value, ENT_QUOTES | ENT_HTML5)));
     }
 }
