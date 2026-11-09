@@ -20,6 +20,9 @@ final class LiveCheckRequestLimiter
     /** @var array<string, int> */
     private array $lastRequestByHost = [];
 
+    /** @var array<string, bool> */
+    private array $budgetExceededByAdapter = [];
+
     /**
      * @param Closure(int): void $sleepMicroseconds
      * @param Closure(): int $clockNanoseconds
@@ -48,11 +51,17 @@ final class LiveCheckRequestLimiter
     {
         $slug = $this->adapterSlug;
         $host = parse_url($url, PHP_URL_HOST);
-        if ($slug === null || ! is_string($host) || $host === '') {
+        if ($slug === null) {
             return true;
         }
 
         if (($this->requestCountByAdapter[$slug] ?? 0) >= self::MAX_REQUESTS_PER_ADAPTER) {
+            $this->budgetExceededByAdapter[$slug] = true;
+
+            return false;
+        }
+
+        if (! is_string($host) || $host === '') {
             return false;
         }
 
@@ -62,6 +71,11 @@ final class LiveCheckRequestLimiter
         $this->lastRequestByHost[$host] = ($this->clockNanoseconds)();
 
         return true;
+    }
+
+    public function wasBudgetExceeded(string $slug): bool
+    {
+        return $this->budgetExceededByAdapter[$slug] ?? false;
     }
 
     private function waitForHost(string $host): void

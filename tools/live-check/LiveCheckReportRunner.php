@@ -54,6 +54,8 @@ final class LiveCheckReportRunner
                 try {
                     $outcome = ($this->crawl)($sample);
                     $classification = $this->classifier->classify($outcome);
+                } catch (LiveCheckRequestLimitException) {
+                    $classification = ['status' => 'not-checked', 'item_count' => 0, 'error_code' => 'request_limit'];
                 } catch (Throwable $exception) {
                     $classification = $exception instanceof NetworkExceptionInterface
                         ? $this->classifier->classify($exception)

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Http;
 
 use Closure;
+use JOOservices\Client\Client\ClientBuilder;
 use JOOservices\Client\Client\HttpClient;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\CrawlHttpResponse;
@@ -34,12 +35,18 @@ final readonly class ClientCrawlHttpClient implements CrawlHttpClient
         }
 
         $builder = $this->httpClient->requestBuilder()->get($url);
+        if ($this->beforeOutboundRequest !== null && ! ClientBuilder::isFaked()) {
+            // Redirects are additional requests, so callers enforcing outbound limits must handle
+            // each hop themselves rather than letting the transport follow them invisibly.
+            $builder = $builder->withRedirects(false);
+        }
+
         $merged = array_merge($this->headers, $headers);
         if ($merged !== []) {
             $builder = $builder->withHeaders($merged);
         }
         $request = $builder->build();
 
-        return new PsrCrawlHttpResponse($this->httpClient->sendRequest($request->toPsr()));
+        return new PsrCrawlHttpResponse($this->httpClient->send($request->toPsr(), $request->options()));
     }
 }

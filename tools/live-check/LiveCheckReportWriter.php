@@ -10,7 +10,7 @@ use RuntimeException;
 
 final class LiveCheckReportWriter
 {
-    private const STATUSES = ['ok', 'empty', 'blocked', 'parse-error', 'network'];
+    private const STATUSES = ['ok', 'empty', 'blocked', 'parse-error', 'network', 'not-checked'];
 
     /**
      * @param list<array{slug: string, adapter_name: string, sample_role: string, sample_name: string, sample_type: string, url: string, status: string, item_count: int, duration_ms: int, error_code: ?string}> $results

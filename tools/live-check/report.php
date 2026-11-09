@@ -5,9 +5,12 @@ declare(strict_types=1);
 use JOOservices\CrawlerX\CrawlerX;
 use JOOservices\CrawlerX\CrawlerXFactory;
 use JOOservices\CrawlerX\Dto\CrawlOptionsDto;
+use JOOservices\CrawlerX\Dto\FetchOptionsDto;
 use JOOservices\CrawlerX\Dto\HttpOptionsDto;
+use JOOservices\CrawlerX\Enums\FetchProfile;
 use JOOservices\CrawlerX\Tools\Canary\Env;
 use JOOservices\CrawlerX\Tools\LiveCheck\LiveCheckReportRunner;
+use JOOservices\CrawlerX\Tools\LiveCheck\LiveCheckRequestLimitException;
 use JOOservices\CrawlerX\Tools\LiveCheck\LiveCheckRequestLimiter;
 use JOOservices\CrawlerX\Tools\LiveCheck\LiveCheckReportWriter;
 use JOOservices\CrawlerX\Tools\LiveCheck\LiveCheckSampleSelector;
@@ -16,6 +19,7 @@ require dirname(__DIR__, 2) . '/vendor/autoload.php';
 require dirname(__DIR__) . '/canary/Env.php';
 require __DIR__ . '/LiveCheckSampleSelector.php';
 require __DIR__ . '/LiveCheckClassifier.php';
+require __DIR__ . '/LiveCheckRequestLimitException.php';
 require __DIR__ . '/LiveCheckRequestLimiter.php';
 require __DIR__ . '/LiveCheckReportRunner.php';
 require __DIR__ . '/LiveCheckReportWriter.php';
@@ -131,16 +135,33 @@ CrawlerXFactory::configure(
     },
 );
 $crawl = static function (array $sample) use ($proxy, $requestLimiter): \JOOservices\CrawlerX\Dto\CrawlOutcomeDto {
-    return $requestLimiter->forAdapter(
-        $sample['slug'],
-        static function () use ($sample, $proxy): \JOOservices\CrawlerX\Dto\CrawlOutcomeDto {
-            return CrawlerX::url($sample['url'])
-                ->site($sample['slug'])
-                ->type($sample['type'])
-                ->options(new CrawlOptionsDto(http: new HttpOptionsDto(proxy: $proxy)))
-                ->tryCrawl();
-        },
-    );
+    try {
+        $outcome = $requestLimiter->forAdapter(
+            $sample['slug'],
+            static function () use ($sample, $proxy): \JOOservices\CrawlerX\Dto\CrawlOutcomeDto {
+                return CrawlerX::url($sample['url'])
+                    ->site($sample['slug'])
+                    ->type($sample['type'])
+                    ->options(new CrawlOptionsDto(
+                        http: new HttpOptionsDto(proxy: $proxy),
+                        fetch: new FetchOptionsDto(profile: FetchProfile::HttpOnly),
+                    ))
+                    ->tryCrawl();
+            },
+        );
+    } catch (Throwable $exception) {
+        if ($requestLimiter->wasBudgetExceeded($sample['slug'])) {
+            throw new LiveCheckRequestLimitException(previous: $exception);
+        }
+
+        throw $exception;
+    }
+
+    if (! $outcome->ok && $requestLimiter->wasBudgetExceeded($sample['slug'])) {
+        throw new LiveCheckRequestLimitException();
+    }
+
+    return $outcome;
 };
 $runner = new LiveCheckReportRunner(
     crawl: $crawl,
@@ -159,7 +180,7 @@ $report = (new LiveCheckReportWriter())->write(
 
 printf("Checked %d adapter(s), %d sample(s).\n", count(array_unique(array_column($results, 'slug'))), count($results));
 printf("Markdown: %s\nJSON: %s\n", $report['markdown_path'], $report['json_path']);
-foreach (['ok', 'empty', 'blocked', 'parse-error', 'network'] as $status) {
+foreach (['ok', 'empty', 'blocked', 'parse-error', 'network', 'not-checked'] as $status) {
     $count = count(array_filter($results, static fn(array $result): bool => $result['status'] === $status));
     printf("%-12s %d\n", $status, $count);
 }
