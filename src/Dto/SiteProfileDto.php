@@ -29,6 +29,7 @@ final class SiteProfileDto extends Dto
         public readonly array $soft404Markers = [],
         /** @var array<string, float>|null */
         public readonly ?array $defaultThrottle = null,
+        public readonly ?bool $respectRobots = null,
     ) {
     }
 
@@ -62,7 +63,16 @@ final class SiteProfileDto extends Dto
             readyMarkers: $manifest->readyMarkers,
             soft404Markers: $manifest->soft404Markers,
             defaultThrottle: self::normalizeThrottle($manifest->defaultThrottle),
+            respectRobots: self::respectRobotsFromConfig($manifest->defaultCrawlConfig),
         );
+    }
+
+    /** @param array<string, mixed> $config */
+    private static function respectRobotsFromConfig(array $config): ?bool
+    {
+        $value = $config['respect_robots'] ?? null;
+
+        return is_bool($value) ? $value : null;
     }
 
     /** @param array<string, mixed>|null $settings

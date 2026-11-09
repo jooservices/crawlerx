@@ -11,6 +11,7 @@ use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Enums\FetchProfile;
 use JOOservices\CrawlerX\Fetch\Budget\FetchBudget;
 use JOOservices\CrawlerX\Fetch\Guard\HostCircuit;
+use JOOservices\CrawlerX\Fetch\Guard\HostThrottle;
 use JOOservices\CrawlerX\Fetch\Guard\PreFetchGuard;
 use JOOservices\CrawlerX\Tests\Support\ArrayCache;
 use PHPUnit\Framework\TestCase;
@@ -47,6 +48,38 @@ final class PreFetchGuardTest extends TestCase
         self::assertNull($guard->check('https://a.test/x', $this->profile(), FetchMethod::Http, $budget));
     }
 
+    public function test_robots_crawl_delay_raises_the_throttle_gap(): void
+    {
+        $now = 0.0;
+        $throttle = new HostThrottle(
+            cache: new ArrayCache(),
+            nodeId: 'node-a',
+            clock: static function () use (&$now): float {
+                return $now;
+            },
+            sleeper: static function (int $microseconds) use (&$now): void {
+                $now += $microseconds / 1_000_000;
+            },
+        );
+        $guard = new PreFetchGuard($throttle, null, 5.0);
+        $profile = new SiteProfileDto(
+            slug: 'sample',
+            displayName: 'Sample',
+            baseUrl: 'https://a.test',
+            fetchProfile: FetchProfile::Adaptive,
+            fetchChain: [],
+            http: new HttpProfileDto(),
+            defaultThrottle: ['default_gap_seconds' => 1.0, 'min_gap_seconds' => 0.0, 'max_gap_seconds' => 10.0],
+        );
+
+        self::assertNull($guard->check('https://a.test/x', $profile, FetchMethod::Http, $this->budget($now, 20)));
+
+        $result = $guard->check('https://a.test/x', $profile, FetchMethod::Http, $this->budget($now, 2));
+
+        self::assertNotNull($result);
+        self::assertSame(['5'], $result->headers['Retry-After']);
+    }
+
     private function openCircuit(string $host): HostCircuit
     {
         $circuit = new HostCircuit(cache: new ArrayCache(), clock: static fn(): float => 100.0);
@@ -55,6 +88,17 @@ final class PreFetchGuardTest extends TestCase
         }
 
         return $circuit;
+    }
+
+    private function budget(float &$now, int $deadlineSeconds): FetchBudget
+    {
+        return new FetchBudget(
+            deadlineSeconds: $deadlineSeconds,
+            startedAt: (int) ($now * 1_000_000_000),
+            clock: static function () use (&$now): float {
+                return $now * 1_000_000_000;
+            },
+        );
     }
 
     private function profile(): SiteProfileDto

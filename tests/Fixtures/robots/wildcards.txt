@@ -1,0 +1,6 @@
+# Wildcards and end-of-string anchors
+User-agent: *
+Disallow: /*.pdf$
+Disallow: /tmp/*
+Allow: /tmp/index.html
+Disallow: /admin$
