@@ -6,6 +6,7 @@ namespace JOOservices\CrawlerX\Adapters\Dahlia\Types;
 
 use JOOservices\CrawlerX\Adapters\AbstractHtmlType;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
+use JOOservices\CrawlerX\Adapters\Concerns\ReadsPathNumbers;
 use JOOservices\CrawlerX\Adapters\Dahlia\Fields;
 use JOOservices\CrawlerX\Adapters\Dahlia\Selectors;
 use JOOservices\CrawlerX\Adapters\Dahlia\Site;
@@ -17,11 +18,10 @@ use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
-use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 
 final class Listing extends AbstractHtmlType implements TypeInterface
 {
-    use ParsesUrlParts;
+    use ReadsPathNumbers;
 
     use ParsesHtml;
 

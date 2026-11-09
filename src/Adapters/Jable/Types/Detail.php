@@ -4,26 +4,28 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\Jable\Types;
 
-use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
-use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Adapters\AbstractType;
+use JOOservices\CrawlerX\Adapters\Concerns\CoercesNumbers;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
+use JOOservices\CrawlerX\Adapters\Concerns\ReadsLastPathSegment;
+use JOOservices\CrawlerX\Adapters\Concerns\StripsTitleCode;
 use JOOservices\CrawlerX\Adapters\Jable\Selectors;
 use JOOservices\CrawlerX\Adapters\Jable\UrlNormalizer;
+use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
-use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
+use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Support\CodeNormalizer;
 use JOOservices\CrawlerX\Support\JableStreamParser;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
-use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 
 final class Detail extends AbstractType implements TypeInterface
 {
-    use CoercesValues;
-    use ParsesUrlParts;
+    use CoercesNumbers;
+    use ReadsLastPathSegment;
+    use StripsTitleCode;
     use ParsesHtml;
 
     public function __construct(

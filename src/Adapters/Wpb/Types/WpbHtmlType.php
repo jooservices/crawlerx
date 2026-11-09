@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Adapters\Wpb\Types;
 
 use JOOservices\CrawlerX\Adapters\AbstractHtmlType;
+use JOOservices\CrawlerX\Adapters\Concerns\CoercesNumbers;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
 use JOOservices\CrawlerX\Adapters\Wpb\Urls;
 use Symfony\Component\DomCrawler\Crawler;
-use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
 
 abstract class WpbHtmlType extends AbstractHtmlType
 {
-    use CoercesValues;
+    use CoercesNumbers;
     use ParsesHtml;
 
     protected function siteLabel(): string

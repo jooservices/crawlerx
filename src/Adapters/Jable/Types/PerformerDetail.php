@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\Jable\Types;
 
-use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 use JOOservices\CrawlerX\Adapters\AbstractType;
+use JOOservices\CrawlerX\Adapters\Concerns\MatchesUrlPath;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
 use JOOservices\CrawlerX\Adapters\Jable\Selectors;
 use JOOservices\CrawlerX\Adapters\Jable\UrlNormalizer;
@@ -20,7 +20,7 @@ use Symfony\Component\DomCrawler\Crawler;
 
 final class PerformerDetail extends AbstractType implements TypeInterface
 {
-    use ParsesUrlParts;
+    use MatchesUrlPath;
     use ParsesHtml;
 
     public function __construct(

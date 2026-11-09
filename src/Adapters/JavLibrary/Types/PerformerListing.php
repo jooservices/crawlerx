@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\JavLibrary\Types;
 
-use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 use JOOservices\CrawlerX\Adapters\AbstractHtmlType;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
+use JOOservices\CrawlerX\Adapters\Concerns\ReadsQueryParams;
 use JOOservices\CrawlerX\Adapters\JavLibrary\Selectors;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
-use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
+use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class PerformerListing extends AbstractHtmlType implements TypeInterface
 {
-    use ParsesUrlParts;
+    use ReadsQueryParams;
     use ParsesHtml;
 
     protected function siteLabel(): string

@@ -6,6 +6,9 @@ namespace JOOservices\CrawlerX\Adapters\Asagei\Types;
 
 use JOOservices\CrawlerX\Adapters\Asagei\Selectors;
 use JOOservices\CrawlerX\Adapters\Asagei\Urls;
+use JOOservices\CrawlerX\Adapters\Concerns\CoercesNumbers;
+use JOOservices\CrawlerX\Adapters\Concerns\ReadsQueryNumbers;
+use JOOservices\CrawlerX\Adapters\Concerns\ResolvesLinkUrls;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
@@ -15,17 +18,14 @@ use JOOservices\CrawlerX\Dto\Entity\GalleryDto;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
-use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
-use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
-use JOOservices\CrawlerX\Adapters\Concerns\ResolvesLinkUrls;
 
 final class Listing extends AsageiHtmlType implements TypeInterface
 {
     use ResolvesLinkUrls;
 
-    use ParsesUrlParts;
+    use CoercesNumbers;
+    use ReadsQueryNumbers;
 
-    use CoercesValues;
 
     protected function contextLabel(): string
     {

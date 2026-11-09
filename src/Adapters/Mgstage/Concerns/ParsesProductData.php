@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\Mgstage\Concerns;
 
+use JOOservices\CrawlerX\Adapters\Concerns\MatchesUrlPath;
 use JOOservices\CrawlerX\Adapters\Mgstage\Site;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
@@ -13,6 +14,8 @@ use Symfony\Component\DomCrawler\Crawler;
  */
 trait ParsesProductData
 {
+    use MatchesUrlPath;
+
     protected function skuFromUrl(string $url): ?string
     {
         return $this->pathMatch($url, '#/product/product_detail/([^/?\#]+)#');

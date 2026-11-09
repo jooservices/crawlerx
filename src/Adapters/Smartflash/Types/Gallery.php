@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\Smartflash\Types;
 
+use JOOservices\CrawlerX\Adapters\Concerns\CoercesNumbers;
 use JOOservices\CrawlerX\Adapters\Smartflash\Selectors;
 use JOOservices\CrawlerX\Adapters\Smartflash\Urls;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
@@ -14,11 +15,10 @@ use JOOservices\CrawlerX\Dto\Entity\PhotoDto;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
-use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
 
 final class Gallery extends SmartflashHtmlType implements TypeInterface
 {
-    use CoercesValues;
+    use CoercesNumbers;
 
     protected function contextLabel(): string
     {

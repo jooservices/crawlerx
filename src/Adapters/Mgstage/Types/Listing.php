@@ -6,7 +6,7 @@ namespace JOOservices\CrawlerX\Adapters\Mgstage\Types;
 
 use JOOservices\CrawlerX\Adapters\AbstractHtmlType;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
-use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
+use JOOservices\CrawlerX\Adapters\Concerns\ReadsQueryNumbers;
 use JOOservices\CrawlerX\Adapters\Mgstage\Concerns\ParsesProductData;
 use JOOservices\CrawlerX\Adapters\Mgstage\Selectors;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
@@ -22,7 +22,7 @@ use Symfony\Component\DomCrawler\Crawler;
 final class Listing extends AbstractHtmlType implements TypeInterface
 {
     use ParsesHtml;
-    use ParsesUrlParts;
+    use ReadsQueryNumbers;
     use ParsesProductData;
 
     protected function siteLabel(): string
