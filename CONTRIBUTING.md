@@ -79,7 +79,7 @@ Coding rules:
 
 ## Architecture checks
 
-CI enforces the Deptrac rules in `deptrac.yaml` through the required `Architecture (Deptrac)` check. Run `composer lint:deptrac` locally and keep dependencies within the declared layer rules before opening a pull request.
+CI runs the Deptrac rules in `deptrac.yaml` through `Architecture (Deptrac)`. The required `Coverage upload` check also requires that architecture job to succeed, so an architecture failure blocks merging without changing the required check names. Run `composer lint:deptrac` locally and keep dependencies within the declared layer rules before opening a pull request.
 
 ## Testing expectations
 

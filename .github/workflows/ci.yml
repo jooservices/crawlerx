@@ -406,10 +406,17 @@ jobs:
 
   coverage:
     name: Coverage upload
-    needs: [test, security]
+    needs: [test, security, architecture]
+    if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      - name: Require successful test, security, and architecture checks
+        if: ${{ needs.test.result != 'success' || needs.security.result != 'success' || needs.architecture.result != 'success' }}
+        run: |
+          echo "::error::Coverage upload requires successful test, security, and architecture checks."
+          exit 1
+
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
