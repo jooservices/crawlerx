@@ -8,17 +8,27 @@ use JOOservices\Client\Exceptions\NetworkConnectionException;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\CrawlHttpResponse;
 use JOOservices\CrawlerX\Dto\FetchResultDto;
+use JOOservices\CrawlerX\Fetch\Cache\RequestScopedResponseMemo;
 use Nyholm\Psr7\Response;
 
 final readonly class SeededCrawlHttpClient implements CrawlHttpClient
 {
+    private RequestScopedResponseMemo $responses;
+
     public function __construct(
         private CrawlHttpClient $inner,
         private FetchResultDto $fetch,
     ) {
+        $this->responses = new RequestScopedResponseMemo();
     }
 
     public function get(string $url, array $headers = []): CrawlHttpResponse
+    {
+        return $this->responses->fetch($url, $headers, fn(): CrawlHttpResponse => $this->fetch($url, $headers));
+    }
+
+    /** @param array<string, string> $headers */
+    private function fetch(string $url, array $headers): CrawlHttpResponse
     {
         if ($this->matches($url)) {
             $responseHeaders = ['Content-Type' => $this->contentType()];

@@ -61,7 +61,7 @@ final class ResponseCache implements CacheAwareFetchMethodHandler
             return null;
         }
 
-        $key = $this->key($method, $url, $this->handler->requestHeaders($url, $profile, $options));
+        $key = ResponseCacheKey::for($method, $url, $this->handler->requestHeaders($url, $profile, $options));
         try {
             $entry = $this->cache->get($key);
         } catch (Throwable) {
@@ -116,22 +116,10 @@ final class ResponseCache implements CacheAwareFetchMethodHandler
         ];
 
         try {
-            $this->cache->set($this->key($method, $url, $headers), $entry, $this->ttlSeconds);
+            $this->cache->set(ResponseCacheKey::for($method, $url, $headers), $entry, $this->ttlSeconds);
         } catch (Throwable) {
             // A cache outage must not turn a successful HTTP fetch into a failure.
         }
-    }
-
-    /** @param array<string, string> $headers */
-    private function key(FetchMethod $method, string $url, array $headers): string
-    {
-        $normalized = [];
-        foreach ($headers as $name => $value) {
-            $normalized[] = [strtolower(trim($name)), trim($value)];
-        }
-        sort($normalized);
-
-        return 'crawlerx.response.' . substr(hash('sha256', serialize([$method->value, $url, $normalized])), 0, 46);
     }
 
     /** @return array<string, list<string>>|null */
