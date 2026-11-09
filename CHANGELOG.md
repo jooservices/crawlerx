@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add the Asagei Plus (`asagei`) gravure adapter with paged tag/category/home listings and article galleries (every in-article photo, cover, categories, tags, dates, prev/next and source fields), captured fixtures and URL inference (JOOXCR-461).
 - Add the WPB Web Gravure (`wpb`) adapter for Weekly Playboy (週プレNEWS) public gravure listing and gallery pages: cover at full resolution with thumbnails, profile, credits, tags, source fields and captured fixtures (JOOXCR-460).
 
+### Changed
+
+- Split `FetchFallbackChain` (747 lines) into single-responsibility collaborators under `src/Fetch` (attempt log rows and method runner with transient retry, pre-fetch throttle/circuit guard, session and budget request shaping, ready-marker gate, login-wall detection, rejection builders, circuit reporting); the chain stays a thin orchestrator and fetch behaviour, config keys, exceptions and the SSRF guard are unchanged (JOOXCR-463).
+
 ### Fixed
 
 - Browser SSRF guard drops loopback/unspecified decoy DNS answers and pins only remaining public addresses, so hosts such as Jable/MissAV with Cloudflare A records plus `127.0.0.1`/`0.0.0.0` decoys fetch normally while private-only answers stay blocked; blocked responses carry a clear `ssrfReason` into the fetch exception message (JOOXCR-399 / JOOXCR-363).
