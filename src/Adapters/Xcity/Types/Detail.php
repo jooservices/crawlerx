@@ -13,9 +13,12 @@ use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
+use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
 
 final class Detail extends AbstractType implements TypeInterface
 {
+    use CoercesValues;
+
     public function __construct(
         private readonly CrawlHttpClient $client,
         private readonly UrlNormalizer $normalizer = new UrlNormalizer(),
@@ -304,10 +307,5 @@ final class Detail extends AbstractType implements TypeInterface
         }
 
         return preg_match('/\d+/', $value, $match) === 1 ? (int) $match[0] : null;
-    }
-
-    private function cleanText(string $value): string
-    {
-        return trim((string) preg_replace('/\s+/u', ' ', html_entity_decode($value, ENT_QUOTES | ENT_HTML5)));
     }
 }

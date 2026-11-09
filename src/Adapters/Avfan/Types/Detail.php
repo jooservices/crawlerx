@@ -16,9 +16,11 @@ use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Support\CodeNormalizer;
 use JOOservices\CrawlerX\Support\SizeParser;
 use Symfony\Component\DomCrawler\Crawler;
+use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
 
 final class Detail extends AbstractType implements TypeInterface
 {
+    use CoercesValues;
     use ParsesHtml;
 
     public function __construct(
@@ -242,10 +244,5 @@ final class Detail extends AbstractType implements TypeInterface
         }
 
         return preg_match('/(\d+(?:\.\d+)?)\s*star/i', $value, $match) === 1 ? (float) $match[1] : null;
-    }
-
-    private function cleanText(string $value): string
-    {
-        return trim((string) preg_replace('/\s+/u', ' ', html_entity_decode($value, ENT_QUOTES | ENT_HTML5)));
     }
 }

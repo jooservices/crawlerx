@@ -14,9 +14,11 @@ use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Support\CodeNormalizer;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
+use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 
 final class Listing extends AbstractHtmlType implements TypeInterface
 {
+    use ParsesUrlParts;
     use InteractsWithMissavHtml;
 
     /** @var list<string> */
@@ -57,7 +59,7 @@ final class Listing extends AbstractHtmlType implements TypeInterface
                 return;
             }
 
-            $externalId = $this->externalId($absolute);
+            $externalId = $this->lastPathSegment($absolute);
             if ($externalId === null) {
                 return;
             }
@@ -230,13 +232,6 @@ final class Listing extends AbstractHtmlType implements TypeInterface
         $segments = $this->contentPathSegments($path);
 
         return count($segments) === 1 && in_array($segments[0], self::LISTING_PATHS, true);
-    }
-
-    private function externalId(string $url): ?string
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-
-        return is_string($path) && trim($path, '/') !== '' ? trim(basename($path), '/') : null;
     }
 
     private function itemTitle(Crawler $node): ?string
