@@ -30,6 +30,7 @@ final class GuardedFallbackDefaultFactoryTest extends TestCase
             'PLAYWRIGHT_URL',
             'FLARESOLVERR_URL',
             'CRAWLERX_FLARESOLVERR_PROXY_URL',
+            'PATH',
         ] as $name) {
             $this->environment[$name] = getenv($name);
         }
@@ -56,18 +57,23 @@ final class GuardedFallbackDefaultFactoryTest extends TestCase
 
     public function test_default_factory_runs_an_allowed_browser_fallback_with_robots_enabled(): void
     {
+        $nodeDirectory = sys_get_temp_dir() . '/crawlerx-node-' . bin2hex(random_bytes(8));
+        self::assertTrue(mkdir($nodeDirectory, 0700));
+        $nodeBinary = $nodeDirectory . '/node';
+        file_put_contents($nodeBinary, <<<'SH'
+            #!/bin/sh
+            if grep -q '"respectRobots":true' "${2#--config=}"; then
+                printf '%s\n' '{"html":"<html><body>allowed browser fallback</body></html>","status":200,"finalUrl":"https://example.test/page"}'
+            else
+                printf '%s\n' '{"html":"<html><body>allowed browser fallback</body></html>","status":500,"finalUrl":"https://example.test/page"}'
+            fi
+            SH);
+        chmod($nodeBinary, 0700);
+        putenv('PATH=' . $nodeDirectory . PATH_SEPARATOR . (getenv('PATH') ?: ''));
+
         $script = tempnam(sys_get_temp_dir(), 'crawlerx-browser-fallback-');
         self::assertNotFalse($script);
-        file_put_contents($script, <<<'JS'
-            const fs = require('node:fs');
-            const configPath = process.argv.find((argument) => argument.startsWith('--config='))?.slice(9);
-            const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-            process.stdout.write(JSON.stringify({
-                html: '<html><body>allowed browser fallback</body></html>',
-                status: config.respectRobots === true ? 200 : 500,
-                finalUrl: config.url,
-            }));
-            JS);
+        file_put_contents($script, 'browser script stub');
         putenv('CRAWLERX_PLAYWRIGHT_SCRIPT=' . $script);
         ClientBuilder::fake();
 
@@ -85,6 +91,8 @@ final class GuardedFallbackDefaultFactoryTest extends TestCase
             self::assertSame('ok', $result->attempts[0]['outcome']);
         } finally {
             unlink($script);
+            unlink($nodeBinary);
+            rmdir($nodeDirectory);
         }
     }
 
