@@ -56,10 +56,13 @@ final class LiveCheckClassifier
             CrawlErrorCode::ParseFailed,
             CrawlErrorCode::UnsupportedUrl,
             CrawlErrorCode::AmbiguousUrl,
-            CrawlErrorCode::AdapterNotFound => 'parse-error',
+            CrawlErrorCode::AdapterNotFound,
+            CrawlErrorCode::Unknown => 'parse-error',
             CrawlErrorCode::NotFound,
             CrawlErrorCode::Gone => 'empty',
-            default => 'network',
+            CrawlErrorCode::Network,
+            CrawlErrorCode::Timeout => 'network',
+            default => 'parse-error',
         };
     }
 

@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Tools\LiveCheck;
 
 use Closure;
+use JOOservices\CrawlerX\Dto\CrawlErrorDto;
 use JOOservices\CrawlerX\Dto\CrawlOutcomeDto;
+use JOOservices\CrawlerX\Enums\CrawlErrorCode;
+use Psr\Http\Client\NetworkExceptionInterface;
 use Throwable;
 
 final class LiveCheckReportRunner
@@ -52,7 +55,11 @@ final class LiveCheckReportRunner
                     $outcome = ($this->crawl)($sample);
                     $classification = $this->classifier->classify($outcome);
                 } catch (Throwable $exception) {
-                    $classification = $this->classifier->classify($exception);
+                    $classification = $exception instanceof NetworkExceptionInterface
+                        ? $this->classifier->classify($exception)
+                        : $this->classifier->classify(CrawlOutcomeDto::failure(
+                            new CrawlErrorDto(CrawlErrorCode::Unknown, 'Unexpected live-check error.'),
+                        ));
                 }
 
                 $durationMs = (int) round((($this->clockNanoseconds)() - $startedAt) / 1_000_000);
