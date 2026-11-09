@@ -38,18 +38,19 @@ final class RequestScopedResponseMemo
         $response = $fetch();
         $psrResponse = $response->toPsrResponse();
         $body = (string) $psrResponse->getBody();
+        $snapshot = [
+            'body' => $body,
+            'headers' => $this->headers($psrResponse),
+            'reason' => $psrResponse->getReasonPhrase(),
+            'status' => $psrResponse->getStatusCode(),
+            'version' => $psrResponse->getProtocolVersion(),
+        ];
 
         if ($this->isCacheable($psrResponse, $body)) {
-            $this->responses[$key] = [
-                'body' => $body,
-                'headers' => $this->headers($psrResponse),
-                'reason' => $psrResponse->getReasonPhrase(),
-                'status' => $psrResponse->getStatusCode(),
-                'version' => $psrResponse->getProtocolVersion(),
-            ];
+            $this->responses[$key] = $snapshot;
         }
 
-        return $response;
+        return $this->response($snapshot);
     }
 
     /**
