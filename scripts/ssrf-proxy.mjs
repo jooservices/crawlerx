@@ -12,6 +12,8 @@ import { createBrotliDecompress, createGunzip, createInflate } from 'node:zlib';
 import { assertSafeBrowserUrl, SsrfBlockedError } from './ssrf-guard.mjs';
 import { configuredMaxResponseBytes } from './fetch-limits.mjs';
 import { withoutConfiguredCookies } from './request-security.mjs';
+import { fetchRobotsTxt } from './robots-fetch.mjs';
+import { allowsRobotsPath } from './robots-policy.mjs';
 
 const hopByHopHeaderNames = new Set([
     'connection',
@@ -84,6 +86,8 @@ export async function createSsrfProxyServer({
     requestOrigin = null,
     sensitiveHeaders = [],
     configuredCookieNames = [],
+    respectRobots = false,
+    robotsUserAgent = 'CrawlerX',
 } = {}) {
     const normalizedSensitiveHeaders = new Set(sensitiveHeaders.map((name) => String(name).toLowerCase()));
     const normalizedConfiguredCookieNames = configuredCookieNames.map((name) => String(name));
@@ -92,7 +96,10 @@ export async function createSsrfProxyServer({
     let blockedError = null;
     let credentialRedirectBlocked = false;
     let responseTooLarge = false;
+    let robotsBlocked = false;
+    let robotsBlockedUrl = null;
     let closed = false;
+    const robotsPolicies = new Map();
     const server = createServer((request, response) => {
         void forwardHttpRequest(request, response);
     });
@@ -145,6 +152,31 @@ export async function createSsrfProxyServer({
         response.end('ssrf_blocked');
     }
 
+    function rejectRobotsRequest(response) {
+        response.writeHead(403, { Connection: 'close', 'Content-Type': 'text/plain' });
+        response.end('robots_disallowed');
+    }
+
+    async function isAllowedByRobots(target) {
+        if (!respectRobots || target.pathname === '/robots.txt') return true;
+
+        const policyUrl = target.protocol === 'ws:'
+            ? new URL(`http://${target.host}${target.pathname}${target.search}`)
+            : target;
+        let policy = robotsPolicies.get(policyUrl.origin);
+        if (policy === undefined) {
+            const pendingPolicy = fetchRobotsTxt(policyUrl.origin, {
+                resolveUrl: resolveTarget,
+                userAgent: robotsUserAgent,
+                maxResponseBytes,
+            }).then((content) => content ?? '');
+            robotsPolicies.set(policyUrl.origin, pendingPolicy);
+            policy = pendingPolicy;
+        }
+
+        return allowsRobotsPath(await policy, policyUrl.pathname || '/', robotsUserAgent);
+    }
+
     function rejectSocket(socket) {
         if (!socket.destroyed) {
             socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\nContent-Length: 12\r\n\r\nssrf_blocked');
@@ -167,6 +199,23 @@ export async function createSsrfProxyServer({
                 response.writeHead(400, { Connection: 'close' });
                 response.end();
             }
+            return;
+        }
+
+        try {
+            if (!await isAllowedByRobots(target)) {
+                robotsBlocked = true;
+                robotsBlockedUrl ??= target.href;
+                rejectRobotsRequest(response);
+                return;
+            }
+        } catch (error) {
+            if (error instanceof SsrfBlockedError) {
+                rejectRequest(response);
+                return;
+            }
+            response.writeHead(502, { Connection: 'close' });
+            response.end();
             return;
         }
 
@@ -327,6 +376,22 @@ export async function createSsrfProxyServer({
             return;
         }
 
+        try {
+            if (!await isAllowedByRobots(target)) {
+                robotsBlocked = true;
+                robotsBlockedUrl ??= target.href;
+                rejectSocket(clientSocket);
+                return;
+            }
+        } catch (error) {
+            if (error instanceof SsrfBlockedError) {
+                rejectSocket(clientSocket);
+                return;
+            }
+            clientSocket.end('HTTP/1.1 502 Bad Gateway\r\nConnection: close\r\n\r\n');
+            return;
+        }
+
         let headers = { ...request.headers, host: target.host, connection: 'Upgrade' };
         const targetOrigin = `http://${target.host}`;
         if (requestOrigin !== null && targetOrigin !== requestOrigin) {
@@ -424,6 +489,8 @@ export async function createSsrfProxyServer({
         blockedError: () => blockedError,
         wasCredentialRedirectBlocked: () => credentialRedirectBlocked,
         wasResponseTooLarge: () => responseTooLarge,
+        wasRobotsBlocked: () => robotsBlocked,
+        robotsBlockedUrl: () => robotsBlockedUrl,
         close: async () => {
             if (closed) return;
             closed = true;

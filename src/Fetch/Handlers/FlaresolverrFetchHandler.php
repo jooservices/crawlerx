@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Fetch\Handlers;
 
-use JOOservices\CrawlerX\Contracts\FetchMethodHandler;
+use JOOservices\CrawlerX\Contracts\GuardedRedirectFetchMethodHandler;
 use JOOservices\CrawlerX\Contracts\LoginCookieProvider;
 use JOOservices\CrawlerX\Dto\CrawlOptionsDto;
 use JOOservices\CrawlerX\Dto\FetchResultDto;
@@ -22,7 +22,7 @@ use Nyholm\Psr7\Request;
 use Psr\Http\Client\ClientInterface;
 use Throwable;
 
-final class FlaresolverrFetchHandler implements FetchMethodHandler
+final class FlaresolverrFetchHandler implements GuardedRedirectFetchMethodHandler
 {
     public function __construct(
         private readonly FetchRuntimeConfig $runtime,
@@ -35,6 +35,14 @@ final class FlaresolverrFetchHandler implements FetchMethodHandler
     public function supports(FetchMethod $method): bool
     {
         return $method === FetchMethod::Flaresolverr;
+    }
+
+    public function supportsGuardedRedirects(): bool
+    {
+        // FlareSolverr does not expose redirect hops. The configured egress proxy
+        // must enforce SSRF and robots policy before forwarding each destination.
+        return $this->runtime->flaresolverrProxyUrl !== null
+            && trim($this->runtime->flaresolverrProxyUrl) !== '';
     }
 
     public function fetch(

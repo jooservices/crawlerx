@@ -6,6 +6,7 @@ namespace JOOservices\CrawlerX;
 
 use JOOservices\Client\Client\ClientBuilder;
 use JOOservices\Client\Exceptions\DownloadSizeExceededException;
+use JOOservices\Client\Exceptions\RequestException;
 use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Contracts\LoginCookieProvider;
 use JOOservices\CrawlerX\Fetch\BrowserServiceProcessRunner;
@@ -34,11 +35,14 @@ use JOOservices\CrawlerX\Services\CrawlOrchestrator;
 use JOOservices\CrawlerX\Services\CrawlerXService;
 use JOOservices\CrawlerX\Services\UrlClassifier;
 use Psr\SimpleCache\CacheInterface;
+use Psr\Http\Message\RequestInterface;
 use Closure;
 use Throwable;
 
 final class CrawlerXFactory
 {
+    private const MAX_ROBOTS_REDIRECTS = 5;
+
     private static ?CrawlOrchestrator $orchestrator = null;
 
     private static ?FetchFallbackChain $fetchChain = null;
@@ -140,13 +144,12 @@ final class CrawlerXFactory
         $cookies = new CookieHandoffStore();
         $sessions = new SessionStore();
         $clientFactory = new ClientFactory(self::$beforeOutboundRequest, self::$onUnsupportedRedirect);
-        $robotsClientFactory = new ClientFactory(
-            self::$beforeRobotsRequest ?? self::$beforeOutboundRequest,
-        );
+        $robotsClientFactory = new ClientFactory();
+        $beforeRobotsRequest = self::$beforeRobotsRequest ?? self::$beforeOutboundRequest;
 
         $playwright = new PlaywrightFamilyFetchHandler($runtime, $browserRunner);
         $robotsGuard = new RobotsGuard(
-            fetchRobotsTxt: static function (string $url) use ($robotsClientFactory, $runtime): ?string {
+            fetchRobotsTxt: static function (string $url) use ($robotsClientFactory, $runtime, $beforeRobotsRequest): ?string {
                 // A faked client serves fixtures and records every request; there is no robots.txt
                 // fixture, so skip the fetch and treat the host as unrestricted (fail-open).
                 if (ClientBuilder::isFaked()) {
@@ -157,20 +160,23 @@ final class CrawlerXFactory
                     $response = $robotsClientFactory->factory([
                         'timeout' => 10,
                         'max_response_bytes' => $runtime->maxResponseBytes,
-                        'allow_redirects' => false,
+                        'allow_redirects' => ['max' => self::MAX_ROBOTS_REDIRECTS],
                         'headers' => $runtime->userAgent !== null && $runtime->userAgent !== ''
                             ? ['User-Agent' => $runtime->userAgent]
                             : [],
+                        'before_request' => $beforeRobotsRequest === null
+                            ? null
+                            : static function (RequestInterface $request) use ($beforeRobotsRequest): void {
+                                if (! $beforeRobotsRequest((string) $request->getUri())) {
+                                    throw new RequestException($request, 'Robots.txt redirect destination was rejected.');
+                                }
+                            },
                     ])->get($url);
                     $psr = $response->toPsrResponse();
                     $status = $psr->getStatusCode();
 
                     if ($status === 404) {
                         return '';
-                    }
-
-                    if ($status >= 300 && $status < 400) {
-                        return null;
                     }
 
                     return $status >= 200 && $status < 300

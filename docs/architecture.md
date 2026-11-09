@@ -159,10 +159,9 @@ Key implementation points are [`CrawlerX.php`](../src/CrawlerX.php),
   `defaultCrawlConfig.respect_robots` in the source manifest overrides
   `CRAWLERX_RESPECT_ROBOTS` in either direction; when the manifest omits it,
   robots checking defaults to enabled. On a cache miss, the guard requests
-  `/robots.txt` through the default `ClientFactory` HTTP client. This request
-  happens before browser methods and is not protected by their SSRF scripts or
-  egress proxy, so it may reach a private host even if a later browser method
-  blocks the target. Unavailable `robots.txt` fails open, while a matching
+  `/robots.txt` through the bounded HTTP transport, follows up to five redirects
+  and checks each destination before requesting it. The final policy applies to
+  the original origin. Unavailable `robots.txt` fails open, while a matching
   `Disallow` rule stops the crawl. The optional robots crawl delay is applied to
   host throttling.
 - On each method attempt, a cache-aware handler is checked first. A cache hit
@@ -173,13 +172,11 @@ Key implementation points are [`CrawlerX.php`](../src/CrawlerX.php),
   that fetch.
 - The HTTP page handler selects a proxy from request options, the site HTTP
   profile, then `CRAWLERX_HTTP_PROXY`. The robots request does not receive the
-  request or site proxy; use `CRAWLERX_HTTP_PROXY` or the applicable libcurl
-  proxy environment variable when it must also use a proxy. When CrawlerX
-  leaves libcurl's proxy unset, libcurl may use `http_proxy` or `all_proxy`;
-  `NO_PROXY` may bypass a configured proxy. An
-  unset CrawlerX proxy therefore does not guarantee a direct connection. The
-  optional response cache wraps successful HTTP responses only and is disabled
-  by default.
+  request or site proxy; use `CRAWLERX_HTTP_PROXY` when it must also use a
+  proxy. The bounded transport disables implicit libcurl proxy environment
+  variables unless CrawlerX has an explicit proxy configured. The optional
+  response cache wraps successful HTTP responses only and is disabled by
+  default.
 - The browser-side SSRF guard applies to the Playwright-family methods
   (`Playwright`, `PlaywrightStealth`, and `ChromeStealth`) and `PuppeteerStealth`,
   whose scripts validate destinations and route browser traffic through the
@@ -192,10 +189,11 @@ Key implementation points are [`CrawlerX.php`](../src/CrawlerX.php),
   [`scripts/puppeteer-stealth-fetch.mjs`](../scripts/puppeteer-stealth-fetch.mjs),
   called by [`PlaywrightFamilyFetchHandler`](../src/Fetch/Handlers/PlaywrightFamilyFetchHandler.php)
   and [`PuppeteerStealthFetchHandler`](../src/Fetch/Handlers/PuppeteerStealthFetchHandler.php).
-  It does not cover the `BrowserLikely` profile as a whole:
+  It does not cover FlareSolverr's redirects:
   [`FlaresolverrFetchHandler`](../src/Fetch/Handlers/FlaresolverrFetchHandler.php)
-  submits the target URL to an external service and needs separate destination
-  or network controls. [`HttpFetchHandler`](../src/Fetch/Handlers/HttpFetchHandler.php),
+  submits the target URL to an external service and requires a configured
+  egress proxy that enforces SSRF and robots policy for every hop. CrawlerX
+  cannot verify that external proxy's policy. [`HttpFetchHandler`](../src/Fetch/Handlers/HttpFetchHandler.php),
   the robots request, and
   [`CurlImpersonateFetchHandler`](../src/Fetch/Handlers/CurlImpersonateFetchHandler.php)
   also do not use this browser-side guard and need separate controls.

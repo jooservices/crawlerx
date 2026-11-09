@@ -63,6 +63,8 @@ const maximumResponseBytes = configuredMaxResponseBytes(config.maxResponseBytes)
 const ssrfProxy = await createSsrfProxyServer({
     maxResponseBytes: maximumResponseBytes,
     requestOrigin: new URL(url).origin,
+    respectRobots: config.respectRobots === true,
+    robotsUserAgent: config.robotsUserAgent ?? config.userAgent,
 });
 let ssrfViolation = false;
 let ssrfError = null;
@@ -125,6 +127,9 @@ try {
     });
     if (ssrfViolation) {
         throw ssrfError ?? ssrfProxy.blockedError() ?? new SsrfBlockedError();
+    }
+    if (ssrfProxy.wasRobotsBlocked()) {
+        throw new Error('robots_disallowed');
     }
     if (ssrfProxy.wasResponseTooLarge()) {
         throw new ResponseBodyTooLargeError();
@@ -213,14 +218,15 @@ try {
         ? error
         : ssrfError ?? ssrfProxy.blockedError();
     const responseTooLarge = error?.code === 'response_too_large' || ssrfProxy.wasResponseTooLarge();
+    const robotsDisallowed = ssrfProxy.wasRobotsBlocked();
     console.log(JSON.stringify({
-        error: ssrfBlocked ? 'ssrf_blocked' : responseTooLarge ? 'response_too_large' : 'browser_fetch_failed',
+        error: ssrfBlocked ? 'ssrf_blocked' : robotsDisallowed ? 'robots_disallowed' : responseTooLarge ? 'response_too_large' : 'browser_fetch_failed',
         ...(ssrfBlocked ? {
             errorCode: 'ssrf_blocked',
             ssrfReason: blockedError?.reason ?? 'blocked',
             ssrfHostname: blockedError?.hostname ?? null,
         } : {}),
-        status: ssrfBlocked ? 403 : responseTooLarge ? 413 : 1,
+        status: ssrfBlocked || robotsDisallowed ? 403 : responseTooLarge ? 413 : 1,
         elapsedMs: Date.now() - started,
         challenge: false,
     }));

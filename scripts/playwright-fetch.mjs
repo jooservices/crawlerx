@@ -221,6 +221,8 @@ export async function fetchWithBrowser(config, browser) {
             requestOrigin: startOrigin,
             sensitiveHeaders: Object.keys(sensitiveHeaders),
             configuredCookieNames: configuredCookies.names,
+            respectRobots: config.respectRobots === true,
+            robotsUserAgent: config.robotsUserAgent ?? userAgent,
         });
         contextOptions.proxy = { server: ssrfProxy.url };
         context = await browser.newContext(contextOptions);
@@ -297,6 +299,9 @@ export async function fetchWithBrowser(config, browser) {
         if (ssrfProxy.wasCredentialRedirectBlocked()) {
             throw new Error('Sensitive headers cannot cross redirect origins.');
         }
+        if (ssrfProxy.wasRobotsBlocked()) {
+            throw new Error('robots_disallowed');
+        }
         if (ssrfProxy.wasResponseTooLarge()) {
             throw new ResponseBodyTooLargeError();
         }
@@ -308,6 +313,9 @@ export async function fetchWithBrowser(config, browser) {
         }
         if (ssrfProxy.wasCredentialRedirectBlocked()) {
             throw new Error('Sensitive headers cannot cross redirect origins.');
+        }
+        if (ssrfProxy.wasRobotsBlocked()) {
+            throw new Error('robots_disallowed');
         }
 
         const waitStarted = Date.now();
@@ -413,6 +421,15 @@ export async function fetchWithBrowser(config, browser) {
                 challenge: false,
                 ssrfReason: blockedError?.reason ?? 'blocked',
                 ssrfHostname: blockedError?.hostname ?? null,
+            };
+        }
+        if (ssrfProxy?.wasRobotsBlocked()) {
+            return {
+                error: 'robots_disallowed',
+                status: 403,
+                elapsedMs: Date.now() - started,
+                challenge: false,
+                blockedUrl: ssrfProxy.robotsBlockedUrl(),
             };
         }
         if (error?.code === 'response_too_large' || ssrfProxy?.wasResponseTooLarge()) {

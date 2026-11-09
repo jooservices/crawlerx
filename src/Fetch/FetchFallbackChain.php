@@ -6,6 +6,7 @@ namespace JOOservices\CrawlerX\Fetch;
 
 use Closure;
 use JOOservices\CrawlerX\Contracts\FetchMethodHandler;
+use JOOservices\CrawlerX\Contracts\GuardedRedirectFetchMethodHandler;
 use JOOservices\CrawlerX\Contracts\LoginCookieProvider;
 use JOOservices\CrawlerX\Dto\CrawlOptionsDto;
 use JOOservices\CrawlerX\Dto\FetchResultDto;
@@ -128,9 +129,8 @@ final class FetchFallbackChain
                 $this->robotsGuard !== null
                 && $this->respectsRobots($profile)
                 && ($method === FetchMethod::Flaresolverr || $this->isBrowserMethod($method))
+                && (! $handler instanceof GuardedRedirectFetchMethodHandler || ! $handler->supportsGuardedRedirects())
             ) {
-                // These engines own redirects internally; until each hop can be guarded,
-                // fail closed before they request the initial URL.
                 $run->attempts[] = AttemptRow::build($method, 0, 0, false, false, 'redirect guard unavailable', skipped: true);
                 continue;
             }

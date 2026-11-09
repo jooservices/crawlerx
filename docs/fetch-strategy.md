@@ -58,10 +58,19 @@ login wall returns `auth_required` and is not retryable.
 
 `PLAYWRIGHT_URL` is the one browser service for the node and `FLARESOLVERR_URL` the one FlareSolverr service; both are plain addresses set in `.env`, so they can point at this project's Docker, the Workspaces Dev VM (through `scripts/docker/playwright-fetch-vm` and `scripts/docker/flaresolverr-vm`) or any other host. The browser service binds `PLAYWRIGHT_HOST` (default `0.0.0.0`, use `127.0.0.1` behind a tunnel). Playwright runs the `node` binary on PATH
 when `PLAYWRIGHT_URL` is empty.
-FlareSolverr runs navigation outside CrawlerX's SSRF guard. Set
-`CRAWLERX_FLARESOLVERR_PROXY_URL` to a proxy reachable by FlareSolverr that
-blocks private and reserved destination addresses; the FlareSolverr fallback
-is skipped when this proxy is not configured.
+Playwright and Puppeteer route every HTTP request, including redirects, through
+a request-scoped proxy. It checks SSRF destinations and the destination
+origin's `robots.txt` before forwarding each hop. Robots redirects are followed
+up to five times; each target is checked by the SSRF guard and the final rules
+apply to the original origin.
+
+FlareSolverr runs navigation outside CrawlerX and does not expose its redirect
+hops. Set `CRAWLERX_FLARESOLVERR_PROXY_URL` to a policy-aware egress proxy
+reachable by FlareSolverr. That proxy must block private and reserved
+destinations and enforce robots rules before forwarding every redirect. The
+FlareSolverr fallback is skipped when this proxy is not configured. CrawlerX
+cannot verify the external proxy's policy; the proxy operator owns that
+enforcement.
 `CRAWLERX_USER_AGENT` sets the user agent. The default is a modern Chrome user
 agent. `CRAWLERX_USER_AGENT_POOL` accepts a comma-separated pool; after three
 consecutive challenges for a site, CrawlerX switches to the next user agent and
@@ -97,7 +106,9 @@ runs before every uncached method attempt.
 
 Before any fetch-method attempt, the chain consults the host's `robots.txt`
 through `RobotsGuard`. On a cache miss, the guard fetches
-`<scheme>://<host>/robots.txt` through the default `ClientFactory` HTTP client.
+`<scheme>://<host>/robots.txt` through the bounded default HTTP client, follows
+up to five redirects and applies the resulting rules to the original origin.
+The HTTP transport validates each redirect destination before requesting it.
 The scheme comes from the target URL, defaults to HTTPS when absent, and an
 explicit port is omitted. Parsed rules are memoized in worker memory without
 expiry. An unreachable file fails open as an empty ruleset, which is also
@@ -198,12 +209,11 @@ The HTTP fetch method can go through a proxy, for example a Japan exit for
 sources that geo-block other countries. At the CrawlerX level, select it
 process-wide with `CRAWLERX_HTTP_PROXY=http://host:port`, or per site profile
 and per request with `HttpProfileDto::$proxy` and `HttpOptionsDto::$proxy`; a
-request option wins over the profile, which wins over the environment. If
-CrawlerX leaves libcurl's proxy unset, libcurl may still use `http_proxy` or
-`all_proxy`; `NO_PROXY` may bypass a configured proxy, so an unset CrawlerX
-proxy does not guarantee a direct connection. The default robots request does
-not receive request or site proxy options. The proxy URL may contain credentials
+request option wins over the profile, which wins over the environment. The
+bounded transport disables implicit libcurl proxy environment variables unless
+CrawlerX has an explicit proxy configured. The default robots request does not
+receive request or site proxy options. The proxy URL may contain credentials
 and is never logged. Browser-based methods and FlareSolverr are not routed
 through the CrawlerX HTTP page proxy. Playwright and Puppeteer use their
-separate SSRF egress proxy; FlareSolverr requires separate destination or
-network controls.
+separate SSRF and robots egress proxy; FlareSolverr requires a separate
+policy-aware egress proxy because it does not expose its redirect hops.
