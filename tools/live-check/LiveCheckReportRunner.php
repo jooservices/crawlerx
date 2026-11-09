@@ -5,10 +5,8 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Tools\LiveCheck;
 
 use Closure;
-use JOOservices\CrawlerX\Dto\CrawlErrorDto;
 use JOOservices\CrawlerX\Dto\CrawlOutcomeDto;
 use JOOservices\CrawlerX\Enums\CrawlErrorCode;
-use Psr\Http\Client\NetworkExceptionInterface;
 use Throwable;
 
 final class LiveCheckReportRunner
@@ -54,15 +52,11 @@ final class LiveCheckReportRunner
 
                 try {
                     $outcome = ($this->crawl)($sample);
-                    $classification = $this->classifier->classify($outcome, $sample['fallback_required'] ?? false);
+                    $classification = $this->classifySample($sample, $outcome);
                 } catch (LiveCheckRequestLimitException $exception) {
                     $classification = ['status' => 'not-checked', 'item_count' => 0, 'error_code' => $exception->reason];
                 } catch (Throwable $exception) {
-                    $classification = $exception instanceof NetworkExceptionInterface
-                        ? $this->classifier->classify($exception, $sample['fallback_required'] ?? false)
-                        : $this->classifier->classify(CrawlOutcomeDto::failure(
-                            new CrawlErrorDto(CrawlErrorCode::Unknown, 'Unexpected live-check error.'),
-                        ), $sample['fallback_required'] ?? false);
+                    $classification = $this->classifySample($sample, $exception);
                 }
 
                 $durationMs = (int) round((($this->clockNanoseconds)() - $startedAt) / 1_000_000);
@@ -83,6 +77,24 @@ final class LiveCheckReportRunner
         }
 
         return $results;
+    }
+
+    /** Leaves a challenge inconclusive when the sample requires a fallback this runner cannot execute.
+     *
+     * @param array{slug: string, adapter_name: string, role: string, name: string, type: \JOOservices\CrawlerX\Enums\CrawlType, url: string, fallback_required?: bool} $sample
+     * @return array{status: string, item_count: int, error_code: ?string}
+     */
+    private function classifySample(array $sample, CrawlOutcomeDto|Throwable $outcome): array
+    {
+        if (($sample['fallback_required'] ?? false)
+            && $outcome instanceof CrawlOutcomeDto
+            && ! $outcome->ok
+            && $outcome->error?->code === CrawlErrorCode::Challenge
+        ) {
+            return ['status' => 'not-checked', 'item_count' => 0, 'error_code' => 'fallback_unsupported'];
+        }
+
+        return $this->classifier->classify($outcome);
     }
 
     /** Waits until a hostname's previous sample request is at least ten seconds old.

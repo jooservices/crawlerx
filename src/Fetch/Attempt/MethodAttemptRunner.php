@@ -109,6 +109,7 @@ final class MethodAttemptRunner
         }
     }
 
+    /** Runs one fetch method after guards and applies the response's ready-marker check. */
     private function fetchWithHandler(FetchMethodHandler $handler, FetchMethod $method, FetchRequest $request, FetchBudget $budget): FetchResultDto
     {
         $profile = SessionProfile::apply($request->profile, $request->options, $request->session, $request->loginCookies, $request->userAgent);

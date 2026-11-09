@@ -46,7 +46,7 @@ final class LiveCheckClassifierTest extends TestCase
         self::assertSame('parse-error', $classifier->classify($this->failure(CrawlErrorCode::UnsupportedUrl))['status']);
         self::assertSame('empty', $classifier->classify($this->failure(CrawlErrorCode::NotFound))['status']);
         self::assertSame('network', $classifier->classify($this->failure(CrawlErrorCode::Network))['status']);
-        self::assertSame('network', $classifier->classify(new RuntimeException('synthetic transport failure'))['status']);
+        self::assertSame('parse-error', $classifier->classify(new RuntimeException('synthetic unexpected failure'))['status']);
     }
 
     private function list(array $items): CrawlListResultDto

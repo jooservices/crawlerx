@@ -8,7 +8,7 @@ use Closure;
 
 final class LiveCheckRequestLimiter
 {
-    private const MAX_CONTENT_REQUESTS_PER_ADAPTER = 2;
+    private const MAX_REQUESTS_PER_ADAPTER = 2;
 
     private const MIN_HOST_INTERVAL_NANOSECONDS = 10_000_000_000;
 
@@ -36,7 +36,7 @@ final class LiveCheckRequestLimiter
     ) {
     }
 
-    /** Runs one sample crawl under the selected adapter's shared content request budget.
+    /** Runs one sample crawl under the selected adapter's shared outbound request budget.
      *
      * @template T
      * @param Closure(): T $operation
@@ -45,9 +45,7 @@ final class LiveCheckRequestLimiter
     public function forAdapter(string $slug, Closure $operation): mixed
     {
         $previousSlug = $this->adapterSlug;
-        if ($previousSlug !== $slug) {
-            unset($this->unsupportedRedirectByAdapter[$slug]);
-        }
+        unset($this->budgetExceededByAdapter[$slug], $this->unsupportedRedirectByAdapter[$slug]);
         $this->adapterSlug = $slug;
 
         try {
@@ -57,16 +55,16 @@ final class LiveCheckRequestLimiter
         }
     }
 
-    /** Returns false before sending when this adapter has exhausted its content request budget. */
+    /** Returns false before sending when this adapter has exhausted its outbound request budget. */
     public function beforeRequest(string $url): bool
     {
         return $this->permit($url, countForAdapter: true);
     }
 
-    /** Paces the shared robots lookup without consuming a sample's content request allowance. */
+    /** Counts and paces the robots lookup against the adapter's outbound request budget. */
     public function beforeRobotsRequest(string $url): bool
     {
-        return $this->permit($url, countForAdapter: false);
+        return $this->permit($url, countForAdapter: true);
     }
 
     /** Paces the hostname and optionally counts the request against its adapter.
@@ -75,7 +73,7 @@ final class LiveCheckRequestLimiter
     {
         $slug = $this->adapterSlug;
         if ($countForAdapter && $slug !== null
-            && ($this->requestCountByAdapter[$slug] ?? 0) >= self::MAX_CONTENT_REQUESTS_PER_ADAPTER
+            && ($this->requestCountByAdapter[$slug] ?? 0) >= self::MAX_REQUESTS_PER_ADAPTER
         ) {
             $this->budgetExceededByAdapter[$slug] = true;
 

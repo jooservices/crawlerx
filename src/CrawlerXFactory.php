@@ -55,6 +55,7 @@ final class CrawlerXFactory
     /** @var Closure(): void|null */
     private static ?Closure $onUnsupportedRedirect = null;
 
+    /** Builds the cached crawler orchestrator with the current factory configuration. */
     public static function create(): CrawlOrchestrator
     {
         if (self::$orchestrator instanceof CrawlOrchestrator) {
@@ -80,6 +81,7 @@ final class CrawlerXFactory
         return self::$orchestrator;
     }
 
+    /** Uses a custom fetch chain and invalidates the cached orchestrator. */
     public static function useFetchChain(FetchFallbackChain $chain): void
     {
         self::$fetchChain = $chain;
@@ -110,6 +112,7 @@ final class CrawlerXFactory
         self::$orchestrator = null;
     }
 
+    /** Clears configured dependencies and cached crawler state. */
     public static function reset(): void
     {
         self::$orchestrator = null;
@@ -122,6 +125,7 @@ final class CrawlerXFactory
         self::$onUnsupportedRedirect = null;
     }
 
+    /** Builds the default HTTP, browser, solver, and guard chain. */
     private static function defaultFetchChain(): FetchFallbackChain
     {
         $runtime = FetchRuntimeConfig::fromEnvironment();
@@ -134,7 +138,6 @@ final class CrawlerXFactory
         $clientFactory = new ClientFactory(self::$beforeOutboundRequest, self::$onUnsupportedRedirect);
         $robotsClientFactory = new ClientFactory(
             self::$beforeRobotsRequest ?? self::$beforeOutboundRequest,
-            self::$onUnsupportedRedirect,
         );
 
         $playwright = new PlaywrightFamilyFetchHandler($runtime, $browserRunner);

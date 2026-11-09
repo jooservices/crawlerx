@@ -7,29 +7,28 @@ namespace JOOservices\CrawlerX\Tools\LiveCheck;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\CrawlOutcomeDto;
 use JOOservices\CrawlerX\Enums\CrawlErrorCode;
+use Psr\Http\Client\NetworkExceptionInterface;
 use Throwable;
 
 final class LiveCheckClassifier
 {
-    /** Classifies crawler outcomes while keeping unavailable fetch fallbacks inconclusive.
+    /** Classifies observed crawl outcomes and transport failures.
      *
      * @return array{status: string, item_count: int, error_code: ?string}
      */
-    public function classify(CrawlOutcomeDto|Throwable $outcome, bool $fallbackUnavailable = false): array
+    public function classify(CrawlOutcomeDto|Throwable $outcome): array
     {
         if ($outcome instanceof Throwable) {
-            if ($fallbackUnavailable) {
-                return ['status' => 'not-checked', 'item_count' => 0, 'error_code' => 'fallback_unsupported'];
-            }
+            $isNetworkFailure = $outcome instanceof NetworkExceptionInterface;
 
-            return ['status' => 'network', 'item_count' => 0, 'error_code' => 'network'];
+            return [
+                'status' => $isNetworkFailure ? 'network' : 'parse-error',
+                'item_count' => 0,
+                'error_code' => $isNetworkFailure ? 'network' : 'unexpected_error',
+            ];
         }
 
         if (! $outcome->ok) {
-            if ($fallbackUnavailable) {
-                return ['status' => 'not-checked', 'item_count' => 0, 'error_code' => 'fallback_unsupported'];
-            }
-
             $code = $outcome->error?->code;
 
             return [

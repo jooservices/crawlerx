@@ -2,17 +2,12 @@
 
 declare(strict_types=1);
 
-use JOOservices\CrawlerX\CrawlerX;
 use JOOservices\CrawlerX\CrawlerXFactory;
-use JOOservices\CrawlerX\Dto\CrawlOptionsDto;
-use JOOservices\CrawlerX\Dto\FetchOptionsDto;
-use JOOservices\CrawlerX\Dto\HttpOptionsDto;
-use JOOservices\CrawlerX\Enums\FetchProfile;
 use JOOservices\CrawlerX\Tools\Canary\Env;
 use JOOservices\CrawlerX\Tools\LiveCheck\LiveCheckReportRunner;
-use JOOservices\CrawlerX\Tools\LiveCheck\LiveCheckRequestLimitException;
 use JOOservices\CrawlerX\Tools\LiveCheck\LiveCheckRequestLimiter;
 use JOOservices\CrawlerX\Tools\LiveCheck\LiveCheckReportWriter;
+use JOOservices\CrawlerX\Tools\LiveCheck\LiveCheckSampleCrawler;
 use JOOservices\CrawlerX\Tools\LiveCheck\LiveCheckSampleSelector;
 
 require dirname(__DIR__, 2) . '/vendor/autoload.php';
@@ -23,6 +18,7 @@ require __DIR__ . '/LiveCheckRequestLimitException.php';
 require __DIR__ . '/LiveCheckRequestLimiter.php';
 require __DIR__ . '/LiveCheckReportRunner.php';
 require __DIR__ . '/LiveCheckReportWriter.php';
+require __DIR__ . '/LiveCheckSampleCrawler.php';
 
 Env::applyToProcess(dirname(__DIR__, 2) . '/.env');
 
@@ -33,9 +29,10 @@ Usage:
 
 Checks one listing and one detail sample per adapter when available. A gallery
 sample is used for the detail check when an adapter has no detail sample.
-Each adapter has at most two content requests, including follow-ups, retries,
-and redirect hops. The cached robots lookup is also paced but does not consume
-that allowance. Requests to the same host are at least 10 seconds apart.
+Each adapter has at most two outbound requests, including robots lookups,
+follow-ups, retries, and redirect hops. A fresh robots lookup can use one of
+those requests, so a later selected sample may be reported as not-checked when
+the request budget is exhausted. Requests to the same host are at least 10 seconds apart.
 Reports are written to build/live-check/ as Markdown and JSON files.
 
 Options:
@@ -142,43 +139,9 @@ CrawlerXFactory::configure(
         $requestLimiter->markUnsupportedRedirect();
     },
 );
-$crawl = static function (array $sample) use ($proxy, $requestLimiter): \JOOservices\CrawlerX\Dto\CrawlOutcomeDto {
-    try {
-        $outcome = $requestLimiter->forAdapter(
-            $sample['slug'],
-            static function () use ($sample, $proxy): \JOOservices\CrawlerX\Dto\CrawlOutcomeDto {
-                return CrawlerX::url($sample['url'])
-                    ->site($sample['slug'])
-                    ->type($sample['type'])
-                    ->options(new CrawlOptionsDto(
-                        http: new HttpOptionsDto(proxy: $proxy),
-                        fetch: new FetchOptionsDto(profile: FetchProfile::HttpOnly),
-                    ))
-                    ->tryCrawl();
-            },
-        );
-    } catch (Throwable $exception) {
-        if ($requestLimiter->wasRedirectUnsupported($sample['slug'])) {
-            throw new LiveCheckRequestLimitException(reason: 'redirect_unsupported', previous: $exception);
-        }
-        if ($requestLimiter->wasBudgetExceeded($sample['slug'])) {
-            throw new LiveCheckRequestLimitException(previous: $exception);
-        }
-
-        throw $exception;
-    }
-
-    if ($requestLimiter->wasRedirectUnsupported($sample['slug'])) {
-        throw new LiveCheckRequestLimitException(reason: 'redirect_unsupported');
-    }
-    if ($requestLimiter->wasBudgetExceeded($sample['slug'])) {
-        throw new LiveCheckRequestLimitException();
-    }
-
-    return $outcome;
-};
+$sampleCrawler = new LiveCheckSampleCrawler($requestLimiter, $proxy);
 $runner = new LiveCheckReportRunner(
-    crawl: $crawl,
+    crawl: static fn(array $sample): \JOOservices\CrawlerX\Dto\CrawlOutcomeDto => $sampleCrawler->crawl($sample),
     sleepMicroseconds: $sleepMicroseconds,
     clockNanoseconds: $clockNanoseconds,
 );

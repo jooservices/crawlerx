@@ -6,12 +6,8 @@ namespace JOOservices\CrawlerX\Tests\Unit\Tools;
 
 use JOOservices\Client\Client\ClientBuilder;
 use JOOservices\Client\Testing\TestResponseSequence;
-use JOOservices\CrawlerX\CrawlerX;
 use JOOservices\CrawlerX\CrawlerXFactory;
-use JOOservices\CrawlerX\Dto\CrawlOutcomeDto;
-use JOOservices\CrawlerX\Dto\FetchOptionsDto;
 use JOOservices\CrawlerX\Enums\CrawlType;
-use JOOservices\CrawlerX\Enums\FetchProfile;
 use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Fetch\FetchFallbackChain;
 use JOOservices\CrawlerX\Fetch\Guard\RobotsGuard;
@@ -19,15 +15,16 @@ use JOOservices\CrawlerX\Fetch\Handlers\HttpFetchHandler;
 use JOOservices\CrawlerX\Services\ClientFactory;
 use JOOservices\CrawlerX\Tools\LiveCheck\LiveCheckClassifier;
 use JOOservices\CrawlerX\Tools\LiveCheck\LiveCheckReportRunner;
-use JOOservices\CrawlerX\Tools\LiveCheck\LiveCheckRequestLimitException;
 use JOOservices\CrawlerX\Tools\LiveCheck\LiveCheckRequestLimiter;
+use JOOservices\CrawlerX\Tools\LiveCheck\LiveCheckSampleCrawler;
 use Nyholm\Psr7\Response;
 use PHPUnit\Framework\TestCase;
 
 require_once __DIR__ . '/../../../tools/live-check/LiveCheckClassifier.php';
-require_once __DIR__ . '/../../../tools/live-check/LiveCheckRequestLimitException.php';
 require_once __DIR__ . '/../../../tools/live-check/LiveCheckRequestLimiter.php';
 require_once __DIR__ . '/../../../tools/live-check/LiveCheckReportRunner.php';
+require_once __DIR__ . '/../../../tools/live-check/LiveCheckRequestLimitException.php';
+require_once __DIR__ . '/../../../tools/live-check/LiveCheckSampleCrawler.php';
 
 final class LiveCheckRobotsBudgetTest extends TestCase
 {
@@ -38,7 +35,7 @@ final class LiveCheckRobotsBudgetTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_the_robots_lookup_does_not_consume_either_sample_request(): void
+    public function test_the_robots_lookup_counts_toward_the_two_request_adapter_budget(): void
     {
         $registry = ClientBuilder::fake();
         $registry->respond('GET', '/robots.txt', (new TestResponseSequence())->push(
@@ -100,34 +97,9 @@ final class LiveCheckRobotsBudgetTest extends TestCase
             beforeOutboundRequest: $beforeOutboundRequest,
         ));
 
-        $crawl = static function (array $sample) use ($limiter): CrawlOutcomeDto {
-            try {
-                $outcome = $limiter->forAdapter(
-                    $sample['slug'],
-                    static fn(): CrawlOutcomeDto => CrawlerX::url($sample['url'])
-                        ->site($sample['slug'])
-                        ->type($sample['type'])
-                        ->options(new \JOOservices\CrawlerX\Dto\CrawlOptionsDto(
-                            fetch: new FetchOptionsDto(profile: FetchProfile::HttpOnly),
-                        ))
-                        ->tryCrawl(),
-                );
-            } catch (\Throwable $exception) {
-                if ($limiter->wasBudgetExceeded($sample['slug'])) {
-                    throw new LiveCheckRequestLimitException(previous: $exception);
-                }
-
-                throw $exception;
-            }
-
-            if ($limiter->wasBudgetExceeded($sample['slug'])) {
-                throw new LiveCheckRequestLimitException();
-            }
-
-            return $outcome;
-        };
+        $crawler = new LiveCheckSampleCrawler($limiter);
         $runner = new LiveCheckReportRunner(
-            crawl: $crawl,
+            crawl: static fn(array $sample) => $crawler->crawl($sample),
             sleepMicroseconds: static function (int $microseconds) use (&$now): void {
                 $now += $microseconds * 1_000;
             },
@@ -140,16 +112,94 @@ final class LiveCheckRobotsBudgetTest extends TestCase
             $this->sample(CrawlType::Detail, 'https://missav.ws/en/fns-247'),
         ]);
 
-        self::assertSame(['ok', 'ok'], array_column($results, 'status'));
-        self::assertCount(3, $registry->recorded());
+        self::assertSame(['ok', 'not-checked'], array_column($results, 'status'));
+        self::assertSame('request_limit', $results[1]['error_code']);
+        self::assertCount(2, $registry->recorded());
         self::assertSame([
             'https://missav.ws/robots.txt',
             'https://missav.ws/en/new',
             'https://missav.ws/en/fns-247',
         ], $requestedUrls);
-        self::assertCount(3, $permittedAt);
+        self::assertCount(2, $permittedAt);
         self::assertGreaterThanOrEqual(10_000_000_000, $permittedAt[1] - $permittedAt[0]);
-        self::assertGreaterThanOrEqual(10_000_000_000, $permittedAt[2] - $permittedAt[1]);
+    }
+
+    public function test_a_multi_request_listing_does_not_hide_an_unchecked_detail_sample(): void
+    {
+        $registry = ClientBuilder::fake();
+        $registry->respond('GET', '/robots.txt', (new TestResponseSequence())->push(
+            new Response(200, ['Content-Type' => 'text/plain'], "User-agent: *\nAllow: /\n"),
+        ));
+        $registry->respond('GET', '/w/api.php', (new TestResponseSequence())->push(
+            new Response(200, ['Content-Type' => 'application/json'], $this->commonsFixture('listing-root.json')),
+        ));
+
+        $now = 0;
+        $attemptedUrls = [];
+        $limiter = new LiveCheckRequestLimiter(
+            static function (int $microseconds) use (&$now): void {
+                $now += $microseconds * 1_000;
+            },
+            static function () use (&$now): int {
+                return $now;
+            },
+        );
+        $beforeOutboundRequest = static function (string $url) use ($limiter, &$attemptedUrls): bool {
+            $attemptedUrls[] = $url;
+
+            return $limiter->beforeRequest($url);
+        };
+        $beforeRobotsRequest = static function (string $url) use ($limiter, &$attemptedUrls): bool {
+            $attemptedUrls[] = $url;
+
+            return $limiter->beforeRobotsRequest($url);
+        };
+        $clientFactory = new ClientFactory($beforeOutboundRequest);
+        $robotsClientFactory = new ClientFactory($beforeRobotsRequest);
+        $robotsGuard = new RobotsGuard(
+            fetchRobotsTxt: static function (string $url) use ($robotsClientFactory): ?string {
+                return (string) $robotsClientFactory->factory()->get($url)->toPsrResponse()->getBody();
+            },
+        );
+
+        CrawlerXFactory::configure(
+            beforeOutboundRequest: $beforeOutboundRequest,
+            beforeRobotsRequest: $beforeRobotsRequest,
+        );
+        CrawlerXFactory::useFetchChain(new FetchFallbackChain(
+            [FetchMethod::Http->value => new HttpFetchHandler($clientFactory)],
+            robotsGuard: $robotsGuard,
+            beforeOutboundRequest: $beforeOutboundRequest,
+        ));
+
+        $crawler = new LiveCheckSampleCrawler($limiter);
+        $runner = new LiveCheckReportRunner(
+            crawl: static fn(array $sample) => $crawler->crawl($sample),
+            sleepMicroseconds: static function (int $microseconds) use (&$now): void {
+                $now += $microseconds * 1_000;
+            },
+            clockNanoseconds: static function () use (&$now): int {
+                return $now;
+            },
+        );
+        $results = $runner->run([
+            $this->commonsSample(
+                'listing',
+                CrawlType::Listing,
+                'https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&list=categorymembers&cmtitle=Category%3AGravure+idols+from+Japan&cmtype=subcat%7Cfile&cmlimit=5&cmprop=ids%7Ctitle%7Ctype%7Ctimestamp%7Csortkeyprefix',
+            ),
+            $this->commonsSample(
+                'detail',
+                CrawlType::PerformerDetail,
+                'https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&titles=Category%3AYuzuki+Aikawa&prop=categoryinfo%7Cpageprops%7Cpageimages%7Cinfo%7Crevisions%7Ccategories%7Clanglinks%7Cextlinks&inprop=url&piprop=original%7Cthumbnail%7Cname&pithumbsize=320&rvprop=content%7Ctimestamp&rvslots=main&cllimit=max&lllimit=max&ellimit=max',
+            ),
+        ]);
+
+        self::assertSame(['not-checked', 'not-checked'], array_column($results, 'status'));
+        self::assertSame(['request_limit', 'request_limit'], array_column($results, 'error_code'));
+        self::assertCount(2, $registry->recorded());
+        self::assertCount(4, $attemptedUrls);
+        self::assertSame('https://commons.wikimedia.org/robots.txt', $attemptedUrls[0]);
     }
 
     /** @return array{slug: string, adapter_name: string, role: string, name: string, type: CrawlType, url: string, fallback_required: bool} */
@@ -169,6 +219,28 @@ final class LiveCheckRobotsBudgetTest extends TestCase
     private function fixture(string $name): string
     {
         $body = file_get_contents(__DIR__ . '/../../Fixtures/missav/' . $name);
+        self::assertIsString($body);
+
+        return $body;
+    }
+
+    /** @return array{slug: string, adapter_name: string, role: string, name: string, type: CrawlType, url: string, fallback_required: bool} */
+    private function commonsSample(string $role, CrawlType $type, string $url): array
+    {
+        return [
+            'slug' => 'commons',
+            'adapter_name' => 'Commons',
+            'role' => $role,
+            'name' => $type->value,
+            'type' => $type,
+            'url' => $url,
+            'fallback_required' => false,
+        ];
+    }
+
+    private function commonsFixture(string $name): string
+    {
+        $body = file_get_contents(__DIR__ . '/../../Fixtures/commons/' . $name);
         self::assertIsString($body);
 
         return $body;

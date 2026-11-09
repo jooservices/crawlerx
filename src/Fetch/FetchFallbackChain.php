@@ -70,7 +70,8 @@ final class FetchFallbackChain
         return $this->cookies;
     }
 
-    /**
+    /** Runs the ordered fetch methods and returns the first acceptable result.
+     *
      * @param  list<FetchMethod>  $plan
      */
     public function fetch(
