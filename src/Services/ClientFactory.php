@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Services;
 
+use Closure;
 use JOOservices\Client\Client\ClientBuilder;
 use JOOservices\Client\Client\HttpClient;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
@@ -47,6 +48,16 @@ final class ClientFactory
         return new ClientCrawlHttpClient($client, $headers);
     }
 
+    public static function boundedHttpClient(float $timeout, int $maxResponseBytes): HttpClient
+    {
+        $builder = ClientBuilder::create()->withTimeout($timeout);
+        if (! ClientBuilder::isFaked()) {
+            $builder = $builder->withTransport(new BoundedCurlTransport($maxResponseBytes));
+        }
+
+        return $builder->build();
+    }
+
     /**
      * @param  array<string, mixed>  $options
      */
@@ -83,6 +94,14 @@ final class ClientFactory
         }
         if (! $isFaked && $proxy !== null) {
             $builder = $builder->withProxy($proxy);
+        }
+        $maxResponseBytes = $options['max_response_bytes'] ?? null;
+        if (! $isFaked && is_int($maxResponseBytes) && $maxResponseBytes > 0) {
+            $beforeRequest = $options['before_request'] ?? null;
+            $builder = $builder->withTransport(new BoundedCurlTransport(
+                $maxResponseBytes,
+                $beforeRequest instanceof Closure ? $beforeRequest : null,
+            ));
         }
 
         /** @var HttpClient $client */
@@ -143,6 +162,12 @@ final class ClientFactory
             'verify_ssl' => is_bool($options['verify_ssl'] ?? null) ? $options['verify_ssl'] : true,
             'allow_redirects' => $this->allowRedirects($options),
         ];
+        if (is_int($options['max_response_bytes'] ?? null)) {
+            $transportOptions['max_response_bytes'] = $options['max_response_bytes'];
+        }
+        if (($options['before_request'] ?? null) instanceof Closure) {
+            $transportOptions['before_request'] = spl_object_id($options['before_request']);
+        }
         if (is_string($options['base_uri'] ?? null)) {
             $transportOptions['base_uri'] = $options['base_uri'];
         }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Fetch\Handlers;
 
+use Closure;
 use JOOservices\CrawlerX\Contracts\FetchMethodHandler;
 use JOOservices\CrawlerX\Contracts\LoginCookieProvider;
 use JOOservices\CrawlerX\Dto\CrawlOptionsDto;
@@ -11,24 +12,38 @@ use JOOservices\CrawlerX\Dto\FetchResultDto;
 use JOOservices\CrawlerX\Dto\SiteProfileDto;
 use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Fetch\ChallengeDetector;
+use JOOservices\CrawlerX\Fetch\Guard\RobotsGuard;
 use JOOservices\CrawlerX\Fetch\Session\CookieHandoffStore;
 use JOOservices\CrawlerX\Fetch\Session\SessionStore;
 use JOOservices\CrawlerX\Fetch\Guard\TransientRetry;
 use JOOservices\CrawlerX\Fetch\Request\SensitiveHeaders;
 use JOOservices\CrawlerX\Fetch\ResponseBodyReader;
 use JOOservices\CrawlerX\Fetch\ResponseBodyTooLargeException;
+use JOOservices\CrawlerX\Exceptions\RobotsDisallowedException;
 use JOOservices\CrawlerX\Services\ClientFactory;
+use JOOservices\Client\Exceptions\DownloadSizeExceededException;
+use Psr\Http\Message\RequestInterface;
 use Throwable;
 
 final class HttpFetchHandler implements FetchMethodHandler
 {
+    /** @var Closure(RequestInterface): void|null */
+    private readonly ?Closure $beforeRequest;
+
     public function __construct(
         private readonly ClientFactory $clientFactory,
         private readonly CookieHandoffStore $cookies = new CookieHandoffStore(),
         private readonly ?SessionStore $sessions = null,
         private readonly ?LoginCookieProvider $logins = null,
         private readonly int $maxResponseBytes = 10_485_760,
+        ?RobotsGuard $robotsGuard = null,
+        private readonly ?string $defaultUserAgent = null,
     ) {
+        $this->beforeRequest = $robotsGuard === null
+            ? null
+            : static function (RequestInterface $request) use ($robotsGuard): void {
+                $robotsGuard->assertAllowed((string) $request->getUri(), $request->getHeaderLine('User-Agent'));
+            };
     }
 
     public function supports(FetchMethod $method): bool
@@ -70,9 +85,13 @@ final class HttpFetchHandler implements FetchMethodHandler
             'verify_ssl' => $http !== null && $http->verifySsl !== null ? $http->verifySsl : $profile->http->verifySsl,
             'headers' => $headers,
             'proxy' => $proxy,
+            'max_response_bytes' => $this->maxResponseBytes,
             // A remote proxy resolves the redirect destination itself, so local DNS validation cannot pin its egress.
             'allow_redirects' => $redirectsDisabled ? false : $redirectOptions,
         ];
+        if ($this->beforeRequest !== null) {
+            $clientOptions['before_request'] = $this->beforeRequest;
+        }
 
         try {
             $response = $this->clientFactory->factory($clientOptions, $profile->slug)->get($url);
@@ -85,7 +104,11 @@ final class HttpFetchHandler implements FetchMethodHandler
                 $headerMap[(string) $name] = array_values($values);
             }
         } catch (Throwable $exception) {
-            if ($exception instanceof ResponseBodyTooLargeException) {
+            if ($exception instanceof RobotsDisallowedException) {
+                throw $exception;
+            }
+
+            if ($exception instanceof ResponseBodyTooLargeException || $exception instanceof DownloadSizeExceededException) {
                 return new FetchResultDto(
                     ok: false,
                     body: '',
@@ -157,6 +180,12 @@ final class HttpFetchHandler implements FetchMethodHandler
     public function requestHeaders(string $url, SiteProfileDto $profile, ?CrawlOptionsDto $options = null): array
     {
         $headers = $profile->http->headers;
+        if (! $this->hasHeader($headers, 'User-Agent')) {
+            $userAgent = $this->defaultUserAgent ?? $profile->playwright?->userAgent;
+            if ($userAgent !== null && $userAgent !== '') {
+                $headers['User-Agent'] = $userAgent;
+            }
+        }
         $cookie = $this->cookies->cookieHeader($url);
         if ($cookie !== null) {
             $headers['Cookie'] = $cookie;
@@ -177,5 +206,17 @@ final class HttpFetchHandler implements FetchMethodHandler
         }
 
         return $headers;
+    }
+
+    /** @param array<string, string> $headers */
+    private function hasHeader(array $headers, string $expected): bool
+    {
+        foreach (array_keys($headers) as $name) {
+            if (strcasecmp($name, $expected) === 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -9,6 +9,7 @@ use JOOservices\CrawlerX\Contracts\CacheAwareFetchMethodHandler;
 use JOOservices\CrawlerX\Contracts\FetchMethodHandler;
 use JOOservices\CrawlerX\Dto\FetchResultDto;
 use JOOservices\CrawlerX\Enums\FetchMethod;
+use JOOservices\CrawlerX\Exceptions\RobotsDisallowedException;
 use JOOservices\CrawlerX\Fetch\Budget\FetchBudget;
 use JOOservices\CrawlerX\Fetch\Guard\PreFetchGuard;
 use JOOservices\CrawlerX\Fetch\Guard\TransientRetry;
@@ -99,6 +100,10 @@ final class MethodAttemptRunner
         try {
             return $this->fetchWithHandler($handler, $method, $request, $budget);
         } catch (Throwable $exception) {
+            if ($exception instanceof RobotsDisallowedException) {
+                throw $exception;
+            }
+
             $run->attempts[] = AttemptRow::build($method, $this->nowMs() - $started, 0, false, false, TransientRetry::errorCode($exception), started: $started);
             $run->nonTerminalFailure = true;
 

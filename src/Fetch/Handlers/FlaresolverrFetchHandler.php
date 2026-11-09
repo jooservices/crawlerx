@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Fetch\Handlers;
 
-use JOOservices\Client\Client\ClientBuilder;
 use JOOservices\CrawlerX\Contracts\FetchMethodHandler;
 use JOOservices\CrawlerX\Contracts\LoginCookieProvider;
 use JOOservices\CrawlerX\Dto\CrawlOptionsDto;
@@ -16,6 +15,8 @@ use JOOservices\CrawlerX\Fetch\FetchRuntimeConfig;
 use JOOservices\CrawlerX\Fetch\ResponseBodyReader;
 use JOOservices\CrawlerX\Fetch\ResponseBodyTooLargeException;
 use JOOservices\CrawlerX\Fetch\Session\SessionStore;
+use JOOservices\CrawlerX\Services\ClientFactory;
+use JOOservices\Client\Exceptions\DownloadSizeExceededException;
 use JOOservices\Client\Exceptions\TimeoutException;
 use Nyholm\Psr7\Request;
 use Psr\Http\Client\ClientInterface;
@@ -81,13 +82,15 @@ final class FlaresolverrFetchHandler implements FetchMethodHandler
         ], JSON_THROW_ON_ERROR);
 
         try {
-            $client = $this->client ?? ClientBuilder::create()->withTimeout($timeoutSeconds)->build();
+            $client = $this->client ?? ClientFactory::boundedHttpClient($timeoutSeconds, $this->runtime->maxResponseBytes);
             $response = $client->sendRequest(new Request('POST', $endpoint, [
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
             ], $payload));
             $raw = (new ResponseBodyReader($this->runtime->maxResponseBytes))->read($response->getBody());
         } catch (ResponseBodyTooLargeException) {
+            return $this->fail($method, $started, $url, 'response_too_large');
+        } catch (DownloadSizeExceededException) {
             return $this->fail($method, $started, $url, 'response_too_large');
         } catch (Throwable $exception) {
             return $this->fail($method, $started, $url, $this->transportError($exception));

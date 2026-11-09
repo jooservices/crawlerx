@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Fetch;
 
-use JOOservices\Client\Client\ClientBuilder;
 use JOOservices\CrawlerX\Contracts\ProcessRunner;
 use JOOservices\CrawlerX\Dto\ProcessResultDto;
+use JOOservices\CrawlerX\Services\ClientFactory;
+use JOOservices\Client\Exceptions\DownloadSizeExceededException;
 use Nyholm\Psr7\Request;
 use Psr\Http\Client\ClientInterface;
 use RuntimeException;
@@ -36,13 +37,15 @@ final class BrowserServiceProcessRunner implements ProcessRunner
         ], JSON_THROW_ON_ERROR);
 
         try {
-            $client = $this->client ?? ClientBuilder::create()->withTimeout($timeoutSeconds)->build();
+            $client = $this->client ?? ClientFactory::boundedHttpClient($timeoutSeconds, $this->maxResponseBytes * 6 + 65_536);
             $response = $client->sendRequest(new Request('POST', rtrim($this->endpoint, '/') . '/fetch', [
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
             ], $payload));
             $raw = (new ResponseBodyReader($this->maxResponseBytes * 6 + 65_536))->read($response->getBody());
         } catch (ResponseBodyTooLargeException) {
+            return new ProcessResultDto(1, '', 'Browser service response exceeded the configured size limit.');
+        } catch (DownloadSizeExceededException) {
             return new ProcessResultDto(1, '', 'Browser service response exceeded the configured size limit.');
         } catch (Throwable $exception) {
             return new ProcessResultDto(1, '', 'Browser service request failed.');

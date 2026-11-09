@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX;
 
 use JOOservices\Client\Client\ClientBuilder;
+use JOOservices\Client\Exceptions\DownloadSizeExceededException;
 use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Contracts\LoginCookieProvider;
 use JOOservices\CrawlerX\Fetch\BrowserServiceProcessRunner;
@@ -108,10 +109,6 @@ final class CrawlerXFactory
         $clientFactory = new ClientFactory();
 
         $playwright = new PlaywrightFamilyFetchHandler($runtime, $browserRunner);
-        $http = new HttpFetchHandler($clientFactory, $cookies, $sessions, self::$loginCookieProvider, $runtime->maxResponseBytes);
-        $httpHandler = self::$responseCache !== null && $runtime->responseCacheTtlSeconds > 0
-            ? new ResponseCache($http, self::$responseCache, $runtime->responseCacheTtlSeconds)
-            : $http;
         $robotsGuard = new RobotsGuard(
             fetchRobotsTxt: static function (string $url) use ($clientFactory, $runtime): ?string {
                 // A faked client serves fixtures and records every request; there is no robots.txt
@@ -123,6 +120,7 @@ final class CrawlerXFactory
                 try {
                     $response = $clientFactory->factory([
                         'timeout' => 10,
+                        'max_response_bytes' => $runtime->maxResponseBytes,
                         'allow_redirects' => false,
                         'headers' => $runtime->userAgent !== null && $runtime->userAgent !== ''
                             ? ['User-Agent' => $runtime->userAgent]
@@ -144,6 +142,8 @@ final class CrawlerXFactory
                         : null;
                 } catch (ResponseBodyTooLargeException) {
                     return "User-agent: *\nDisallow: /\n";
+                } catch (DownloadSizeExceededException) {
+                    return "User-agent: *\nDisallow: /\n";
                 } catch (Throwable) {
                     return null;
                 }
@@ -153,6 +153,18 @@ final class CrawlerXFactory
                 error_log($message);
             },
         );
+        $http = new HttpFetchHandler(
+            $clientFactory,
+            $cookies,
+            $sessions,
+            self::$loginCookieProvider,
+            $runtime->maxResponseBytes,
+            $robotsGuard,
+            $runtime->userAgent,
+        );
+        $httpHandler = self::$responseCache !== null && $runtime->responseCacheTtlSeconds > 0
+            ? new ResponseCache($http, self::$responseCache, $runtime->responseCacheTtlSeconds)
+            : $http;
 
         return new FetchFallbackChain([
             FetchMethod::Http->value => $httpHandler,

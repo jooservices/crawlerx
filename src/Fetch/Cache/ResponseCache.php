@@ -51,7 +51,7 @@ final class ResponseCache implements CacheAwareFetchMethodHandler
         }
 
         $result = $this->handler->fetch($url, $profile, $method, $options);
-        if ($this->isCacheable($result)) {
+        if ($result->finalUrl === $url && $this->isCacheable($result)) {
             $this->store($url, $method, $headers, $result);
         }
 
@@ -97,7 +97,12 @@ final class ResponseCache implements CacheAwareFetchMethodHandler
         $headers = $this->responseHeaders($entry['headers'] ?? null);
         $cookies = $this->cookies($entry['cookies'] ?? null);
         $finalUrl = $entry['finalUrl'] ?? null;
-        if ($headers === null || $cookies === null || ($finalUrl !== null && ! is_string($finalUrl))) {
+        if (
+            $headers === null
+            || $cookies === null
+            || ($finalUrl !== null && ! is_string($finalUrl))
+            || ($finalUrl !== null && $finalUrl !== $url)
+        ) {
             return null;
         }
 
