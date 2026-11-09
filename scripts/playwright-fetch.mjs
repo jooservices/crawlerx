@@ -220,6 +220,7 @@ export async function fetchWithBrowser(config, browser) {
             maxResponseBytes: maximumResponseBytes,
             requestOrigin: startOrigin,
             sensitiveHeaders: Object.keys(sensitiveHeaders),
+            configuredCookieNames: configuredCookies.names,
         });
         contextOptions.proxy = { server: ssrfProxy.url };
         context = await browser.newContext(contextOptions);

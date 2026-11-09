@@ -135,7 +135,7 @@ final class CrawlerXFactory
                     }
 
                     if ($status >= 300 && $status < 400) {
-                        return "User-agent: *\nDisallow: /\n";
+                        return null;
                     }
 
                     return $status >= 200 && $status < 300

@@ -68,13 +68,18 @@ export function browserCookiesFromHeader(value) {
 
     const cookies = [];
     for (const part of value.split(';')) {
-        const separator = part.indexOf('=');
+        const trimmed = part.trim();
+        if (trimmed === '') {
+            continue;
+        }
+
+        const separator = trimmed.indexOf('=');
         if (separator < 1) {
             throw new TypeError('invalid_http_cookie');
         }
 
-        const name = part.slice(0, separator).trim();
-        const cookieValue = part.slice(separator + 1).trim();
+        const name = trimmed.slice(0, separator).trim();
+        const cookieValue = trimmed.slice(separator + 1).trim();
         if (name === '' || invalidHeaderName.test(name) || invalidHeaderValue.test(cookieValue)) {
             throw new TypeError('invalid_http_cookie');
         }

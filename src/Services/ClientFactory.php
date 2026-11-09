@@ -152,7 +152,7 @@ final class ClientFactory
      */
     private function cacheKey(?string $site, array $options): ?string
     {
-        if ($site === null) {
+        if ($site === null || ($options['before_request'] ?? null) instanceof Closure) {
             return null;
         }
 
@@ -166,9 +166,6 @@ final class ClientFactory
         ];
         if (is_int($options['max_response_bytes'] ?? null)) {
             $transportOptions['max_response_bytes'] = $options['max_response_bytes'];
-        }
-        if (($options['before_request'] ?? null) instanceof Closure) {
-            $transportOptions['before_request'] = spl_object_id($options['before_request']);
         }
         if (is_string($options['base_uri'] ?? null)) {
             $transportOptions['base_uri'] = $options['base_uri'];

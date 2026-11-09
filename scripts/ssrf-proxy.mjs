@@ -11,6 +11,7 @@ import { tmpdir } from 'node:os';
 import { createBrotliDecompress, createGunzip, createInflate } from 'node:zlib';
 import { assertSafeBrowserUrl, SsrfBlockedError } from './ssrf-guard.mjs';
 import { configuredMaxResponseBytes } from './fetch-limits.mjs';
+import { withoutConfiguredCookies } from './request-security.mjs';
 
 const hopByHopHeaderNames = new Set([
     'connection',
@@ -82,8 +83,10 @@ export async function createSsrfProxyServer({
     maxResponseBytes = configuredMaxResponseBytes(),
     requestOrigin = null,
     sensitiveHeaders = [],
+    configuredCookieNames = [],
 } = {}) {
     const normalizedSensitiveHeaders = new Set(sensitiveHeaders.map((name) => String(name).toLowerCase()));
+    const normalizedConfiguredCookieNames = configuredCookieNames.map((name) => String(name));
     const sockets = new Set();
     let blocked = false;
     let blockedError = null;
@@ -167,7 +170,7 @@ export async function createSsrfProxyServer({
             return;
         }
 
-        const headers = stripHopByHopHeaders(request.headers);
+        let headers = stripHopByHopHeaders(request.headers);
         if (requestOrigin !== null && target.origin !== requestOrigin) {
             const hasSensitiveHeader = [...normalizedSensitiveHeaders].some((name) => headers[name] !== undefined);
             if (hasSensitiveHeader) {
@@ -178,7 +181,7 @@ export async function createSsrfProxyServer({
             for (const name of normalizedSensitiveHeaders) {
                 delete headers[name];
             }
-            delete headers.cookie;
+            headers = withoutConfiguredCookies(headers, normalizedConfiguredCookieNames);
         }
         headers.host = target.host;
         headers.connection = 'close';
@@ -324,13 +327,13 @@ export async function createSsrfProxyServer({
             return;
         }
 
-        const headers = { ...request.headers, host: target.host, connection: 'Upgrade' };
+        let headers = { ...request.headers, host: target.host, connection: 'Upgrade' };
         const targetOrigin = `http://${target.host}`;
         if (requestOrigin !== null && targetOrigin !== requestOrigin) {
             for (const name of normalizedSensitiveHeaders) {
                 delete headers[name];
             }
-            delete headers.cookie;
+            headers = withoutConfiguredCookies(headers, normalizedConfiguredCookieNames);
         }
         delete headers['proxy-authorization'];
         delete headers['proxy-connection'];
