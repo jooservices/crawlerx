@@ -1,0 +1,11 @@
+# Known legacy fixture provenance offenders; paths are relative to tests/Fixtures.
+AvfanProfiles/detail-removed.txt
+crawl/playwright-challenge-stub.mjs
+crawl/playwright-jable-detail-stream-stub.mjs
+crawl/playwright-stub.mjs
+robots/basic.txt
+robots/crawl-delay.txt
+robots/longest-match.txt
+robots/user-agents.txt
+robots/wildcards.txt
+site/server.mjs
