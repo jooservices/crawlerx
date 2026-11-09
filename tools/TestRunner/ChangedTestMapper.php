@@ -64,12 +64,11 @@ final readonly class ChangedTestMapper
             }
 
             if (preg_match('#^tests/Fixtures/([^/]+)/([^/]+)$#', $path, $matches) === 1) {
-                $slug = $this->fixtureSlug($matches[1], $matches[2]);
-                if ($slug === null || ! $this->hasFixtureTests()) {
+                $site = $this->fixtureAdapter($matches[1], $matches[2]);
+                if ($site === null || ! $this->mapAdapter($site, $testPaths, $fixtureSlugs)) {
                     return $this->unmapped($path);
                 }
 
-                $fixtureSlugs[] = $slug;
                 continue;
             }
 
@@ -124,10 +123,7 @@ final readonly class ChangedTestMapper
         $slug = $this->adapterSlug($site);
 
         foreach ($this->featureTests() as $featureTest) {
-            $name = $this->normalizeName(pathinfo($featureTest, PATHINFO_FILENAME));
-            if (str_starts_with($name, $this->normalizeName($site))
-                || ($slug !== null && str_starts_with($name, $this->normalizeName($slug)))
-            ) {
+            if ($this->featureTestMatchesAdapter($featureTest, $site, $slug)) {
                 $testPaths[] = $featureTest;
                 $mapped = true;
             }
@@ -156,7 +152,7 @@ final readonly class ChangedTestMapper
         return is_string($slug) && $slug !== '' ? $slug : null;
     }
 
-    private function fixtureSlug(string $folder, string $fileName): ?string
+    private function fixtureAdapter(string $folder, string $fileName): ?string
     {
         if (str_ends_with($fileName, '.meta.json')) {
             $fileName = substr($fileName, 0, -strlen('.meta.json'));
@@ -187,12 +183,12 @@ final readonly class ChangedTestMapper
                 }
 
                 if (($sample['name'] ?? null) === $fileName) {
-                    return $slug;
+                    return $site;
                 }
 
                 foreach ($sample['followUps'] ?? [] as $followUp) {
                     if (is_array($followUp) && ($followUp['name'] ?? null) === $fileName) {
-                        return $slug;
+                        return $site;
                     }
                 }
             }
@@ -227,6 +223,29 @@ final readonly class ChangedTestMapper
         sort($tests);
 
         return $tests;
+    }
+
+    private function featureTestMatchesAdapter(string $featureTest, string $site, ?string $slug): bool
+    {
+        $name = $this->normalizeName(pathinfo($featureTest, PATHINFO_FILENAME));
+        if (str_starts_with($name, $this->normalizeName($site))
+            || ($slug !== null && str_starts_with($name, $this->normalizeName($slug)))
+        ) {
+            return true;
+        }
+
+        $contents = file_get_contents($this->repositoryRoot . '/' . $featureTest);
+        if (! is_string($contents)) {
+            return false;
+        }
+
+        return $this->containsIdentifier($contents, $site)
+            || ($slug !== null && $this->containsIdentifier($contents, $slug));
+    }
+
+    private function containsIdentifier(string $contents, string $identifier): bool
+    {
+        return preg_match('/(?<![a-z0-9])' . preg_quote($identifier, '/') . '(?![a-z0-9])/i', $contents) === 1;
     }
 
     /**

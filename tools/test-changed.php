@@ -38,16 +38,16 @@ if ($base === '') {
     exit(2);
 }
 
-[$diffExit, $diffOutput, $diffError] = capture(['git', 'diff', '--name-only', '--diff-filter=ACMRTD', $base, '--'], $root);
-[$untrackedExit, $untrackedOutput, $untrackedError] = capture(['git', 'ls-files', '--others', '--exclude-standard'], $root);
+[$diffExit, $diffOutput, $diffError] = capture(['git', 'diff', '--name-only', '-z', '--no-renames', '--diff-filter=ACMRTD', $base, '--'], $root);
+[$untrackedExit, $untrackedOutput, $untrackedError] = capture(['git', 'ls-files', '--others', '--exclude-standard', '-z'], $root);
 
 if ($diffExit !== 0 || $untrackedExit !== 0) {
     $error = trim($diffError . "\n" . $untrackedError);
     $plan = new ChangedTestPlan(true, [], [], 'Could not compare changes with ' . $base . ($error === '' ? '.' : ': ' . $error));
 } else {
     $changedFiles = array_values(array_unique(array_filter([
-        ...explode("\n", trim($diffOutput)),
-        ...explode("\n", trim($untrackedOutput)),
+        ...explode("\0", $diffOutput),
+        ...explode("\0", $untrackedOutput),
     ], static fn(string $path): bool => $path !== '')));
     $plan = (new ChangedTestMapper($root))->map($changedFiles);
 }
