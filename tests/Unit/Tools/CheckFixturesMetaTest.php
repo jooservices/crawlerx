@@ -85,6 +85,30 @@ final class CheckFixturesMetaTest extends TestCase
         self::assertStringContainsString('http_status', $report['issues'][0]['detail']);
     }
 
+    public function test_basic_iso8601_utc_offset_is_valid(): void
+    {
+        $report = $this->checkCapturedAt('2026-11-10T12:00:00+0700');
+
+        self::assertSame([], $report['issues']);
+    }
+
+    public function test_iso8601_utc_offset_at_its_maximum_is_valid(): void
+    {
+        $report = $this->checkCapturedAt('2026-11-10T12:00:00-14:00');
+
+        self::assertSame([], $report['issues']);
+    }
+
+    public function test_iso8601_utc_offset_over_its_maximum_is_invalid(): void
+    {
+        foreach (['2026-11-10T12:00:00+14:01', '2026-11-10T12:00:00+24:00'] as $capturedAt) {
+            $report = $this->checkCapturedAt($capturedAt);
+
+            self::assertSame(['BAD_VALUE'], array_column($report['issues'], 'code'));
+            self::assertStringContainsString('captured_at', $report['issues'][0]['detail']);
+        }
+    }
+
     public function test_hash_mismatch_is_reported(): void
     {
         $contents = '<html>fixture</html>';
@@ -146,6 +170,17 @@ final class CheckFixturesMetaTest extends TestCase
             'fetch_method' => 'http',
             'sanitized' => false,
         ];
+    }
+
+    /** @return array{exit_code: int, issues: list<array{code: string, path: string, detail: string}>, baseline_file_count: int, baseline_counts: array<string, int>, missing_directory: bool} */
+    private function checkCapturedAt(string $capturedAt): array
+    {
+        $contents = '<html>fixture</html>';
+        $metadata = $this->validMetadata($contents);
+        $metadata['captured_at'] = $capturedAt;
+        $this->writeFixture('source/detail.html', $contents, $metadata);
+
+        return $this->check();
     }
 
     /**

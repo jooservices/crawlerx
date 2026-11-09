@@ -259,12 +259,28 @@ final class FixturesMetaChecker
     private function isIso8601DateTime(mixed $value): bool
     {
         if (!is_string($value)
-            || preg_match('/\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})\z/', $value) !== 1) {
+            || preg_match('/\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?<offset>Z|[+-]\d{2}(?::?\d{2})?)\z/', $value, $matches) !== 1) {
             return false;
         }
 
+        $dateTime = $value;
+        $offset = $matches['offset'];
+        if ($offset !== 'Z') {
+            $sign = $offset[0];
+            $digits = str_replace(':', '', substr($offset, 1));
+            $hours = (int) substr($digits, 0, 2);
+            $minutes = strlen($digits) === 4 ? (int) substr($digits, 2, 2) : 0;
+
+            if ($hours > 14 || $minutes > 59 || ($hours === 14 && $minutes !== 0)) {
+                return false;
+            }
+
+            $normalizedOffset = sprintf('%s%02d:%02d', $sign, $hours, $minutes);
+            $dateTime = substr($value, 0, -strlen($offset)) . $normalizedOffset;
+        }
+
         try {
-            new DateTimeImmutable($value);
+            new DateTimeImmutable($dateTime);
         } catch (\Exception) {
             return false;
         }
