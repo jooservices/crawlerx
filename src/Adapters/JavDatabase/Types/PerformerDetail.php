@@ -4,25 +4,25 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\JavDatabase\Types;
 
-use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
-use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Adapters\AbstractType;
+use JOOservices\CrawlerX\Adapters\Concerns\CleansText;
+use JOOservices\CrawlerX\Adapters\Concerns\MatchesUrlPath;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
 use JOOservices\CrawlerX\Adapters\JavDatabase\Selectors;
+use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
-use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
-use Psr\Http\Message\ResponseInterface;
+use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Support\MovieMeta;
+use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\DomCrawler\UriResolver;
-use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
 
 final class PerformerDetail extends AbstractType implements TypeInterface
 {
-    use ParsesUrlParts;
-    use CoercesValues;
+    use CleansText;
+    use MatchesUrlPath;
     use ParsesHtml;
 
     public function __construct(

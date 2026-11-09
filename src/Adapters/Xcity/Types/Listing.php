@@ -4,23 +4,25 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\Xcity\Types;
 
-use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Adapters\AbstractType;
+use JOOservices\CrawlerX\Adapters\Concerns\CleansText;
+use JOOservices\CrawlerX\Adapters\Concerns\CoercesStrings;
+use JOOservices\CrawlerX\Adapters\Concerns\ReadsQueryNumbers;
 use JOOservices\CrawlerX\Adapters\Xcity\UrlNormalizer;
+use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
-use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
+use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
-use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
-use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 
 final class Listing extends AbstractType implements TypeInterface
 {
-    use CoercesValues;
-    use ParsesUrlParts;
+    use CleansText;
+    use CoercesStrings;
+    use ReadsQueryNumbers;
 
     public function __construct(
         private readonly CrawlHttpClient $client,

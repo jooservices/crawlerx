@@ -33,8 +33,12 @@ Do not hand-write the same private helper in a new adapter; compose the traits u
 | `ParsesHtml` | `firstText`, `firstAttribute`, `texts`, `normalizeText` for a DomCrawler node |
 | `NormalizesUrls` | `absolute($baseUrl, $url)` resolving relative, protocol-relative and root-relative links |
 | `ResolvesLinkUrls` | `linkUrl` (compose with `ParsesHtml` + `NormalizesUrls`) for an absolute href from a CSS selector |
-| `ParsesUrlParts` | `lastPathSegment`, `pathMatch`, `pathNumber`, `queryParam`, `firstQueryParam`, `queryNumber` for external ids and page numbers (adapters keep their own route regex) |
-| `CoercesValues` | `nonEmptyString`, `positiveInt`, `cleanText`, `cleanTextWithoutTrailingPhrase`, `pageNumberFromText`, `titleWithoutCode`, `integerStat`, `dateString`, `arrayValue` for loosely typed scraped values |
+| `MatchesUrlPath`, `ReadsLastPathSegment`, `ReadsPathNumbers` | `pathMatch`, `lastPathSegment`, `pathNumber`, `pathInteger` for external ids and page numbers in the URL path (adapters keep their own route regex) |
+| `ReadsQueryParams`, `ReadsQueryNumbers`, `ReadsPathOrQueryParam` | `queryParam`, `hasQueryParam`, `firstQueryParam`, `queryNumber`, `positiveNumericQueryNumber`, `queryPageNumber`, `pathMatchOrQueryParam` for query-string values |
+| `CoercesStrings`, `CoercesNumbers` | `nonEmptyString`; `positiveInt`, `pageNumberFromText`, `integerStat` for loosely typed scraped values |
+| `CleansText`, `StripsTitleCode`, `ParsesDateStrings`, `ReadsArrayValues` | `cleanText`, `cleanTextWithoutTrailingPhrase`; `titleWithoutCode`; `dateString`; `arrayValue` |
 | `ParsesJson` | JSON response decoding for API-backed sources |
 
-A Type extends `AbstractHtmlType` (HTML pages fetched through the shared client) or `AbstractType` (API/JSON or custom fetching); do not introduce a third base class. If a helper you need exists in two adapters, move it into the matching trait with a test instead of copying it.
+A Type extends `AbstractHtmlType` (HTML pages fetched through the shared client) or `AbstractType` (API/JSON or custom fetching); do not introduce a third base class. If a helper you need exists in two adapters, move it into a shared concern with a test instead of copying it.
+
+**One concern, one responsibility.** A new shared helper is a NEW file under `src/Adapters/Concerns/` with its own unit test in `tests/Unit/Adapters/Concerns/`; do not append unrelated helpers to an existing concern (it is how the old grab-bag traits became merge-conflict magnets). Keep each concern file under about 60 lines, and have an adapter `use` only the concerns it calls. A concern that builds on another declares it with `use` inside the trait.

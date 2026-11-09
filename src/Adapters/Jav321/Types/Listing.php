@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\Jav321\Types;
 
-use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 use JOOservices\CrawlerX\Adapters\AbstractHtmlType;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
+use JOOservices\CrawlerX\Adapters\Concerns\ReadsPathNumbers;
 use JOOservices\CrawlerX\Adapters\Jav321\Concerns\ParsesMovieCards;
 use JOOservices\CrawlerX\Adapters\Jav321\Selectors;
 use JOOservices\CrawlerX\Adapters\Jav321\UrlNormalizer;
@@ -21,7 +21,7 @@ use Symfony\Component\DomCrawler\Crawler;
 
 final class Listing extends AbstractHtmlType implements TypeInterface
 {
-    use ParsesUrlParts;
+    use ReadsPathNumbers;
     use ParsesHtml;
     use ParsesMovieCards;
 

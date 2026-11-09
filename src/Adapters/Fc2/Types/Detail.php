@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Adapters\Fc2\Types;
 
 use JOOservices\CrawlerX\Adapters\AbstractHtmlType;
+use JOOservices\CrawlerX\Adapters\Concerns\MatchesUrlPath;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
+use JOOservices\CrawlerX\Adapters\Concerns\ReadsArrayValues;
+use JOOservices\CrawlerX\Adapters\Fc2\ParsesPoints;
 use JOOservices\CrawlerX\Contracts\CrawlHttpResponse;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
@@ -14,9 +17,6 @@ use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 use Throwable;
-use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
-use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
-use JOOservices\CrawlerX\Adapters\Fc2\ParsesPoints;
 
 /**
  * FC2 Content Market product page: the JSON-LD Product (name, id, image, brand, rating, price), the header (duration,
@@ -27,9 +27,9 @@ final class Detail extends AbstractHtmlType implements TypeInterface
 {
     use ParsesPoints;
 
-    use CoercesValues;
+    use MatchesUrlPath;
+    use ReadsArrayValues;
 
-    use ParsesUrlParts;
 
     use ParsesHtml;
 

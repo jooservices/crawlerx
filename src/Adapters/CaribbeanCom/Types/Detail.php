@@ -7,6 +7,7 @@ namespace JOOservices\CrawlerX\Adapters\CaribbeanCom\Types;
 use JOOservices\CrawlerX\Adapters\AbstractHtmlType;
 use JOOservices\CrawlerX\Adapters\CaribbeanCom\Price;
 use JOOservices\CrawlerX\Adapters\CaribbeanCom\Profile;
+use JOOservices\CrawlerX\Adapters\Concerns\MatchesUrlPath;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
@@ -16,7 +17,6 @@ use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use JOOservices\CrawlerX\Support\SizeParser;
 use Symfony\Component\DomCrawler\Crawler;
-use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 
 /**
  * Caribbeancom movie page: the spec list (Starring, Tags, Release Date, Duration), the poster, the sample video, the
@@ -24,7 +24,7 @@ use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
  */
 final class Detail extends AbstractHtmlType implements TypeInterface
 {
-    use ParsesUrlParts;
+    use MatchesUrlPath;
 
     use ParsesHtml;
 

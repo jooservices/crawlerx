@@ -4,22 +4,22 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\JavBus\Types;
 
-use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
-use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Adapters\AbstractHtmlType;
+use JOOservices\CrawlerX\Adapters\Concerns\MatchesUrlPath;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
 use JOOservices\CrawlerX\Adapters\JavBus\Selectors;
 use JOOservices\CrawlerX\Adapters\JavBus\UrlNormalizer;
+use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
-use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
+use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class PerformerListing extends AbstractHtmlType implements TypeInterface
 {
-    use ParsesUrlParts;
+    use MatchesUrlPath;
     use ParsesHtml;
 
     public function __construct(

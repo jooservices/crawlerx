@@ -6,6 +6,7 @@ namespace JOOservices\CrawlerX\Adapters\Asagei\Types;
 
 use JOOservices\CrawlerX\Adapters\Asagei\Selectors;
 use JOOservices\CrawlerX\Adapters\Asagei\Urls;
+use JOOservices\CrawlerX\Adapters\Concerns\CoercesNumbers;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
@@ -14,11 +15,10 @@ use JOOservices\CrawlerX\Dto\Entity\PhotoDto;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
-use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
 
 final class Gallery extends AsageiHtmlType implements TypeInterface
 {
-    use CoercesValues;
+    use CoercesNumbers;
 
     protected function contextLabel(): string
     {

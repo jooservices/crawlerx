@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Adapters\Next11\Types;
 
 use JOOservices\CrawlerX\Adapters\AbstractHtmlType;
-use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
+use JOOservices\CrawlerX\Adapters\Concerns\CoercesStrings;
 use JOOservices\CrawlerX\Adapters\Next11\Fields;
 use JOOservices\CrawlerX\Adapters\Next11\Selectors;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
@@ -18,7 +18,7 @@ use Symfony\Component\DomCrawler\Crawler;
 
 final class Detail extends AbstractHtmlType implements TypeInterface
 {
-    use CoercesValues;
+    use CoercesStrings;
 
     public function __construct(
         CrawlHttpClient $client,

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Adapters\Eporner\Types;
 
 use JOOservices\CrawlerX\Adapters\AbstractHtmlType;
+use JOOservices\CrawlerX\Adapters\Concerns\MatchesUrlPath;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
 use JOOservices\CrawlerX\Adapters\Eporner\Selectors;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
@@ -14,11 +15,10 @@ use JOOservices\CrawlerX\Dto\Entity\GalleryDto;
 use JOOservices\CrawlerX\Dto\Entity\PhotoDto;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
 use Symfony\Component\DomCrawler\Crawler;
-use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 
 final class Gallery extends AbstractHtmlType implements TypeInterface
 {
-    use ParsesUrlParts;
+    use MatchesUrlPath;
 
     use ParsesHtml;
 

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\Smartflash\Types;
 
+use JOOservices\CrawlerX\Adapters\Concerns\CoercesNumbers;
 use JOOservices\CrawlerX\Adapters\Smartflash\Selectors;
 use JOOservices\CrawlerX\Adapters\Smartflash\Urls;
-use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
@@ -19,7 +19,7 @@ use Symfony\Component\DomCrawler\Crawler;
 
 final class Listing extends SmartflashHtmlType implements TypeInterface
 {
-    use CoercesValues;
+    use CoercesNumbers;
 
     protected function contextLabel(): string
     {
