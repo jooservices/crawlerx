@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add a changed-file test runner with adapter, fetch and fixture targeting plus full-suite fallback (`composer test:changed`, `make test-changed`) (JOOXCR-473).
 - Add an optional outbound HTTP proxy for the HTTP fetch method (`CRAWLERX_HTTP_PROXY`, `HttpProfileDto::$proxy`, `HttpOptionsDto::$proxy`), off by default (JOOXCR-470).
 - Add Deptrac architecture rules for the Adapters, Fetch, Dto, Support and Contracts layers (`deptrac.yaml`, `composer lint:deptrac`) and a report-only CI job (JOOXCR-466).
 - Add an opt-in PSR-16 HTTP response cache with configurable TTL, challenge/captcha exclusions and throttle bypass on cache hits (JOOXCR-465).

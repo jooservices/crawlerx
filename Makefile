@@ -1,4 +1,4 @@
-.PHONY: build install shell validate lint test test-coverage ci audit fixtures fetch-up fetch-down live-check source-matrix bench canary snapshots
+.PHONY: build install shell validate lint test test-changed test-coverage ci audit fixtures fetch-up fetch-down live-check source-matrix bench canary snapshots
 
 -include .env
 
@@ -24,6 +24,9 @@ lint:
 
 test:
 	$(PHP) composer test
+
+test-changed:
+	$(PHP) composer test:changed $(if $(BASE),-- --base=$(BASE),)
 
 test-coverage:
 	$(PHP) composer test:coverage
