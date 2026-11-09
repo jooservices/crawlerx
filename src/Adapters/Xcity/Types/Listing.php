@@ -15,10 +15,12 @@ use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
+use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 
 final class Listing extends AbstractType implements TypeInterface
 {
     use CoercesValues;
+    use ParsesUrlParts;
 
     public function __construct(
         private readonly CrawlHttpClient $client,
@@ -42,7 +44,7 @@ final class Listing extends AbstractType implements TypeInterface
             }
 
             $absolute = $this->normalizer->absolute($request->url, $href);
-            $externalId = $this->externalId($absolute);
+            $externalId = $this->nonEmptyString($this->queryParam($absolute, 'id'));
             if ($externalId === null || isset($items[$absolute])) {
                 return;
             }
@@ -103,7 +105,7 @@ final class Listing extends AbstractType implements TypeInterface
             $nextUrl = is_string($href) && trim($href) !== '' ? $this->normalizer->absolute($url, $href) : null;
         }
 
-        $nextPage = $nextUrl !== null ? $this->pageFromUrl($nextUrl) : null;
+        $nextPage = $nextUrl !== null ? $this->positiveNumericQueryNumber($nextUrl, 'page') : null;
 
         return new CrawlPaginationDto(
             currentPage: $currentPage,
@@ -112,19 +114,6 @@ final class Listing extends AbstractType implements TypeInterface
             nextUrl: $nextUrl,
             hasNextPage: $nextUrl !== null,
         );
-    }
-
-    private function externalId(string $url): ?string
-    {
-        $query = parse_url($url, PHP_URL_QUERY);
-        if (! is_string($query) || $query === '') {
-            return null;
-        }
-
-        parse_str($query, $params);
-        $id = $params['id'] ?? null;
-
-        return is_string($id) && trim($id) !== '' ? trim($id) : null;
     }
 
     private function itemTitle(Crawler $node): ?string
@@ -141,18 +130,5 @@ final class Listing extends AbstractType implements TypeInterface
         }
 
         return null;
-    }
-
-    private function pageFromUrl(string $url): ?int
-    {
-        $query = parse_url($url, PHP_URL_QUERY);
-        if (! is_string($query) || $query === '') {
-            return null;
-        }
-
-        parse_str($query, $params);
-        $page = $params['page'] ?? null;
-
-        return is_numeric($page) && (int) $page > 0 ? (int) $page : null;
     }
 }

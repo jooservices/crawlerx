@@ -7,52 +7,29 @@ namespace JOOservices\CrawlerX\Adapters\Warashi\Types;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Adapters\AbstractType;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
+use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 use JOOservices\CrawlerX\Adapters\Warashi\Selectors;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
-use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\DomCrawler\UriResolver;
 
 final class PerformerDetail extends AbstractType implements TypeInterface
 {
     use ParsesHtml;
+    use ParsesUrlParts;
 
     public function __construct(
         private readonly CrawlHttpClient $client,
     ) {
     }
 
-    protected function htmlFromResponse(ResponseInterface $response, string $site, string $context): string
-    {
-        $html = (string) $response->getBody();
-
-        if ($response->getStatusCode() >= 400) {
-            throw new \RuntimeException("{$site} {$context} page is blocked or unavailable.");
-        }
-
-        $isChallenge = str_contains($html, 'cf-browser-verification')
-            || str_contains($html, 'cf-mitigated')
-            || str_contains($html, 'Just a moment...')
-            || str_contains($html, 'Attention Required!');
-
-        if ($isChallenge) {
-            throw new \RuntimeException("{$site} {$context} page is blocked or unavailable.");
-        }
-
-        if (trim($html) === '') {
-            throw new \RuntimeException("{$site} {$context} page is empty.");
-        }
-
-        return $html;
-    }
-
     public function execute(CrawlRequestDto $request): CrawlItemResultDto
     {
         $response = $this->client->get($request->url);
-        $html = $this->htmlFromResponse($response->toPsrResponse(), 'warashi', 'performer_detail');
+        $html = $this->htmlResponse($response->toPsrResponse(), 'warashi', 'performer_detail');
         $crawler = new Crawler($html, $request->url);
 
         $nameNode = $crawler->filter(Selectors::PERFORMER_NAME);
@@ -62,7 +39,7 @@ final class PerformerDetail extends AbstractType implements TypeInterface
 
         $name = $this->normalizeText($nameNode->first()->text('')) ?? '';
         $jpName = $this->firstText($crawler, Selectors::PERFORMER_NAME_JAPANESE);
-        $externalId = $this->externalId($request->url);
+        $externalId = $this->pathMatch($request->url, '#/asian-female-pornstar/(\d+)/?$#i');
 
         $profileNode = $crawler->filter(Selectors::PROFILE_INFO);
         $profileCrawler = $profileNode->count() > 0 ? $profileNode->first() : $crawler;
@@ -332,15 +309,5 @@ final class PerformerDetail extends AbstractType implements TypeInterface
         }
 
         return $val;
-    }
-
-    private function externalId(string $url): ?string
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-        if (is_string($path) && preg_match('#/asian-female-pornstar/(\d+)/?$#i', $path, $match) === 1) {
-            return $match[1];
-        }
-
-        return null;
     }
 }

@@ -4,10 +4,35 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\Concerns;
 
+use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\DomCrawler\Crawler;
 
 trait ParsesHtml
 {
+    protected function htmlResponse(ResponseInterface $response, string $site, string $context): string
+    {
+        $html = (string) $response->getBody();
+
+        if ($response->getStatusCode() >= 400) {
+            throw new \RuntimeException("{$site} {$context} page is blocked or unavailable.");
+        }
+
+        $isChallenge = str_contains($html, 'cf-browser-verification')
+            || str_contains($html, 'cf-mitigated')
+            || str_contains($html, 'Just a moment...')
+            || str_contains($html, 'Attention Required!');
+
+        if ($isChallenge) {
+            throw new \RuntimeException("{$site} {$context} page is blocked or unavailable.");
+        }
+
+        if (trim($html) === '') {
+            throw new \RuntimeException("{$site} {$context} page is empty.");
+        }
+
+        return $html;
+    }
+
     protected function firstText(Crawler $crawler, string $selector): ?string
     {
         if ($crawler->filter($selector)->count() === 0) {
