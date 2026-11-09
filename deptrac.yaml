@@ -1,5 +1,4 @@
-# Architecture layers for CrawlerX (JOOXCR-466). Report-only in CI — violations
-# are visible but do not fail the required quality gate yet.
+# Architecture layers for CrawlerX.
 deptrac:
   paths:
     - ./src
@@ -27,8 +26,6 @@ deptrac:
         - type: directory
           value: src/Contracts/.*
   ruleset:
-    # Adapters → Fetch is intentional debt today (AbstractType → ChallengeDetector).
-    # Leave it disallowed so the report-only CI job keeps surfacing it.
     Adapters:
       - Contracts
       - Dto
