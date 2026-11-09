@@ -7,9 +7,14 @@ namespace JOOservices\CrawlerX\Tools;
 use JsonException;
 use RuntimeException;
 
+/** Holds the consistency check's CLI result. */
 final readonly class ReadmeSitesCheckResult
 {
-    /** @param list<string> $messages */
+    /**
+     * Creates a result with its CLI status and diagnostics.
+     *
+     * @param list<string> $messages
+     */
     public function __construct(
         public int $exitCode,
         public array $messages,
@@ -17,8 +22,10 @@ final readonly class ReadmeSitesCheckResult
     }
 }
 
+/** Compares README supported-site names with adapter manifest identifiers. */
 final class ReadmeSitesChecker
 {
+    /** Reads both inputs and returns sorted consistency errors. */
     public function check(string $readmePath, string $adapterDirectory): ReadmeSitesCheckResult
     {
         try {
@@ -38,21 +45,40 @@ final class ReadmeSitesChecker
             return new ReadmeSitesCheckResult(2, [$exception->getMessage()]);
         }
 
-        $knownNames = [];
-        foreach ($manifests as $manifest) {
-            $knownNames[] = $manifest['slug'];
-            $knownNames[] = $manifest['name'];
+        $matchedManifestIndexes = [];
+        $matchedReadmeIndexes = [];
+        foreach ([false, true] as $allowAnnotatedSuffix) {
+            foreach ($readmeNames as $readmeIndex => $readmeName) {
+                if (isset($matchedReadmeIndexes[$readmeIndex])) {
+                    continue;
+                }
+
+                foreach ($manifests as $manifestIndex => $manifest) {
+                    if (isset($matchedManifestIndexes[$manifestIndex])) {
+                        continue;
+                    }
+
+                    if (! $this->matchesIdentifier($readmeName, $manifest['slug'], $allowAnnotatedSuffix)
+                        && ! $this->matchesIdentifier($readmeName, $manifest['name'], $allowAnnotatedSuffix)) {
+                        continue;
+                    }
+
+                    $matchedManifestIndexes[$manifestIndex] = true;
+                    $matchedReadmeIndexes[$readmeIndex] = true;
+                    break;
+                }
+            }
         }
 
         $messages = [];
-        foreach ($manifests as $manifest) {
-            if (! $this->containsReadmeName($readmeNames, $manifest['slug']) && ! $this->containsReadmeName($readmeNames, $manifest['name'])) {
+        foreach ($manifests as $manifestIndex => $manifest) {
+            if (! isset($matchedManifestIndexes[$manifestIndex])) {
                 $messages[] = sprintf('MISSING_IN_README %s', $manifest['slug']);
             }
         }
 
-        foreach ($readmeNames as $readmeName) {
-            if (! $this->matchesKnownName($readmeName, $knownNames)) {
+        foreach ($readmeNames as $readmeIndex => $readmeName) {
+            if (! isset($matchedReadmeIndexes[$readmeIndex])) {
                 $messages[] = sprintf('UNKNOWN_IN_README %s', $readmeName);
             }
         }
@@ -61,7 +87,11 @@ final class ReadmeSitesChecker
         return new ReadmeSitesCheckResult($messages === [] ? 0 : 1, $messages);
     }
 
-    /** @return array{slug: string, name: string} */
+    /**
+     * Reads and validates one adapter manifest.
+     *
+     * @return array{slug: string, name: string}
+     */
     private function readManifest(string $path): array
     {
         $manifest = json_decode($this->readFile($path, 'adapter manifest'), true, flags: JSON_THROW_ON_ERROR);
@@ -74,6 +104,7 @@ final class ReadmeSitesChecker
         return ['slug' => trim($slug), 'name' => trim($name)];
     }
 
+    /** Reads a required file or throws an error suitable for the CLI. */
     private function readFile(string $path, string $description): string
     {
         if (! is_file($path) || ! is_readable($path)) {
@@ -88,11 +119,17 @@ final class ReadmeSitesChecker
         return $contents;
     }
 
-    /** @return list<string>|null */
+    /**
+     * Parses supported-site names, or returns null when the Markdown table is invalid.
+     *
+     * @return list<string>|null
+     */
     private function supportedSiteNames(string $readme): ?array
     {
         $inSection = false;
         $foundHeader = false;
+        $foundSeparator = false;
+        $headerCellCount = 0;
         $names = [];
 
         foreach (preg_split('/\R/', $readme) ?: [] as $line) {
@@ -105,14 +142,20 @@ final class ReadmeSitesChecker
                 return null;
             }
             if ($line === '') {
-                if ($foundHeader) {
+                if ($foundSeparator) {
                     break;
+                }
+                if ($foundHeader) {
+                    return null;
                 }
                 continue;
             }
             if (! str_starts_with($line, '|')) {
-                if ($foundHeader) {
+                if ($foundSeparator) {
                     break;
+                }
+                if ($foundHeader) {
+                    return null;
                 }
                 continue;
             }
@@ -122,9 +165,20 @@ final class ReadmeSitesChecker
                 $foundHeader = isset($cells[1])
                     && strtolower(trim($cells[0], " `\t")) === 'site'
                     && strtolower(trim($cells[1], " `\t")) === 'slug';
+                $headerCellCount = count($cells);
                 continue;
             }
-            if (preg_match('/^:?-{3,}:?$/', $cells[0]) === 1) {
+
+            if (! $foundSeparator) {
+                $foundSeparator = count($cells) === $headerCellCount
+                    && array_reduce(
+                        $cells,
+                        static fn(bool $valid, string $cell): bool => $valid && preg_match('/^:?-{3,}:?$/', $cell) === 1,
+                        true,
+                    );
+                if (! $foundSeparator) {
+                    return null;
+                }
                 continue;
             }
 
@@ -134,41 +188,20 @@ final class ReadmeSitesChecker
             }
         }
 
-        return $foundHeader ? $names : null;
+        return $foundSeparator ? $names : null;
     }
 
-    /** @param list<string> $readmeNames */
-    private function containsReadmeName(array $readmeNames, string $identifier): bool
-    {
-        foreach ($readmeNames as $readmeName) {
-            if ($this->matchesIdentifier($readmeName, $identifier)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /** @param list<string> $knownNames */
-    private function matchesKnownName(string $readmeName, array $knownNames): bool
-    {
-        foreach ($knownNames as $knownName) {
-            if ($this->matchesIdentifier($readmeName, $knownName)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private function matchesIdentifier(string $readmeName, string $identifier): bool
+    /** Compares a README name with a manifest identifier, optionally allowing annotations. */
+    private function matchesIdentifier(string $readmeName, string $identifier, bool $allowAnnotatedSuffix = true): bool
     {
         $readmeName = $this->normalize($readmeName);
         $identifier = $this->normalize($identifier);
 
-        return $readmeName === $identifier || str_starts_with($readmeName, $identifier . ' (');
+        return $readmeName === $identifier
+            || ($allowAnnotatedSuffix && str_starts_with($readmeName, $identifier . ' ('));
     }
 
+    /** Normalizes case and Markdown code delimiters before comparison. */
     private function normalize(string $name): string
     {
         return strtolower(trim($name, " `\t\r\n"));
