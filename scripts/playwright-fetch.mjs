@@ -293,6 +293,9 @@ export async function fetchWithBrowser(config, browser) {
         if (ssrfViolation || ssrfProxy.wasBlocked()) {
             throw ssrfError ?? ssrfProxy.blockedError() ?? new SsrfBlockedError();
         }
+        if (ssrfProxy.wasCredentialRedirectBlocked()) {
+            throw new Error('Sensitive headers cannot cross redirect origins.');
+        }
         if (ssrfProxy.wasResponseTooLarge()) {
             throw new ResponseBodyTooLargeError();
         }
@@ -301,6 +304,9 @@ export async function fetchWithBrowser(config, browser) {
         await dismissInterstitials(page, context, url);
         if (ssrfViolation || ssrfProxy.wasBlocked()) {
             throw ssrfError ?? ssrfProxy.blockedError() ?? new SsrfBlockedError();
+        }
+        if (ssrfProxy.wasCredentialRedirectBlocked()) {
+            throw new Error('Sensitive headers cannot cross redirect origins.');
         }
 
         const waitStarted = Date.now();

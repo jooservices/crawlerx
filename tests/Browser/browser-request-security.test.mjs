@@ -131,7 +131,7 @@ test('browser cookies reach the configured origin and stay off another origin', 
             navigationTimeoutMs: 10000,
         });
 
-        assert.equal(payload.exitCode, 0, JSON.stringify(payload));
+        assert.equal(payload.exitCode, 0);
         assert.equal(result.status, 200);
         await waitFor(() => targetCookies.length > 0);
         assert.match(sourceCookies[0], /session=alice/);
@@ -174,7 +174,7 @@ test('browser follows a same-origin redirect with its sensitive header', async (
             navigationTimeoutMs: 10000,
         });
 
-        assert.equal(payload.exitCode, 0, JSON.stringify(payload));
+        assert.equal(payload.exitCode, 0);
         assert.equal(result.status, 200);
         assert.deepEqual(authorizations, ['Bearer private-token', 'Bearer private-token']);
     } finally {
@@ -183,7 +183,7 @@ test('browser follows a same-origin redirect with its sensitive header', async (
     }
 });
 
-test('browser strips sensitive headers before a cross-origin redirect destination', async (t) => {
+test('browser aborts a redirect before forwarding a sensitive custom header', async (t) => {
     if (!hasChromium()) {
         t.skip('The Playwright Chromium executable is not installed');
         return;
@@ -209,16 +209,15 @@ test('browser strips sensitive headers before a cross-origin redirect destinatio
     const service = await startBrowserService(host);
 
     try {
-        const { payload, result } = await fetchBrowser(service, {
+        const { payload } = await fetchBrowser(service, {
             url: `http://${host}:${source.port}/start`,
             extraHttpHeaders: { Authorization: 'Bearer private-token' },
             navigationTimeoutMs: 10000,
         });
 
-        assert.equal(payload.exitCode, 0, JSON.stringify(payload));
-        assert.equal(result.status, 200);
+        assert.notEqual(payload.exitCode, 0);
         assert.match(sourceAuthorizations[0] ?? '', /Bearer private-token/);
-        assert.deepEqual(targetRequests, ['']);
+        assert.deepEqual(targetRequests, []);
     } finally {
         await service.stop();
         await source.close();

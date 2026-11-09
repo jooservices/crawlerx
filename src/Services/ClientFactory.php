@@ -187,6 +187,10 @@ final class ClientFactory
      */
     private function allowRedirects(array $options): bool|array
     {
+        if (self::resolveProxy($options) !== null && !(($options['before_request'] ?? null) instanceof Closure)) {
+            return false;
+        }
+
         $configured = $options['allow_redirects'] ?? null;
         if (is_array($configured)) {
             $redirectOptions = [];

@@ -87,6 +87,7 @@ export async function createSsrfProxyServer({
     const sockets = new Set();
     let blocked = false;
     let blockedError = null;
+    let credentialRedirectBlocked = false;
     let responseTooLarge = false;
     let closed = false;
     const server = createServer((request, response) => {
@@ -168,6 +169,12 @@ export async function createSsrfProxyServer({
 
         const headers = stripHopByHopHeaders(request.headers);
         if (requestOrigin !== null && target.origin !== requestOrigin) {
+            const hasSensitiveHeader = [...normalizedSensitiveHeaders].some((name) => headers[name] !== undefined);
+            if (hasSensitiveHeader) {
+                credentialRedirectBlocked = true;
+                rejectRequest(response);
+                return;
+            }
             for (const name of normalizedSensitiveHeaders) {
                 delete headers[name];
             }
@@ -412,6 +419,7 @@ export async function createSsrfProxyServer({
         certificateSpkiHash: certificate().spkiHash,
         wasBlocked: () => blocked,
         blockedError: () => blockedError,
+        wasCredentialRedirectBlocked: () => credentialRedirectBlocked,
         wasResponseTooLarge: () => responseTooLarge,
         close: async () => {
             if (closed) return;

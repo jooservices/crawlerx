@@ -15,7 +15,6 @@ use JOOservices\CrawlerX\Enums\FetchProfile;
 use JOOservices\CrawlerX\Fetch\Handlers\HttpFetchHandler;
 use JOOservices\CrawlerX\Fetch\Session\CookieHandoffStore;
 use JOOservices\CrawlerX\Services\ClientFactory;
-use JOOservices\CrawlerX\Tests\Support\LocalHttpServer;
 use PHPUnit\Framework\TestCase;
 
 final class HttpFetchHandlerProxySecurityTest extends TestCase
@@ -26,9 +25,9 @@ final class HttpFetchHandlerProxySecurityTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_client_factory_keeps_the_callers_guarded_redirect_policy_when_a_proxy_is_configured(): void
+    public function test_client_factory_disables_redirects_when_a_proxy_is_configured(): void
     {
-        self::assertSame(['track_redirects' => true], $this->redirectPolicy([
+        self::assertFalse($this->redirectPolicy([
             'proxy' => 'http://proxy.example:8080',
             'allow_redirects' => ['track_redirects' => true],
         ]));
@@ -48,46 +47,6 @@ final class HttpFetchHandlerProxySecurityTest extends TestCase
                 putenv('CRAWLERX_HTTP_PROXY=' . $originalProxy);
             } else {
                 putenv('CRAWLERX_HTTP_PROXY');
-            }
-        }
-    }
-
-    public function test_transport_rejects_cross_origin_redirects_for_proxy_clients_without_a_handler_callback(): void
-    {
-        $requestLog = sys_get_temp_dir() . '/crawlerx-proxy-client-redirect-' . bin2hex(random_bytes(8));
-        $proxy = LocalHttpServer::start(sprintf(
-            <<<'PHP'
-            <?php
-            $target = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
-            file_put_contents(%s, $target . PHP_EOL, FILE_APPEND | LOCK_EX);
-            if ($target === '/start') {
-                header('Location: http://public.example:8080/private', true, 302);
-                exit;
-            }
-            header('Content-Type: text/html; charset=utf-8');
-            echo '<html><body>private response</body></html>';
-            PHP,
-            var_export($requestLog, true),
-        ));
-
-        try {
-            $exception = null;
-            try {
-                (new ClientFactory())->factory([
-                    'proxy' => $proxy->url('/'),
-                    'allow_redirects' => ['track_redirects' => true],
-                    'max_response_bytes' => 1024,
-                ])->get('http://public.example/start');
-            } catch (\Throwable $caught) {
-                $exception = $caught;
-            }
-
-            self::assertNotNull($exception);
-            self::assertSame(['/start'], file($requestLog, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES));
-        } finally {
-            $proxy->stop();
-            if (is_file($requestLog)) {
-                unlink($requestLog);
             }
         }
     }

@@ -21,10 +21,45 @@ use PHPUnit\Framework\TestCase;
 
 final class HttpRedirectSecurityTest extends TestCase
 {
-    public function test_cache_does_not_store_a_round_trip_redirect_response_personalized_by_a_cookie(): void
+    public function test_cache_does_not_store_a_response_personalized_by_a_redirect_cookie(): void
     {
         $requestLog = sys_get_temp_dir() . '/crawlerx-redirect-cache-' . bin2hex(random_bytes(8));
         $server = LocalHttpServer::start($this->cacheRedirectRouter($requestLog));
+
+        try {
+            $cache = new ExpiringArrayCache(static fn(): float => 1.0);
+            $handler = new ResponseCache(
+                new HttpFetchHandler(new ClientFactory(), new CookieHandoffStore(), maxResponseBytes: 4096),
+                $cache,
+                60,
+            );
+            $url = $server->url('/start');
+            $profile = $this->profile();
+
+            $first = $handler->fetch($url, $profile, FetchMethod::Http);
+            $second = $handler->fetch($url, $profile, FetchMethod::Http);
+
+            self::assertSame($server->url('/private'), $first->finalUrl);
+            self::assertSame('<html><body>personalized alice response</body></html>', $first->body);
+            self::assertSame($first->body, $second->body);
+            self::assertSame([
+                '/start|',
+                '/private|session=alice',
+                '/start|',
+                '/private|session=alice',
+            ], $this->requestLog($requestLog));
+        } finally {
+            $server->stop();
+            if (is_file($requestLog)) {
+                unlink($requestLog);
+            }
+        }
+    }
+
+    public function test_cache_does_not_store_a_round_trip_redirect_response_personalized_by_a_cookie(): void
+    {
+        $requestLog = sys_get_temp_dir() . '/crawlerx-round-trip-redirect-cache-' . bin2hex(random_bytes(8));
+        $server = LocalHttpServer::start($this->cacheRoundTripRedirectRouter($requestLog));
 
         try {
             $cache = new ExpiringArrayCache(static fn(): float => 1.0);
@@ -230,6 +265,30 @@ final class HttpRedirectSecurityTest extends TestCase
     }
 
     private function cacheRedirectRouter(string $requestLog): string
+    {
+        return sprintf(
+            <<<'PHP'
+            <?php
+            $requestLog = %s;
+            $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+            file_put_contents($requestLog, $path . '|' . ($_SERVER['HTTP_COOKIE'] ?? '') . PHP_EOL, FILE_APPEND | LOCK_EX);
+
+            if ($path === '/start') {
+                header('Set-Cookie: session=alice; Path=/; HttpOnly');
+                header('Location: /private', true, 302);
+                exit;
+            }
+
+            header('Content-Type: text/html; charset=utf-8');
+            echo ($_COOKIE['session'] ?? '') === 'alice'
+                ? '<html><body>personalized alice response</body></html>'
+                : '<html><body>anonymous response body</body></html>';
+            PHP,
+            var_export($requestLog, true),
+        );
+    }
+
+    private function cacheRoundTripRedirectRouter(string $requestLog): string
     {
         return sprintf(
             <<<'PHP'

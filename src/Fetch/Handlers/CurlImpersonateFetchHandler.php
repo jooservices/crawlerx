@@ -150,6 +150,9 @@ final class CurlImpersonateFetchHandler implements FetchMethodHandler
                 if (! $this->sameOrigin($currentUrl, $nextUrl)) {
                     return $this->fail($method, $started, $url, 'redirect changed origin');
                 }
+                if ($respectRobots && $this->robotsGuard === null) {
+                    return $this->fail($method, $started, $url, 'redirect guard unavailable');
+                }
 
                 $currentUrl = $nextUrl;
             }
