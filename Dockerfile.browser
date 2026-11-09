@@ -31,7 +31,7 @@ COPY --from=dependencies --chown=node:node /ms-playwright /ms-playwright
 RUN npx playwright install-deps chromium \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --chown=node:node scripts/fetch-server.mjs scripts/fetch-limits.mjs scripts/request-security.mjs scripts/playwright-fetch.mjs scripts/puppeteer-stealth-fetch.mjs scripts/ssrf-guard.mjs scripts/ssrf-proxy.mjs ./scripts/
+COPY --chown=node:node scripts/fetch-server.mjs scripts/fetch-limits.mjs scripts/request-security.mjs scripts/playwright-fetch.mjs scripts/puppeteer-stealth-fetch.mjs scripts/ssrf-guard.mjs scripts/ssrf-proxy.mjs scripts/robots-fetch.mjs scripts/robots-policy.mjs ./scripts/
 
 USER node
 
