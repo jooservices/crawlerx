@@ -17,9 +17,12 @@ use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
+use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 
 final class Listing extends AbstractHtmlType implements TypeInterface
 {
+    use ParsesUrlParts;
+
     use ParsesHtml;
 
     protected function siteLabel(): string
@@ -86,19 +89,14 @@ final class Listing extends AbstractHtmlType implements TypeInterface
         $nextUrl = $next === null ? null : $this->absolute($request->url, $next);
         $hrefs = $crawler->filter(Selectors::PAGINATION_LAST . ', ' . Selectors::PAGINATION_PAGES)
             ->each(static fn(Crawler $node): string => (string) $node->attr('href'));
-        $pages = array_map(fn(string $href): int => $this->pageNumber($href) ?? 0, $hrefs);
+        $pages = array_map(fn(string $href): int => $this->pathNumber($href, '#/page/(\d+)/?#') ?? 0, $hrefs);
 
         return new CrawlPaginationDto(
             currentPage: $current,
             lastPage: max([$current, ...$pages]),
-            nextPage: $nextUrl === null ? null : ($this->pageNumber($nextUrl) ?? $current + 1),
+            nextPage: $nextUrl === null ? null : ($this->pathNumber($nextUrl, '#/page/(\d+)/?#') ?? $current + 1),
             nextUrl: $nextUrl,
             hasNextPage: $nextUrl !== null,
         );
-    }
-
-    private function pageNumber(string $href): ?int
-    {
-        return preg_match('#/page/(\d+)/?#', $href, $match) === 1 ? (int) $match[1] : null;
     }
 }

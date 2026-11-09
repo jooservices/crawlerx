@@ -16,9 +16,14 @@ use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
 use JOOservices\CrawlerX\Support\DmmCover;
 use Symfony\Component\DomCrawler\Crawler;
+use JOOservices\CrawlerX\Adapters\Avjoho\ParsesAvjohoIds;
+use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 
 final class PerformerDetail extends AbstractType implements TypeInterface
 {
+    use ParsesAvjohoIds;
+    use ParsesUrlParts;
+
     use NormalizesUrls;
     use ParsesHtml;
 
@@ -202,17 +207,5 @@ final class PerformerDetail extends AbstractType implements TypeInterface
         }
 
         return DmmCover::large($this->absolute($baseUrl, $src));
-    }
-
-    private function externalId(string $url): ?string
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-        if (is_string($path) && preg_match('#^/([^/]+)/?$#', $path, $match) === 1) {
-            $slug = $match[1];
-
-            return $slug !== 'sitemap' ? $slug : null;
-        }
-
-        return null;
     }
 }

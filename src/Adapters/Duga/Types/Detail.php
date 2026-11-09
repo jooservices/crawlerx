@@ -13,6 +13,7 @@ use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use JOOservices\CrawlerX\Support\SizeParser;
 use Symfony\Component\DomCrawler\Crawler;
+use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 
 /**
  * DUGA product page: the information table (dates, performers, director, maker, label, series, product ids,
@@ -21,6 +22,8 @@ use Symfony\Component\DomCrawler\Crawler;
  */
 final class Detail extends AbstractHtmlType implements TypeInterface
 {
+    use ParsesUrlParts;
+
     use ParsesHtml;
 
     private const KNOWN_ROWS = ['配信開始日', '配信終了日', '発売日', '出演者', '監督', 'メーカー', 'レーベル', 'シリーズ', '作品ID', 'メーカー品番', '品番', 'カテゴリ', 'ランキング'];
@@ -39,7 +42,7 @@ final class Detail extends AbstractHtmlType implements TypeInterface
     {
         $crawler = $this->fetchCrawler($request);
         $rows = $this->rows($crawler);
-        $externalId = $this->externalId($request->url);
+        $externalId = $this->pathMatch($request->url, '~/ppv/([^/]+)/?$~i');
         $sku = $this->cellText($rows, '作品ID');
         $productNumber = $this->cellText($rows, 'メーカー品番') ?? $this->cellText($rows, '品番');
         $prices = $this->prices($crawler);
@@ -359,12 +362,5 @@ final class Detail extends AbstractHtmlType implements TypeInterface
         }
 
         return $other;
-    }
-
-    private function externalId(string $url): ?string
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-
-        return is_string($path) && preg_match('~/ppv/([^/]+)/?$~i', $path, $match) === 1 ? $match[1] : null;
     }
 }
