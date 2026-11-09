@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\Xcity\Types;
 
-use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Adapters\AbstractType;
+use JOOservices\CrawlerX\Adapters\Concerns\CleansText;
 use JOOservices\CrawlerX\Adapters\Xcity\UrlNormalizer;
+use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
-use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
+use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
-use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
 
 final class Detail extends AbstractType implements TypeInterface
 {
-    use CoercesValues;
+    use CleansText;
 
     public function __construct(
         private readonly CrawlHttpClient $client,

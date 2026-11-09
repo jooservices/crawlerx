@@ -6,20 +6,24 @@ namespace JOOservices\CrawlerX\Adapters\Avfan\Types;
 
 use JOOservices\CrawlerX\Adapters\AbstractHtmlType;
 use JOOservices\CrawlerX\Adapters\Avfan\Selectors;
+use JOOservices\CrawlerX\Adapters\Concerns\MatchesUrlPath;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
+use JOOservices\CrawlerX\Adapters\Concerns\ReadsQueryNumbers;
+use JOOservices\CrawlerX\Adapters\Concerns\StripsTitleCode;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
-use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
+use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Support\CodeNormalizer;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
-use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 
 final class Listing extends AbstractHtmlType implements TypeInterface
 {
-    use ParsesUrlParts;
+    use MatchesUrlPath;
+    use ReadsQueryNumbers;
+    use StripsTitleCode;
 
     use ParsesHtml;
 

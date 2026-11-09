@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Adapters\Duga\Types;
 
 use JOOservices\CrawlerX\Adapters\AbstractHtmlType;
+use JOOservices\CrawlerX\Adapters\Concerns\MatchesUrlPath;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
@@ -13,7 +14,6 @@ use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use JOOservices\CrawlerX\Support\SizeParser;
 use Symfony\Component\DomCrawler\Crawler;
-use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 
 /**
  * DUGA product page: the information table (dates, performers, director, maker, label, series, product ids,
@@ -22,7 +22,7 @@ use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
  */
 final class Detail extends AbstractHtmlType implements TypeInterface
 {
-    use ParsesUrlParts;
+    use MatchesUrlPath;
 
     use ParsesHtml;
 

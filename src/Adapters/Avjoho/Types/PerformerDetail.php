@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Adapters\Avjoho\Types;
 
 use JOOservices\CrawlerX\Adapters\AbstractType;
+use JOOservices\CrawlerX\Adapters\Avjoho\ParsesAvjohoIds;
+use JOOservices\CrawlerX\Adapters\Avjoho\Selectors;
 use JOOservices\CrawlerX\Adapters\Concerns\NormalizesUrls;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
-use JOOservices\CrawlerX\Adapters\Avjoho\Selectors;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
@@ -16,13 +17,10 @@ use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
 use JOOservices\CrawlerX\Support\DmmCover;
 use Symfony\Component\DomCrawler\Crawler;
-use JOOservices\CrawlerX\Adapters\Avjoho\ParsesAvjohoIds;
-use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 
 final class PerformerDetail extends AbstractType implements TypeInterface
 {
     use ParsesAvjohoIds;
-    use ParsesUrlParts;
 
     use NormalizesUrls;
     use ParsesHtml;

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\JavPhotos\Types;
 
-use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 use JOOservices\CrawlerX\Adapters\AbstractHtmlType;
+use JOOservices\CrawlerX\Adapters\Concerns\MatchesUrlPath;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
 use JOOservices\CrawlerX\Adapters\JavPhotos\Selectors;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
@@ -18,7 +18,7 @@ use Symfony\Component\DomCrawler\Crawler;
 
 final class Gallery extends AbstractHtmlType implements TypeInterface
 {
-    use ParsesUrlParts;
+    use MatchesUrlPath;
     use ParsesHtml;
 
     protected function siteLabel(): string

@@ -6,7 +6,7 @@ namespace JOOservices\CrawlerX\Adapters\Mgstage\Types;
 
 use JOOservices\CrawlerX\Adapters\AbstractHtmlType;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
-use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
+use JOOservices\CrawlerX\Adapters\Concerns\ReadsLastPathSegment;
 use JOOservices\CrawlerX\Adapters\Mgstage\Concerns\ParsesProductData;
 use JOOservices\CrawlerX\Adapters\Mgstage\Selectors;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
@@ -19,7 +19,7 @@ use Symfony\Component\DomCrawler\Crawler;
 final class Detail extends AbstractHtmlType implements TypeInterface
 {
     use ParsesHtml;
-    use ParsesUrlParts;
+    use ReadsLastPathSegment;
     use ParsesProductData;
 
     /** Row labels of the product table mapped to a canonical key; unknown rows stay in source_fields only. */

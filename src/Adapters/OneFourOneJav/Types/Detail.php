@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\OneFourOneJav\Types;
 
-use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Adapters\AbstractType;
 use JOOservices\CrawlerX\Adapters\Concerns\NormalizesUrls;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
-use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
+use JOOservices\CrawlerX\Adapters\Concerns\ReadsLastPathSegment;
 use JOOservices\CrawlerX\Adapters\OneFourOneJav\Selectors;
+use JOOservices\CrawlerX\Adapters\Shared\OnejavTheme\TorrentCardFields;
+use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
-use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
-use JOOservices\CrawlerX\Adapters\Shared\OnejavTheme\TorrentCardFields;
+use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Support\CodeNormalizer;
 use Symfony\Component\DomCrawler\Crawler;
 
@@ -22,7 +22,7 @@ final class Detail extends AbstractType implements TypeInterface
 {
     use NormalizesUrls;
     use ParsesHtml;
-    use ParsesUrlParts;
+    use ReadsLastPathSegment;
 
     public function __construct(private readonly CrawlHttpClient $client)
     {

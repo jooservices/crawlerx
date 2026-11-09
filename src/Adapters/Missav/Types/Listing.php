@@ -5,20 +5,20 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Adapters\Missav\Types;
 
 use JOOservices\CrawlerX\Adapters\AbstractHtmlType;
+use JOOservices\CrawlerX\Adapters\Concerns\ReadsLastPathSegment;
 use JOOservices\CrawlerX\Adapters\Missav\Selectors;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
-use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
+use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Support\CodeNormalizer;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
-use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 
 final class Listing extends AbstractHtmlType implements TypeInterface
 {
-    use ParsesUrlParts;
+    use ReadsLastPathSegment;
     use InteractsWithMissavHtml;
 
     /** @var list<string> */

@@ -4,26 +4,28 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\Avfan\Types;
 
-use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Adapters\AbstractType;
 use JOOservices\CrawlerX\Adapters\Avfan\Selectors;
 use JOOservices\CrawlerX\Adapters\Avfan\UrlNormalizer;
+use JOOservices\CrawlerX\Adapters\Concerns\CleansText;
+use JOOservices\CrawlerX\Adapters\Concerns\MatchesUrlPath;
+use JOOservices\CrawlerX\Adapters\Concerns\ParsesDateStrings;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
+use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
-use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
+use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Support\CodeNormalizer;
 use JOOservices\CrawlerX\Support\SizeParser;
 use Symfony\Component\DomCrawler\Crawler;
-use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
-use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 
 final class Detail extends AbstractType implements TypeInterface
 {
-    use ParsesUrlParts;
+    use CleansText;
+    use MatchesUrlPath;
+    use ParsesDateStrings;
 
-    use CoercesValues;
     use ParsesHtml;
 
     public function __construct(

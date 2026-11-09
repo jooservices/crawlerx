@@ -4,24 +4,24 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\Xcity\Types;
 
-use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Adapters\AbstractType;
+use JOOservices\CrawlerX\Adapters\Concerns\CleansText;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
-use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
+use JOOservices\CrawlerX\Adapters\Concerns\ReadsPathOrQueryParam;
+use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
-use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
+use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\DomCrawler\UriResolver;
-use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
 
 final class PerformerDetail extends AbstractType implements TypeInterface
 {
-    use CoercesValues;
+    use CleansText;
+    use ReadsPathOrQueryParam;
     use ParsesHtml;
-    use ParsesUrlParts;
 
     public function __construct(
         private readonly CrawlHttpClient $client,

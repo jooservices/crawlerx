@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Split the grab-bag `CoercesValues` and `ParsesUrlParts` traits into 13 single-responsibility concerns (`MatchesUrlPath`, `ReadsQueryParams`, `CoercesNumbers`, `CleansText`, ...), one file and one unit test each, update every adapter's imports and document the one-concern-per-helper rule (no behaviour change, JOOXCR-472).
 - Migrate the remaining duplicated N–Z adapter helpers to the shared parsing and coercion concerns without changing crawl output (JOOXCR-469).
 - Migrate the exact duplicate private helpers of the G-M adapters (Jable, Jav321, JavBus, JavDatabase, JavLibrary, JavPhotos, MinnanoAv) to the shared `ParsesUrlParts` and `CoercesValues` traits, adding `firstQueryParam`, `titleWithoutCode` and `integerStat` (no behaviour change, JOOXCR-468).
 - Migrate adapters A–F onto the shared parsing helpers (`ParsesUrlParts`, `CoercesValues`, `ResolvesLinkUrls`) and drop their private duplicates; extend those helpers with `dateString`, `arrayValue` and `linkUrl` (unit-tested, no behaviour change, JOOXCR-467).
