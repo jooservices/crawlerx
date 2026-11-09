@@ -71,4 +71,28 @@ final class SharedHelpersTest extends TestCase
         self::assertNull($this->helper->call('positiveInt', 'x'));
         self::assertSame('A & B c', $this->helper->call('cleanText', "A &amp;\n B\t c "));
     }
+
+    public function test_first_query_param_uses_the_first_present_alias(): void
+    {
+        self::assertSame('a1', $this->helper->call('firstQueryParam', 'https://a.test/?st=a1&s=b2', 'st', 's'));
+        self::assertSame('b2', $this->helper->call('firstQueryParam', 'https://a.test/?s=%20b2%20', 'st', 's'));
+        self::assertNull($this->helper->call('firstQueryParam', 'https://a.test/?st=&s=b2', 'st', 's'));
+        self::assertNull($this->helper->call('firstQueryParam', 'https://a.test/?st[]=1', 'st', 's'));
+        self::assertNull($this->helper->call('firstQueryParam', 'https://a.test/', 'st', 's'));
+    }
+
+    public function test_title_without_code(): void
+    {
+        self::assertSame('Title', $this->helper->call('titleWithoutCode', 'abc-123  Title', 'ABC-123'));
+        self::assertSame('ABC-123', $this->helper->call('titleWithoutCode', 'ABC-123', 'ABC-123'));
+        self::assertSame('Other', $this->helper->call('titleWithoutCode', 'Other', 'ABC-123'));
+        self::assertNull($this->helper->call('titleWithoutCode', null, 'ABC-123'));
+    }
+
+    public function test_integer_stat(): void
+    {
+        self::assertSame(1234, $this->helper->call('integerStat', '1,234'));
+        self::assertSame(1234, $this->helper->call('integerStat', '1 234'));
+        self::assertSame(0, $this->helper->call('integerStat', 'n/a'));
+    }
 }

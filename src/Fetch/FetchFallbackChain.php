@@ -21,6 +21,7 @@ use JOOservices\CrawlerX\Fetch\Guard\HostCircuit;
 use JOOservices\CrawlerX\Fetch\Guard\HostCircuitReporter;
 use JOOservices\CrawlerX\Fetch\Guard\HostThrottle;
 use JOOservices\CrawlerX\Fetch\Guard\PreFetchGuard;
+use JOOservices\CrawlerX\Fetch\Guard\RobotsGuard;
 use JOOservices\CrawlerX\Fetch\Guard\TransientRetry;
 use JOOservices\CrawlerX\Fetch\Outcome\FetchRejections;
 use JOOservices\CrawlerX\Fetch\Request\AuthWallDetector;
@@ -50,6 +51,7 @@ final class FetchFallbackChain
         ?Closure $retrySleeper = null,
         private readonly ?HostThrottle $hostThrottle = null,
         private readonly ?HostCircuit $hostCircuit = null,
+        private readonly ?RobotsGuard $robotsGuard = null,
         private readonly int $maxTransientRetries = TransientRetry::MAX_RETRIES,
         /** @var Closure(): (int|float)|null */
         private readonly ?Closure $budgetClock = null,
@@ -80,7 +82,6 @@ final class FetchFallbackChain
         $host = is_string($parsedHost) && $parsedHost !== '' ? $parsedHost : null;
         $run = new FetchRun();
         $budget = FetchBudget::start($options?->fetch, $this->budgetClock);
-        $runner = new MethodAttemptRunner(new PreFetchGuard($this->hostThrottle, $this->hostCircuit), $this->retrySleeper, $this->maxTransientRetries);
         $session = $this->sessions->get($profile->slug);
         $request = new FetchRequest(
             $url,
@@ -91,6 +92,14 @@ final class FetchFallbackChain
             $this->logins?->cookiesFor($profile->slug) ?? [],
             $session['userAgent'] ?? $this->defaultUserAgent($profile),
         );
+
+        $robotsDelaySeconds = null;
+        if ($this->robotsGuard !== null && $this->respectsRobots($profile)) {
+            $this->robotsGuard->assertAllowed($url, $request->userAgent ?? '');
+            $robotsDelaySeconds = $this->robotsGuard->crawlDelaySeconds($url, $request->userAgent ?? '');
+        }
+
+        $runner = new MethodAttemptRunner(new PreFetchGuard($this->hostThrottle, $this->hostCircuit, $robotsDelaySeconds), $this->retrySleeper, $this->maxTransientRetries);
 
         foreach ($plan as $method) {
             // FlareSolverr is the expensive last resort. It is skipped only when an earlier method got a real
@@ -195,5 +204,14 @@ final class FetchFallbackChain
             ?? $profile->playwright->userAgent
             ?? $profile->http->headers['User-Agent']
             ?? null;
+    }
+
+    private function respectsRobots(SiteProfileDto $profile): bool
+    {
+        if ($profile->respectRobots !== null) {
+            return $profile->respectRobots;
+        }
+
+        return $this->runtime === null || $this->runtime->respectRobots;
     }
 }
