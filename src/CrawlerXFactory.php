@@ -101,6 +101,7 @@ final class CrawlerXFactory
     {
         $runtime = FetchRuntimeConfig::fromEnvironment();
         $runner = new ProcOpenProcessRunner($runtime->maxResponseBytes * 6 + 65_536);
+        $curlRunner = new ProcOpenProcessRunner($runtime->maxResponseBytes);
         $browserRunner = $runtime->playwrightUrl === null
             ? $runner
             : new BrowserServiceProcessRunner($runtime->playwrightUrl, maxResponseBytes: $runtime->maxResponseBytes);
@@ -161,6 +162,7 @@ final class CrawlerXFactory
             $runtime->maxResponseBytes,
             $robotsGuard,
             $runtime->userAgent,
+            $runtime->respectRobots,
         );
         $httpHandler = self::$responseCache !== null && $runtime->responseCacheTtlSeconds > 0
             ? new ResponseCache($http, self::$responseCache, $runtime->responseCacheTtlSeconds)
@@ -168,7 +170,7 @@ final class CrawlerXFactory
 
         return new FetchFallbackChain([
             FetchMethod::Http->value => $httpHandler,
-            FetchMethod::CurlImpersonate->value => new CurlImpersonateFetchHandler($runtime, $runner, $cookies, $sessions, self::$loginCookieProvider),
+            FetchMethod::CurlImpersonate->value => new CurlImpersonateFetchHandler($runtime, $curlRunner, $cookies, $sessions, self::$loginCookieProvider),
             FetchMethod::Playwright->value => $playwright,
             FetchMethod::PlaywrightStealth->value => $playwright,
             FetchMethod::ChromeStealth->value => $playwright,

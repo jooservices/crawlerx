@@ -102,6 +102,12 @@ final class FetchFallbackChain
         $runner = new MethodAttemptRunner(new PreFetchGuard($this->hostThrottle, $this->hostCircuit, $robotsDelaySeconds), $this->retrySleeper, $this->maxTransientRetries);
 
         foreach ($plan as $method) {
+            if ($method === FetchMethod::Flaresolverr && $this->robotsGuard !== null) {
+                // FlareSolverr follows redirects internally, outside this chain's per-hop SSRF and robots guard.
+                $run->attempts[] = AttemptRow::build($method, 0, 0, false, false, 'redirect guard unavailable', skipped: true);
+                continue;
+            }
+
             // FlareSolverr is the expensive last resort. It is skipped only when an earlier method got a real
             // answer from the site (an HTTP status) that was not a challenge. When nothing answered (a method
             // could not run, or a browser timed out on a page that never settles, as Cloudflare interstitials

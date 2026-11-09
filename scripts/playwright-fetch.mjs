@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url';
 import { assertSafeBrowserUrl, SsrfBlockedError } from './ssrf-guard.mjs';
 import { createSsrfProxyServer } from './ssrf-proxy.mjs';
 import { assertResponseBodyWithinLimit, configuredMaxResponseBytes, ResponseBodyTooLargeError } from './fetch-limits.mjs';
-import { headersForOrigin, splitBrowserHeaders } from './request-security.mjs';
+import { browserCookiesFromHeader, headersForOrigin, splitBrowserHeaders, withoutConfiguredCookies } from './request-security.mjs';
 
 export const DEFAULT_USER_AGENT =
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
@@ -182,7 +182,12 @@ export async function fetchWithBrowser(config, browser) {
         await assertSafeBrowserUrl(url);
         const startOrigin = new URL(url).origin;
         const configuredHeaders = splitBrowserHeaders(config.extraHttpHeaders ?? {});
-        sensitiveHeaders = configuredHeaders.sensitive;
+        const cookieHeader = Object.entries(configuredHeaders.sensitive)
+            .find(([name]) => name.toLowerCase() === 'cookie')?.[1];
+        const configuredCookies = browserCookiesFromHeader(cookieHeader);
+        sensitiveHeaders = Object.fromEntries(
+            Object.entries(configuredHeaders.sensitive).filter(([name]) => name.toLowerCase() !== 'cookie'),
+        );
         const contextStarted = Date.now();
         const contextOptions = {
             userAgent,
@@ -213,6 +218,15 @@ export async function fetchWithBrowser(config, browser) {
         ssrfProxy = await createSsrfProxyServer({ maxResponseBytes: maximumResponseBytes });
         contextOptions.proxy = { server: ssrfProxy.url };
         context = await browser.newContext(contextOptions);
+        if (configuredCookies.cookies.length > 0) {
+            const target = new URL(url);
+            await context.addCookies(configuredCookies.cookies.map((cookie) => ({
+                ...cookie,
+                domain: target.hostname,
+                path: '/',
+                secure: target.protocol === 'https:',
+            })));
+        }
         await context.route('**/*', async (route) => {
             const requestUrl = route.request().url();
             const protocol = new URL(requestUrl).protocol;
@@ -237,9 +251,31 @@ export async function fetchWithBrowser(config, browser) {
                 return;
             }
             const sameOrigin = new URL(requestUrl).origin === startOrigin;
-            await route.continue({
-                headers: headersForOrigin(route.request().headers(), sensitiveHeaders, sameOrigin),
-            });
+            const requestHeaders = headersForOrigin(
+                route.request().headers(),
+                sensitiveHeaders,
+                sameOrigin,
+            );
+            const safeHeaders = withoutConfiguredCookies(requestHeaders, sameOrigin ? [] : configuredCookies.names);
+            const mustStopRedirects = configuredCookies.names.length > 0
+                || (sameOrigin && Object.keys(sensitiveHeaders).length > 0);
+
+            if (mustStopRedirects) {
+                try {
+                    const response = await route.fetch({ headers: safeHeaders, maxRedirects: 0 });
+                    const status = response.status();
+                    if ([301, 302, 303, 307, 308].includes(status) && response.headers().location) {
+                        await route.abort('blockedbyclient');
+                        return;
+                    }
+                    await route.fulfill({ response });
+                } catch {
+                    await route.abort('failed').catch(() => {});
+                }
+                return;
+            }
+
+            await route.continue({ headers: safeHeaders });
         });
         try {
             const hostname = new URL(url).hostname;

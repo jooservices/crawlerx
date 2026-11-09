@@ -80,14 +80,15 @@ final class FlaresolverrFetchHandler implements FetchMethodHandler
             'cookies' => $flareCookies,
             'userAgent' => $userAgent,
         ], JSON_THROW_ON_ERROR);
+        $maxEnvelopeBytes = $this->runtime->maxResponseBytes * 6 + 65_536;
 
         try {
-            $client = $this->client ?? ClientFactory::boundedHttpClient($timeoutSeconds, $this->runtime->maxResponseBytes);
+            $client = $this->client ?? ClientFactory::boundedHttpClient($timeoutSeconds, $maxEnvelopeBytes);
             $response = $client->sendRequest(new Request('POST', $endpoint, [
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
             ], $payload));
-            $raw = (new ResponseBodyReader($this->runtime->maxResponseBytes))->read($response->getBody());
+            $raw = (new ResponseBodyReader($maxEnvelopeBytes))->read($response->getBody());
         } catch (ResponseBodyTooLargeException) {
             return $this->fail($method, $started, $url, 'response_too_large');
         } catch (DownloadSizeExceededException) {
@@ -105,6 +106,9 @@ final class FlaresolverrFetchHandler implements FetchMethodHandler
         $status = is_string($decoded['status'] ?? null) ? $decoded['status'] : '';
         $solution = is_array($decoded['solution'] ?? null) ? $decoded['solution'] : [];
         $html = is_string($solution['response'] ?? null) ? $solution['response'] : '';
+        if (strlen($html) > $this->runtime->maxResponseBytes) {
+            return $this->fail($method, $started, $url, 'response_too_large');
+        }
         $httpStatus = is_numeric($solution['status'] ?? null) ? (int) $solution['status'] : 0;
         $cookies = $this->cookies($solution['cookies'] ?? null);
         $solutionCookies = is_array($solution['cookies'] ?? null) ? $solution['cookies'] : [];

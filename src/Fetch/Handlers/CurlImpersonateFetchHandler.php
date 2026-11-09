@@ -53,6 +53,8 @@ final class CurlImpersonateFetchHandler implements FetchMethodHandler
             '--silent',
             '--show-error',
             '--location',
+            '--max-redirs',
+            '0',
             '--max-time',
             (string) (($options !== null && $options->http !== null && $options->http->timeout !== null) ? $options->http->timeout : $profile->http->timeout),
             '--user-agent',
@@ -81,6 +83,13 @@ final class CurlImpersonateFetchHandler implements FetchMethodHandler
             ? $options->http->timeout
             : $profile->http->timeout;
         $result = $this->runner->run($command, min($timeout, $options->methodTimeoutSeconds ?? $timeout));
+        if (
+            strlen($result->stdout) > $this->runtime->maxResponseBytes
+            || str_contains($result->stderr, 'process output exceeded the configured size limit.')
+        ) {
+            return $this->fail($method, $started, $url, 'response_too_large');
+        }
+
         $body = $result->stdout;
         $status = $result->exitCode === 0 ? 200 : 0;
         $challenge = ChallengeDetector::isChallenge($body, $status);

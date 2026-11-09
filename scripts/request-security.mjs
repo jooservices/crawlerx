@@ -60,3 +60,55 @@ export function headersForOrigin(requestHeaders, sensitiveHeaders, sameOrigin) {
 
     return headers;
 }
+
+export function browserCookiesFromHeader(value) {
+    if (value === undefined || value === '') {
+        return { cookies: [], names: [] };
+    }
+
+    const cookies = [];
+    for (const part of value.split(';')) {
+        const separator = part.indexOf('=');
+        if (separator < 1) {
+            throw new TypeError('invalid_http_cookie');
+        }
+
+        const name = part.slice(0, separator).trim();
+        const cookieValue = part.slice(separator + 1).trim();
+        if (name === '' || invalidHeaderName.test(name) || invalidHeaderValue.test(cookieValue)) {
+            throw new TypeError('invalid_http_cookie');
+        }
+        cookies.push({ name, value: cookieValue });
+    }
+
+    return { cookies, names: cookies.map(({ name }) => name) };
+}
+
+export function withoutConfiguredCookies(requestHeaders, configuredNames) {
+    const headers = { ...requestHeaders };
+    if (configuredNames.length === 0) {
+        return headers;
+    }
+
+    const cookieHeader = Object.keys(headers).find((name) => name.toLowerCase() === 'cookie');
+    if (cookieHeader === undefined) {
+        return headers;
+    }
+
+    const configured = new Set(configuredNames);
+    const remaining = headers[cookieHeader]
+        .split(';')
+        .map((part) => part.trim())
+        .filter((part) => {
+            const separator = part.indexOf('=');
+            return separator < 1 || !configured.has(part.slice(0, separator).trim());
+        });
+
+    if (remaining.length === 0) {
+        delete headers[cookieHeader];
+    } else {
+        headers[cookieHeader] = remaining.join('; ');
+    }
+
+    return headers;
+}

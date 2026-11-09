@@ -38,6 +38,7 @@ final class HttpFetchHandler implements FetchMethodHandler
         private readonly int $maxResponseBytes = 10_485_760,
         ?RobotsGuard $robotsGuard = null,
         private readonly ?string $defaultUserAgent = null,
+        private readonly bool $defaultRespectRobots = true,
     ) {
         $this->beforeRequest = $robotsGuard === null
             ? null
@@ -89,7 +90,7 @@ final class HttpFetchHandler implements FetchMethodHandler
             // A remote proxy resolves the redirect destination itself, so local DNS validation cannot pin its egress.
             'allow_redirects' => $redirectsDisabled ? false : $redirectOptions,
         ];
-        if ($this->beforeRequest !== null) {
+        if ($this->beforeRequest !== null && ($profile->respectRobots ?? $this->defaultRespectRobots)) {
             $clientOptions['before_request'] = $this->beforeRequest;
         }
 
