@@ -31,6 +31,7 @@ use JOOservices\CrawlerX\Services\CrawlOrchestrator;
 use JOOservices\CrawlerX\Services\CrawlerXService;
 use JOOservices\CrawlerX\Services\UrlClassifier;
 use Psr\SimpleCache\CacheInterface;
+use Closure;
 use Throwable;
 
 final class CrawlerXFactory
@@ -45,6 +46,9 @@ final class CrawlerXFactory
 
     private static ?CacheInterface $responseCache = null;
 
+    /** @var Closure(string): bool|null */
+    private static ?Closure $beforeOutboundRequest = null;
+
     public static function create(): CrawlOrchestrator
     {
         if (self::$orchestrator instanceof CrawlOrchestrator) {
@@ -52,7 +56,7 @@ final class CrawlerXFactory
         }
 
         $manifests = new FileAdapterManifestRegistry();
-        $registry = new AdapterRegistry(new ClientFactory(), $manifests);
+        $registry = new AdapterRegistry(new ClientFactory(self::$beforeOutboundRequest), $manifests);
         $registry->registerFromManifests($manifests);
 
         $service = new CrawlerXService($registry, new AdapterExecutor());
@@ -73,14 +77,17 @@ final class CrawlerXFactory
         self::$orchestrator = null;
     }
 
+    /** @param Closure(string): bool|null $beforeOutboundRequest */
     public static function configure(
         ?LoginCookieProvider $logins = null,
         ?CacheInterface $throttleCache = null,
         ?CacheInterface $responseCache = null,
+        ?Closure $beforeOutboundRequest = null,
     ): void {
         self::$loginCookieProvider = $logins;
         self::$throttleCache = $throttleCache;
         self::$responseCache = $responseCache;
+        self::$beforeOutboundRequest = $beforeOutboundRequest;
         self::$fetchChain = null;
         self::$orchestrator = null;
     }
@@ -92,6 +99,7 @@ final class CrawlerXFactory
         self::$loginCookieProvider = null;
         self::$throttleCache = null;
         self::$responseCache = null;
+        self::$beforeOutboundRequest = null;
     }
 
     private static function defaultFetchChain(): FetchFallbackChain
@@ -103,7 +111,7 @@ final class CrawlerXFactory
             : new BrowserServiceProcessRunner($runtime->playwrightUrl);
         $cookies = new CookieHandoffStore();
         $sessions = new SessionStore();
-        $clientFactory = new ClientFactory();
+        $clientFactory = new ClientFactory(self::$beforeOutboundRequest);
 
         $playwright = new PlaywrightFamilyFetchHandler($runtime, $browserRunner);
         $http = new HttpFetchHandler($clientFactory, $cookies, $sessions, self::$loginCookieProvider);
@@ -157,6 +165,6 @@ final class CrawlerXFactory
         ), hostCircuit: new HostCircuit(
             cache: self::$throttleCache,
             nodeId: $runtime->nodeId,
-        ), robotsGuard: $robotsGuard);
+        ), robotsGuard: $robotsGuard, beforeOutboundRequest: self::$beforeOutboundRequest);
     }
 }

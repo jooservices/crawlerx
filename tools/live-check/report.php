@@ -8,6 +8,7 @@ use JOOservices\CrawlerX\Dto\CrawlOptionsDto;
 use JOOservices\CrawlerX\Dto\HttpOptionsDto;
 use JOOservices\CrawlerX\Tools\Canary\Env;
 use JOOservices\CrawlerX\Tools\LiveCheck\LiveCheckReportRunner;
+use JOOservices\CrawlerX\Tools\LiveCheck\LiveCheckRequestLimiter;
 use JOOservices\CrawlerX\Tools\LiveCheck\LiveCheckReportWriter;
 use JOOservices\CrawlerX\Tools\LiveCheck\LiveCheckSampleSelector;
 
@@ -15,6 +16,7 @@ require dirname(__DIR__, 2) . '/vendor/autoload.php';
 require dirname(__DIR__) . '/canary/Env.php';
 require __DIR__ . '/LiveCheckSampleSelector.php';
 require __DIR__ . '/LiveCheckClassifier.php';
+require __DIR__ . '/LiveCheckRequestLimiter.php';
 require __DIR__ . '/LiveCheckReportRunner.php';
 require __DIR__ . '/LiveCheckReportWriter.php';
 
@@ -114,30 +116,36 @@ if (! $foundOnly) {
     exit(2);
 }
 
-$crawl = static function (array $sample) use ($proxy): \JOOservices\CrawlerX\Dto\CrawlOutcomeDto {
-    $builder = CrawlerX::url($sample['url'])
-        ->site($sample['slug'])
-        ->type($sample['type']);
-
-    if ($proxy !== null) {
-        $builder = $builder->options(new CrawlOptionsDto(http: new HttpOptionsDto(proxy: $proxy)));
-    }
-
-    try {
-        return $builder->tryCrawl();
-    } finally {
-        CrawlerXFactory::reset();
-    }
+$sleepMicroseconds = static function (int $microseconds): void {
+    usleep($microseconds);
+};
+$clockNanoseconds = static fn(): int => hrtime(true);
+$requestLimiter = new LiveCheckRequestLimiter($sleepMicroseconds, $clockNanoseconds);
+CrawlerXFactory::configure(
+    beforeOutboundRequest: static function (string $url) use ($requestLimiter): bool {
+        return $requestLimiter->beforeRequest($url);
+    },
+);
+$crawl = static function (array $sample) use ($proxy, $requestLimiter): \JOOservices\CrawlerX\Dto\CrawlOutcomeDto {
+    return $requestLimiter->forAdapter(
+        $sample['slug'],
+        static function () use ($sample, $proxy): \JOOservices\CrawlerX\Dto\CrawlOutcomeDto {
+            return CrawlerX::url($sample['url'])
+                ->site($sample['slug'])
+                ->type($sample['type'])
+                ->options(new CrawlOptionsDto(http: new HttpOptionsDto(proxy: $proxy)))
+                ->tryCrawl();
+        },
+    );
 };
 $runner = new LiveCheckReportRunner(
     crawl: $crawl,
-    sleepMicroseconds: static function (int $microseconds): void {
-        usleep($microseconds);
-    },
-    clockNanoseconds: static fn(): int => hrtime(true),
+    sleepMicroseconds: $sleepMicroseconds,
+    clockNanoseconds: $clockNanoseconds,
 );
 
 $results = $runner->run($samples);
+CrawlerXFactory::reset();
 $generatedAt = new DateTimeImmutable('now', new DateTimeZone('UTC'));
 $report = (new LiveCheckReportWriter())->write(
     $results,

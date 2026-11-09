@@ -9,8 +9,11 @@ It reads URLs and crawl types from `runtime.fixtureSamples`, preferring
 `listing`/`performer_listing` and `detail`/`performer_detail` samples. If an
 adapter has no detail sample, a `gallery` sample fills that role. An adapter
 without a supported listing sample is checked only with its available sample.
-No adapter receives more than two requests. Requests to the same hostname are
-at least 10 seconds apart, including when separate adapters share a host.
+The limit applies at the outbound HTTP request boundary, so follow-up URLs,
+fetch retries, and `robots.txt` requests use the same two-request adapter budget.
+Requests to the same hostname are at least 10 seconds apart, including when
+separate adapters share a host. A request over the adapter budget is stopped
+before it reaches the network and returned as a rate-limited response.
 
 An optional `runtime.live` block can override a fixture sample when the
 fixture URL is no longer suitable for a manual live check:

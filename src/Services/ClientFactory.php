@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Services;
 
+use Closure;
 use JOOservices\Client\Client\ClientBuilder;
 use JOOservices\Client\Client\HttpClient;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
@@ -16,6 +17,11 @@ final class ClientFactory
 
     /** @var array<string, HttpClient> */
     private static array $clients = [];
+
+    /** @param Closure(string): bool|null $beforeOutboundRequest */
+    public function __construct(private readonly ?Closure $beforeOutboundRequest = null)
+    {
+    }
 
     /**
      * @param  array<string, mixed>  $options
@@ -44,7 +50,7 @@ final class ClientFactory
 
         $client = $this->client($options, $site);
 
-        return new ClientCrawlHttpClient($client, $headers);
+        return new ClientCrawlHttpClient($client, $headers, $this->beforeOutboundRequest);
     }
 
     /**
