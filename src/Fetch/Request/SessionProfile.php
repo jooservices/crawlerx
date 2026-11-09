@@ -66,7 +66,7 @@ final class SessionProfile
             baseUrl: $profile->baseUrl,
             fetchProfile: $profile->fetchProfile,
             fetchChain: $profile->fetchChain,
-            http: new HttpProfileDto($profile->http->timeout, $profile->http->verifySsl, $headers),
+            http: new HttpProfileDto($profile->http->timeout, $profile->http->verifySsl, $headers, $profile->http->proxy),
             playwright: $playwright,
             cookieHandoffAfterBrowser: $profile->cookieHandoffAfterBrowser,
             readyMarkers: $profile->readyMarkers,

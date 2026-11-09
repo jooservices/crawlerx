@@ -51,6 +51,10 @@ abstract class AbstractBaseCrawler implements SiteAdapter
             if ($httpOptions->headers !== null) {
                 $http['headers'] = $httpOptions->headers;
             }
+
+            if ($httpOptions->proxy !== null) {
+                $http['proxy'] = $httpOptions->proxy;
+            }
         }
 
         $inner = $this->clientFactory->factory(array_merge($this->options, $http));
