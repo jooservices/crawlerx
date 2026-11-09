@@ -112,6 +112,62 @@ final class ChangedTestRunnerTest extends TestCase
         self::assertContains('tests/Feature/Snapshots/SnapshotParseTest.php', $plan->testPaths);
     }
 
+    public function test_adapter_and_fixture_changes_select_cross_adapter_unit_tests(): void
+    {
+        $this->addAdapter('Onejav', 'onejav', ['detail-sample-1.html']);
+        $this->addAdapter('Fc2', 'fc2', ['detail.html']);
+        $this->addFile('tests/Unit/Adapters/Onejav/FieldsTest.php', '<?php // Onejav');
+        $this->addFile('tests/Unit/Adapters/OnejavFamily/FieldsTest.php', '<?php // Onejav');
+        $this->addFile('tests/Unit/OnejavDetailTest.php', '<?php // Onejav');
+        $this->addFile('tests/Unit/Adapters/Fc2/FieldsTest.php', '<?php // Fc2');
+        $this->addFile('tests/Unit/Adapters/ImageCompletenessTest.php', '<?php // Onejav Fc2');
+
+        $mapper = new ChangedTestMapper($this->root);
+        foreach ([
+            'src/Adapters/Onejav/Types/Detail.php' => [
+                'tests/Unit/Adapters/OnejavFamily/FieldsTest.php',
+                'tests/Unit/OnejavDetailTest.php',
+                'tests/Unit/Adapters/ImageCompletenessTest.php',
+            ],
+            'tests/Fixtures/onejav/detail-sample-1.html' => [
+                'tests/Unit/Adapters/OnejavFamily/FieldsTest.php',
+                'tests/Unit/OnejavDetailTest.php',
+                'tests/Unit/Adapters/ImageCompletenessTest.php',
+            ],
+            'src/Adapters/Fc2/Types/Detail.php' => [
+                'tests/Unit/Adapters/ImageCompletenessTest.php',
+            ],
+            'tests/Fixtures/fc2/detail.html' => [
+                'tests/Unit/Adapters/ImageCompletenessTest.php',
+            ],
+        ] as $changedFile => $expectedTests) {
+            $plan = $mapper->map([$changedFile]);
+
+            self::assertFalse($plan->fullSuite, $changedFile);
+            foreach ($expectedTests as $expectedTest) {
+                self::assertContains($expectedTest, $plan->testPaths, $changedFile);
+            }
+        }
+    }
+
+    public function test_abstract_test_helper_changes_fall_back_to_the_full_suite(): void
+    {
+        $this->addFile(
+            'tests/Unit/Adapters/ImageAuditTestCase.php',
+            '<?php abstract class ImageAuditTestCase extends TestCase {}',
+        );
+
+        $plan = (new ChangedTestMapper($this->root))->map([
+            'tests/Unit/Adapters/ImageAuditTestCase.php',
+        ]);
+
+        self::assertTrue($plan->fullSuite);
+        self::assertSame(
+            'No targeted mapping for tests/Unit/Adapters/ImageAuditTestCase.php.',
+            $plan->reason,
+        );
+    }
+
     public function test_runner_changes_select_unit_and_integration_tests(): void
     {
         $this->addFile('tests/Unit/Tools/ChangedTestRunnerTest.php');

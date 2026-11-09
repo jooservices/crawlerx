@@ -36,6 +36,19 @@ final class ChangedTestRunnerIntegrationTest extends TestCase
         self::assertStringContainsString('AllAdaptersCrawlTest.php', $output);
     }
 
+    public function test_fixture_change_runs_cross_adapter_unit_tests(): void
+    {
+        $this->addFile('tests/Fixtures/onejav/detail-sample-1.html', '<html>changed</html>');
+
+        [$exitCode, $output, $error] = $this->runTestRunner();
+
+        self::assertSame(0, $exitCode, $error);
+        self::assertStringContainsString('tests/Unit/Adapters/OnejavFamily/FieldsTest.php', $output);
+        self::assertStringContainsString('tests/Unit/OnejavDetailTest.php', $output);
+        self::assertStringContainsString('tests/Unit/Adapters/ImageCompletenessTest.php', $output);
+        self::assertStringContainsString('tests/Feature/Adapters/OnejavFamilyFieldsTest.php', $output);
+    }
+
     public function test_adapter_change_runs_dynamic_snapshot_test_with_real_phpunit(): void
     {
         $this->addFile('src/Adapters/Mgstage/Types/Detail.php', '<?php // changed');
@@ -100,6 +113,77 @@ final class ChangedTestRunnerIntegrationTest extends TestCase
         self::assertStringContainsString('ChangedTestRunnerIntegrationTest.php', $output);
     }
 
+    public function test_changed_abstract_test_helper_falls_back_and_runs_with_real_phpunit(): void
+    {
+        $helper = <<<'PHP'
+<?php
+
+declare(strict_types=1);
+
+namespace ChangedRunnerRegression;
+
+use PHPUnit\Framework\TestCase;
+
+abstract class ImageAuditTestCase extends TestCase
+{
+}
+PHP;
+
+        $this->addFile('tests/Unit/Adapters/ImageAuditTestCase.php', $helper);
+        $this->addFile(
+            'tests/Unit/AbstractHelperRegression/ImageAuditTest.php',
+            <<<'PHP'
+<?php
+
+declare(strict_types=1);
+
+namespace ChangedRunnerRegression;
+
+final class ImageAuditTest extends ImageAuditTestCase
+{
+    public function test_concrete_dependent_test_runs(): void
+    {
+        self::assertTrue(true);
+    }
+}
+PHP,
+        );
+        $this->addFile(
+            'tests/bootstrap.php',
+            "<?php\nrequire __DIR__ . '/Unit/Adapters/ImageAuditTestCase.php';\n",
+        );
+        $this->addFile(
+            'phpunit.xml',
+            '<?xml version="1.0"?><phpunit bootstrap="tests/bootstrap.php"><testsuites><testsuite name="Unit"><directory>tests/Unit/AbstractHelperRegression</directory></testsuite></testsuites></phpunit>',
+        );
+
+        [$addExitCode, , $addError] = $this->execute(['git', 'add', '-A']);
+        self::assertSame(0, $addExitCode, $addError);
+        [$commitExitCode, , $commitError] = $this->execute([
+            'git', '-c', 'commit.gpgsign=false', 'commit', '--quiet', '-m', 'phpunit regression fixtures',
+        ]);
+        self::assertSame(0, $commitExitCode, $commitError);
+
+        $this->addFile('tests/Unit/Adapters/ImageAuditTestCase.php', $helper . "\n// changed\n");
+
+        $previous = getenv('CRAWLERX_TEST_REAL_PHPUNIT');
+        putenv('CRAWLERX_TEST_REAL_PHPUNIT=1');
+        try {
+            [$exitCode, $output, $error] = $this->runTestRunner();
+        } finally {
+            if ($previous === false) {
+                putenv('CRAWLERX_TEST_REAL_PHPUNIT');
+            } else {
+                putenv('CRAWLERX_TEST_REAL_PHPUNIT=' . $previous);
+            }
+        }
+
+        self::assertSame(0, $exitCode, $output . $error);
+        self::assertStringContainsString('Concrete dependent test runs', $output);
+        self::assertStringContainsString('OK (', $output);
+        self::assertStringNotContainsString('ImageAuditTestCase.php', $error);
+    }
+
     private function createRepository(): void
     {
         $sourceRoot = dirname(__DIR__, 3);
@@ -118,13 +202,22 @@ final class ChangedTestRunnerIntegrationTest extends TestCase
         $this->addFile('vendor/bin/phpunit', $phpunitWrapper);
         $this->addAdapter('Mgstage', 'mgstage', 'detail.html');
         $this->addAdapter('Xcity', 'xcity', 'detail.html');
+        $this->addAdapter('Onejav', 'onejav', 'detail-sample-1.html');
+        $this->addAdapter('Fc2', 'fc2', 'detail.html');
 
         foreach ([
             'tests/Unit/Adapters/Mgstage/FieldsTest.php',
             'tests/Unit/Adapters/Mgstage/ImagesTest.php',
             'tests/Unit/Adapters/Xcity/FieldsTest.php',
+            'tests/Unit/Adapters/Onejav/FieldsTest.php',
+            'tests/Unit/Adapters/OnejavFamily/FieldsTest.php',
+            'tests/Unit/OnejavDetailTest.php',
+            'tests/Unit/Adapters/Fc2/FieldsTest.php',
+            'tests/Unit/Adapters/ImageCompletenessTest.php',
             'tests/Feature/AllAdaptersCrawlTest.php',
             'tests/Feature/CapabilityCrawlTest.php',
+            'tests/Feature/Adapters/OnejavFamilyFieldsTest.php',
+            'tests/Feature/Adapters/Fc2FieldsTest.php',
             'tests/Unit/ManifestFixtureExecutorTest.php',
             'tests/Feature/Snapshots/SnapshotParseTest.php',
             'tests/Unit/Tools/ChangedTestRunnerTest.php',
@@ -146,6 +239,18 @@ final class ChangedTestRunnerIntegrationTest extends TestCase
         }
 
         $this->addFile('tests/Fixtures/mgstage/detail.html', '<html>original</html>');
+        $this->addFile('tests/Fixtures/onejav/detail-sample-1.html', '<html>original</html>');
+        $this->addFile('tests/Fixtures/fc2/detail.html', '<html>original</html>');
+        foreach ([
+            'tests/Unit/Adapters/OnejavFamily/FieldsTest.php' => '<?php // Onejav family assertions',
+            'tests/Unit/OnejavDetailTest.php' => '<?php // Onejav detail assertions',
+            'tests/Unit/Adapters/Fc2/FieldsTest.php' => '<?php // Fc2 detail assertions',
+            'tests/Unit/Adapters/ImageCompletenessTest.php' => '<?php // Onejav Fc2 image assertions',
+            'tests/Feature/Adapters/OnejavFamilyFieldsTest.php' => '<?php // Onejav family feature assertions',
+            'tests/Feature/Adapters/Fc2FieldsTest.php' => '<?php // Fc2 feature assertions',
+        ] as $testFile => $contents) {
+            $this->addFile($testFile, $contents);
+        }
     }
 
     private function placeholderTest(string $class, string $method): string

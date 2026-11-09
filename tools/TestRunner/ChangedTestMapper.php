@@ -128,9 +128,9 @@ final readonly class ChangedTestMapper
         $unitPath = 'tests/Unit/Adapters/' . $site;
         $mapped = $this->addExistingPath($unitPath, $testPaths);
 
-        foreach ($this->featureTests() as $featureTest) {
-            if ($this->featureTestMatchesAdapter($featureTest, $site, $slug)) {
-                $testPaths[] = $featureTest;
+        foreach ($this->testFiles() as $testFile) {
+            if ($this->testFileMatchesAdapter($testFile, $site, $slug)) {
+                $testPaths[] = $testFile;
                 $mapped = true;
             }
         }
@@ -219,24 +219,27 @@ final readonly class ChangedTestMapper
     /**
      * @return list<string>
      */
-    private function featureTests(): array
+    private function testFiles(): array
     {
-        $directory = $this->repositoryRoot . '/tests/Feature';
-        if (! is_dir($directory)) {
-            return [];
-        }
-
         $tests = [];
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS),
-        );
-
-        foreach ($iterator as $file) {
-            if (! $file->isFile() || $file->getExtension() !== 'php') {
+        foreach (['tests/Unit', 'tests/Feature'] as $testDirectory) {
+            $directory = $this->repositoryRoot . '/' . $testDirectory;
+            if (! is_dir($directory)) {
                 continue;
             }
 
-            $tests[] = 'tests/Feature/' . substr($file->getPathname(), strlen($directory) + 1);
+            $iterator = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS),
+            );
+
+            foreach ($iterator as $file) {
+                if (! $file->isFile() || $file->getExtension() !== 'php') {
+                    continue;
+                }
+
+                $relativePath = substr($file->getPathname(), strlen($directory) + 1);
+                $tests[] = $testDirectory . '/' . str_replace('\\', '/', $relativePath);
+            }
         }
 
         sort($tests);
@@ -244,16 +247,16 @@ final readonly class ChangedTestMapper
         return $tests;
     }
 
-    private function featureTestMatchesAdapter(string $featureTest, string $site, ?string $slug): bool
+    private function testFileMatchesAdapter(string $testFile, string $site, ?string $slug): bool
     {
-        $name = $this->normalizeName(pathinfo($featureTest, PATHINFO_FILENAME));
+        $name = $this->normalizeName(pathinfo($testFile, PATHINFO_FILENAME));
         if (str_starts_with($name, $this->normalizeName($site))
             || ($slug !== null && str_starts_with($name, $this->normalizeName($slug)))
         ) {
             return true;
         }
 
-        $contents = file_get_contents($this->repositoryRoot . '/' . $featureTest);
+        $contents = file_get_contents($this->repositoryRoot . '/' . $testFile);
         if (! is_string($contents)) {
             return false;
         }
@@ -287,6 +290,10 @@ final readonly class ChangedTestMapper
     private function addTestPath(string $path, array &$destination): bool
     {
         if ($this->pathExists($path)) {
+            if (is_file($this->repositoryRoot . '/' . $path) && $this->isNonExecutableTestFile($path)) {
+                return false;
+            }
+
             $destination[] = $path;
 
             return true;
@@ -297,6 +304,44 @@ final readonly class ChangedTestMapper
             $destination[] = $parent;
 
             return true;
+        }
+
+        return false;
+    }
+
+    private function isNonExecutableTestFile(string $path): bool
+    {
+        $contents = file_get_contents($this->repositoryRoot . '/' . $path);
+        if (! is_string($contents)) {
+            return true;
+        }
+
+        $tokens = token_get_all($contents);
+        foreach ($tokens as $index => $token) {
+            if (! is_array($token)) {
+                continue;
+            }
+
+            if ($token[0] === T_TRAIT || $token[0] === T_INTERFACE) {
+                return true;
+            }
+
+            if ($token[0] !== T_ABSTRACT) {
+                continue;
+            }
+
+            for ($next = $index + 1, $count = count($tokens); $next < $count; ++$next) {
+                $nextToken = $tokens[$next];
+                if (is_array($nextToken) && in_array($nextToken[0], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT, T_READONLY], true)) {
+                    continue;
+                }
+
+                if (is_array($nextToken) && $nextToken[0] === T_CLASS) {
+                    return true;
+                }
+
+                break;
+            }
         }
 
         return false;
