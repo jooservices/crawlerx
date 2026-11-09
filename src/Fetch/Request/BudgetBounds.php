@@ -88,6 +88,7 @@ final class BudgetBounds
                 timeout: $timeout,
                 verifySsl: $http?->verifySsl,
                 headers: $http?->headers,
+                proxy: $http?->proxy,
             )
             : $http;
 

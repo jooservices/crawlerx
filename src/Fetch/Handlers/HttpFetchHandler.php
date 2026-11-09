@@ -46,6 +46,7 @@ final class HttpFetchHandler implements FetchMethodHandler
             'timeout' => $http !== null && $http->timeout !== null ? $http->timeout : $profile->http->timeout,
             'verify_ssl' => $http !== null && $http->verifySsl !== null ? $http->verifySsl : $profile->http->verifySsl,
             'headers' => $headers,
+            'proxy' => $http !== null && $http->proxy !== null ? $http->proxy : $profile->http->proxy,
         ];
 
         try {

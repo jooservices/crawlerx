@@ -15,6 +15,7 @@ final class HttpProfileDto extends Dto
         public readonly int $timeout = 30,
         public readonly bool $verifySsl = true,
         public readonly array $headers = [],
+        public readonly ?string $proxy = null,
     ) {
     }
 }
