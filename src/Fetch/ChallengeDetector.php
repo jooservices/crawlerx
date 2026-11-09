@@ -23,8 +23,8 @@ final class ChallengeDetector
             return true;
         }
 
-        $visibleText = self::visibleText($body);
-        if (strlen($body) < 20000 && preg_match('/\b(?:captcha|recaptcha|hcaptcha|funcaptcha)\b/i', $visibleText) === 1) {
+        $visibleText = trim(self::visibleText($body));
+        if (self::isStandaloneCaptchaMessage($visibleText)) {
             return true;
         }
 
@@ -126,7 +126,28 @@ final class ChallengeDetector
         $outsideText = trim(self::visibleText($bodyWithoutForms));
 
         return $outsideText === ''
-            || preg_match('/\b(?:captcha|challenge|robot|human)\b|verify you are human|security check/i', $outsideText) === 1;
+            || preg_match('/\b(?:captcha|challenge|robot|human)\b|verify you are human|security check/i', $outsideText) === 1
+            || (strlen($outsideText) <= 80 && ! self::hasSubstantiveContentRegion($bodyWithoutForms));
+    }
+
+    private static function hasSubstantiveContentRegion(string $body): bool
+    {
+        $regions = (new Crawler($body))->filterXPath('//article|//main|//section');
+        foreach ($regions as $region) {
+            if (strlen(trim((new Crawler($region))->text(''))) > 20) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function isStandaloneCaptchaMessage(string $visibleText): bool
+    {
+        return preg_match(
+            '/^(?:captcha|recaptcha|hcaptcha|funcaptcha)(?:\s+(?:challenge|page|verification(?:\s+(?:is\s+)?required)?|is required))?[.!]?$/i',
+            $visibleText,
+        ) === 1;
     }
 
     private static function visibleText(string $body): string
