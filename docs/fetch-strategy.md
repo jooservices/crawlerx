@@ -90,13 +90,18 @@ failures fall back to worker-local state.
 
 Before any fetch-method attempt, the chain consults the host's `robots.txt`
 through `RobotsGuard`. On a cache miss, the guard fetches
-`https://<host>/robots.txt` through the default `ClientFactory` HTTP client,
-caches the parsed rules for an hour, and evaluates the request path against the
-library's user agent and the `*` group. This request does not receive request
-or site proxy options and is not covered by the browser-side SSRF guard; it may
-reach a private host before a browser method later blocks the target. Use the
-process-level `CRAWLERX_HTTP_PROXY` setting when the robots request must use a
-proxy. Disallow/Allow rules follow RFC 9309:
+`<scheme>://<host>/robots.txt` through the default `ClientFactory` HTTP client.
+The scheme comes from the target URL, defaults to HTTPS when absent, and an
+explicit port is omitted. Parsed rules are memoized in worker memory without
+expiry. An unreachable file fails open as an empty ruleset, which is also
+memoized, so a long-running worker does not retry it. The optional shared
+PSR-16 cache stores the raw robots.txt body for one hour; it does not refresh
+rules already held in worker memory. The guard evaluates the most specific
+matching user-agent group, falling back to `*`; groups are not combined. This
+request does not receive request or site proxy options and is not covered by
+the browser-side SSRF guard; it may reach a private host before a browser
+method later blocks the target. Use the process-level `CRAWLERX_HTTP_PROXY`
+setting when the robots request must use a proxy. The rules follow RFC 9309:
 the longest matching pattern wins, `*` is a wildcard, a trailing `$` anchors to
 the end of the path, and an Allow of equal length overrides a Disallow. An
 explicit Disallow aborts the request with a `RobotsDisallowedException`

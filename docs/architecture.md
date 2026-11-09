@@ -177,11 +177,15 @@ register fixture samples in the manifest. Reuse the single-purpose concerns in
 
 Implement [`FetchMethodHandler`](../src/Contracts/FetchMethodHandler.php),
 including `supports()` and `fetch()`. Add the method to
-[`FetchMethod`](../src/Enums/FetchMethod.php), choose which fetch profiles
-include it in [`FetchProfile`](../src/Enums/FetchProfile.php), and register its
-handler in [`CrawlerXFactory::defaultFetchChain()`](../src/CrawlerXFactory.php).
-Add focused coverage under `tests/Unit/Fetch/` for support, result handling,
-and fallback behavior.
+[`FetchMethod`](../src/Enums/FetchMethod.php), then update the appropriate
+default method arrays in `FetchMethod::httpOnlyChain()`,
+`FetchMethod::browserChain()`, and/or `FetchMethod::defaultChain()`.
+[`FetchProfile::chain()`](../src/Enums/FetchProfile.php) delegates to those
+arrays. Also review any explicit `runtime.fetch.chain` values in source
+manifests, which override the profile defaults. Register the handler in
+[`CrawlerXFactory::defaultFetchChain()`](../src/CrawlerXFactory.php). Add
+focused coverage under `tests/Unit/Fetch/` for support, result handling, and
+fallback behavior.
 
 ### Add a guard
 
