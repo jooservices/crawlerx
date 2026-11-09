@@ -40,6 +40,7 @@
         }
     },
     "scripts": {
+        "check:changelog": "php tools/check-changelog.php",
         "test": "phpunit --no-coverage",
         "test:unit": "phpunit --no-coverage --testsuite Unit",
         "test:feature": "phpunit --no-coverage --testsuite Feature",
