@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\JavLibrary\Types;
 
+use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 use JOOservices\CrawlerX\Adapters\AbstractHtmlType;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
 use JOOservices\CrawlerX\Adapters\JavLibrary\Selectors;
@@ -16,6 +17,7 @@ use Symfony\Component\DomCrawler\Crawler;
 
 final class PerformerListing extends AbstractHtmlType implements TypeInterface
 {
+    use ParsesUrlParts;
     use ParsesHtml;
 
     protected function siteLabel(): string
@@ -139,14 +141,6 @@ final class PerformerListing extends AbstractHtmlType implements TypeInterface
 
     private function externalId(string $url): ?string
     {
-        $query = parse_url($url, PHP_URL_QUERY);
-        if (! is_string($query) || $query === '') {
-            return null;
-        }
-
-        parse_str($query, $params);
-        $id = $params['st'] ?? $params['s'] ?? null;
-
-        return is_string($id) && trim($id) !== '' ? trim($id) : null;
+        return $this->firstQueryParam($url, 'st', 's');
     }
 }
