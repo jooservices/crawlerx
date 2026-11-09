@@ -36,12 +36,7 @@ final class FixtureResponder
     public function file(string $fixturePath, int $status = 200, array $headers = []): void
     {
         $fullPath = __DIR__ . '/../Fixtures/' . ltrim($fixturePath, '/');
-        $html = file_get_contents($fullPath);
-        if ($html === false) {
-            throw new \RuntimeException("Fixture not found: {$fullPath}");
-        }
-
-        $this->body($html, $status, $headers);
+        $this->body(FixtureContentCache::read($fullPath), $status, $headers);
     }
 
     /**
