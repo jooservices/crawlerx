@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add a Keep a Changelog structure check via `composer check:changelog` (JOOXCR-484).
+- Add a changed-file test runner with adapter, fetch and fixture targeting plus full-suite fallback (`composer test:changed`, `make test-changed`) (JOOXCR-473).
 - Add `composer check:fixtures-meta` to validate captured fixture provenance metadata, with a baseline for known legacy offenders (JOOXCR-485).
 - Add `composer check:manifests` to check adapter manifest keys, slugs, base URLs, classes and capabilities (JOOXCR-483).
 - Add the MGStage source (`mgstage`): paged work listing (search, new releases, maker, series, genre, actor) and work detail with every labelled row, large cover with thumbnail, all sample stills with thumbnails, prices and sale end, reviews, rating, counters and the sample-video URL; the site needs a Japan exit (`CRAWLERX_HTTP_PROXY`) and the `adc=1` age cookie (JOOXCR-471).
@@ -126,13 +128,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Recognize removed AVfanProfiles pages, refresh its live profile sample, and wait for DUGA product content rather than navigation links (JOOXCR-260).
 - Try the proven solver before a slow browser on Jable/JAVLibrary, and let the canary use project-configured browser endpoints (JOOXCR-260).
 
-### Documentation
+### Changed
 
 - Canary: refresh the 1.4.x status after the fetch-budget and source-fallback changes (57/68 samples pass), and publish the observed failures in `docs/testing/canary-latest.json`. Shared-service load is a possible, unconfirmed timing factor (JOOXCR-182).
 
 ## [1.4.2] - 2026-10-24
 
-### Documentation
+### Changed
 
 - Fetch strategy: a status log of sources that are down or walled; warashi is offline (Dedibox maintenance, port 443 refused) and is not behind a challenge (JOOXCR-244).
 
@@ -176,7 +178,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The unused generic `Shared\Catalog\Detail` and `Listing` parsers (every catalog site has a dedicated parser).
 
-### Also in this release
+### Fixed
 
 - Standard metadata keys and builders for movie data (`Support\MovieMeta`, `docs/dto-conventions.md`).
 
@@ -205,7 +207,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Treat Avfan Profiles (`av-fan.tokyo`) as public for the covered views and
   refresh the 63-sample live canary status.
 
-### Migration
+### Removed
 
 - Remove the `cache:` argument from `CrawlerXFactory::configure()`. Set
   `PLAYWRIGHT_URL` and `FLARESOLVERR_URL` for service containers; `CRAWLERX_NODE`

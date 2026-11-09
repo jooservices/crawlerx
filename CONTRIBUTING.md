@@ -63,12 +63,15 @@ Run the relevant gates before every push — CI runs the same chain and **every 
 | Command | Purpose |
 | --- | --- |
 | `make validate` | `composer validate --strict` |
+| `composer check:changelog` | Validate Keep a Changelog structure |
 | `make lint` | Pint (`per` preset), PHPCS, PHPStan, PHPMD, PHP-CS-Fixer |
 | `composer lint:deptrac` | Deptrac architecture layers (Adapters, Fetch, Dto, Support, Contracts) |
 | `make test` | PHPUnit Unit + Feature suites |
 | `make test-coverage` | Coverage run (CI enforces an 85% per-suite Clover floor) |
 | `make audit` | Composer audit |
 | `make ci` | lint + coverage run (local CI parity) |
+
+During development, run only tests mapped from changes against `origin/develop` with `composer test:changed` or `make test-changed`. Use `composer test:changed -- --base=<git-ref>` or `make test-changed BASE=<git-ref>` to compare with another ref. The runner targets adapter, fetch, shared concern, and fixture tests where it can; it runs the full suite when a changed file has no safe mapping. Run the full suite once before pushing.
 
 Coding rules:
 
