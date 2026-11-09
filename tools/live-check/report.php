@@ -77,6 +77,10 @@ for ($index = 0; $index < count($arguments); ++$index) {
     failUsage("Unknown option [{$argument}].");
 }
 
+if ($proxy !== null) {
+    putenv('CRAWLERX_HTTP_PROXY=' . $proxy);
+}
+
 $manifestPaths = glob(dirname(__DIR__, 2) . '/src/Adapters/*/manifest.json') ?: [];
 sort($manifestPaths);
 $selector = new LiveCheckSampleSelector();
