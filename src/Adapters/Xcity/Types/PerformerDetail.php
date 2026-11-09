@@ -14,9 +14,11 @@ use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\DomCrawler\UriResolver;
+use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
 
 final class PerformerDetail extends AbstractType implements TypeInterface
 {
+    use CoercesValues;
     use ParsesHtml;
 
     public function __construct(
@@ -226,10 +228,5 @@ final class PerformerDetail extends AbstractType implements TypeInterface
         $value = preg_replace('/\s*All Titles Information\s*$/iu', '', $value) ?? $value;
 
         return $this->cleanText($value);
-    }
-
-    private function cleanText(string $value): string
-    {
-        return trim((string) preg_replace('/\s+/u', ' ', html_entity_decode($value, ENT_QUOTES | ENT_HTML5)));
     }
 }

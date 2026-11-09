@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add the shared parsing traits `ParsesUrlParts` and `CoercesValues` (external id and page-number extraction, scalar coercion) and migrate the exact duplicates in the Asagei, Avfan, Jable, JavDatabase, Javbtc, Missav, Smartflash, Wpb and Xcity adapters to them (no behaviour change, JOOXCR-462).
 - Add the Asagei Plus (`asagei`) gravure adapter with paged tag/category/home listings and article galleries (every in-article photo, cover, categories, tags, dates, prev/next and source fields), captured fixtures and URL inference (JOOXCR-461).
 - Add the WPB Web Gravure (`wpb`) adapter for Weekly Playboy (週プレNEWS) public gravure listing and gallery pages: cover at full resolution with thumbnails, profile, credits, tags, source fields and captured fixtures (JOOXCR-460).
 
