@@ -27,6 +27,21 @@ trait CoercesValues
         return trim((string) preg_replace('/\s+/u', ' ', html_entity_decode($value, ENT_QUOTES | ENT_HTML5)));
     }
 
+    /** Removes a trailing phrase before applying the standard text cleanup. */
+    protected function cleanTextWithoutTrailingPhrase(string $value, string $phrase): string
+    {
+        $pattern = '/\s*' . preg_quote($phrase, '/') . '\s*$/iu';
+        $value = preg_replace($pattern, '', $value) ?? $value;
+
+        return $this->cleanText($value);
+    }
+
+    /** A page number read from digit-only text, clamped to the first page. */
+    protected function pageNumberFromText(?string $text): ?int
+    {
+        return $text !== null && ctype_digit($text) ? max(1, (int) $text) : null;
+    }
+
     /** Drops a leading product code (`ABC-123 Title` gives `Title`); keeps the title when nothing else would remain. */
     protected function titleWithoutCode(?string $title, string $code): ?string
     {

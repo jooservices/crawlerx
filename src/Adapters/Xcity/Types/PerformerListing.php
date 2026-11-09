@@ -15,11 +15,13 @@ use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\DomCrawler\UriResolver;
 use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
+use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 
 final class PerformerListing extends AbstractType implements TypeInterface
 {
     use CoercesValues;
     use ParsesHtml;
+    use ParsesUrlParts;
 
     private const CARD_IMAGES = '#avidol a[href*="detail/"] img[src]';
 
@@ -45,7 +47,7 @@ final class PerformerListing extends AbstractType implements TypeInterface
                 }
 
                 $url = UriResolver::resolve($href, $request->url);
-                $externalId = $this->externalId($url);
+                $externalId = $this->pathMatchOrQueryParam($url, '#/idol/detail/([^/]+)/?#i', 'id');
                 if ($externalId === null) {
                     return;
                 }
@@ -68,7 +70,7 @@ final class PerformerListing extends AbstractType implements TypeInterface
             pagination: new CrawlPaginationDto(
                 currentPage: $request->page,
                 lastPage: null,
-                nextPage: $nextUrl !== null ? $this->pageNumber($nextUrl) : null,
+                nextPage: $nextUrl !== null ? $this->queryPageNumber($nextUrl, 'page') : null,
                 nextUrl: $nextUrl,
                 hasNextPage: $nextUrl !== null,
             ),
@@ -98,15 +100,15 @@ final class PerformerListing extends AbstractType implements TypeInterface
     {
         $title = $node->attr('title');
         if (is_string($title) && trim($title) !== '') {
-            return $this->cleanName($title);
+            return $this->cleanTextWithoutTrailingPhrase($title, 'All Titles Information');
         }
 
         $imgAlt = $node->filter('img')->count() > 0 ? $node->filter('img')->first()->attr('alt') : null;
         if (is_string($imgAlt) && trim($imgAlt) !== '') {
-            return $this->cleanName($imgAlt);
+            return $this->cleanTextWithoutTrailingPhrase($imgAlt, 'All Titles Information');
         }
 
-        return $this->cleanName($node->text(''));
+        return $this->cleanTextWithoutTrailingPhrase($node->text(''), 'All Titles Information');
     }
 
     private function nextPageUrl(Crawler $crawler, string $baseUrl): ?string
@@ -122,43 +124,5 @@ final class PerformerListing extends AbstractType implements TypeInterface
         }
 
         return UriResolver::resolve($href, $baseUrl);
-    }
-
-    private function pageNumber(string $url): ?int
-    {
-        $query = parse_url($url, PHP_URL_QUERY);
-        if (! is_string($query) || $query === '') {
-            return null;
-        }
-
-        parse_str($query, $params);
-        $page = $params['page'] ?? null;
-
-        return is_numeric($page) ? max(1, (int) $page) : null;
-    }
-
-    private function externalId(string $url): ?string
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-        if (is_string($path) && preg_match('#/idol/detail/([^/]+)/?#i', $path, $match) === 1) {
-            return $match[1];
-        }
-
-        $query = parse_url($url, PHP_URL_QUERY);
-        if (is_string($query) && $query !== '') {
-            parse_str($query, $params);
-            $id = $params['id'] ?? null;
-
-            return is_string($id) && trim($id) !== '' ? trim($id) : null;
-        }
-
-        return null;
-    }
-
-    private function cleanName(string $value): string
-    {
-        $value = preg_replace('/\s*All Titles Information\s*$/iu', '', $value) ?? $value;
-
-        return $this->cleanText($value);
     }
 }

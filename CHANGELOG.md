@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Migrate the remaining duplicated N–Z adapter helpers to the shared parsing and coercion concerns without changing crawl output (JOOXCR-469).
 - Migrate the exact duplicate private helpers of the G-M adapters (Jable, Jav321, JavBus, JavDatabase, JavLibrary, JavPhotos, MinnanoAv) to the shared `ParsesUrlParts` and `CoercesValues` traits, adding `firstQueryParam`, `titleWithoutCode` and `integerStat` (no behaviour change, JOOXCR-468).
 - Cut CI wall time by caching the PHP image, running security and sharded Unit/Feature suites in parallel after Validate, and keeping the required check names unchanged (JOOXCR-466).
 - Split `FetchFallbackChain` (747 lines) into single-responsibility collaborators under `src/Fetch` (attempt log rows and method runner with transient retry, pre-fetch throttle/circuit guard, session and budget request shaping, ready-marker gate, login-wall detection, rejection builders, circuit reporting); the chain stays a thin orchestrator and fetch behaviour, config keys, exceptions and the SSRF guard are unchanged (JOOXCR-463).

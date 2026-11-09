@@ -8,6 +8,18 @@ use Symfony\Component\DomCrawler\UriResolver;
 
 trait NormalizesUrls
 {
+    public function absoluteFromOrigin(string $sourceUrl, string $url): string
+    {
+        if (str_starts_with($url, 'http://') || str_starts_with($url, 'https://')) {
+            return $url;
+        }
+
+        $parts = parse_url($sourceUrl);
+        $origin = ($parts['scheme'] ?? 'https') . '://' . ($parts['host'] ?? '');
+
+        return rtrim($origin, '/') . '/' . ltrim($url, '/');
+    }
+
     public function absolute(string $baseUrl, string $url): string
     {
         if (str_starts_with($url, 'http://') || str_starts_with($url, 'https://')) {
