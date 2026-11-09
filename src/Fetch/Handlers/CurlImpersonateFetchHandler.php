@@ -89,7 +89,8 @@ final class CurlImpersonateFetchHandler implements FetchMethodHandler
                 if ($respectRobots) {
                     $this->robotsGuard?->assertAllowed($currentUrl, $userAgent);
                 }
-                $remainingTimeout = $requestTimeout - (int) floor((microtime(true) * 1000 - $started) / 1000);
+                $elapsedSeconds = max(0, (int) floor((microtime(true) * 1000 - $started) / 1000));
+                $remainingTimeout = $requestTimeout - $elapsedSeconds;
                 if ($remainingTimeout < 1) {
                     return $this->fail($method, $started, $url, 'curl-impersonate timed out');
                 }
