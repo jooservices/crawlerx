@@ -62,6 +62,7 @@
         "lint": ["@lint:pint", "@lint:phpcs", "@lint:phpstan", "@lint:phpmd", "@lint:cs"],
         "lint:fix": ["@lint:pint:fix", "@lint:cs:fix"],
         "check": ["@lint", "@test"],
+        "check:manifests": "php tools/check-manifests.php",
         "ci": ["@lint", "@test:coverage", "@coverage:check"],
         "hooks:install": "captainhook install --force --skip-existing"
     },

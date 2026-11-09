@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add a manual live health report for adapter samples with per-host pacing, a two-content-request budget, limiter-aware redirects, fallback-aware inconclusive results, optional HTTP proxy routing, and Markdown/JSON output (JOOXCR-474).
+- Add `composer check:manifests` to check adapter manifest keys, slugs, base URLs, classes and capabilities (JOOXCR-483).
 - Add the MGStage source (`mgstage`): paged work listing (search, new releases, maker, series, genre, actor) and work detail with every labelled row, large cover with thumbnail, all sample stills with thumbnails, prices and sale end, reviews, rating, counters and the sample-video URL; the site needs a Japan exit (`CRAWLERX_HTTP_PROXY`) and the `adc=1` age cookie (JOOXCR-471).
 - Add an optional outbound HTTP proxy for the HTTP fetch method (`CRAWLERX_HTTP_PROXY`, `HttpProfileDto::$proxy`, `HttpOptionsDto::$proxy`), off by default (JOOXCR-470).
 - Add Deptrac architecture rules for the Adapters, Fetch, Dto, Support and Contracts layers (`deptrac.yaml`, `composer lint:deptrac`) and a report-only CI job (JOOXCR-466).
