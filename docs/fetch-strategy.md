@@ -86,6 +86,26 @@ additional request waits for its 30-second probe lease. An open circuit returns
 retryable `rate_limited` with the remaining time in `Retry-After`. Circuit cache
 failures fall back to worker-local state.
 
+## Robots.txt compliance
+
+Before it fetches a URL, the chain consults the host's `robots.txt` through
+`RobotsGuard`. The guard fetches `https://<host>/robots.txt` once per host,
+caches the parsed rules for an hour, and evaluates the request path against the
+library's user agent and the `*` group. Disallow/Allow rules follow RFC 9309:
+the longest matching pattern wins, `*` is a wildcard, a trailing `$` anchors to
+the end of the path, and an Allow of equal length overrides a Disallow. An
+explicit Disallow aborts the request with a `RobotsDisallowedException`
+(fail-closed); an unreachable `robots.txt` is logged and the request proceeds
+(fail-open).
+
+The guard is on by default. Disable it globally with
+`CRAWLERX_RESPECT_ROBOTS=false`, or per site with
+`runtime.defaultCrawlConfig.respect_robots: false` in the adapter manifest. A
+per-site value takes precedence over the global default.
+
+`Crawl-delay` is parsed per user-agent group and applied as an additional
+minimum gap on top of the site's `defaultThrottle`.
+
 ## HTTP response cache
 
 HTTP response caching is disabled by default. Set `CRAWLERX_RESPONSE_CACHE_TTL`
@@ -152,3 +172,7 @@ period. Timeout/network failure metadata contains all completed attempts,
 transport exceptions and the first fallback skipped when the budget is spent.
 Custom fetch handlers must honor `methodTimeoutSeconds`; the chain cannot
 preempt arbitrary PHP code inside a consumer-supplied synchronous handler.
+
+## Outbound proxy
+
+The HTTP fetch method can go through a proxy, for example a Japan exit for sources that geo-block other countries. The proxy is off by default. Set it process-wide with `CRAWLERX_HTTP_PROXY=http://host:port`, or per site profile and per request with `HttpProfileDto::$proxy` and `HttpOptionsDto::$proxy`; a request option wins over the profile, which wins over the environment. The proxy URL may contain credentials and is never logged. Browser-based methods (Playwright, FlareSolverr) are not routed through it.

@@ -49,7 +49,7 @@ final class Listing extends AsageiHtmlType implements TypeInterface
             throw new CrawlParseException('Asagei listing page did not contain article cards.');
         }
 
-        $currentPage = $this->digitPage($this->firstText($crawler, Selectors::PAGINATION_CURRENT)) ?? $request->page;
+        $currentPage = $this->pageNumberFromText($this->firstText($crawler, Selectors::PAGINATION_CURRENT)) ?? $request->page;
         $nextUrl = $this->linkUrl($crawler, Selectors::PAGINATION_NEXT, $request->url);
         $lastUrl = $this->linkUrl($crawler, Selectors::PAGINATION_LAST, $request->url);
 

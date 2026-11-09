@@ -6,6 +6,7 @@ namespace JOOservices\CrawlerX\Adapters\Wpb\Types;
 
 use JOOservices\CrawlerX\Adapters\Wpb\Selectors;
 use JOOservices\CrawlerX\Adapters\Wpb\Urls;
+use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
@@ -19,6 +20,8 @@ use Symfony\Component\DomCrawler\Crawler;
 
 final class Listing extends WpbHtmlType implements TypeInterface
 {
+    use CoercesValues;
+
     protected function contextLabel(): string
     {
         return 'listing';
@@ -40,7 +43,7 @@ final class Listing extends WpbHtmlType implements TypeInterface
             throw new CrawlParseException('WPB listing page did not contain gravure cards.');
         }
 
-        $currentPage = $this->pageNumber($this->firstText($crawler, Selectors::PAGINATION_CURRENT)) ?? $this->urlPage($request->url);
+        $currentPage = $this->pageNumberFromText($this->firstText($crawler, Selectors::PAGINATION_CURRENT)) ?? $this->urlPage($request->url);
         $pages = $this->pagerPages($crawler, $request->url);
         $nextUrl = $this->nextPageUrl($pages, $currentPage);
         $lastPage = $pages === [] ? null : max(array_keys($pages));
@@ -171,11 +174,6 @@ final class Listing extends WpbHtmlType implements TypeInterface
         return $page <= 1
             ? $scheme . '://' . $host . $path
             : $scheme . '://' . $host . $path . '?page=' . $page;
-    }
-
-    private function pageNumber(?string $text): ?int
-    {
-        return $text !== null && ctype_digit($text) ? max(1, (int) $text) : null;
     }
 
     private function urlPage(string $url): int

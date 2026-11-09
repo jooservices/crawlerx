@@ -6,6 +6,7 @@ namespace JOOservices\CrawlerX\Adapters\Smartflash\Types;
 
 use JOOservices\CrawlerX\Adapters\Smartflash\Selectors;
 use JOOservices\CrawlerX\Adapters\Smartflash\Urls;
+use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
@@ -18,6 +19,8 @@ use Symfony\Component\DomCrawler\Crawler;
 
 final class Listing extends SmartflashHtmlType implements TypeInterface
 {
+    use CoercesValues;
+
     protected function contextLabel(): string
     {
         return 'listing';
@@ -39,9 +42,11 @@ final class Listing extends SmartflashHtmlType implements TypeInterface
             throw new CrawlParseException('Smartflash listing page did not contain article cards.');
         }
 
-        $currentPage = $this->pageNumber($this->firstText($crawler, Selectors::PAGINATION_CURRENT)) ?? $request->page;
-        $nextUrl = $this->linkUrl($crawler, Selectors::PAGINATION_NEXT, $request->url);
-        $lastUrl = $this->linkUrl($crawler, Selectors::PAGINATION_LAST, $request->url);
+        $currentPage = $this->pageNumberFromText($this->firstText($crawler, Selectors::PAGINATION_CURRENT)) ?? $request->page;
+        $nextHref = $this->firstAttribute($crawler, Selectors::PAGINATION_NEXT, 'href');
+        $nextUrl = $nextHref === null ? null : $this->absolute($request->url, $nextHref);
+        $lastHref = $this->firstAttribute($crawler, Selectors::PAGINATION_LAST, 'href');
+        $lastUrl = $lastHref === null ? null : $this->absolute($request->url, $lastHref);
 
         return new CrawlListResultDto(
             url: $request->url,
@@ -110,18 +115,6 @@ final class Listing extends SmartflashHtmlType implements TypeInterface
             'thumbnail_url' => $thumbnail,
             'mime_type' => Urls::mimeType($original),
         ]);
-    }
-
-    private function linkUrl(Crawler $crawler, string $selector, string $baseUrl): ?string
-    {
-        $href = $this->firstAttribute($crawler, $selector, 'href');
-
-        return $href === null ? null : $this->absolute($baseUrl, $href);
-    }
-
-    private function pageNumber(?string $text): ?int
-    {
-        return $text !== null && ctype_digit($text) ? max(1, (int) $text) : null;
     }
 
     private function urlPage(string $url): ?int

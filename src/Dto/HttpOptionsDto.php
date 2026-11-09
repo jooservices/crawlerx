@@ -15,6 +15,7 @@ final class HttpOptionsDto extends Dto
         public readonly ?int $timeout = null,
         public readonly ?bool $verifySsl = null,
         public readonly ?array $headers = null,
+        public readonly ?string $proxy = null,
     ) {
     }
 }

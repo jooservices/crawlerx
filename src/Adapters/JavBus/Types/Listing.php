@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\JavBus\Types;
 
+use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Adapters\AbstractHtmlType;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
@@ -20,6 +21,7 @@ use Symfony\Component\DomCrawler\Crawler;
 
 final class Listing extends AbstractHtmlType implements TypeInterface
 {
+    use CoercesValues;
     use ParsesHtml;
 
     public function __construct(
@@ -217,17 +219,6 @@ final class Listing extends AbstractHtmlType implements TypeInterface
         }
 
         return $match[1];
-    }
-
-    private function titleWithoutCode(?string $title, string $code): ?string
-    {
-        if ($title === null) {
-            return null;
-        }
-
-        $stripped = preg_replace('/^' . preg_quote($code, '/') . '\s*/i', '', $title);
-
-        return is_string($stripped) && trim($stripped) !== '' ? trim($stripped) : $title;
     }
 
     private function pageFromUrl(string $url): ?int

@@ -33,8 +33,8 @@ Do not hand-write the same private helper in a new adapter; compose the traits u
 | `ParsesHtml` | `firstText`, `firstAttribute`, `texts`, `normalizeText` for a DomCrawler node |
 | `NormalizesUrls` | `absolute($baseUrl, $url)` resolving relative, protocol-relative and root-relative links |
 | `ResolvesLinkUrls` | `linkUrl` (compose with `ParsesHtml` + `NormalizesUrls`) for an absolute href from a CSS selector |
-| `ParsesUrlParts` | `lastPathSegment`, `pathMatch`, `pathNumber`, `queryParam`, `queryNumber` for external ids and page numbers (adapters keep their own route regex) |
-| `CoercesValues` | `nonEmptyString`, `positiveInt`, `cleanText`, `digitPage`, `dateString`, `arrayValue` for loosely typed scraped values |
+| `ParsesUrlParts` | `lastPathSegment`, `pathMatch`, `pathNumber`, `queryParam`, `firstQueryParam`, `queryNumber` for external ids and page numbers (adapters keep their own route regex) |
+| `CoercesValues` | `nonEmptyString`, `positiveInt`, `cleanText`, `cleanTextWithoutTrailingPhrase`, `pageNumberFromText`, `titleWithoutCode`, `integerStat`, `dateString`, `arrayValue` for loosely typed scraped values |
 | `ParsesJson` | JSON response decoding for API-backed sources |
 
 A Type extends `AbstractHtmlType` (HTML pages fetched through the shared client) or `AbstractType` (API/JSON or custom fetching); do not introduce a third base class. If a helper you need exists in two adapters, move it into the matching trait with a test instead of copying it.

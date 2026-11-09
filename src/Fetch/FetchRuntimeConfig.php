@@ -17,6 +17,7 @@ final readonly class FetchRuntimeConfig
         /** @var list<string> */
         public array $userAgentPool = [],
         public string $nodeId = 'local',
+        public bool $respectRobots = true,
         public int $responseCacheTtlSeconds = 0,
     ) {
     }
@@ -69,8 +70,18 @@ final readonly class FetchRuntimeConfig
             userAgent: $configuredUserAgent,
             userAgentPool: $pool,
             nodeId: $resolvedNodeId,
+            respectRobots: self::resolveRespectRobots(getenv('CRAWLERX_RESPECT_ROBOTS')),
             responseCacheTtlSeconds: $responseCacheTtlSeconds,
         );
+    }
+
+    private static function resolveRespectRobots(mixed $value): bool
+    {
+        if (! is_string($value) || trim($value) === '') {
+            return true;
+        }
+
+        return ! in_array(strtolower(trim($value)), ['0', 'false', 'no', 'off'], true);
     }
 
     private static function detectCurlImpersonate(): ?string

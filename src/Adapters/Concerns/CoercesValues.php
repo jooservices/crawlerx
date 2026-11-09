@@ -27,10 +27,39 @@ trait CoercesValues
         return trim((string) preg_replace('/\s+/u', ' ', html_entity_decode($value, ENT_QUOTES | ENT_HTML5)));
     }
 
-    /** Digits-only text as a page number floored at 1, or null. */
-    protected function digitPage(?string $text): ?int
+    /** Removes a trailing phrase before applying the standard text cleanup. */
+    protected function cleanTextWithoutTrailingPhrase(string $value, string $phrase): string
+    {
+        $pattern = '/\s*' . preg_quote($phrase, '/') . '\s*$/iu';
+        $value = preg_replace($pattern, '', $value) ?? $value;
+
+        return $this->cleanText($value);
+    }
+
+    /** A page number read from digit-only text, clamped to the first page. */
+    protected function pageNumberFromText(?string $text): ?int
     {
         return $text !== null && ctype_digit($text) ? max(1, (int) $text) : null;
+    }
+
+    /** Drops a leading product code (`ABC-123 Title` gives `Title`); keeps the title when nothing else would remain. */
+    protected function titleWithoutCode(?string $title, string $code): ?string
+    {
+        if ($title === null) {
+            return null;
+        }
+
+        $stripped = preg_replace('/^' . preg_quote($code, '/') . '\s*/i', '', $title);
+
+        return is_string($stripped) && trim($stripped) !== '' ? trim($stripped) : $title;
+    }
+
+    /** A view/like counter such as `1,234` or `1 234` as an int; 0 when it is not numeric. */
+    protected function integerStat(string $value): int
+    {
+        $normalized = str_replace([',', ' '], '', $value);
+
+        return is_numeric($normalized) ? (int) $normalized : 0;
     }
 
     /** YYYY-MM-DD from a parseable date string, or null when empty or unparseable. */

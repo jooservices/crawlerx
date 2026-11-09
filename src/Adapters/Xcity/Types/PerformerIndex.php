@@ -7,6 +7,7 @@ namespace JOOservices\CrawlerX\Adapters\Xcity\Types;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Adapters\AbstractType;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
+use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
@@ -19,6 +20,7 @@ use Symfony\Component\DomCrawler\UriResolver;
 final class PerformerIndex extends AbstractType implements TypeInterface
 {
     use ParsesHtml;
+    use ParsesUrlParts;
 
     public function __construct(
         private readonly CrawlHttpClient $client,
@@ -97,18 +99,5 @@ final class PerformerIndex extends AbstractType implements TypeInterface
         $port = isset($parts['port']) ? ':' . $parts['port'] : '';
 
         return "{$scheme}://{$host}{$port}{$path}" . ($filtered !== [] ? '?' . http_build_query($filtered) : '');
-    }
-
-    private function hasQueryParam(string $url, string $key): bool
-    {
-        $query = parse_url($url, PHP_URL_QUERY);
-        if (! is_string($query) || $query === '') {
-            return false;
-        }
-
-        parse_str($query, $params);
-        $value = $params[$key] ?? null;
-
-        return is_string($value) && trim($value) !== '';
     }
 }

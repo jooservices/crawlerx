@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\Jable\Types;
 
+use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 use JOOservices\CrawlerX\Adapters\AbstractType;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
 use JOOservices\CrawlerX\Adapters\Jable\Selectors;
@@ -19,6 +20,7 @@ use Symfony\Component\DomCrawler\Crawler;
 
 final class PerformerDetail extends AbstractType implements TypeInterface
 {
+    use ParsesUrlParts;
     use ParsesHtml;
 
     public function __construct(
@@ -84,13 +86,6 @@ final class PerformerDetail extends AbstractType implements TypeInterface
 
     private function externalId(string $url): ?string
     {
-        $path = parse_url($url, PHP_URL_PATH);
-        if (! is_string($path) || preg_match('#/models/([^/]+)/?#i', $path, $match) !== 1) {
-            return null;
-        }
-
-        $slug = trim($match[1], '/');
-
-        return $slug !== '' ? $slug : null;
+        return $this->pathMatch($url, '#/models/([^/]+)/?#i');
     }
 }

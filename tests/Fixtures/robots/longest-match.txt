@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /photos
+Allow: /photos/public/
+Disallow: /photos/public/secret

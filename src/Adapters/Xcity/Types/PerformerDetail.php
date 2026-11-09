@@ -7,6 +7,7 @@ namespace JOOservices\CrawlerX\Adapters\Xcity\Types;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Adapters\AbstractType;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
+use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
@@ -20,6 +21,7 @@ final class PerformerDetail extends AbstractType implements TypeInterface
 {
     use CoercesValues;
     use ParsesHtml;
+    use ParsesUrlParts;
 
     public function __construct(
         private readonly CrawlHttpClient $client,
@@ -38,9 +40,9 @@ final class PerformerDetail extends AbstractType implements TypeInterface
         $name = $this->firstHeading($crawler) ?? $fields['name'] ?? null;
         $imageUrl = $this->firstAttribute($crawler, '.photo img.actressThumb, p.tn img.actressThumb, img.actressThumb', 'src');
 
-        $parts = $this->nameParts(is_string($name) ? $this->cleanName($name) : '');
+        $parts = $this->nameParts(is_string($name) ? $this->cleanTextWithoutTrailingPhrase($name, 'All Titles Information') : '');
         $data = array_filter([
-            'external_id' => $this->externalId($request->url),
+            'external_id' => $this->pathMatchOrQueryParam($request->url, '#/idol/detail/([^/]+)/?#i', 'id'),
             'external_url' => $request->url,
             'name' => $parts['name'] !== '' ? $parts['name'] : null,
             'name_kana' => $parts['kana'],
@@ -113,7 +115,7 @@ final class PerformerDetail extends AbstractType implements TypeInterface
                 continue;
             }
 
-            $text = $this->cleanName($nodes->first()->text(''));
+            $text = $this->cleanTextWithoutTrailingPhrase($nodes->first()->text(''), 'All Titles Information');
             if ($text !== '') {
                 return $text;
             }
@@ -203,30 +205,5 @@ final class PerformerDetail extends AbstractType implements TypeInterface
             'Other', 'その他' => 'other',
             default => null,
         };
-    }
-
-    private function externalId(string $url): ?string
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-        if (is_string($path) && preg_match('#/idol/detail/([^/]+)/?#i', $path, $match) === 1) {
-            return $match[1];
-        }
-
-        $query = parse_url($url, PHP_URL_QUERY);
-        if (is_string($query) && $query !== '') {
-            parse_str($query, $params);
-            $id = $params['id'] ?? null;
-
-            return is_string($id) && trim($id) !== '' ? trim($id) : null;
-        }
-
-        return null;
-    }
-
-    private function cleanName(string $value): string
-    {
-        $value = preg_replace('/\s*All Titles Information\s*$/iu', '', $value) ?? $value;
-
-        return $this->cleanText($value);
     }
 }

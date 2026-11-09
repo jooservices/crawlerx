@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Adapters\Next11\Types;
 
 use JOOservices\CrawlerX\Adapters\AbstractHtmlType;
+use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
 use JOOservices\CrawlerX\Adapters\Next11\Fields;
 use JOOservices\CrawlerX\Adapters\Next11\Selectors;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
@@ -17,6 +18,8 @@ use Symfony\Component\DomCrawler\Crawler;
 
 final class Detail extends AbstractHtmlType implements TypeInterface
 {
+    use CoercesValues;
+
     public function __construct(
         CrawlHttpClient $client,
         private readonly Fields $fields = new Fields(),
@@ -41,7 +44,7 @@ final class Detail extends AbstractHtmlType implements TypeInterface
             ? $this->fields->rows($crawler->filter(Selectors::DETAIL_ROWS)->first())
             : [];
         $schema = $this->movieSchema($crawler);
-        $code = $this->rowText($rows, '品番') ?? $this->string($schema['identifier'] ?? null);
+        $code = $this->rowText($rows, '品番') ?? $this->nonEmptyString($schema['identifier'] ?? null);
         $genres = isset($rows['ジャンル']) ? $this->fields->links($rows['ジャンル']) : [];
         $label = isset($rows['レーベル']) ? $this->fields->entity($rows['レーベル']) : null;
         $series = isset($rows['シリーズ']) ? $this->fields->entity($rows['シリーズ']) : null;
@@ -63,7 +66,7 @@ final class Detail extends AbstractHtmlType implements TypeInterface
                 'performers' => isset($rows['出演']) ? $this->fields->links($rows['出演']) : [],
                 'tags' => array_column($genres, 'name'),
                 'metadata' => MovieMeta::filter([
-                    MovieMeta::MAKER => $maker['name'] ?? (is_array($company) ? $this->string($company['name'] ?? null) : null),
+                    MovieMeta::MAKER => $maker['name'] ?? (is_array($company) ? $this->nonEmptyString($company['name'] ?? null) : null),
                     'maker_url' => $maker['url'] ?? null,
                     MovieMeta::LABEL => $label['name'] ?? null,
                     'label_id' => $label['external_id'] ?? null,
@@ -73,7 +76,7 @@ final class Detail extends AbstractHtmlType implements TypeInterface
                     'series_url' => $series['url'] ?? null,
                     MovieMeta::DIRECTOR => isset($rows['監督']) ? $this->fields->text($rows['監督']) : null,
                     'genres' => $genres,
-                    'cover_medium_url' => $this->fields->resolve($this->string($schema['image'] ?? null)),
+                    'cover_medium_url' => $this->fields->resolve($this->nonEmptyString($schema['image'] ?? null)),
                     MovieMeta::SAMPLE_VIDEO_URL => $this->sampleVideo($crawler),
                     'purchase_links' => $this->purchaseLinks($crawler),
                     'badges' => $this->badges($crawler),
@@ -120,7 +123,7 @@ final class Detail extends AbstractHtmlType implements TypeInterface
     {
         $review = $crawler->filter(Selectors::DETAIL_REVIEW);
 
-        return ($review->count() > 0 ? $this->fields->text($review->first()) : null) ?? $this->string($schema['description'] ?? null);
+        return ($review->count() > 0 ? $this->fields->text($review->first()) : null) ?? $this->nonEmptyString($schema['description'] ?? null);
     }
 
     /**
@@ -132,7 +135,7 @@ final class Detail extends AbstractHtmlType implements TypeInterface
         $time = isset($rows['発売日']) ? $rows['発売日']->filter('time[datetime]') : null;
         $value = $time !== null && $time->count() > 0 ? $time->first()->attr('datetime') : $this->rowText($rows, '発売日');
 
-        return MovieMeta::isoDate($value) ?? MovieMeta::isoDate($this->string($schema['dateCreated'] ?? null));
+        return MovieMeta::isoDate($value) ?? MovieMeta::isoDate($this->nonEmptyString($schema['dateCreated'] ?? null));
     }
 
     private function isoDuration(mixed $value): ?int
@@ -217,10 +220,5 @@ final class Detail extends AbstractHtmlType implements TypeInterface
         $note = $crawler->filter(Selectors::DETAIL_NOTE);
 
         return $note->count() > 0 ? $this->fields->text($note->first()) : null;
-    }
-
-    private function string(mixed $value): ?string
-    {
-        return is_string($value) && trim($value) !== '' ? trim($value) : null;
     }
 }
