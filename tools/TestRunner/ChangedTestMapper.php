@@ -89,7 +89,9 @@ final readonly class ChangedTestMapper
             }
 
             if ($path === 'tools/test-changed.php' || str_starts_with($path, 'tools/TestRunner/')) {
-                if (! $this->addExistingPath('tests/Unit/Tools/ChangedTestRunnerTest.php', $testPaths)) {
+                if (! $this->addExistingPath('tests/Unit/Tools/ChangedTestRunnerTest.php', $testPaths)
+                    || ! $this->addExistingPath('tests/Unit/Tools/ChangedTestRunnerIntegrationTest.php', $testPaths)
+                ) {
                     return $this->unmapped($path);
                 }
 
@@ -120,6 +122,7 @@ final readonly class ChangedTestMapper
     {
         $unitPath = 'tests/Unit/Adapters/' . $site;
         $mapped = $this->addExistingPath($unitPath, $testPaths);
+        $mapped = $this->addExistingPath('tests/Feature/Snapshots/SnapshotParseTest.php', $testPaths) || $mapped;
         $slug = $this->adapterSlug($site);
 
         foreach ($this->featureTests() as $featureTest) {

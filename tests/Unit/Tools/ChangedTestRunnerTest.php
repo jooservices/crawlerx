@@ -81,11 +81,39 @@ final class ChangedTestRunnerTest extends TestCase
     {
         $this->addAdapter('ExampleSite', 'example-site', ['detail.html']);
         $this->addFile('tests/Feature/AllAdaptersCrawlTest.php');
+        $this->addFile('tests/Feature/Snapshots/SnapshotParseTest.php');
 
         $plan = (new ChangedTestMapper($this->root))->map(['tests/Fixtures/example-site/detail.html']);
 
         self::assertFalse($plan->fullSuite);
+        self::assertContains('tests/Feature/Snapshots/SnapshotParseTest.php', $plan->testPaths);
         self::assertSame(['example-site'], $plan->fixtureSlugs);
+    }
+
+    public function test_adapter_changes_select_the_shared_snapshot_feature_test(): void
+    {
+        $this->addAdapter('ExampleSite', 'example-site');
+        $this->addFile('tests/Unit/Adapters/ExampleSite/ExampleSiteTest.php');
+        $this->addFile('tests/Feature/Snapshots/SnapshotParseTest.php');
+
+        $plan = (new ChangedTestMapper($this->root))->map(['src/Adapters/ExampleSite/Types/Detail.php']);
+
+        self::assertFalse($plan->fullSuite);
+        self::assertContains('tests/Feature/Snapshots/SnapshotParseTest.php', $plan->testPaths);
+    }
+
+    public function test_runner_changes_select_unit_and_integration_tests(): void
+    {
+        $this->addFile('tests/Unit/Tools/ChangedTestRunnerTest.php');
+        $this->addFile('tests/Unit/Tools/ChangedTestRunnerIntegrationTest.php');
+
+        $plan = (new ChangedTestMapper($this->root))->map(['tools/test-changed.php']);
+
+        self::assertFalse($plan->fullSuite);
+        self::assertSame([
+            'tests/Unit/Tools/ChangedTestRunnerIntegrationTest.php',
+            'tests/Unit/Tools/ChangedTestRunnerTest.php',
+        ], $plan->testPaths);
     }
 
     public function test_unmapped_files_fall_back_to_the_full_suite(): void
