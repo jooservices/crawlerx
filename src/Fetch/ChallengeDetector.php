@@ -132,14 +132,20 @@ final class ChallengeDetector
 
     private static function hasSubstantiveContentRegion(string $body): bool
     {
-        $regions = (new Crawler($body))->filterXPath('//article|//main|//section');
+        $crawler = new Crawler($body);
+        $regions = $crawler->filterXPath('//article|//main|//section');
         foreach ($regions as $region) {
             if (strlen(trim((new Crawler($region))->text(''))) > 20) {
                 return true;
             }
         }
 
-        return false;
+        $headings = $crawler->filterXPath('//h1|//h2|//h3|//h4|//h5|//h6');
+        $paragraphs = $crawler->filterXPath('//p');
+
+        return $headings->count() > 0
+            && $paragraphs->count() > 0
+            && strlen(trim(self::visibleText($body))) > 20;
     }
 
     private static function isStandaloneCaptchaMessage(string $visibleText): bool
