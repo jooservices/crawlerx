@@ -45,6 +45,7 @@
         "test:changed": "php tools/test-changed.php",
         "test:unit": "phpunit --no-coverage --testsuite Unit",
         "test:feature": "phpunit --no-coverage --testsuite Feature",
+        "check:readme-sites": "php tools/check-readme-sites.php",
         "test:coverage": "mkdir -p build/coverage && phpunit --coverage-clover build/coverage/clover-Unit.xml --testsuite Unit && phpunit --coverage-clover build/coverage/clover-Feature.xml --testsuite Feature",
         "check:fixtures-meta": "php tools/check-fixtures-meta.php",
         "coverage:check": [
