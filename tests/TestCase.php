@@ -7,6 +7,7 @@ namespace JOOservices\CrawlerX\Tests;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Http\MappedPrefetchedCrawlHttpClient;
 use JOOservices\CrawlerX\Http\PrefetchedCrawlHttpClient;
+use JOOservices\CrawlerX\Tests\Support\FixtureContentCache;
 use PHPUnit\Framework\TestCase as BaseTestCase;
 
 abstract class TestCase extends BaseTestCase
@@ -16,7 +17,7 @@ abstract class TestCase extends BaseTestCase
         $fullPath = __DIR__ . '/Fixtures/' . ltrim($path, '/');
         self::assertFileExists($fullPath, "Fixture not found: {$fullPath}");
 
-        $content = file_get_contents($fullPath);
+        $content = FixtureContentCache::read($fullPath);
         self::assertIsString($content);
         self::assertNotSame('', $content, "Fixture is empty: {$fullPath}");
 
