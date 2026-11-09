@@ -1,0 +1,10 @@
+{
+    "source_url": "https://www.mgstage.com/search/cSearch.php?search_word=&sort=new&list_cnt=30&type=top",
+    "final_url": "https://www.mgstage.com/search/cSearch.php?search_word=&sort=new&list_cnt=30&type=top",
+    "captured_at": "2026-11-09T04:00:00.000Z",
+    "http_status": 200,
+    "content_hash": "6010f1269a8128e8c1864fa61a87fd5f16888e0ce7dd0ce72f6fa7ceab8e3c01",
+    "target_type": "listing",
+    "fetch_method": "http",
+    "sanitized": false
+}

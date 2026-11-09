@@ -15,9 +15,18 @@ use JOOservices\CrawlerX\Dto\Entity\GalleryDto;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
+use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
+use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
+use JOOservices\CrawlerX\Adapters\Concerns\ResolvesLinkUrls;
 
 final class Listing extends AsageiHtmlType implements TypeInterface
 {
+    use ResolvesLinkUrls;
+
+    use ParsesUrlParts;
+
+    use CoercesValues;
+
     protected function contextLabel(): string
     {
         return 'listing';
@@ -40,7 +49,7 @@ final class Listing extends AsageiHtmlType implements TypeInterface
             throw new CrawlParseException('Asagei listing page did not contain article cards.');
         }
 
-        $currentPage = $this->pageNumber($this->firstText($crawler, Selectors::PAGINATION_CURRENT)) ?? $request->page;
+        $currentPage = $this->pageNumberFromText($this->firstText($crawler, Selectors::PAGINATION_CURRENT)) ?? $request->page;
         $nextUrl = $this->linkUrl($crawler, Selectors::PAGINATION_NEXT, $request->url);
         $lastUrl = $this->linkUrl($crawler, Selectors::PAGINATION_LAST, $request->url);
 
@@ -51,8 +60,8 @@ final class Listing extends AsageiHtmlType implements TypeInterface
             items: array_values($items),
             pagination: new CrawlPaginationDto(
                 currentPage: $currentPage,
-                lastPage: $lastUrl === null ? null : $this->urlPage($lastUrl),
-                nextPage: $nextUrl === null ? null : $this->urlPage($nextUrl),
+                lastPage: $lastUrl === null ? null : $this->queryNumber($lastUrl, 'page'),
+                nextPage: $nextUrl === null ? null : $this->queryNumber($nextUrl, 'page'),
                 nextUrl: $nextUrl,
                 hasNextPage: $nextUrl !== null,
             ),
@@ -106,30 +115,5 @@ final class Listing extends AsageiHtmlType implements TypeInterface
                 ]),
             ],
         )->withNextCrawlType('gallery');
-    }
-
-    private function linkUrl(Crawler $crawler, string $selector, string $baseUrl): ?string
-    {
-        $href = $this->firstAttribute($crawler, $selector, 'href');
-
-        return $href === null ? null : $this->absolute($baseUrl, $href);
-    }
-
-    private function pageNumber(?string $text): ?int
-    {
-        return $text !== null && ctype_digit($text) ? max(1, (int) $text) : null;
-    }
-
-    private function urlPage(string $url): ?int
-    {
-        $query = parse_url($url, PHP_URL_QUERY);
-        if (! is_string($query) || $query === '') {
-            return null;
-        }
-
-        parse_str($query, $params);
-        $page = $params['page'] ?? null;
-
-        return is_numeric($page) ? max(1, (int) $page) : null;
     }
 }

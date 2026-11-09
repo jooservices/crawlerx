@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add a changed-file test runner with adapter, fetch and fixture targeting plus full-suite fallback (`composer test:changed`, `make test-changed`) (JOOXCR-473).
+- Add the MGStage source (`mgstage`): paged work listing (search, new releases, maker, series, genre, actor) and work detail with every labelled row, large cover with thumbnail, all sample stills with thumbnails, prices and sale end, reviews, rating, counters and the sample-video URL; the site needs a Japan exit (`CRAWLERX_HTTP_PROXY`) and the `adc=1` age cookie (JOOXCR-471).
 - Add an optional outbound HTTP proxy for the HTTP fetch method (`CRAWLERX_HTTP_PROXY`, `HttpProfileDto::$proxy`, `HttpOptionsDto::$proxy`), off by default (JOOXCR-470).
 - Add Deptrac architecture rules for the Adapters, Fetch, Dto, Support and Contracts layers (`deptrac.yaml`, `composer lint:deptrac`) and a report-only CI job (JOOXCR-466).
 - Add an opt-in PSR-16 HTTP response cache with configurable TTL, challenge/captcha exclusions and throttle bypass on cache hits (JOOXCR-465).
@@ -24,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Migrate the remaining duplicated N–Z adapter helpers to the shared parsing and coercion concerns without changing crawl output (JOOXCR-469).
 - Migrate the exact duplicate private helpers of the G-M adapters (Jable, Jav321, JavBus, JavDatabase, JavLibrary, JavPhotos, MinnanoAv) to the shared `ParsesUrlParts` and `CoercesValues` traits, adding `firstQueryParam`, `titleWithoutCode` and `integerStat` (no behaviour change, JOOXCR-468).
+- Migrate adapters A–F onto the shared parsing helpers (`ParsesUrlParts`, `CoercesValues`, `ResolvesLinkUrls`) and drop their private duplicates; extend those helpers with `dateString`, `arrayValue` and `linkUrl` (unit-tested, no behaviour change, JOOXCR-467).
 - Cut CI wall time by caching the PHP image, running security and sharded Unit/Feature suites in parallel after Validate, and keeping the required check names unchanged (JOOXCR-466).
 - Split `FetchFallbackChain` (747 lines) into single-responsibility collaborators under `src/Fetch` (attempt log rows and method runner with transient retry, pre-fetch throttle/circuit guard, session and budget request shaping, ready-marker gate, login-wall detection, rejection builders, circuit reporting); the chain stays a thin orchestrator and fetch behaviour, config keys, exceptions and the SSRF guard are unchanged (JOOXCR-463).
 

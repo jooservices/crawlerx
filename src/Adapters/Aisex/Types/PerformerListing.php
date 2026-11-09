@@ -17,9 +17,12 @@ use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
 use Symfony\Component\DomCrawler\Crawler;
+use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 
 final class PerformerListing extends AbstractType implements TypeInterface
 {
+    use ParsesUrlParts;
+
     use NormalizesUrls;
     use ParsesHtml;
 
@@ -43,7 +46,7 @@ final class PerformerListing extends AbstractType implements TypeInterface
             }
 
             $url = $this->absolute($request->url, $href);
-            $externalId = $this->externalId($url);
+            $externalId = $this->pathMatch($url, '#^/actress/(\\d+)/?$#');
             if ($externalId === null || isset($items[$url])) {
                 return;
             }
@@ -60,7 +63,7 @@ final class PerformerListing extends AbstractType implements TypeInterface
             throw new CrawlParseException('Aisex listing page did not contain performer cards.');
         }
 
-        $currentPage = $this->currentPage($crawler) ?? $this->pageNumber($request->url) ?? 1;
+        $currentPage = $this->currentPage($crawler) ?? $this->queryNumber($request->url, 'page') ?? 1;
         $nextUrl = $this->nextUrl($crawler, $request->url, $currentPage);
         $lastPage = $this->lastPage($crawler);
 
@@ -72,7 +75,7 @@ final class PerformerListing extends AbstractType implements TypeInterface
             pagination: new CrawlPaginationDto(
                 currentPage: $currentPage,
                 lastPage: $lastPage,
-                nextPage: $nextUrl === null ? null : $this->pageNumber($nextUrl),
+                nextPage: $nextUrl === null ? null : $this->queryNumber($nextUrl, 'page'),
                 nextUrl: $nextUrl,
                 hasNextPage: $nextUrl !== null,
             ),
@@ -147,28 +150,5 @@ final class PerformerListing extends AbstractType implements TypeInterface
         });
 
         return $last;
-    }
-
-    private function pageNumber(string $url): ?int
-    {
-        $query = parse_url($url, PHP_URL_QUERY);
-        if (! is_string($query) || $query === '') {
-            return null;
-        }
-
-        parse_str($query, $params);
-        $page = $params['page'] ?? null;
-
-        return is_numeric($page) ? max(1, (int) $page) : null;
-    }
-
-    private function externalId(string $url): ?string
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-        if (is_string($path) && preg_match('#^/actress/(\d+)/?$#', $path, $match) === 1) {
-            return $match[1];
-        }
-
-        return null;
     }
 }
