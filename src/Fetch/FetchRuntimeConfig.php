@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Fetch;
 
+use JOOservices\CrawlerX\Support\CrawlerUserAgent;
+
 final readonly class FetchRuntimeConfig
 {
     public function __construct(
@@ -30,12 +32,10 @@ final readonly class FetchRuntimeConfig
         $curl = getenv('CRAWLERX_CURL_IMPERSONATE');
         $flare = getenv('FLARESOLVERR_URL');
         $playwrightUrl = getenv('PLAYWRIGHT_URL');
-        $userAgent = getenv('CRAWLERX_USER_AGENT');
         $userAgentPool = getenv('CRAWLERX_USER_AGENT_POOL');
         $nodeId = getenv('CRAWLERX_NODE');
         $responseCacheTtl = getenv('CRAWLERX_RESPONSE_CACHE_TTL');
-        $defaultUserAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
-        $configuredUserAgent = is_string($userAgent) && trim($userAgent) !== '' ? trim($userAgent) : $defaultUserAgent;
+        $configuredUserAgent = CrawlerUserAgent::fromEnvironment();
         $pool = is_string($userAgentPool) && trim($userAgentPool) !== ''
             ? array_values(array_filter(
                 array_map('trim', explode(',', $userAgentPool)),
