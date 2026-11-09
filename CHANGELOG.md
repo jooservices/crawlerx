@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add a manual live health report for adapter samples with per-host pacing, a two-outbound-request budget including robots and redirects, accurate failure classifications, fallback-aware challenge results, optional HTTP proxy routing, and Markdown/JSON output (JOOXCR-474).
+- Add a changed-file test runner with adapter, fetch and fixture targeting plus full-suite fallback (`composer test:changed`, `make test-changed`) (JOOXCR-473).
 - Add `composer check:fixtures-meta` to validate captured fixture provenance metadata, with a baseline for known legacy offenders (JOOXCR-485).
 - Add `composer check:manifests` to check adapter manifest keys, slugs, base URLs, classes and capabilities (JOOXCR-483).
 - Add the MGStage source (`mgstage`): paged work listing (search, new releases, maker, series, genre, actor) and work detail with every labelled row, large cover with thumbnail, all sample stills with thumbnails, prices and sale end, reviews, rating, counters and the sample-video URL; the site needs a Japan exit (`CRAWLERX_HTTP_PROXY`) and the `adc=1` age cookie (JOOXCR-471).
