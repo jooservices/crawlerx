@@ -61,7 +61,7 @@ final class PlaywrightFamilyFetchHandler implements FetchMethodHandler
             'timezoneId' => $playwright->timezoneId,
             'stealthEnabled' => true,
             'stealthLevel' => 'enhanced',
-            'extraHttpHeaders' => $profile->http->headers,
+            'extraHttpHeaders' => (object) $profile->http->headers,
             'storageStatePath' => $playwright->storageStatePath,
             'storageState' => $options?->storageState,
             'blockResources' => $playwright->blockResources,
