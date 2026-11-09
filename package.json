@@ -7,7 +7,6 @@
         "playwright:install": "npx playwright install chromium"
     },
     "dependencies": {
-        "deepmerge": "file:tools/vendor/deepmerge",
         "playwright": "1.64.1",
         "puppeteer": "^25.14.0",
         "puppeteer-extra": "^3.3.6",
@@ -15,7 +14,6 @@
     },
     "overrides": {
         "zod": "4.6.6",
-        "minimatch": "11.0.4",
-        "deepmerge": "file:tools/vendor/deepmerge"
+        "minimatch": "11.0.4"
     }
 }
