@@ -20,17 +20,20 @@ final class ImageCompletenessTest extends ImageAuditTestCase
             ['detail-0bb.html', '0bb'],
         ] as [$fixtureName, $id]) {
             $fixture = 'gravurech/' . $fixtureName;
-            $image = (new Crawler($this->loadFixture($fixture)))->filter('.product-detail .thumbnail img[src]')->first();
-            $expected = UriResolver::resolve((string) $image->attr('src'), 'https://gravure-ch.com/content/' . $id);
+            $url = 'https://gravure-ch.com/content/' . $id;
+            $expected = (new Crawler($this->loadFixture($fixture)))->filter('.product-detail__inner > div:first-child img[src]')->each(
+                static fn(Crawler $image): string => UriResolver::resolve((string) $image->attr('src'), $url),
+            );
             $gallery = $this->item(
                 Gallery::class,
                 $fixture,
-                'https://gravure-ch.com/content/' . $id,
+                $url,
                 CrawlType::Gallery,
             )->meta['gallery'];
 
-            self::assertNotSame('', $expected, $fixtureName);
-            self::assertSame([$expected], $this->column($gallery['photos'], 'image_url'), $fixtureName);
+            self::assertNotEmpty($expected, $fixtureName);
+            self::assertCount(count($expected), $gallery['photos'], $fixtureName);
+            self::assertSame($expected, $this->column($gallery['photos'], 'image_url'), $fixtureName);
         }
     }
 

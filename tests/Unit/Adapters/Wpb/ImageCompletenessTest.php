@@ -18,9 +18,24 @@ final class ImageCompletenessTest extends ImageAuditTestCase
         $fixture = 'wpb/gallery-20261108-133432.html';
         $url = 'https://wpb.shueisha.co.jp/gravure/20261108-133432/';
         $page = new Crawler($this->loadFixture($fixture));
-        $picture = $page->filter('.group-entry-a .body-gravure-a picture')->first();
-        $expected = $this->fixtureCover($picture, $url);
-        $expected['thumbnail_url'] = $this->fixtureThumbnail($picture, $url);
+        $expectedByUrl = [];
+        $page->filter('.group-entry-a .body-gravure-a img[src]')->each(function (Crawler $image) use (&$expectedByUrl, $url): void {
+            $imageUrl = UriResolver::resolve((string) $image->attr('src'), $url);
+            $picture = $image->ancestors()->filter('picture')->first();
+            $expectedByUrl[$imageUrl] = [
+                'url' => $imageUrl,
+                'thumbnail_url' => $picture->count() === 0 ? null : $this->fixtureThumbnail($picture, $url),
+            ];
+        });
+        $ogImage = $page->filter('meta[property="og:image"][content]')->first()->attr('content');
+        if (is_string($ogImage) && $ogImage !== '') {
+            $ogImage = UriResolver::resolve($ogImage, $url);
+            if (! $this->isChromeImage($ogImage) && ! isset($expectedByUrl[$ogImage])) {
+                $expectedByUrl[$ogImage] = ['url' => $ogImage, 'thumbnail_url' => null];
+            }
+        }
+
+        $expected = array_values($expectedByUrl);
         $gallery = $this->item(
             Gallery::class,
             $fixture,
@@ -36,9 +51,12 @@ final class ImageCompletenessTest extends ImageAuditTestCase
         );
         $cover = $gallery['metadata']['cover'];
 
-        self::assertSame([$expected], $photos);
+        self::assertNotEmpty($expected);
+        self::assertCount(count($expected), $photos);
+        self::assertSame($expected, $photos);
+        $expectedCover = $expected[0];
         self::assertSame(
-            ['url' => $expected['url'], 'thumbnail_url' => $expected['thumbnail_url']],
+            ['url' => $expectedCover['url'], 'thumbnail_url' => $expectedCover['thumbnail_url']],
             array_intersect_key($cover, ['url' => true, 'thumbnail_url' => true]),
         );
     }
@@ -124,5 +142,13 @@ final class ImageCompletenessTest extends ImageAuditTestCase
         });
 
         return $thumbnail;
+    }
+
+    private function isChromeImage(string $url): bool
+    {
+        return str_contains($url, '/images/common/')
+            || str_contains($url, '/images/bnr/')
+            || str_contains($url, '/data/banner/')
+            || str_contains($url, '4375d21660a17e6b0e50d5402d16cb885ab42bd1');
     }
 }
