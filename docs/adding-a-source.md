@@ -23,3 +23,17 @@ A new source touches only its own folders plus one CHANGELOG line. No shared tes
 6. Add the site's row to the supported-sites table in `README.md` (a documentation step; no test depends on it).
 
 No count is hand-maintained per site; the registry-count tests compare the registry with the number of manifest files, so a manifest that fails to register fails the build.
+
+## Shared parsing helpers
+
+Do not hand-write the same private helper in a new adapter; compose the traits under `src/Adapters/Concerns/`:
+
+| Trait | Gives you |
+|---|---|
+| `ParsesHtml` | `firstText`, `firstAttribute`, `texts`, `normalizeText` for a DomCrawler node |
+| `NormalizesUrls` | `absolute($baseUrl, $url)` resolving relative, protocol-relative and root-relative links |
+| `ParsesUrlParts` | `lastPathSegment`, `pathMatch`, `pathNumber`, `queryParam`, `queryNumber` for external ids and page numbers (adapters keep their own route regex) |
+| `CoercesValues` | `nonEmptyString`, `positiveInt`, `cleanText` for loosely typed scraped values |
+| `ParsesJson` | JSON response decoding for API-backed sources |
+
+A Type extends `AbstractHtmlType` (HTML pages fetched through the shared client) or `AbstractType` (API/JSON or custom fetching); do not introduce a third base class. If a helper you need exists in two adapters, move it into the matching trait with a test instead of copying it.

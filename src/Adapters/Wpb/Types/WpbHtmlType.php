@@ -8,9 +8,11 @@ use JOOservices\CrawlerX\Adapters\AbstractHtmlType;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
 use JOOservices\CrawlerX\Adapters\Wpb\Urls;
 use Symfony\Component\DomCrawler\Crawler;
+use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
 
 abstract class WpbHtmlType extends AbstractHtmlType
 {
+    use CoercesValues;
     use ParsesHtml;
 
     protected function siteLabel(): string
@@ -82,11 +84,11 @@ abstract class WpbHtmlType extends AbstractHtmlType
         if ($alt !== null) {
             $result['alt'] = $alt;
         }
-        $width = $this->dimension($img->attr('width')) ?? $best['width'];
+        $width = $this->positiveInt($img->attr('width')) ?? $best['width'];
         if ($width !== null) {
             $result['width'] = $width;
         }
-        $height = $this->dimension($img->attr('height'));
+        $height = $this->positiveInt($img->attr('height'));
         if ($height !== null) {
             $result['height'] = $height;
         }
@@ -121,10 +123,5 @@ abstract class WpbHtmlType extends AbstractHtmlType
         }
 
         return $entries;
-    }
-
-    protected function dimension(mixed $value): ?int
-    {
-        return is_numeric($value) && (int) $value > 0 ? (int) $value : null;
     }
 }

@@ -14,9 +14,12 @@ use JOOservices\CrawlerX\Dto\Entity\PhotoDto;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
+use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
 
 final class Gallery extends AsageiHtmlType implements TypeInterface
 {
+    use CoercesValues;
+
     protected function contextLabel(): string
     {
         return 'gallery';
@@ -112,8 +115,8 @@ final class Gallery extends AsageiHtmlType implements TypeInterface
                 position: count($photos) + 1,
                 metadata: MovieMeta::filter([
                     'alt' => $this->normalizeText((string) $img->attr('alt')),
-                    'width' => $this->dimension($img->attr('width')),
-                    'height' => $this->dimension($img->attr('height')),
+                    'width' => $this->positiveInt($img->attr('width')),
+                    'height' => $this->positiveInt($img->attr('height')),
                     'source_page_url' => $baseUrl,
                     'mime_type' => Urls::mimeType($full),
                 ]),
@@ -145,10 +148,5 @@ final class Gallery extends AsageiHtmlType implements TypeInterface
         $href = $this->firstAttribute($crawler, $selector, 'href');
 
         return $href === null ? null : Urls::article($this->absolute($baseUrl, $href));
-    }
-
-    private function dimension(mixed $value): ?int
-    {
-        return is_numeric($value) && (int) $value > 0 ? (int) $value : null;
     }
 }

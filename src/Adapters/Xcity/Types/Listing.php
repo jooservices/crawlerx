@@ -14,9 +14,12 @@ use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
+use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
 
 final class Listing extends AbstractType implements TypeInterface
 {
+    use CoercesValues;
+
     public function __construct(
         private readonly CrawlHttpClient $client,
         private readonly UrlNormalizer $normalizer = new UrlNormalizer(),
@@ -151,10 +154,5 @@ final class Listing extends AbstractType implements TypeInterface
         $page = $params['page'] ?? null;
 
         return is_numeric($page) && (int) $page > 0 ? (int) $page : null;
-    }
-
-    private function cleanText(string $value): string
-    {
-        return trim((string) preg_replace('/\s+/u', ' ', html_entity_decode($value, ENT_QUOTES | ENT_HTML5)));
     }
 }
