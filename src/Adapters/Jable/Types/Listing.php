@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\Jable\Types;
 
+use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
 use JOOservices\CrawlerX\Adapters\AbstractHtmlType;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
 use JOOservices\CrawlerX\Adapters\Jable\Selectors;
@@ -17,6 +18,7 @@ use Symfony\Component\DomCrawler\Crawler;
 
 final class Listing extends AbstractHtmlType implements TypeInterface
 {
+    use CoercesValues;
     use ParsesHtml;
 
     protected function siteLabel(): string
@@ -301,12 +303,5 @@ final class Listing extends AbstractHtmlType implements TypeInterface
         $page = (int) $matches[1];
 
         return $page > 0 ? $page : null;
-    }
-
-    private function integerStat(string $value): int
-    {
-        $normalized = str_replace([',', ' '], '', $value);
-
-        return is_numeric($normalized) ? (int) $normalized : 0;
     }
 }

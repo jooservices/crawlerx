@@ -26,4 +26,24 @@ trait CoercesValues
     {
         return trim((string) preg_replace('/\s+/u', ' ', html_entity_decode($value, ENT_QUOTES | ENT_HTML5)));
     }
+
+    /** Drops a leading product code (`ABC-123 Title` gives `Title`); keeps the title when nothing else would remain. */
+    protected function titleWithoutCode(?string $title, string $code): ?string
+    {
+        if ($title === null) {
+            return null;
+        }
+
+        $stripped = preg_replace('/^' . preg_quote($code, '/') . '\s*/i', '', $title);
+
+        return is_string($stripped) && trim($stripped) !== '' ? trim($stripped) : $title;
+    }
+
+    /** A view/like counter such as `1,234` or `1 234` as an int; 0 when it is not numeric. */
+    protected function integerStat(string $value): int
+    {
+        $normalized = str_replace([',', ' '], '', $value);
+
+        return is_numeric($normalized) ? (int) $normalized : 0;
+    }
 }

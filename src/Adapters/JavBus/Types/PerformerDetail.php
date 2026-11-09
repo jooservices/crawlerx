@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\JavBus\Types;
 
+use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Adapters\AbstractType;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
@@ -18,6 +19,7 @@ use Symfony\Component\DomCrawler\Crawler;
 
 final class PerformerDetail extends AbstractType implements TypeInterface
 {
+    use ParsesUrlParts;
     use ParsesHtml;
 
     public function __construct(
@@ -198,11 +200,6 @@ final class PerformerDetail extends AbstractType implements TypeInterface
 
     private function performerExternalId(string $url): ?string
     {
-        $path = parse_url($url, PHP_URL_PATH);
-        if (is_string($path) && preg_match('#/(?:en/)?star/([^/]+)/?$#i', $path, $match) === 1) {
-            return $match[1];
-        }
-
-        return null;
+        return $this->pathMatch($url, '#/(?:en/)?star/([^/]+)/?$#i');
     }
 }
