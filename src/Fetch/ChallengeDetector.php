@@ -19,12 +19,17 @@ final class ChallengeDetector
 
     public static function isCaptchaChallenge(string $body): bool
     {
-        if (preg_match('/<(?:form|iframe)\b[^>]*(?:captcha|recaptcha|hcaptcha|funcaptcha)/i', $body) === 1) {
+        if (self::hasCaptchaForm($body)) {
             return true;
         }
 
-        return strlen($body) < 20000
-            && preg_match('/\b(?:captcha|recaptcha|hcaptcha|funcaptcha)\b/i', $body) === 1;
+        $visibleText = self::visibleText($body);
+        if (strlen($body) < 20000 && preg_match('/\b(?:captcha|recaptcha|hcaptcha|funcaptcha)\b/i', $visibleText) === 1) {
+            return true;
+        }
+
+        return preg_match('/<script\b[^>]*\bsrc=["\'][^"\']*(?:captcha|recaptcha|hcaptcha|funcaptcha)[^"\']*["\']/i', $body) === 1
+            && preg_match('/\b(?:verify|verification|human|robot|security check)\b/i', $visibleText) === 1;
     }
 
     /** @param list<string> $readyMarkers */
@@ -86,5 +91,48 @@ final class ChallengeDetector
             // A raw-body fallback would also match content inside scripts.
             return false;
         }
+    }
+
+    private static function hasCaptchaForm(string $body): bool
+    {
+        if (
+            stripos($body, '<form') === false
+            || (stripos($body, 'captcha') === false && stripos($body, 'data-sitekey') === false)
+        ) {
+            return false;
+        }
+
+        $letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $lowercase = 'abcdefghijklmnopqrstuvwxyz';
+        $captchaAttribute = sprintf(
+            'contains(translate(concat(@class, " ", @id, " ", @name, " ", @action, " ", @src), "%s", "%s"), "captcha")',
+            $letters,
+            $lowercase,
+        );
+        $formAttribute = sprintf(
+            'contains(translate(concat(@class, " ", @id, " ", @name, " ", @action), "%s", "%s"), "captcha")',
+            $letters,
+            $lowercase,
+        );
+
+        $captchaForms = (new Crawler($body))->filterXPath(
+            sprintf('//form[%s or .//*[%s or @data-sitekey]]', $formAttribute, $captchaAttribute),
+        );
+        if ($captchaForms->count() === 0) {
+            return false;
+        }
+
+        $bodyWithoutForms = preg_replace('/<form\b[^>]*>.*?<\/form\s*>/is', '', $body) ?? $body;
+        $outsideText = trim(self::visibleText($bodyWithoutForms));
+
+        return $outsideText === ''
+            || preg_match('/\b(?:captcha|challenge|robot|human)\b|verify you are human|security check/i', $outsideText) === 1;
+    }
+
+    private static function visibleText(string $body): string
+    {
+        $withoutExecutableText = preg_replace('/<(script|style)\b[^>]*>.*?<\/\1\s*>/is', '', $body);
+
+        return html_entity_decode(strip_tags($withoutExecutableText ?? $body), ENT_QUOTES | ENT_HTML5);
     }
 }
