@@ -164,6 +164,9 @@ jobs:
           tools/ci/docker-compose run --rm php composer lint:deptrac
           status=$?
           echo "Deptrac finished with exit code ${status} (report-only; not a required gate)."
+          if [[ "${status}" -ne 0 ]]; then
+            echo "::warning title=Deptrac::Architecture violations or errors reported (exit ${status})."
+          fi
           exit 0
 
   security:

@@ -58,7 +58,7 @@ Rules: imperative mood, uppercase first letter of the subject, no trailing perio
 
 ## Quality gates
 
-Run the relevant gates before every push — CI runs the same chain and **every job is required**:
+Run the relevant gates before every push — CI runs the same chain and **every required job must stay green** (the report-only `Architecture (Deptrac)` job is not required):
 
 | Command | Purpose |
 | --- | --- |

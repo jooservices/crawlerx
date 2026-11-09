@@ -30,13 +30,12 @@ final class PhpunitShardTest extends TestCase
             ];
             $process = proc_open(
                 $command,
-                [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+                [1 => ['file', '/dev/null', 'w'], 2 => ['pipe', 'w']],
                 $pipes,
                 $root,
             );
             self::assertIsResource($process);
             $stderr = stream_get_contents($pipes[2]);
-            fclose($pipes[1]);
             fclose($pipes[2]);
             $exit = proc_close($process);
             self::assertSame(0, $exit, is_string($stderr) ? $stderr : '');

@@ -43,6 +43,9 @@ foreach ($inputPaths as $inputPath) {
         }
 
         if (! isset($fileNodes[$name])) {
+            // Keep the first file node as the XML template. Nested class/file
+            // metrics on that node may stay stale; project-level statement
+            // metrics below are recomputed from the merged line counts.
             $fileNodes[$name] = $file;
             $lineCounts[$name] = [];
         }

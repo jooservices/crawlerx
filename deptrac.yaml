@@ -27,6 +27,8 @@ deptrac:
         - type: directory
           value: src/Contracts/.*
   ruleset:
+    # Adapters → Fetch is intentional debt today (AbstractType → ChallengeDetector).
+    # Leave it disallowed so the report-only CI job keeps surfacing it.
     Adapters:
       - Contracts
       - Dto
