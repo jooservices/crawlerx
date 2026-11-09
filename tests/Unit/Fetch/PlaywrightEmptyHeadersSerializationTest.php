@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Tests\Unit\Fetch;
 
-use JOOservices\CrawlerX\Contracts\ProcessRunner;
 use JOOservices\CrawlerX\Dto\HttpProfileDto;
-use JOOservices\CrawlerX\Dto\ProcessResultDto;
 use JOOservices\CrawlerX\Dto\SiteProfileDto;
 use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Enums\FetchProfile;
+use JOOservices\CrawlerX\Fetch\BrowserServiceProcessRunner;
 use JOOservices\CrawlerX\Fetch\FetchRuntimeConfig;
 use JOOservices\CrawlerX\Fetch\Handlers\PlaywrightFamilyFetchHandler;
+use Nyholm\Psr7\Response;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Client\ClientInterface;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 final class PlaywrightEmptyHeadersSerializationTest extends TestCase
 {
@@ -23,32 +26,31 @@ final class PlaywrightEmptyHeadersSerializationTest extends TestCase
         file_put_contents($script, '// test script');
 
         try {
-            $runner = new class implements ProcessRunner {
+            $client = new class implements ClientInterface {
                 public mixed $extraHttpHeaders = null;
 
-                public function run(array $command, int $timeoutSeconds = 120, ?string $cwd = null): ProcessResultDto
+                public function sendRequest(RequestInterface $request): ResponseInterface
                 {
-                    $argument = $command[2] ?? '';
-                    $configPath = str_starts_with($argument, '--config=') ? substr($argument, 9) : '';
-                    $configJson = $configPath !== '' ? file_get_contents($configPath) : false;
-                    $config = is_string($configJson) ? json_decode($configJson, flags: JSON_THROW_ON_ERROR) : null;
-                    $this->extraHttpHeaders = $config?->extraHttpHeaders ?? null;
+                    $payload = json_decode((string) $request->getBody(), flags: JSON_THROW_ON_ERROR);
+                    $config = is_object($payload) ? ($payload->config ?? null) : null;
+                    $this->extraHttpHeaders = is_object($config) ? ($config->extraHttpHeaders ?? null) : null;
 
-                    return new ProcessResultDto(
-                        exitCode: 0,
-                        stdout: json_encode([
+                    return new Response(200, [], json_encode([
+                        'exitCode' => 0,
+                        'stdout' => json_encode([
                             'status' => 200,
                             'finalUrl' => 'https://example.test/page',
                             'html' => '<html><body>page is ready</body></html>',
                             'challenge' => false,
                         ], JSON_THROW_ON_ERROR),
-                    );
+                        'stderr' => '',
+                    ], JSON_THROW_ON_ERROR));
                 }
             };
 
             $handler = new PlaywrightFamilyFetchHandler(
                 new FetchRuntimeConfig(playwrightScript: $script),
-                $runner,
+                new BrowserServiceProcessRunner('https://browser.example.test', $client),
             );
             $profile = new SiteProfileDto(
                 slug: 'example',
@@ -62,8 +64,8 @@ final class PlaywrightEmptyHeadersSerializationTest extends TestCase
             $result = $handler->fetch('https://example.test/page', $profile, FetchMethod::Playwright);
 
             self::assertTrue($result->ok);
-            self::assertInstanceOf(\stdClass::class, $runner->extraHttpHeaders);
-            self::assertSame([], get_object_vars($runner->extraHttpHeaders));
+            self::assertInstanceOf(\stdClass::class, $client->extraHttpHeaders);
+            self::assertSame([], get_object_vars($client->extraHttpHeaders));
         } finally {
             unlink($script);
         }

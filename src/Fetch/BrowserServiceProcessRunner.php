@@ -32,7 +32,7 @@ final class BrowserServiceProcessRunner implements ProcessRunner
         $script = isset($command[1]) && str_contains($command[1], 'puppeteer') ? 'puppeteer' : 'playwright';
         $payload = json_encode([
             'script' => $script,
-            'config' => json_decode($config, true, flags: JSON_THROW_ON_ERROR),
+            'config' => json_decode($config, flags: JSON_THROW_ON_ERROR),
         ], JSON_THROW_ON_ERROR);
 
         try {
