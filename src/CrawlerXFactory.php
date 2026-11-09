@@ -49,6 +49,12 @@ final class CrawlerXFactory
     /** @var Closure(string): bool|null */
     private static ?Closure $beforeOutboundRequest = null;
 
+    /** @var Closure(string): bool|null */
+    private static ?Closure $beforeRobotsRequest = null;
+
+    /** @var Closure(): void|null */
+    private static ?Closure $onUnsupportedRedirect = null;
+
     public static function create(): CrawlOrchestrator
     {
         if (self::$orchestrator instanceof CrawlOrchestrator) {
@@ -56,7 +62,10 @@ final class CrawlerXFactory
         }
 
         $manifests = new FileAdapterManifestRegistry();
-        $registry = new AdapterRegistry(new ClientFactory(self::$beforeOutboundRequest), $manifests);
+        $registry = new AdapterRegistry(
+            new ClientFactory(self::$beforeOutboundRequest, self::$onUnsupportedRedirect),
+            $manifests,
+        );
         $registry->registerFromManifests($manifests);
 
         $service = new CrawlerXService($registry, new AdapterExecutor());
@@ -77,17 +86,26 @@ final class CrawlerXFactory
         self::$orchestrator = null;
     }
 
-    /** @param Closure(string): bool|null $beforeOutboundRequest */
+    /** Applies crawler dependencies and the optional outbound request callbacks.
+     *
+     * @param Closure(string): bool|null $beforeOutboundRequest
+     * @param Closure(string): bool|null $beforeRobotsRequest
+     * @param Closure(): void|null $onUnsupportedRedirect
+     */
     public static function configure(
         ?LoginCookieProvider $logins = null,
         ?CacheInterface $throttleCache = null,
         ?CacheInterface $responseCache = null,
         ?Closure $beforeOutboundRequest = null,
+        ?Closure $beforeRobotsRequest = null,
+        ?Closure $onUnsupportedRedirect = null,
     ): void {
         self::$loginCookieProvider = $logins;
         self::$throttleCache = $throttleCache;
         self::$responseCache = $responseCache;
         self::$beforeOutboundRequest = $beforeOutboundRequest;
+        self::$beforeRobotsRequest = $beforeRobotsRequest;
+        self::$onUnsupportedRedirect = $onUnsupportedRedirect;
         self::$fetchChain = null;
         self::$orchestrator = null;
     }
@@ -100,6 +118,8 @@ final class CrawlerXFactory
         self::$throttleCache = null;
         self::$responseCache = null;
         self::$beforeOutboundRequest = null;
+        self::$beforeRobotsRequest = null;
+        self::$onUnsupportedRedirect = null;
     }
 
     private static function defaultFetchChain(): FetchFallbackChain
@@ -111,7 +131,11 @@ final class CrawlerXFactory
             : new BrowserServiceProcessRunner($runtime->playwrightUrl);
         $cookies = new CookieHandoffStore();
         $sessions = new SessionStore();
-        $clientFactory = new ClientFactory(self::$beforeOutboundRequest);
+        $clientFactory = new ClientFactory(self::$beforeOutboundRequest, self::$onUnsupportedRedirect);
+        $robotsClientFactory = new ClientFactory(
+            self::$beforeRobotsRequest ?? self::$beforeOutboundRequest,
+            self::$onUnsupportedRedirect,
+        );
 
         $playwright = new PlaywrightFamilyFetchHandler($runtime, $browserRunner);
         $http = new HttpFetchHandler($clientFactory, $cookies, $sessions, self::$loginCookieProvider);
@@ -119,7 +143,7 @@ final class CrawlerXFactory
             ? new ResponseCache($http, self::$responseCache, $runtime->responseCacheTtlSeconds)
             : $http;
         $robotsGuard = new RobotsGuard(
-            fetchRobotsTxt: static function (string $url) use ($clientFactory, $runtime): ?string {
+            fetchRobotsTxt: static function (string $url) use ($robotsClientFactory, $runtime): ?string {
                 // A faked client serves fixtures and records every request; there is no robots.txt
                 // fixture, so skip the fetch and treat the host as unrestricted (fail-open).
                 if (ClientBuilder::isFaked()) {
@@ -127,7 +151,7 @@ final class CrawlerXFactory
                 }
 
                 try {
-                    $response = $clientFactory->factory([
+                    $response = $robotsClientFactory->factory([
                         'timeout' => 10,
                         'headers' => $runtime->userAgent !== null && $runtime->userAgent !== ''
                             ? ['User-Agent' => $runtime->userAgent]

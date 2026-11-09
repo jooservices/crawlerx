@@ -18,12 +18,18 @@ final class ClientFactory
     /** @var array<string, HttpClient> */
     private static array $clients = [];
 
-    /** @param Closure(string): bool|null $beforeOutboundRequest */
-    public function __construct(private readonly ?Closure $beforeOutboundRequest = null)
-    {
+    /**
+     * @param Closure(string): bool|null $beforeOutboundRequest
+     * @param Closure(): void|null $onUnsupportedRedirect
+     */
+    public function __construct(
+        private readonly ?Closure $beforeOutboundRequest = null,
+        private readonly ?Closure $onUnsupportedRedirect = null,
+    ) {
     }
 
-    /**
+    /** Builds a crawl HTTP client with site-specific request options.
+     *
      * @param  array<string, mixed>  $options
      */
     public function factory(array $options = [], ?string $site = null): CrawlHttpClient
@@ -50,10 +56,11 @@ final class ClientFactory
 
         $client = $this->client($options, $site);
 
-        return new ClientCrawlHttpClient($client, $headers, $this->beforeOutboundRequest);
+        return new ClientCrawlHttpClient($client, $headers, $this->beforeOutboundRequest, $this->onUnsupportedRedirect);
     }
 
-    /**
+    /** Resolves or creates the shared transport for a site's HTTP options.
+     *
      * @param  array<string, mixed>  $options
      */
     private function client(array $options, ?string $site): HttpClient
@@ -129,7 +136,8 @@ final class ClientFactory
         return is_string($env) && trim($env) !== '' ? trim($env) : null;
     }
 
-    /**
+    /** Creates a stable cache key for equivalent site transport settings.
+     *
      * @param  array<string, mixed>  $options
      */
     private function cacheKey(?string $site, array $options): ?string

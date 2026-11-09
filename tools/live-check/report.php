@@ -33,8 +33,10 @@ Usage:
 
 Checks one listing and one detail sample per adapter when available. A gallery
 sample is used for the detail check when an adapter has no detail sample.
-Requests to the same host are at least 10 seconds apart. Reports are written
-to build/live-check/ as Markdown and JSON files.
+Each adapter has at most two content requests, including follow-ups, retries,
+and redirect hops. The cached robots lookup is also paced but does not consume
+that allowance. Requests to the same host are at least 10 seconds apart.
+Reports are written to build/live-check/ as Markdown and JSON files.
 
 Options:
   --only=SLUG       Check one adapter manifest
@@ -133,6 +135,12 @@ CrawlerXFactory::configure(
     beforeOutboundRequest: static function (string $url) use ($requestLimiter): bool {
         return $requestLimiter->beforeRequest($url);
     },
+    beforeRobotsRequest: static function (string $url) use ($requestLimiter): bool {
+        return $requestLimiter->beforeRobotsRequest($url);
+    },
+    onUnsupportedRedirect: static function () use ($requestLimiter): void {
+        $requestLimiter->markUnsupportedRedirect();
+    },
 );
 $crawl = static function (array $sample) use ($proxy, $requestLimiter): \JOOservices\CrawlerX\Dto\CrawlOutcomeDto {
     try {
@@ -150,6 +158,9 @@ $crawl = static function (array $sample) use ($proxy, $requestLimiter): \JOOserv
             },
         );
     } catch (Throwable $exception) {
+        if ($requestLimiter->wasRedirectUnsupported($sample['slug'])) {
+            throw new LiveCheckRequestLimitException(reason: 'redirect_unsupported', previous: $exception);
+        }
         if ($requestLimiter->wasBudgetExceeded($sample['slug'])) {
             throw new LiveCheckRequestLimitException(previous: $exception);
         }
@@ -157,7 +168,10 @@ $crawl = static function (array $sample) use ($proxy, $requestLimiter): \JOOserv
         throw $exception;
     }
 
-    if (! $outcome->ok && $requestLimiter->wasBudgetExceeded($sample['slug'])) {
+    if ($requestLimiter->wasRedirectUnsupported($sample['slug'])) {
+        throw new LiveCheckRequestLimitException(reason: 'redirect_unsupported');
+    }
+    if ($requestLimiter->wasBudgetExceeded($sample['slug'])) {
         throw new LiveCheckRequestLimitException();
     }
 
@@ -187,6 +201,7 @@ foreach (['ok', 'empty', 'blocked', 'parse-error', 'network', 'not-checked'] as 
 
 exit(count(array_filter($results, static fn(array $result): bool => $result['status'] !== 'ok')) === 0 ? 0 : 1);
 
+/** Prints a CLI usage error and exits with the usage status. */
 function failUsage(string $message): never
 {
     fwrite(STDERR, $message . "\nRun with --help for usage.\n");

@@ -8,7 +8,7 @@ use Closure;
 
 final class LiveCheckRequestLimiter
 {
-    private const MAX_REQUESTS_PER_ADAPTER = 2;
+    private const MAX_CONTENT_REQUESTS_PER_ADAPTER = 2;
 
     private const MIN_HOST_INTERVAL_NANOSECONDS = 10_000_000_000;
 
@@ -23,6 +23,9 @@ final class LiveCheckRequestLimiter
     /** @var array<string, bool> */
     private array $budgetExceededByAdapter = [];
 
+    /** @var array<string, bool> */
+    private array $unsupportedRedirectByAdapter = [];
+
     /**
      * @param Closure(int): void $sleepMicroseconds
      * @param Closure(): int $clockNanoseconds
@@ -33,10 +36,18 @@ final class LiveCheckRequestLimiter
     ) {
     }
 
-    /** @template T @param Closure(): T $operation @return T */
+    /** Runs one sample crawl under the selected adapter's shared content request budget.
+     *
+     * @template T
+     * @param Closure(): T $operation
+     * @return T
+     */
     public function forAdapter(string $slug, Closure $operation): mixed
     {
         $previousSlug = $this->adapterSlug;
+        if ($previousSlug !== $slug) {
+            unset($this->unsupportedRedirectByAdapter[$slug]);
+        }
         $this->adapterSlug = $slug;
 
         try {
@@ -46,28 +57,41 @@ final class LiveCheckRequestLimiter
         }
     }
 
-    /** Returns false before sending when this adapter has exhausted its outbound request budget. */
+    /** Returns false before sending when this adapter has exhausted its content request budget. */
     public function beforeRequest(string $url): bool
     {
-        $slug = $this->adapterSlug;
-        $host = parse_url($url, PHP_URL_HOST);
-        if ($slug === null) {
-            return true;
-        }
+        return $this->permit($url, countForAdapter: true);
+    }
 
-        if (($this->requestCountByAdapter[$slug] ?? 0) >= self::MAX_REQUESTS_PER_ADAPTER) {
+    /** Paces the shared robots lookup without consuming a sample's content request allowance. */
+    public function beforeRobotsRequest(string $url): bool
+    {
+        return $this->permit($url, countForAdapter: false);
+    }
+
+    /** Paces the hostname and optionally counts the request against its adapter.
+     */
+    private function permit(string $url, bool $countForAdapter): bool
+    {
+        $slug = $this->adapterSlug;
+        if ($countForAdapter && $slug !== null
+            && ($this->requestCountByAdapter[$slug] ?? 0) >= self::MAX_CONTENT_REQUESTS_PER_ADAPTER
+        ) {
             $this->budgetExceededByAdapter[$slug] = true;
 
             return false;
         }
 
+        $host = parse_url($url, PHP_URL_HOST);
         if (! is_string($host) || $host === '') {
             return false;
         }
 
         $host = strtolower(rtrim($host, '.'));
         $this->waitForHost($host);
-        $this->requestCountByAdapter[$slug] = ($this->requestCountByAdapter[$slug] ?? 0) + 1;
+        if ($countForAdapter && $slug !== null) {
+            $this->requestCountByAdapter[$slug] = ($this->requestCountByAdapter[$slug] ?? 0) + 1;
+        }
         $this->lastRequestByHost[$host] = ($this->clockNanoseconds)();
 
         return true;
@@ -78,6 +102,19 @@ final class LiveCheckRequestLimiter
         return $this->budgetExceededByAdapter[$slug] ?? false;
     }
 
+    public function markUnsupportedRedirect(): void
+    {
+        if ($this->adapterSlug !== null) {
+            $this->unsupportedRedirectByAdapter[$this->adapterSlug] = true;
+        }
+    }
+
+    public function wasRedirectUnsupported(string $slug): bool
+    {
+        return $this->unsupportedRedirectByAdapter[$slug] ?? false;
+    }
+
+    /** Sleeps until the hostname's previous outbound request is ten seconds old. */
     private function waitForHost(string $host): void
     {
         if (! isset($this->lastRequestByHost[$host])) {

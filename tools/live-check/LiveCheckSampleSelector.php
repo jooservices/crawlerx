@@ -9,9 +9,10 @@ use JOOservices\CrawlerX\Enums\CrawlType;
 
 final class LiveCheckSampleSelector
 {
-    /**
+    /** Selects the preferred listing and detail samples declared by a manifest.
+     *
      * @param array<string, mixed> $manifest
-     * @return list<array{slug: string, adapter_name: string, role: string, name: string, type: CrawlType, url: string}>
+     * @return list<array{slug: string, adapter_name: string, role: string, name: string, type: CrawlType, url: string, fallback_required: bool}>
      */
     public function select(array $manifest): array
     {
@@ -22,6 +23,8 @@ final class LiveCheckSampleSelector
         }
 
         $runtime = is_array($manifest['runtime'] ?? null) ? $manifest['runtime'] : [];
+        $fetch = is_array($runtime['fetch'] ?? null) ? $runtime['fetch'] : [];
+        $fallbackRequired = ($fetch['profile'] ?? 'adaptive') !== 'http_only';
         $samples = is_array($runtime['fixtureSamples'] ?? null) ? $runtime['fixtureSamples'] : [];
         $live = is_array($runtime['live'] ?? null) ? $runtime['live'] : [];
         $adapter = is_array($manifest['adapter'] ?? null) ? $manifest['adapter'] : [];
@@ -45,6 +48,7 @@ final class LiveCheckSampleSelector
                 'name' => $sample['name'],
                 'type' => $sample['type'],
                 'url' => $sample['url'],
+                'fallback_required' => $fallbackRequired,
             ];
         }
 
@@ -55,7 +59,8 @@ final class LiveCheckSampleSelector
         return $selected;
     }
 
-    /**
+    /** Validates and normalizes an optional live sample override.
+     *
      * @param mixed $sample
      * @return array{name: string, type: CrawlType, url: string}|null
      */
@@ -89,7 +94,8 @@ final class LiveCheckSampleSelector
         return ['name' => $name, 'type' => $type, 'url' => trim($sample['url'])];
     }
 
-    /**
+    /** Selects the first fixture sample matching the role's preferred crawl types.
+     *
      * @param list<mixed> $samples
      * @return array{name: string, type: CrawlType, url: string}|null
      */
@@ -116,7 +122,10 @@ final class LiveCheckSampleSelector
         return null;
     }
 
-    /** @return list<CrawlType> */
+    /** Returns the crawl types allowed to fill a listing or detail role.
+     *
+     * @return list<CrawlType>
+     */
     private function roleTypes(string $role): array
     {
         return $role === 'listing'

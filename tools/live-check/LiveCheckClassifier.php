@@ -11,16 +11,25 @@ use Throwable;
 
 final class LiveCheckClassifier
 {
-    /**
+    /** Classifies crawler outcomes while keeping unavailable fetch fallbacks inconclusive.
+     *
      * @return array{status: string, item_count: int, error_code: ?string}
      */
-    public function classify(CrawlOutcomeDto|Throwable $outcome): array
+    public function classify(CrawlOutcomeDto|Throwable $outcome, bool $fallbackUnavailable = false): array
     {
         if ($outcome instanceof Throwable) {
+            if ($fallbackUnavailable) {
+                return ['status' => 'not-checked', 'item_count' => 0, 'error_code' => 'fallback_unsupported'];
+            }
+
             return ['status' => 'network', 'item_count' => 0, 'error_code' => 'network'];
         }
 
         if (! $outcome->ok) {
+            if ($fallbackUnavailable) {
+                return ['status' => 'not-checked', 'item_count' => 0, 'error_code' => 'fallback_unsupported'];
+            }
+
             $code = $outcome->error?->code;
 
             return [
@@ -45,6 +54,7 @@ final class LiveCheckClassifier
         return ['status' => 'parse-error', 'item_count' => 0, 'error_code' => 'missing_result'];
     }
 
+    /** Maps crawler errors into the live report's health categories. */
     private function failureStatus(?CrawlErrorCode $code): string
     {
         return match ($code) {
@@ -66,6 +76,7 @@ final class LiveCheckClassifier
         };
     }
 
+    /** Checks whether a parsed detail result contains an identifying value. */
     private function itemHasIdentity(CrawlItemResultDto $item): bool
     {
         $entity = $item->meta[$item->entityType] ?? null;

@@ -31,7 +31,25 @@ final class LiveCheckSampleSelectorTest extends TestCase
         self::assertCount(2, $samples);
         self::assertSame(['listing', 'detail'], array_column($samples, 'role'));
         self::assertSame(CrawlType::Listing, $samples[0]['type']);
+        self::assertTrue($samples[0]['fallback_required']);
         self::assertSame('https://example.test/detail', $samples[1]['url']);
+    }
+
+    public function test_it_marks_http_only_profiles_as_not_requiring_a_fallback(): void
+    {
+        $samples = (new LiveCheckSampleSelector())->select([
+            'slug' => 'http-site',
+            'name' => 'HTTP Site',
+            'adapter' => ['capabilities' => ['listing']],
+            'runtime' => [
+                'fetch' => ['profile' => 'http_only'],
+                'fixtureSamples' => [
+                    ['url' => 'https://example.test/list', 'name' => 'list.html', 'type' => 'listing'],
+                ],
+            ],
+        ]);
+
+        self::assertFalse($samples[0]['fallback_required']);
     }
 
     public function test_it_uses_optional_live_samples_and_gallery_when_detail_is_unavailable(): void

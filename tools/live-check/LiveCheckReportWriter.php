@@ -12,7 +12,8 @@ final class LiveCheckReportWriter
 {
     private const STATUSES = ['ok', 'empty', 'blocked', 'parse-error', 'network', 'not-checked'];
 
-    /**
+    /** Renders the report rows as JSON and Markdown strings.
+     *
      * @param list<array{slug: string, adapter_name: string, sample_role: string, sample_name: string, sample_type: string, url: string, status: string, item_count: int, duration_ms: int, error_code: ?string}> $results
      * @return array{json: string, markdown: string}
      */
@@ -39,7 +40,8 @@ final class LiveCheckReportWriter
         ];
     }
 
-    /**
+    /** Writes the rendered reports to their timestamped output files.
+     *
      * @param list<array{slug: string, adapter_name: string, sample_role: string, sample_name: string, sample_type: string, url: string, status: string, item_count: int, duration_ms: int, error_code: ?string}> $results
      * @return array{json: string, markdown: string, json_path: string, markdown_path: string}
      */
@@ -63,7 +65,10 @@ final class LiveCheckReportWriter
         return [...$rendered, 'json_path' => $jsonPath, 'markdown_path' => $markdownPath];
     }
 
-    /** @param array<string, mixed> $report */
+    /** Builds the Markdown summary table for a rendered report.
+     *
+     * @param array<string, mixed> $report
+     */
     private function markdown(array $report): string
     {
         /** @var array<string, int> $summary */
@@ -102,6 +107,7 @@ final class LiveCheckReportWriter
         return implode("\n", $lines) . "\n";
     }
 
+    /** Escapes Markdown table separators and line breaks in one cell. */
     private function escapeCell(string $value): string
     {
         return str_replace(["\r", "\n", '|'], [' ', ' ', '\\|'], $value);

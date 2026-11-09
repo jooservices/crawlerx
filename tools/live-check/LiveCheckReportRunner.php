@@ -14,7 +14,7 @@ use Throwable;
 final class LiveCheckReportRunner
 {
     /**
-     * @param Closure(array{slug: string, adapter_name: string, role: string, name: string, type: \JOOservices\CrawlerX\Enums\CrawlType, url: string}): CrawlOutcomeDto $crawl
+     * @param Closure(array{slug: string, adapter_name: string, role: string, name: string, type: \JOOservices\CrawlerX\Enums\CrawlType, url: string, fallback_required?: bool}): CrawlOutcomeDto $crawl
      * @param Closure(int): void $sleepMicroseconds
      * @param Closure(): int $clockNanoseconds
      */
@@ -26,8 +26,9 @@ final class LiveCheckReportRunner
     ) {
     }
 
-    /**
-     * @param list<array{slug: string, adapter_name: string, role: string, name: string, type: \JOOservices\CrawlerX\Enums\CrawlType, url: string}> $samples
+    /** Runs selected sample crawls and returns their report rows.
+     *
+     * @param list<array{slug: string, adapter_name: string, role: string, name: string, type: \JOOservices\CrawlerX\Enums\CrawlType, url: string, fallback_required?: bool}> $samples
      * @return list<array{slug: string, adapter_name: string, sample_role: string, sample_name: string, sample_type: string, url: string, status: string, item_count: int, duration_ms: int, error_code: ?string}>
      */
     public function run(array $samples): array
@@ -53,15 +54,15 @@ final class LiveCheckReportRunner
 
                 try {
                     $outcome = ($this->crawl)($sample);
-                    $classification = $this->classifier->classify($outcome);
-                } catch (LiveCheckRequestLimitException) {
-                    $classification = ['status' => 'not-checked', 'item_count' => 0, 'error_code' => 'request_limit'];
+                    $classification = $this->classifier->classify($outcome, $sample['fallback_required'] ?? false);
+                } catch (LiveCheckRequestLimitException $exception) {
+                    $classification = ['status' => 'not-checked', 'item_count' => 0, 'error_code' => $exception->reason];
                 } catch (Throwable $exception) {
                     $classification = $exception instanceof NetworkExceptionInterface
-                        ? $this->classifier->classify($exception)
+                        ? $this->classifier->classify($exception, $sample['fallback_required'] ?? false)
                         : $this->classifier->classify(CrawlOutcomeDto::failure(
                             new CrawlErrorDto(CrawlErrorCode::Unknown, 'Unexpected live-check error.'),
-                        ));
+                        ), $sample['fallback_required'] ?? false);
                 }
 
                 $durationMs = (int) round((($this->clockNanoseconds)() - $startedAt) / 1_000_000);
@@ -84,7 +85,10 @@ final class LiveCheckReportRunner
         return $results;
     }
 
-    /** @param array<string, int> $lastRequestByHost */
+    /** Waits until a hostname's previous sample request is at least ten seconds old.
+     *
+     * @param array<string, int> $lastRequestByHost
+     */
     private function waitForHost(string $host, array $lastRequestByHost): void
     {
         if (! isset($lastRequestByHost[$host])) {
