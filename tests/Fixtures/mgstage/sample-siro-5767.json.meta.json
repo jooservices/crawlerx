@@ -1,0 +1,10 @@
+{
+    "source_url": "https://www.mgstage.com/sampleplayer/sampleRespons.php?pid=56d253a6-5c48-40c5-8859-6a848f9f16f0",
+    "final_url": "https://www.mgstage.com/sampleplayer/sampleRespons.php?pid=56d253a6-5c48-40c5-8859-6a848f9f16f0",
+    "captured_at": "2026-11-09T04:00:00.000Z",
+    "http_status": 200,
+    "content_hash": "837ced61763002351d8ea55c5caa56aa5dcd901b579fa6fb5d5861351c2d1651",
+    "target_type": "detail",
+    "fetch_method": "http",
+    "sanitized": false
+}

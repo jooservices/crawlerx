@@ -321,6 +321,7 @@ below come from each adapter's current manifest. To add a source, see
 | JAVLibrary | `javlibrary` | Yes | Yes | — | Yes | Yes |
 | JAVMenu | `javmenu` | Yes | Yes | — | Yes | Yes |
 | JavPhotos | `javphotos` | Yes | — | Yes | — | — |
+| MGStage (needs a Japan exit) | `mgstage` | Yes | Yes | — | — | — |
 | Minnano AV | `minnanoav` | Yes | Yes | — | Yes | Yes |
 | MissAV | `missav` | Yes | Yes | — | — | — |
 | Muramura | `muramura` | Yes | Yes | — | — | — |
