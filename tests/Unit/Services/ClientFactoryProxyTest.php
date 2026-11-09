@@ -70,4 +70,15 @@ final class ClientFactoryProxyTest extends TestCase
 
         self::assertSame('http://p:1', $applied->http->proxy);
     }
+
+    public function test_a_blank_request_proxy_falls_back_to_the_profile_proxy(): void
+    {
+        $handler = new \JOOservices\CrawlerX\Fetch\Handlers\HttpFetchHandler(new ClientFactory());
+        $select = new \ReflectionMethod($handler, 'proxy');
+
+        self::assertSame('http://profile:1', $select->invoke($handler, '  ', 'http://profile:1'));
+        self::assertSame('http://request:1', $select->invoke($handler, ' http://request:1 ', 'http://profile:1'));
+        self::assertNull($select->invoke($handler, '', ' '));
+        self::assertNull($select->invoke($handler, null, null));
+    }
 }
