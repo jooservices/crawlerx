@@ -6,6 +6,7 @@ WORKDIR /app
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
 COPY package.json package-lock.json ./
+COPY tools/vendor/deepmerge ./tools/vendor/deepmerge
 
 RUN --mount=type=cache,target=/root/.npm,sharing=locked \
     npm ci --ignore-scripts \
@@ -22,6 +23,7 @@ ENV NODE_ENV=production \
 WORKDIR /app
 
 COPY --from=dependencies --chown=node:node /app/node_modules ./node_modules
+COPY --from=dependencies --chown=node:node /app/tools/vendor/deepmerge ./tools/vendor/deepmerge
 COPY --from=dependencies --chown=node:node /ms-playwright /ms-playwright
 
 RUN npx playwright install-deps chromium \
