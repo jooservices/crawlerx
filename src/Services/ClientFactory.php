@@ -19,6 +19,16 @@ final class ClientFactory
     private static array $clients = [];
 
     /**
+     * @param Closure(string): bool|null $beforeOutboundRequest
+     * @param Closure(): void|null $onUnsupportedRedirect
+     */
+    public function __construct(
+        private readonly ?Closure $beforeOutboundRequest = null,
+        private readonly ?Closure $onUnsupportedRedirect = null,
+    ) {
+    }
+
+    /**
      * @param  array<string, mixed>  $options
      */
     public function factory(array $options = [], ?string $site = null): CrawlHttpClient
@@ -45,7 +55,7 @@ final class ClientFactory
 
         $client = $this->client($options, $site);
 
-        return new ClientCrawlHttpClient($client, $headers);
+        return new ClientCrawlHttpClient($client, $headers, $this->beforeOutboundRequest, $this->onUnsupportedRedirect);
     }
 
     public static function boundedHttpClient(float $timeout, int $maxResponseBytes): HttpClient

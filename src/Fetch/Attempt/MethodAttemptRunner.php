@@ -8,6 +8,7 @@ use Closure;
 use JOOservices\CrawlerX\Contracts\CacheAwareFetchMethodHandler;
 use JOOservices\CrawlerX\Contracts\FetchMethodHandler;
 use JOOservices\CrawlerX\Dto\FetchResultDto;
+use JOOservices\CrawlerX\Enums\CrawlErrorCode;
 use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Exceptions\RobotsDisallowedException;
 use JOOservices\CrawlerX\Fetch\Budget\FetchBudget;
@@ -34,6 +35,8 @@ final class MethodAttemptRunner
         private readonly PreFetchGuard $guard,
         private readonly Closure $retrySleeper,
         private readonly int $maxTransientRetries,
+        /** @var Closure(string): bool|null */
+        private readonly ?Closure $beforeOutboundRequest = null,
     ) {
         $this->transientRetry = new TransientRetry();
     }
@@ -111,6 +114,7 @@ final class MethodAttemptRunner
         }
     }
 
+    /** Runs one fetch method after guards and applies the response's ready-marker check. */
     private function fetchWithHandler(FetchMethodHandler $handler, FetchMethod $method, FetchRequest $request, FetchBudget $budget): FetchResultDto
     {
         $profile = SessionProfile::apply($request->profile, $request->options, $request->session, $request->loginCookies, $request->userAgent);
@@ -125,6 +129,27 @@ final class MethodAttemptRunner
         $blocked = $this->guard->check($request->url, $request->profile, $method, $budget);
         if ($blocked !== null) {
             return $blocked;
+        }
+
+        if (
+            $method !== FetchMethod::Http
+            && $this->beforeOutboundRequest !== null
+            && ! ($this->beforeOutboundRequest)($request->url)
+        ) {
+            return new FetchResultDto(
+                ok: false,
+                body: '',
+                status: 429,
+                methodUsed: $method,
+                elapsedMs: 0,
+                challengeDetected: false,
+                finalUrl: $request->url,
+                headers: [
+                    'Retry-After' => ['0'],
+                    'X-CrawlerX-Request-Limit' => ['exceeded'],
+                ],
+                error: CrawlErrorCode::RateLimited->value,
+            );
         }
 
         $result = $handler->fetch(

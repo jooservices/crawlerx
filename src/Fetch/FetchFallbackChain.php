@@ -57,6 +57,8 @@ final class FetchFallbackChain
         /** @var Closure(): (int|float)|null */
         private readonly ?Closure $budgetClock = null,
         private readonly bool $requireFlareEgressProxy = false,
+        /** @var Closure(string): bool|null */
+        private readonly ?Closure $beforeOutboundRequest = null,
     ) {
         $this->sessions = $sessions ?? new SessionStore();
         $this->circuit = new HostCircuitReporter($hostCircuit);
@@ -70,7 +72,8 @@ final class FetchFallbackChain
         return $this->cookies;
     }
 
-    /**
+    /** Runs the ordered fetch methods and returns the first acceptable result.
+     *
      * @param  list<FetchMethod>  $plan
      */
     public function fetch(
@@ -101,7 +104,12 @@ final class FetchFallbackChain
             $robotsDelaySeconds = $this->robotsGuard->crawlDelaySeconds($url, $request->userAgent ?? '');
         }
 
-        $runner = new MethodAttemptRunner(new PreFetchGuard($this->hostThrottle, $this->hostCircuit, $robotsDelaySeconds), $this->retrySleeper, $this->maxTransientRetries);
+        $runner = new MethodAttemptRunner(
+            new PreFetchGuard($this->hostThrottle, $this->hostCircuit, $robotsDelaySeconds),
+            $this->retrySleeper,
+            $this->maxTransientRetries,
+            $this->beforeOutboundRequest,
+        );
 
         foreach ($plan as $method) {
             $handler = $this->handlers[$method->value] ?? null;

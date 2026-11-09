@@ -34,6 +34,7 @@ use JOOservices\CrawlerX\Services\CrawlOrchestrator;
 use JOOservices\CrawlerX\Services\CrawlerXService;
 use JOOservices\CrawlerX\Services\UrlClassifier;
 use Psr\SimpleCache\CacheInterface;
+use Closure;
 use Throwable;
 
 final class CrawlerXFactory
@@ -48,6 +49,16 @@ final class CrawlerXFactory
 
     private static ?CacheInterface $responseCache = null;
 
+    /** @var Closure(string): bool|null */
+    private static ?Closure $beforeOutboundRequest = null;
+
+    /** @var Closure(string): bool|null */
+    private static ?Closure $beforeRobotsRequest = null;
+
+    /** @var Closure(): void|null */
+    private static ?Closure $onUnsupportedRedirect = null;
+
+    /** Builds the cached crawler orchestrator with the current factory configuration. */
     public static function create(): CrawlOrchestrator
     {
         if (self::$orchestrator instanceof CrawlOrchestrator) {
@@ -55,7 +66,10 @@ final class CrawlerXFactory
         }
 
         $manifests = new FileAdapterManifestRegistry();
-        $registry = new AdapterRegistry(new ClientFactory(), $manifests);
+        $registry = new AdapterRegistry(
+            new ClientFactory(self::$beforeOutboundRequest, self::$onUnsupportedRedirect),
+            $manifests,
+        );
         $registry->registerFromManifests($manifests);
 
         $service = new CrawlerXService($registry, new AdapterExecutor());
@@ -70,24 +84,38 @@ final class CrawlerXFactory
         return self::$orchestrator;
     }
 
+    /** Uses a custom fetch chain and invalidates the cached orchestrator. */
     public static function useFetchChain(FetchFallbackChain $chain): void
     {
         self::$fetchChain = $chain;
         self::$orchestrator = null;
     }
 
+    /** Applies crawler dependencies and the optional outbound request callbacks.
+     *
+     * @param Closure(string): bool|null $beforeOutboundRequest
+     * @param Closure(string): bool|null $beforeRobotsRequest
+     * @param Closure(): void|null $onUnsupportedRedirect
+     */
     public static function configure(
         ?LoginCookieProvider $logins = null,
         ?CacheInterface $throttleCache = null,
         ?CacheInterface $responseCache = null,
+        ?Closure $beforeOutboundRequest = null,
+        ?Closure $beforeRobotsRequest = null,
+        ?Closure $onUnsupportedRedirect = null,
     ): void {
         self::$loginCookieProvider = $logins;
         self::$throttleCache = $throttleCache;
         self::$responseCache = $responseCache;
+        self::$beforeOutboundRequest = $beforeOutboundRequest;
+        self::$beforeRobotsRequest = $beforeRobotsRequest;
+        self::$onUnsupportedRedirect = $onUnsupportedRedirect;
         self::$fetchChain = null;
         self::$orchestrator = null;
     }
 
+    /** Clears configured dependencies and cached crawler state. */
     public static function reset(): void
     {
         self::$orchestrator = null;
@@ -95,8 +123,12 @@ final class CrawlerXFactory
         self::$loginCookieProvider = null;
         self::$throttleCache = null;
         self::$responseCache = null;
+        self::$beforeOutboundRequest = null;
+        self::$beforeRobotsRequest = null;
+        self::$onUnsupportedRedirect = null;
     }
 
+    /** Builds the default HTTP, browser, solver, and guard chain. */
     private static function defaultFetchChain(): FetchFallbackChain
     {
         $runtime = FetchRuntimeConfig::fromEnvironment();
@@ -107,11 +139,14 @@ final class CrawlerXFactory
             : new BrowserServiceProcessRunner($runtime->playwrightUrl, maxResponseBytes: $runtime->maxResponseBytes);
         $cookies = new CookieHandoffStore();
         $sessions = new SessionStore();
-        $clientFactory = new ClientFactory();
+        $clientFactory = new ClientFactory(self::$beforeOutboundRequest, self::$onUnsupportedRedirect);
+        $robotsClientFactory = new ClientFactory(
+            self::$beforeRobotsRequest ?? self::$beforeOutboundRequest,
+        );
 
         $playwright = new PlaywrightFamilyFetchHandler($runtime, $browserRunner);
         $robotsGuard = new RobotsGuard(
-            fetchRobotsTxt: static function (string $url) use ($clientFactory, $runtime): ?string {
+            fetchRobotsTxt: static function (string $url) use ($robotsClientFactory, $runtime): ?string {
                 // A faked client serves fixtures and records every request; there is no robots.txt
                 // fixture, so skip the fetch and treat the host as unrestricted (fail-open).
                 if (ClientBuilder::isFaked()) {
@@ -119,7 +154,7 @@ final class CrawlerXFactory
                 }
 
                 try {
-                    $response = $clientFactory->factory([
+                    $response = $robotsClientFactory->factory([
                         'timeout' => 10,
                         'max_response_bytes' => $runtime->maxResponseBytes,
                         'allow_redirects' => false,
@@ -182,6 +217,6 @@ final class CrawlerXFactory
         ), hostCircuit: new HostCircuit(
             cache: self::$throttleCache,
             nodeId: $runtime->nodeId,
-        ), robotsGuard: $robotsGuard, requireFlareEgressProxy: true);
+        ), robotsGuard: $robotsGuard, beforeOutboundRequest: self::$beforeOutboundRequest, requireFlareEgressProxy: true);
     }
 }

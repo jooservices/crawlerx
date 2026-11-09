@@ -344,6 +344,25 @@ site downtime, blocking, region restrictions, or DOM changes.
 
 ## Live crawl
 
+### Adapter health report
+
+Run a manual health report across adapter samples. This performs live requests,
+spaces requests to each hostname by at least 10 seconds, and writes Markdown and
+JSON files to `build/live-check/`. It is not part of CI.
+
+```bash
+composer live-check:report
+composer live-check:report -- --only=javbus
+composer live-check:report -- --only=javbus --proxy=http://127.0.0.1:8080
+```
+
+`--proxy` sets CrawlerX's HTTP fetch proxy. Browser and solver sidecars use
+their own proxy configuration.
+
+The report checks at most one listing and one detail sample for each adapter
+that supports them. See [the health report guide](docs/testing/live-check-report.md)
+for sample selection and the optional manifest `runtime.live` override.
+
 The live tools read `PLAYWRIGHT_URL` and `FLARESOLVERR_URL` from `.env` (copy `.env.example`; real environment variables win) and start nothing themselves. Point `.env` at any running services. To use this project's own Docker services instead, start them and use the Docker values listed in `.env.example`:
 
 ```bash

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add a manual live health report for adapter samples with per-host pacing, a two-outbound-request budget including robots and redirects, accurate failure classifications, fallback-aware challenge results, optional HTTP proxy routing, and Markdown/JSON output (JOOXCR-474).
 - Add a Keep a Changelog structure check via `composer check:changelog` (JOOXCR-484).
 - Add a changed-file test runner with adapter, fetch and fixture targeting plus full-suite fallback (`composer test:changed`, `make test-changed`) (JOOXCR-473).
 - Add `composer check:fixtures-meta` to validate captured fixture provenance metadata, with a baseline for known legacy offenders (JOOXCR-485).
