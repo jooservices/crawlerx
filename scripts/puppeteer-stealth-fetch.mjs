@@ -4,6 +4,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { chromium } from 'playwright';
 import { assertSafeBrowserUrl, SsrfBlockedError } from './ssrf-guard.mjs';
 import { createSsrfProxyServer } from './ssrf-proxy.mjs';
+import { assertResponseBodyWithinLimit, configuredMaxResponseBytes, ResponseBodyTooLargeError } from './fetch-limits.mjs';
 
 const args = process.argv.slice(2);
 let configPath = '';
@@ -58,7 +59,8 @@ try {
     throw error;
 }
 
-const ssrfProxy = await createSsrfProxyServer();
+const maximumResponseBytes = configuredMaxResponseBytes(config.maxResponseBytes);
+const ssrfProxy = await createSsrfProxyServer({ maxResponseBytes: maximumResponseBytes });
 let ssrfViolation = false;
 let ssrfError = null;
 let browser = null;
@@ -120,6 +122,9 @@ try {
     if (ssrfViolation) {
         throw ssrfError ?? ssrfProxy.blockedError() ?? new SsrfBlockedError();
     }
+    if (ssrfProxy.wasResponseTooLarge()) {
+        throw new ResponseBodyTooLargeError();
+    }
 
     try {
         const ageForm = await page.$('#ageVerify form#form1');
@@ -171,6 +176,10 @@ try {
     await page.evaluate(() => window.scrollTo(0, Math.max(document.body.scrollHeight / 2, 0)));
     await new Promise((resolve) => setTimeout(resolve, 1000));
     const html = await page.content();
+    assertResponseBodyWithinLimit(html, maximumResponseBytes);
+    if (ssrfProxy.wasResponseTooLarge()) {
+        throw new ResponseBodyTooLargeError();
+    }
     if (ssrfViolation) {
         throw ssrfError ?? ssrfProxy.blockedError() ?? new SsrfBlockedError();
     }
@@ -199,14 +208,15 @@ try {
     const blockedError = error instanceof SsrfBlockedError
         ? error
         : ssrfError ?? ssrfProxy.blockedError();
+    const responseTooLarge = error?.code === 'response_too_large' || ssrfProxy.wasResponseTooLarge();
     console.log(JSON.stringify({
-        error: ssrfBlocked ? 'ssrf_blocked' : (error instanceof Error ? error.message : String(error)),
+        error: ssrfBlocked ? 'ssrf_blocked' : responseTooLarge ? 'response_too_large' : 'browser_fetch_failed',
         ...(ssrfBlocked ? {
             errorCode: 'ssrf_blocked',
             ssrfReason: blockedError?.reason ?? 'blocked',
             ssrfHostname: blockedError?.hostname ?? null,
         } : {}),
-        status: ssrfBlocked ? 403 : 1,
+        status: ssrfBlocked ? 403 : responseTooLarge ? 413 : 1,
         elapsedMs: Date.now() - started,
         challenge: false,
     }));

@@ -8,12 +8,14 @@ import { tmpdir } from 'node:os';
 import { chromium } from 'playwright';
 import { fetchWithBrowser } from './playwright-fetch.mjs';
 import { assertSafeBrowserUrl, SsrfBlockedError } from './ssrf-guard.mjs';
+import { configuredMaxResponseBytes } from './fetch-limits.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const port = Number.parseInt(process.env.PLAYWRIGHT_PORT ?? '3000', 10);
 // PLAYWRIGHT_HOST: bind address. 0.0.0.0 inside a container; 127.0.0.1 on a host that is reached through a tunnel.
 const listenHost = process.env.PLAYWRIGHT_HOST?.trim() || '0.0.0.0';
 const maxRequestBytes = 1024 * 1024;
+const maxResponseBytes = configuredMaxResponseBytes();
 const maxConcurrency = positiveInteger(process.env.CRAWLERX_BROWSER_MAX_CONCURRENCY, 2);
 const maxQueue = nonNegativeInteger(process.env.CRAWLERX_BROWSER_MAX_QUEUE, 8);
 const requestTimeoutMs = positiveInteger(process.env.CRAWLERX_BROWSER_REQUEST_TIMEOUT_MS, 120000);
@@ -127,6 +129,7 @@ function killProcessTree(child) {
 
 function executePuppeteer(config) {
     return new Promise((resolvePromise) => {
+        const maxChildOutputBytes = configuredMaxResponseBytes(config.maxResponseBytes) * 6 + 65_536;
         const directory = mkdtempSync(join(tmpdir(), 'crawlerx-browser-'));
         const configPath = join(directory, 'config.json');
         writeFileSync(configPath, JSON.stringify(config));
@@ -140,14 +143,33 @@ function executePuppeteer(config) {
         let stderr = '';
         let timedOut = false;
         let settled = false;
+        let outputTooLarge = false;
+        let stdoutBytes = 0;
+        let stderrBytes = 0;
         let forceKill;
         const timeout = setTimeout(() => {
             timedOut = true;
             forceKill = killProcessTree(child);
         }, requestTimeoutMs);
 
-        child.stdout.on('data', (chunk) => { stdout += chunk; });
-        child.stderr.on('data', (chunk) => { stderr += chunk; });
+        child.stdout.on('data', (chunk) => {
+            if (stdoutBytes + chunk.length > maxChildOutputBytes) {
+                outputTooLarge = true;
+                forceKill ??= killProcessTree(child);
+                return;
+            }
+            stdoutBytes += chunk.length;
+            stdout += chunk;
+        });
+        child.stderr.on('data', (chunk) => {
+            if (stderrBytes + chunk.length > 1024 * 1024) {
+                outputTooLarge = true;
+                forceKill ??= killProcessTree(child);
+                return;
+            }
+            stderrBytes += chunk.length;
+            stderr += chunk;
+        });
         child.on('error', (error) => {
             if (settled) {
                 return;
@@ -176,9 +198,9 @@ function executePuppeteer(config) {
             }
             rmSync(directory, { recursive: true, force: true });
             resolvePromise({
-                exitCode: timedOut ? 124 : code ?? 1,
-                stderr: timedOut && stderr === '' ? 'browser request timed out' : stderr,
-                stdout,
+                exitCode: outputTooLarge ? 1 : timedOut ? 124 : code ?? 1,
+                stderr: outputTooLarge ? 'response_too_large' : timedOut && stderr === '' ? 'browser request timed out' : stderr,
+                stdout: outputTooLarge ? JSON.stringify({ error: 'response_too_large', status: 413 }) : stdout,
                 timedOut,
             });
         });
@@ -291,14 +313,27 @@ async function execute(scriptName, config) {
     }
 
     requestsSinceLaunch += 1;
+    const maxChildOutputBytes = configuredMaxResponseBytes(config.maxResponseBytes) * 6 + 65_536;
     let timer;
     let timedOut = false;
-    const operation = fetchWithBrowser(config, currentBrowser).then((payload) => ({
-        exitCode: payload.error && !payload.html ? 1 : 0,
-        stderr: payload.error && !payload.html ? payload.error : '',
-        stdout: JSON.stringify(payload),
-        timedOut: false,
-    }));
+    const operation = fetchWithBrowser({ ...config, maxResponseBytes: config.maxResponseBytes ?? maxResponseBytes }, currentBrowser).then((payload) => {
+        const stdout = JSON.stringify(payload);
+        if (Buffer.byteLength(stdout, 'utf8') > maxChildOutputBytes) {
+            return {
+                exitCode: 1,
+                stderr: 'response_too_large',
+                stdout: JSON.stringify({ error: 'response_too_large', status: 413 }),
+                timedOut: false,
+            };
+        }
+
+        return {
+            exitCode: payload.error && !payload.html ? 1 : 0,
+            stderr: payload.error && !payload.html ? payload.error : '',
+            stdout,
+            timedOut: false,
+        };
+    });
     const timeout = new Promise((resolvePromise) => {
         timer = setTimeout(async () => {
             timedOut = true;

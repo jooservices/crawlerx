@@ -78,6 +78,9 @@ final class ClientFactory
         }
 
         $proxy = self::resolveProxy($options);
+        if (! $isFaked) {
+            $builder = $builder->withRedirects($this->allowRedirects($options));
+        }
         if (! $isFaked && $proxy !== null) {
             $builder = $builder->withProxy($proxy);
         }
@@ -138,6 +141,7 @@ final class ClientFactory
                 : 30.0,
             'connect_timeout' => $this->connectTimeout($options),
             'verify_ssl' => is_bool($options['verify_ssl'] ?? null) ? $options['verify_ssl'] : true,
+            'allow_redirects' => $this->allowRedirects($options),
         ];
         if (is_string($options['base_uri'] ?? null)) {
             $transportOptions['base_uri'] = $options['base_uri'];
@@ -149,5 +153,31 @@ final class ClientFactory
         $optionsHash = hash('sha256', json_encode($transportOptions, JSON_THROW_ON_ERROR));
 
         return $site . ':' . $optionsHash;
+    }
+
+    /** @param array<string, mixed> $options
+     *  @return bool|array<string, mixed>
+     */
+    private function allowRedirects(array $options): bool|array
+    {
+        if (self::resolveProxy($options) !== null) {
+            return false;
+        }
+
+        $configured = $options['allow_redirects'] ?? null;
+        if (is_array($configured)) {
+            $redirectOptions = [];
+            foreach ($configured as $key => $value) {
+                if (! is_string($key)) {
+                    return false;
+                }
+
+                $redirectOptions[$key] = $value;
+            }
+
+            return $redirectOptions;
+        }
+
+        return is_bool($configured) ? $configured : true;
     }
 }

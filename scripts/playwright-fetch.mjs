@@ -6,6 +6,8 @@ import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { assertSafeBrowserUrl, SsrfBlockedError } from './ssrf-guard.mjs';
 import { createSsrfProxyServer } from './ssrf-proxy.mjs';
+import { assertResponseBodyWithinLimit, configuredMaxResponseBytes, ResponseBodyTooLargeError } from './fetch-limits.mjs';
+import { headersForOrigin, splitBrowserHeaders } from './request-security.mjs';
 
 export const DEFAULT_USER_AGENT =
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
@@ -158,11 +160,13 @@ export async function fetchWithBrowser(config, browser) {
     const navigationTimeoutMs = positiveTimeout(config.navigationTimeoutMs, 90000);
     const viewport = config.viewport ?? { width: 1440, height: 900 };
     const userAgent = config.userAgent ?? DEFAULT_USER_AGENT;
+    const maximumResponseBytes = configuredMaxResponseBytes(config.maxResponseBytes);
     const phases = [];
     let context = null;
     let ssrfProxy = null;
     let ssrfViolation = false;
     let ssrfError = null;
+    let sensitiveHeaders = {};
 
     const closePhase = (id, label, startMs, status = 'ok') => {
         phases.push({
@@ -176,6 +180,9 @@ export async function fetchWithBrowser(config, browser) {
 
     try {
         await assertSafeBrowserUrl(url);
+        const startOrigin = new URL(url).origin;
+        const configuredHeaders = splitBrowserHeaders(config.extraHttpHeaders ?? {});
+        sensitiveHeaders = configuredHeaders.sensitive;
         const contextStarted = Date.now();
         const contextOptions = {
             userAgent,
@@ -184,7 +191,7 @@ export async function fetchWithBrowser(config, browser) {
             serviceWorkers: 'block',
             extraHTTPHeaders: {
                 'Accept-Language': 'en-US,en;q=0.9',
-                ...(config.extraHttpHeaders ?? {}),
+                ...configuredHeaders.safe,
             },
         };
 
@@ -203,7 +210,7 @@ export async function fetchWithBrowser(config, browser) {
             };
         }
 
-        ssrfProxy = await createSsrfProxyServer();
+        ssrfProxy = await createSsrfProxyServer({ maxResponseBytes: maximumResponseBytes });
         contextOptions.proxy = { server: ssrfProxy.url };
         context = await browser.newContext(contextOptions);
         await context.route('**/*', async (route) => {
@@ -229,7 +236,10 @@ export async function fetchWithBrowser(config, browser) {
                 await route.abort();
                 return;
             }
-            await route.continue();
+            const sameOrigin = new URL(requestUrl).origin === startOrigin;
+            await route.continue({
+                headers: headersForOrigin(route.request().headers(), sensitiveHeaders, sameOrigin),
+            });
         });
         try {
             const hostname = new URL(url).hostname;
@@ -260,6 +270,9 @@ export async function fetchWithBrowser(config, browser) {
         });
         if (ssrfViolation || ssrfProxy.wasBlocked()) {
             throw ssrfError ?? ssrfProxy.blockedError() ?? new SsrfBlockedError();
+        }
+        if (ssrfProxy.wasResponseTooLarge()) {
+            throw new ResponseBodyTooLargeError();
         }
         closePhase('navigation', 'Load page (domcontentloaded)', navigationStarted);
 
@@ -309,8 +322,12 @@ export async function fetchWithBrowser(config, browser) {
 
         const extractStarted = Date.now();
         const html = await page.content();
+        assertResponseBodyWithinLimit(html, maximumResponseBytes);
         if (ssrfProxy.wasBlocked()) {
             throw ssrfError ?? ssrfProxy.blockedError() ?? new SsrfBlockedError();
+        }
+        if (ssrfProxy.wasResponseTooLarge()) {
+            throw new ResponseBodyTooLargeError();
         }
         const finalUrl = page.url();
         const pageTitle = await page.title();
@@ -367,6 +384,14 @@ export async function fetchWithBrowser(config, browser) {
                 challenge: false,
                 ssrfReason: blockedError?.reason ?? 'blocked',
                 ssrfHostname: blockedError?.hostname ?? null,
+            };
+        }
+        if (error?.code === 'response_too_large' || ssrfProxy?.wasResponseTooLarge()) {
+            return {
+                error: 'response_too_large',
+                status: 413,
+                elapsedMs: Date.now() - started,
+                challenge: false,
             };
         }
         return {

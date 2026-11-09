@@ -1,7 +1,9 @@
 import { connect, isIP } from 'node:net';
+import { Transform } from 'node:stream';
 import { createServer, request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
 import { assertSafeBrowserUrl, SsrfBlockedError } from './ssrf-guard.mjs';
+import { configuredMaxResponseBytes } from './fetch-limits.mjs';
 
 const hopByHopHeaderNames = new Set([
     'connection',
@@ -37,10 +39,14 @@ function stripHopByHopHeaders(headers) {
 }
 
 /** Start a loopback-only egress proxy for one browser context/process. */
-export async function createSsrfProxyServer({ assertSafeUrl = assertSafeBrowserUrl } = {}) {
+export async function createSsrfProxyServer({
+    assertSafeUrl = assertSafeBrowserUrl,
+    maxResponseBytes = configuredMaxResponseBytes(),
+} = {}) {
     const sockets = new Set();
     let blocked = false;
     let blockedError = null;
+    let responseTooLarge = false;
     let closed = false;
     const server = createServer((request, response) => {
         void forwardHttpRequest(request, response);
@@ -132,13 +138,38 @@ export async function createSsrfProxyServer({ assertSafeUrl = assertSafeBrowserU
             headers,
             lookup: pinnedLookup(resolved.addresses),
         }, (upstream) => {
+            const contentLength = upstream.headers['content-length'];
+            if (typeof contentLength === 'string' && /^\d+$/.test(contentLength) && Number(contentLength) > maxResponseBytes) {
+                responseTooLarge = true;
+                upstream.resume();
+                response.writeHead(413, { Connection: 'close', 'Content-Length': '0' });
+                response.end();
+                return;
+            }
+
             response.writeHead(
                 upstream.statusCode ?? 502,
                 upstream.statusMessage,
                 stripHopByHopHeaders(upstream.headers),
             );
             upstream.on('error', () => response.destroy());
-            upstream.pipe(response);
+            let bytes = 0;
+            const limiter = new Transform({
+                transform(chunk, encoding, callback) {
+                    bytes += chunk.length;
+                    if (bytes > maxResponseBytes) {
+                        responseTooLarge = true;
+                        callback(new Error('response_too_large'));
+                        return;
+                    }
+                    callback(null, chunk);
+                },
+            });
+            limiter.on('error', () => {
+                upstream.destroy();
+                response.destroy();
+            });
+            upstream.pipe(limiter).pipe(response);
         });
         outbound.on('socket', trackSocket);
         response.on('error', () => outbound.destroy());
@@ -187,7 +218,20 @@ export async function createSsrfProxyServer({ assertSafeUrl = assertSafeBrowserU
             }
             clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
             if (head.length > 0) upstream.write(head);
-            clientSocket.pipe(upstream).pipe(clientSocket);
+            let responseBytes = 0;
+            upstream.on('data', (chunk) => {
+                responseBytes += chunk.length;
+                if (responseBytes > maxResponseBytes) {
+                    responseTooLarge = true;
+                    upstream.destroy();
+                    clientSocket.destroy();
+                    return;
+                }
+                if (!clientSocket.destroyed) {
+                    clientSocket.write(chunk);
+                }
+            });
+            clientSocket.pipe(upstream);
         });
         upstream.once('error', () => {
             if (!clientSocket.destroyed) {
@@ -242,14 +286,57 @@ export async function createSsrfProxyServer({ assertSafeUrl = assertSafeBrowserU
             }
             clientSocket.write('\r\n');
             if (head.length > 0) upstreamSocket.write(head);
+            let responseBytes = upstreamHead.length;
+            if (responseBytes > maxResponseBytes) {
+                responseTooLarge = true;
+                upstreamSocket.destroy();
+                clientSocket.destroy();
+                return;
+            }
             if (upstreamHead.length > 0) clientSocket.write(upstreamHead);
-            clientSocket.pipe(upstreamSocket).pipe(clientSocket);
+            upstreamSocket.on('data', (chunk) => {
+                responseBytes += chunk.length;
+                if (responseBytes > maxResponseBytes) {
+                    responseTooLarge = true;
+                    upstreamSocket.destroy();
+                    clientSocket.destroy();
+                    return;
+                }
+                if (!clientSocket.destroyed) {
+                    clientSocket.write(chunk);
+                }
+            });
+            clientSocket.pipe(upstreamSocket);
         });
         outbound.on('response', (upstreamResponse) => {
+            const contentLength = upstreamResponse.headers['content-length'];
+            if (typeof contentLength === 'string' && /^\d+$/.test(contentLength) && Number(contentLength) > maxResponseBytes) {
+                responseTooLarge = true;
+                upstreamResponse.resume();
+                clientSocket.end('HTTP/1.1 413 Payload Too Large\r\nConnection: close\r\nContent-Length: 0\r\n\r\n');
+                return;
+            }
+
             const status = upstreamResponse.statusCode ?? 502;
             const reason = upstreamResponse.statusMessage ?? 'Bad Gateway';
             clientSocket.write(`HTTP/1.1 ${status} ${reason}\r\nConnection: close\r\n\r\n`);
-            upstreamResponse.pipe(clientSocket);
+            let bytes = 0;
+            const limiter = new Transform({
+                transform(chunk, encoding, callback) {
+                    bytes += chunk.length;
+                    if (bytes > maxResponseBytes) {
+                        responseTooLarge = true;
+                        callback(new Error('response_too_large'));
+                        return;
+                    }
+                    callback(null, chunk);
+                },
+            });
+            limiter.on('error', () => {
+                upstreamResponse.destroy();
+                clientSocket.destroy();
+            });
+            upstreamResponse.pipe(limiter).pipe(clientSocket);
         });
         outbound.on('error', () => clientSocket.end('HTTP/1.1 502 Bad Gateway\r\nConnection: close\r\n\r\n'));
         outbound.end();
@@ -259,6 +346,7 @@ export async function createSsrfProxyServer({ assertSafeUrl = assertSafeBrowserU
         url: `http://127.0.0.1:${address.port}`,
         wasBlocked: () => blocked,
         blockedError: () => blockedError,
+        wasResponseTooLarge: () => responseTooLarge,
         close: async () => {
             if (closed) return;
             closed = true;

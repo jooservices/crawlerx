@@ -129,6 +129,14 @@ final class FetchFallbackChain
 
             $run->last = $result->withAttempts($run->attempts);
             $run->sawChallenge = $run->sawChallenge || $result->challengeDetected;
+            if (
+                $result->finalUrl !== null
+                && $result->finalUrl !== $request->url
+                && $this->robotsGuard !== null
+                && $this->respectsRobots($profile)
+            ) {
+                $this->robotsGuard->assertAllowed($result->finalUrl, $request->userAgent ?? '');
+            }
             $this->rejectIfFinal($result, $run->last, $request->url, $host);
 
             if ($result->challengeDetected && $request->session !== null) {

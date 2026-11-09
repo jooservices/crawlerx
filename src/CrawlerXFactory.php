@@ -21,6 +21,8 @@ use JOOservices\CrawlerX\Fetch\Handlers\HttpFetchHandler;
 use JOOservices\CrawlerX\Fetch\Handlers\PlaywrightFamilyFetchHandler;
 use JOOservices\CrawlerX\Fetch\Handlers\PuppeteerStealthFetchHandler;
 use JOOservices\CrawlerX\Fetch\ProcOpenProcessRunner;
+use JOOservices\CrawlerX\Fetch\ResponseBodyReader;
+use JOOservices\CrawlerX\Fetch\ResponseBodyTooLargeException;
 use JOOservices\CrawlerX\Fetch\Session\CookieHandoffStore;
 use JOOservices\CrawlerX\Fetch\Session\SessionStore;
 use JOOservices\CrawlerX\Registry\AdapterRegistry;
@@ -97,16 +99,16 @@ final class CrawlerXFactory
     private static function defaultFetchChain(): FetchFallbackChain
     {
         $runtime = FetchRuntimeConfig::fromEnvironment();
-        $runner = new ProcOpenProcessRunner();
+        $runner = new ProcOpenProcessRunner($runtime->maxResponseBytes * 6 + 65_536);
         $browserRunner = $runtime->playwrightUrl === null
             ? $runner
-            : new BrowserServiceProcessRunner($runtime->playwrightUrl);
+            : new BrowserServiceProcessRunner($runtime->playwrightUrl, maxResponseBytes: $runtime->maxResponseBytes);
         $cookies = new CookieHandoffStore();
         $sessions = new SessionStore();
         $clientFactory = new ClientFactory();
 
         $playwright = new PlaywrightFamilyFetchHandler($runtime, $browserRunner);
-        $http = new HttpFetchHandler($clientFactory, $cookies, $sessions, self::$loginCookieProvider);
+        $http = new HttpFetchHandler($clientFactory, $cookies, $sessions, self::$loginCookieProvider, $runtime->maxResponseBytes);
         $httpHandler = self::$responseCache !== null && $runtime->responseCacheTtlSeconds > 0
             ? new ResponseCache($http, self::$responseCache, $runtime->responseCacheTtlSeconds)
             : $http;
@@ -121,6 +123,7 @@ final class CrawlerXFactory
                 try {
                     $response = $clientFactory->factory([
                         'timeout' => 10,
+                        'allow_redirects' => false,
                         'headers' => $runtime->userAgent !== null && $runtime->userAgent !== ''
                             ? ['User-Agent' => $runtime->userAgent]
                             : [],
@@ -132,7 +135,15 @@ final class CrawlerXFactory
                         return '';
                     }
 
-                    return $status >= 200 && $status < 300 ? (string) $psr->getBody() : null;
+                    if ($status >= 300 && $status < 400) {
+                        return "User-agent: *\nDisallow: /\n";
+                    }
+
+                    return $status >= 200 && $status < 300
+                        ? (new ResponseBodyReader($runtime->maxResponseBytes))->read($psr->getBody())
+                        : null;
+                } catch (ResponseBodyTooLargeException) {
+                    return "User-agent: *\nDisallow: /\n";
                 } catch (Throwable) {
                     return null;
                 }

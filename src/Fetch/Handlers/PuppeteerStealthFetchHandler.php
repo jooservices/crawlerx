@@ -52,6 +52,7 @@ final class PuppeteerStealthFetchHandler implements FetchMethodHandler
             'headless' => $playwright->headless,
             'navigationTimeoutMs' => $playwright->navigationTimeoutMs,
             'userAgent' => $playwright->userAgent,
+            'maxResponseBytes' => $this->runtime->maxResponseBytes,
         ], JSON_THROW_ON_ERROR));
 
         try {

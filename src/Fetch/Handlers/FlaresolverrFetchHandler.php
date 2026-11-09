@@ -13,7 +13,10 @@ use JOOservices\CrawlerX\Dto\SiteProfileDto;
 use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Fetch\ChallengeDetector;
 use JOOservices\CrawlerX\Fetch\FetchRuntimeConfig;
+use JOOservices\CrawlerX\Fetch\ResponseBodyReader;
+use JOOservices\CrawlerX\Fetch\ResponseBodyTooLargeException;
 use JOOservices\CrawlerX\Fetch\Session\SessionStore;
+use JOOservices\Client\Exceptions\TimeoutException;
 use Nyholm\Psr7\Request;
 use Psr\Http\Client\ClientInterface;
 use Throwable;
@@ -83,9 +86,11 @@ final class FlaresolverrFetchHandler implements FetchMethodHandler
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
             ], $payload));
-            $raw = (string) $response->getBody();
+            $raw = (new ResponseBodyReader($this->runtime->maxResponseBytes))->read($response->getBody());
+        } catch (ResponseBodyTooLargeException) {
+            return $this->fail($method, $started, $url, 'response_too_large');
         } catch (Throwable $exception) {
-            return $this->fail($method, $started, $url, 'FlareSolverr request failed: ' . $exception->getMessage());
+            return $this->fail($method, $started, $url, $this->transportError($exception));
         }
 
         /** @var array<string, mixed>|null $decoded */
@@ -117,8 +122,34 @@ final class FlaresolverrFetchHandler implements FetchMethodHandler
             cookies: $cookies,
             storageState: $storageState,
             userAgent: $userAgent,
-            error: $ok ? null : (is_string($decoded['message'] ?? null) ? $decoded['message'] : 'flaresolverr failed'),
+            error: $ok ? null : $this->serviceError($decoded['message'] ?? null),
         );
+    }
+
+    private function transportError(Throwable $exception): string
+    {
+        if ($exception instanceof TimeoutException || preg_match('/\btime(?:d?\s*out)\b/i', $exception->getMessage()) === 1) {
+            return 'Request timed out';
+        }
+
+        if (str_contains(strtolower($exception->getMessage()), 'offline')) {
+            return 'FlareSolverr offline';
+        }
+
+        return 'FlareSolverr request failed';
+    }
+
+    private function serviceError(mixed $message): string
+    {
+        if (! is_string($message)) {
+            return 'flaresolverr failed';
+        }
+
+        return match (strtolower(trim($message))) {
+            'request timed out' => 'Request timed out',
+            'offline' => 'FlareSolverr offline',
+            default => 'flaresolverr failed',
+        };
     }
 
     /**

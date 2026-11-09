@@ -19,6 +19,7 @@ final readonly class FetchRuntimeConfig
         public string $nodeId = 'local',
         public bool $respectRobots = true,
         public int $responseCacheTtlSeconds = 0,
+        public int $maxResponseBytes = 10_485_760,
     ) {
     }
 
@@ -34,6 +35,7 @@ final readonly class FetchRuntimeConfig
         $userAgentPool = getenv('CRAWLERX_USER_AGENT_POOL');
         $nodeId = getenv('CRAWLERX_NODE');
         $responseCacheTtl = getenv('CRAWLERX_RESPONSE_CACHE_TTL');
+        $maxResponseBytes = getenv('CRAWLERX_MAX_RESPONSE_BYTES');
         $defaultUserAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
         $configuredUserAgent = is_string($userAgent) && trim($userAgent) !== '' ? trim($userAgent) : $defaultUserAgent;
         $pool = is_string($userAgentPool) && trim($userAgentPool) !== ''
@@ -55,6 +57,9 @@ final readonly class FetchRuntimeConfig
         $responseCacheTtlSeconds = is_string($responseCacheTtl) && ctype_digit(trim($responseCacheTtl))
             ? (int) trim($responseCacheTtl)
             : 0;
+        $configuredMaxResponseBytes = is_string($maxResponseBytes) && ctype_digit(trim($maxResponseBytes))
+            ? filter_var(trim($maxResponseBytes), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 104_857_600]])
+            : false;
 
         return new self(
             nodeBinary: 'node',
@@ -72,6 +77,7 @@ final readonly class FetchRuntimeConfig
             nodeId: $resolvedNodeId,
             respectRobots: self::resolveRespectRobots(getenv('CRAWLERX_RESPECT_ROBOTS')),
             responseCacheTtlSeconds: $responseCacheTtlSeconds,
+            maxResponseBytes: is_int($configuredMaxResponseBytes) ? $configuredMaxResponseBytes : 10_485_760,
         );
     }
 

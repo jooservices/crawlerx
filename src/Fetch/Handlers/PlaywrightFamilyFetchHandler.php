@@ -66,6 +66,7 @@ final class PlaywrightFamilyFetchHandler implements FetchMethodHandler
             'storageState' => $options?->storageState,
             'blockResources' => $playwright->blockResources,
             'userAgent' => $playwright->userAgent,
+            'maxResponseBytes' => $this->runtime->maxResponseBytes,
         ];
 
         $configPath = tempnam(sys_get_temp_dir(), 'crawlerx-pw-');

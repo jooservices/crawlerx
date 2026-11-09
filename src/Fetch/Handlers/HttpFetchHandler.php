@@ -14,6 +14,9 @@ use JOOservices\CrawlerX\Fetch\ChallengeDetector;
 use JOOservices\CrawlerX\Fetch\Session\CookieHandoffStore;
 use JOOservices\CrawlerX\Fetch\Session\SessionStore;
 use JOOservices\CrawlerX\Fetch\Guard\TransientRetry;
+use JOOservices\CrawlerX\Fetch\Request\SensitiveHeaders;
+use JOOservices\CrawlerX\Fetch\ResponseBodyReader;
+use JOOservices\CrawlerX\Fetch\ResponseBodyTooLargeException;
 use JOOservices\CrawlerX\Services\ClientFactory;
 use Throwable;
 
@@ -24,6 +27,7 @@ final class HttpFetchHandler implements FetchMethodHandler
         private readonly CookieHandoffStore $cookies = new CookieHandoffStore(),
         private readonly ?SessionStore $sessions = null,
         private readonly ?LoginCookieProvider $logins = null,
+        private readonly int $maxResponseBytes = 10_485_760,
     ) {
     }
 
@@ -42,17 +46,38 @@ final class HttpFetchHandler implements FetchMethodHandler
         $headers = $this->requestHeaders($url, $profile, $options);
 
         $http = $options?->http;
+        $proxy = ClientFactory::resolveProxy([
+            'proxy' => $this->proxy($http?->proxy, $profile->http->proxy),
+        ]);
+        $redirectSensitiveHeaders = array_keys(array_filter(
+            $headers,
+            static fn(string $name): bool => SensitiveHeaders::isSensitiveName($name),
+            ARRAY_FILTER_USE_KEY,
+        ));
+        $nonCookieSensitiveHeaders = array_filter(
+            $redirectSensitiveHeaders,
+            static fn(string $name): bool => ! in_array(strtolower($name), ['cookie', 'cookie2'], true),
+        );
+        $urlParts = parse_url($url);
+        $urlHasCredentials = is_array($urlParts) && (isset($urlParts['user']) || isset($urlParts['pass']));
+        $redirectsDisabled = $proxy !== null || $nonCookieSensitiveHeaders !== [] || $urlHasCredentials;
+        $redirectOptions = ['track_redirects' => true];
+        if ($redirectSensitiveHeaders !== []) {
+            $redirectOptions['sensitive_headers'] = $redirectSensitiveHeaders;
+        }
         $clientOptions = [
             'timeout' => $http !== null && $http->timeout !== null ? $http->timeout : $profile->http->timeout,
             'verify_ssl' => $http !== null && $http->verifySsl !== null ? $http->verifySsl : $profile->http->verifySsl,
             'headers' => $headers,
-            'proxy' => $this->proxy($http?->proxy, $profile->http->proxy),
+            'proxy' => $proxy,
+            // A remote proxy resolves the redirect destination itself, so local DNS validation cannot pin its egress.
+            'allow_redirects' => $redirectsDisabled ? false : $redirectOptions,
         ];
 
         try {
             $response = $this->clientFactory->factory($clientOptions, $profile->slug)->get($url);
             $psr = $response->toPsrResponse();
-            $body = (string) $psr->getBody();
+            $body = (new ResponseBodyReader($this->maxResponseBytes))->read($psr->getBody());
             $status = $psr->getStatusCode();
             /** @var array<string, list<string>> $headerMap */
             $headerMap = [];
@@ -60,6 +85,19 @@ final class HttpFetchHandler implements FetchMethodHandler
                 $headerMap[(string) $name] = array_values($values);
             }
         } catch (Throwable $exception) {
+            if ($exception instanceof ResponseBodyTooLargeException) {
+                return new FetchResultDto(
+                    ok: false,
+                    body: '',
+                    status: 0,
+                    methodUsed: $method,
+                    elapsedMs: (int) round(microtime(true) * 1000) - $started,
+                    challengeDetected: false,
+                    finalUrl: $url,
+                    error: 'response_too_large',
+                );
+            }
+
             $error = TransientRetry::errorCode($exception);
 
             return new FetchResultDto(
@@ -75,7 +113,8 @@ final class HttpFetchHandler implements FetchMethodHandler
         }
 
         $challenge = ChallengeDetector::isChallenge($body, $status, $headerMap);
-        $ok = ! $challenge && ChallengeDetector::isUsableBody($body, $status);
+        $redirectNotFollowed = $redirectsDisabled && $status >= 300 && $status < 400;
+        $ok = ! $redirectNotFollowed && ! $challenge && ChallengeDetector::isUsableBody($body, $status);
 
         return new FetchResultDto(
             ok: $ok,
@@ -84,10 +123,22 @@ final class HttpFetchHandler implements FetchMethodHandler
             methodUsed: $method,
             elapsedMs: (int) round(microtime(true) * 1000) - $started,
             challengeDetected: $challenge,
-            finalUrl: $url,
+            finalUrl: $this->finalUrl($headerMap, $url),
             headers: $headerMap,
-            error: $ok ? null : ($challenge ? 'challenge page' : 'unusable HTTP body'),
+            error: $ok ? null : ($redirectNotFollowed ? 'redirect_not_followed' : ($challenge ? 'challenge page' : 'unusable HTTP body')),
         );
+    }
+
+    /** @param array<string, list<string>> $headers */
+    private function finalUrl(array $headers, string $fallback): string
+    {
+        foreach ($headers as $name => $values) {
+            if (strcasecmp($name, 'X-Joo-Effective-Uri') === 0 && is_string($values[0] ?? null)) {
+                return $values[0];
+            }
+        }
+
+        return $fallback;
     }
 
     /** The first non-blank proxy of the request option and the site profile; blank values count as absent. */

@@ -17,6 +17,7 @@ final class BrowserServiceProcessRunner implements ProcessRunner
     public function __construct(
         private readonly string $endpoint,
         private readonly ?ClientInterface $client = null,
+        private readonly int $maxResponseBytes = 10_485_760,
     ) {
     }
 
@@ -40,9 +41,11 @@ final class BrowserServiceProcessRunner implements ProcessRunner
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
             ], $payload));
-            $raw = (string) $response->getBody();
+            $raw = (new ResponseBodyReader($this->maxResponseBytes * 6 + 65_536))->read($response->getBody());
+        } catch (ResponseBodyTooLargeException) {
+            return new ProcessResultDto(1, '', 'Browser service response exceeded the configured size limit.');
         } catch (Throwable $exception) {
-            return new ProcessResultDto(1, '', 'Browser service request failed: ' . $exception->getMessage());
+            return new ProcessResultDto(1, '', 'Browser service request failed.');
         }
 
         /** @var array<string, mixed>|null $decoded */
