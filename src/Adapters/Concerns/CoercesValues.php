@@ -61,4 +61,30 @@ trait CoercesValues
 
         return is_numeric($normalized) ? (int) $normalized : 0;
     }
+
+    /** YYYY-MM-DD from a parseable date string, or null when empty or unparseable. */
+    protected function dateString(?string $value): ?string
+    {
+        if ($value === null || trim($value) === '') {
+            return null;
+        }
+
+        $date = date_create_immutable(trim($value));
+
+        return $date === false ? null : $date->format('Y-m-d');
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function arrayValue(array $data, string $key): array
+    {
+        $value = $data[$key] ?? null;
+
+        /** @var array<string, mixed> $array */
+        $array = is_array($value) ? $value : [];
+
+        return $array;
+    }
 }

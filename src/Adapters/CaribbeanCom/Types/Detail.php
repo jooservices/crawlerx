@@ -16,6 +16,7 @@ use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use JOOservices\CrawlerX\Support\SizeParser;
 use Symfony\Component\DomCrawler\Crawler;
+use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 
 /**
  * Caribbeancom movie page: the spec list (Starring, Tags, Release Date, Duration), the poster, the sample video, the
@@ -23,6 +24,8 @@ use Symfony\Component\DomCrawler\Crawler;
  */
 final class Detail extends AbstractHtmlType implements TypeInterface
 {
+    use ParsesUrlParts;
+
     use ParsesHtml;
 
     /** Keys of the player JSON that are availability flags, kept as booleans. */
@@ -49,7 +52,7 @@ final class Detail extends AbstractHtmlType implements TypeInterface
     public function execute(CrawlRequestDto $request): CrawlItemResultDto
     {
         $crawler = $this->fetchCrawler($request);
-        $externalId = $this->externalId($request->url);
+        $externalId = $this->pathMatch($request->url, '~/moviepages/([^/]+)/~i');
         $specs = $this->specs($crawler);
         $player = $this->playerData($crawler);
         $rawDate = isset($specs['date']) ? $this->normalizeText($specs['date']->text('')) : null;
@@ -305,12 +308,5 @@ final class Detail extends AbstractHtmlType implements TypeInterface
         }
 
         return ['movie_seq' => $this->stringValue($player, 'movie_seq'), 'flags' => $flags];
-    }
-
-    private function externalId(string $url): ?string
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-
-        return is_string($path) && preg_match('~/moviepages/([^/]+)/~i', $path, $match) === 1 ? $match[1] : null;
     }
 }

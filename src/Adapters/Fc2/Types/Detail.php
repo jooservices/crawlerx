@@ -14,6 +14,9 @@ use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 use Throwable;
+use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
+use JOOservices\CrawlerX\Adapters\Concerns\CoercesValues;
+use JOOservices\CrawlerX\Adapters\Fc2\ParsesPoints;
 
 /**
  * FC2 Content Market product page: the JSON-LD Product (name, id, image, brand, rating, price), the header (duration,
@@ -22,6 +25,12 @@ use Throwable;
  */
 final class Detail extends AbstractHtmlType implements TypeInterface
 {
+    use ParsesPoints;
+
+    use CoercesValues;
+
+    use ParsesUrlParts;
+
     use ParsesHtml;
 
     protected function siteLabel(): string
@@ -40,7 +49,7 @@ final class Detail extends AbstractHtmlType implements TypeInterface
         $html = $this->htmlFromResponse($response->toPsrResponse(), $this->siteLabel(), $this->contextLabel());
         $crawler = new Crawler($html, $request->url);
         $ld = $this->productData($crawler);
-        $externalId = $this->externalId($request->url) ?? $this->stringOf($ld, 'productID');
+        $externalId = $this->pathMatch($request->url, '~/article/(\\d+)~') ?? $this->stringOf($ld, 'productID');
         $sale = $this->saleLabels($crawler);
         $price = $this->price($crawler, $ld);
         $seller = $this->seller($crawler, $ld, $request->url);
@@ -67,7 +76,7 @@ final class Detail extends AbstractHtmlType implements TypeInterface
                     'discount_percent' => $sale['discount_percent'],
                     'sale_end_date' => $sale['sale_end_date'],
                     'remaining' => $sale['remaining'],
-                    'availability' => $this->stringOf($this->arrayOf($ld, 'offers'), 'availability'),
+                    'availability' => $this->stringOf($this->arrayValue($ld, 'offers'), 'availability'),
                     'supported_devices' => $this->texts($crawler, '.items_article_softDevice ul li'),
                     'product_id_label' => $this->labelled($crawler, 'Product ID', '商品ID'),
                     MovieMeta::RELEASE_DATE_RAW => $this->labelled($crawler, 'Sale Day', '販売日'),
@@ -99,15 +108,6 @@ final class Detail extends AbstractHtmlType implements TypeInterface
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
-    private function arrayOf(array $data, string $key): array
-    {
-        $value = $data[$key] ?? null;
-
-        /** @var array<string, mixed> $array */
-        $array = is_array($value) ? $value : [];
-
-        return $array;
-    }
 
     /** @param array<string, mixed> $data */
     private function stringOf(array $data, string $key): ?string
@@ -150,7 +150,7 @@ final class Detail extends AbstractHtmlType implements TypeInterface
      */
     private function rating(array $ld): ?array
     {
-        $rating = $this->arrayOf($ld, 'aggregateRating');
+        $rating = $this->arrayValue($ld, 'aggregateRating');
         $score = $rating['ratingValue'] ?? null;
         if (! is_numeric($score)) {
             return null;
@@ -170,7 +170,7 @@ final class Detail extends AbstractHtmlType implements TypeInterface
     {
         $sales = $this->firstText($crawler, '.items_article_mylistBox .price_sales');
         $list = $this->firstText($crawler, '.items_article_mylistBox .sale_Area > p:not(.price_sales)');
-        $offer = $this->arrayOf($ld, 'offers')['price'] ?? null;
+        $offer = $this->arrayValue($ld, 'offers')['price'] ?? null;
 
         $currentAmount = $this->points($sales) ?? (is_numeric($offer) ? (float) $offer : null);
         $listAmount = $this->points($list);
@@ -181,10 +181,6 @@ final class Detail extends AbstractHtmlType implements TypeInterface
         ];
     }
 
-    private function points(?string $text): ?float
-    {
-        return $text !== null && preg_match('/([\d,]+)\s*pt/i', $text, $match) === 1 ? (float) str_replace(',', '', $match[1]) : null;
-    }
 
     /** @return array{discount_percent: ?int, sale_end_date: ?string, remaining: ?int} */
     private function saleLabels(Crawler $crawler): array
@@ -234,7 +230,7 @@ final class Detail extends AbstractHtmlType implements TypeInterface
     private function seller(Crawler $crawler, array $ld, string $baseUrl): array
     {
         $name = $this->firstText($crawler, '.items_article_writer a');
-        $url = $this->firstAttribute($crawler, '.items_article_writer a', 'href') ?? $this->stringOf($this->arrayOf($ld, 'brand'), 'url');
+        $url = $this->firstAttribute($crawler, '.items_article_writer a', 'href') ?? $this->stringOf($this->arrayValue($ld, 'brand'), 'url');
 
         return ['name' => $name, 'url' => $url === null ? null : $this->absolute($baseUrl, $url)];
     }
@@ -396,12 +392,5 @@ final class Detail extends AbstractHtmlType implements TypeInterface
         }
 
         return $text;
-    }
-
-    private function externalId(string $url): ?string
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-
-        return is_string($path) && preg_match('~/article/(\d+)~', $path, $match) === 1 ? $match[1] : null;
     }
 }

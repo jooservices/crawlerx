@@ -16,9 +16,12 @@ use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
+use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 
 final class PerformerDetail extends AbstractType implements TypeInterface
 {
+    use ParsesUrlParts;
+
     use NormalizesUrls;
     use ParsesHtml;
 
@@ -39,7 +42,7 @@ final class PerformerDetail extends AbstractType implements TypeInterface
         }
 
         $name = $this->normalizeText($nameNode->first()->text('')) ?? '';
-        $externalId = $this->externalId($request->url);
+        $externalId = $this->pathMatch($request->url, '#^/actress/([^/]+)\\.html$#i');
         if ($name === '') {
             throw new CrawlParseException('AvfanProfiles performer detail is missing a valid name.');
         }
@@ -218,17 +221,5 @@ final class PerformerDetail extends AbstractType implements TypeInterface
         }
 
         return $this->absolute($baseUrl, $src);
-    }
-
-    private function externalId(string $url): ?string
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-        if (is_string($path) && preg_match('#^/actress/([^/]+)\.html$#i', $path, $match) === 1) {
-            $slug = $match[1];
-
-            return $slug;
-        }
-
-        return null;
     }
 }

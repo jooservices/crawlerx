@@ -16,9 +16,12 @@ use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
 use Symfony\Component\DomCrawler\Crawler;
+use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 
 final class PerformerListing extends AbstractType implements TypeInterface
 {
+    use ParsesUrlParts;
+
     use NormalizesUrls;
     use ParsesHtml;
 
@@ -42,7 +45,7 @@ final class PerformerListing extends AbstractType implements TypeInterface
             }
 
             $url = $this->absolute($request->url, $href);
-            $externalId = $this->externalId($url);
+            $externalId = $this->pathMatch($url, '#^/actress/([^/]+)\\.html$#i');
             if ($externalId === null || isset($items[$url])) {
                 return;
             }
@@ -82,17 +85,5 @@ final class PerformerListing extends AbstractType implements TypeInterface
         $src = $card === null ? null : $this->firstAttribute($card, Selectors::PERFORMER_CARD_IMAGE, 'src');
 
         return $src === null ? null : $this->absolute($baseUrl, $src);
-    }
-
-    private function externalId(string $url): ?string
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-        if (is_string($path) && preg_match('#^/actress/([^/]+)\.html$#i', $path, $match) === 1) {
-            $slug = $match[1];
-
-            return $slug;
-        }
-
-        return null;
     }
 }

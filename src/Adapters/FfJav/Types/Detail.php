@@ -17,9 +17,12 @@ use JOOservices\CrawlerX\Support\CodeNormalizer;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use JOOservices\CrawlerX\Support\SizeParser;
 use Symfony\Component\DomCrawler\Crawler;
+use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 
 final class Detail extends AbstractType implements TypeInterface
 {
+    use ParsesUrlParts;
+
     use ParsesHtml;
 
     public function __construct(
@@ -40,7 +43,7 @@ final class Detail extends AbstractType implements TypeInterface
     {
         $crawler = new Crawler($html, $url);
         $title = $this->firstText($crawler, Selectors::DETAIL_TITLE);
-        $externalId = $this->externalId($url);
+        $externalId = $this->lastPathSegment($url);
 
         $rows = $this->rows($crawler);
         $release = $rows['発売日'] ?? null;
@@ -84,12 +87,6 @@ final class Detail extends AbstractType implements TypeInterface
         return $item;
     }
 
-    private function externalId(string $url): ?string
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-
-        return is_string($path) && $path !== '' ? trim(basename($path), '/') : null;
-    }
 
     private function description(string $html): ?string
     {
