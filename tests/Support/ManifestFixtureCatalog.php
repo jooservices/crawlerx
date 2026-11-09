@@ -13,12 +13,23 @@ final class ManifestFixtureCatalog
     /** @var list<string> */
     private const SKIP_SAMPLES = [];
 
+    /** @var array<string, FileAdapterManifestRegistry> */
+    private static array $manifestRegistries = [];
+
+    /** @var array<string, list<array{slug: string, sample: FixtureSampleDto, fixturePath: string}>> */
+    private static array $sampleCatalogues = [];
+
     /**
      * @return list<array{slug: string, sample: FixtureSampleDto, fixturePath: string}>
      */
     public static function executableSamples(): array
     {
-        $manifests = new FileAdapterManifestRegistry();
+        $environmentKey = self::disabledSitesEnvironmentKey();
+        if (array_key_exists($environmentKey, self::$sampleCatalogues)) {
+            return self::$sampleCatalogues[$environmentKey];
+        }
+
+        $manifests = self::manifestRegistry($environmentKey);
         $samples = [];
 
         foreach ($manifests->slugs() as $slug) {
@@ -49,6 +60,8 @@ final class ManifestFixtureCatalog
                 ];
             }
         }
+
+        self::$sampleCatalogues[$environmentKey] = $samples;
 
         return $samples;
     }
@@ -87,7 +100,7 @@ final class ManifestFixtureCatalog
 
     public static function registerSupportingResponses(string $slug): void
     {
-        $manifest = (new FileAdapterManifestRegistry())->get($slug);
+        $manifest = self::manifestRegistry(self::disabledSitesEnvironmentKey())->get($slug);
         if ($manifest === null) {
             return;
         }
@@ -110,5 +123,17 @@ final class ManifestFixtureCatalog
             'performer_detail' => CrawlType::PerformerDetail,
             default => CrawlType::Listing,
         };
+    }
+
+    private static function manifestRegistry(string $environmentKey): FileAdapterManifestRegistry
+    {
+        return self::$manifestRegistries[$environmentKey] ??= new FileAdapterManifestRegistry();
+    }
+
+    private static function disabledSitesEnvironmentKey(): string
+    {
+        $value = getenv('CRAWLERX_DISABLED_SITES');
+
+        return is_string($value) ? $value : '';
     }
 }
