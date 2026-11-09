@@ -77,7 +77,10 @@ sequenceDiagram
             Handler-->>Runner: cached result or cache miss
         end
         opt cache miss
-            Runner->>Runner: apply host throttle, then circuit breaker
+            Runner->>Runner: apply host throttle
+            opt first uncached attempt that passes throttle in this fetch
+                Runner->>Runner: consult host circuit once
+            end
             Runner->>Handler: fetch(url, profile, options)
             opt HTTP method
                 Handler->>Handler: resolve configured proxy and make HTTP request
@@ -126,7 +129,10 @@ Key implementation points are [`CrawlerX.php`](../src/CrawlerX.php),
   host throttling.
 - On each method attempt, a cache-aware handler is checked first. A cache hit
   skips the host throttle and circuit breaker. On a miss, `PreFetchGuard`
-  applies the host throttle and then checks the circuit breaker.
+  applies the host throttle. It consults the circuit breaker at most once per
+  fetch, after the first uncached attempt that passes throttling; later method
+  attempts do not re-check it, even if another worker opens the circuit during
+  that fetch.
 - The HTTP page handler selects a proxy from request options, the site HTTP
   profile, then `CRAWLERX_HTTP_PROXY`. The robots request does not receive the
   request or site proxy; use `CRAWLERX_HTTP_PROXY` or the applicable libcurl

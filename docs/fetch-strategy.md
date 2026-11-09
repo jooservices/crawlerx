@@ -84,7 +84,10 @@ node. Ten consecutive non-terminal fetch failures open the circuit for five
 minutes. The first request after that interval is a half-open probe; an
 additional request waits for its 30-second probe lease. An open circuit returns
 retryable `rate_limited` with the remaining time in `Retry-After`. Circuit cache
-failures fall back to worker-local state.
+failures fall back to worker-local state. During one fetch, the circuit is
+consulted at most once, after the first uncached method attempt passes host
+throttling; later fallback attempts do not re-check it. Host throttling still
+runs before every uncached method attempt.
 
 ## Robots.txt compliance
 
