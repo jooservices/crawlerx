@@ -71,6 +71,8 @@ Run the relevant gates before every push — CI runs the same chain and **every 
 | `make audit` | Composer audit |
 | `make ci` | lint + coverage run (local CI parity) |
 
+During development, run only tests mapped from changes against `origin/develop` with `composer test:changed` or `make test-changed`. Use `composer test:changed -- --base=<git-ref>` or `make test-changed BASE=<git-ref>` to compare with another ref. The runner targets adapter, fetch, shared concern, and fixture tests where it can; it runs the full suite when a changed file has no safe mapping. Run the full suite once before pushing.
+
 Coding rules:
 
 - linters run at **maximum strictness** — fix the source, do not suppress findings; new PHPStan `ignoreErrors` entries are not accepted
@@ -115,6 +117,7 @@ make live-check SITE=--site=javbus   # crawl one live target for an adapter
 ```
 
 See [tools/fixtures/README.md](tools/fixtures/README.md) for the capture procedure.
+Run `composer check:fixtures-meta` after capture to validate each fixture's provenance metadata.
 
 ## Reporting issues
 
