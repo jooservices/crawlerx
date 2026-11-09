@@ -82,6 +82,22 @@ final class RobotsGuardTest extends TestCase
         self::assertStringContainsString('example.test', $logs[0]);
     }
 
+    public function test_an_unreachable_robots_txt_is_not_cached_across_instances(): void
+    {
+        $fetches = 0;
+        $cache = new ArrayCache();
+        $fetcher = static function (string $url) use (&$fetches): ?string {
+            ++$fetches;
+
+            return null;
+        };
+
+        $this->guard($fetcher, $cache)->assertAllowed('https://example.test/a', 'ua');
+        $this->guard($fetcher, $cache)->assertAllowed('https://example.test/b', 'ua');
+
+        self::assertSame(2, $fetches);
+    }
+
     public function test_fails_closed_with_a_typed_exception_on_disallow(): void
     {
         $guard = $this->guard(

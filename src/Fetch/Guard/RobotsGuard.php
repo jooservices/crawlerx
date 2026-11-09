@@ -67,11 +67,12 @@ final class RobotsGuard
             $content = ($this->fetchRobotsTxt)($this->robotsUrl($url));
 
             if ($content === null) {
+                // An unreachable robots.txt is not cached, so the next fetch of the host tries again.
                 ($this->logger)("robots.txt is unreachable for host [{$host}]; failing open.");
                 $content = '';
+            } else {
+                $this->writeCache($key, $content);
             }
-
-            $this->writeCache($key, $content);
         }
 
         $robots = $content === '' ? new RobotsTxt() : RobotsTxtParser::parse($content);
