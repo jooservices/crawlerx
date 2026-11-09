@@ -45,6 +45,7 @@
         "test:unit": "phpunit --no-coverage --testsuite Unit",
         "test:feature": "phpunit --no-coverage --testsuite Feature",
         "test:coverage": "mkdir -p build/coverage && phpunit --coverage-clover build/coverage/clover-Unit.xml --testsuite Unit && phpunit --coverage-clover build/coverage/clover-Feature.xml --testsuite Feature",
+        "check:fixtures-meta": "php tools/check-fixtures-meta.php",
         "coverage:check": [
             "php tools/coverage-enforce.php build/coverage/clover-Unit.xml",
             "php tools/coverage-enforce.php build/coverage/clover-Feature.xml",
