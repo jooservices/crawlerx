@@ -21,6 +21,7 @@ final class PreFetchGuard
     public function __construct(
         private readonly ?HostThrottle $hostThrottle = null,
         private readonly ?HostCircuit $hostCircuit = null,
+        private readonly ?float $robotsDelaySeconds = null,
     ) {
     }
 
@@ -35,7 +36,7 @@ final class PreFetchGuard
         }
 
         if ($this->hostThrottle !== null) {
-            $retryAfter = $this->hostThrottle->waitBeforeFetch($host, $profile->defaultThrottle, $budget, $method);
+            $retryAfter = $this->hostThrottle->waitBeforeFetch($host, $this->throttle($profile->defaultThrottle), $budget, $method);
             if ($retryAfter !== null) {
                 return self::rateLimited($method, $url, $retryAfter, 'throttle');
             }
@@ -50,6 +51,23 @@ final class PreFetchGuard
         }
 
         return null;
+    }
+
+    /** @param array<string, float>|null $settings
+     *  @return array<string, float>|null
+     */
+    private function throttle(?array $settings): ?array
+    {
+        if ($this->robotsDelaySeconds === null || $this->robotsDelaySeconds <= 0.0) {
+            return $settings;
+        }
+
+        $settings ??= [];
+        $default = $settings['default_gap_seconds'] ?? 0.0;
+        $settings['default_gap_seconds'] = max($default, $this->robotsDelaySeconds);
+        $settings['max_gap_seconds'] = max($settings['max_gap_seconds'] ?? $settings['default_gap_seconds'], $this->robotsDelaySeconds);
+
+        return $settings;
     }
 
     private static function rateLimited(FetchMethod $method, string $url, int $retryAfter, string $guard): FetchResultDto

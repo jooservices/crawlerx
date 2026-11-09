@@ -1,0 +1,7 @@
+User-agent: CrawlerX
+Crawl-delay: 7.5
+Disallow: /crawl
+
+User-agent: *
+Crawl-delay: 2
+Disallow: /everyone
