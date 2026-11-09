@@ -25,8 +25,22 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Build PHP image
-        run: tools/ci/docker-compose build php
+      - name: Cache PHP image
+        id: php-image
+        uses: actions/cache@v6
+        with:
+          path: /tmp/crawlerx-php85.tar
+          key: crawlerx-php85-${{ hashFiles('Dockerfile') }}
+
+      - name: Load or build PHP image
+        run: |
+          set -euo pipefail
+          if [[ -f /tmp/crawlerx-php85.tar ]]; then
+            docker load -i /tmp/crawlerx-php85.tar
+          else
+            tools/ci/docker-compose build php
+            docker save jooservices/crawlerx:php85 -o /tmp/crawlerx-php85.tar
+          fi
 
       - name: Cache Composer vendor
         uses: actions/cache@v6
@@ -69,8 +83,22 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Build PHP image
-        run: tools/ci/docker-compose build php
+      - name: Cache PHP image
+        id: php-image
+        uses: actions/cache@v6
+        with:
+          path: /tmp/crawlerx-php85.tar
+          key: crawlerx-php85-${{ hashFiles('Dockerfile') }}
+
+      - name: Load or build PHP image
+        run: |
+          set -euo pipefail
+          if [[ -f /tmp/crawlerx-php85.tar ]]; then
+            docker load -i /tmp/crawlerx-php85.tar
+          else
+            tools/ci/docker-compose build php
+            docker save jooservices/crawlerx:php85 -o /tmp/crawlerx-php85.tar
+          fi
 
       - name: Cache Composer vendor
         uses: actions/cache@v6
@@ -88,9 +116,54 @@ jobs:
       - name: Run linter
         run: tools/ci/docker-compose run --rm php ${{ matrix.command }}
 
+  architecture:
+    name: Architecture (Deptrac)
+    needs: [validate]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Cache PHP image
+        id: php-image
+        uses: actions/cache@v6
+        with:
+          path: /tmp/crawlerx-php85.tar
+          key: crawlerx-php85-${{ hashFiles('Dockerfile') }}
+
+      - name: Load or build PHP image
+        run: |
+          set -euo pipefail
+          if [[ -f /tmp/crawlerx-php85.tar ]]; then
+            docker load -i /tmp/crawlerx-php85.tar
+          else
+            tools/ci/docker-compose build php
+            docker save jooservices/crawlerx:php85 -o /tmp/crawlerx-php85.tar
+          fi
+
+      - name: Cache Composer vendor
+        uses: actions/cache@v6
+        id: vendor-cache
+        with:
+          path: vendor
+          key: composer-vendor-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            composer-vendor-
+
+      - name: Install dependencies
+        if: steps.vendor-cache.outputs.cache-hit != 'true'
+        run: tools/ci/docker-compose run --rm php composer install --no-interaction --prefer-dist
+
+      - name: Deptrac analyse (report-only)
+        run: tools/ci/docker-compose run --rm php composer lint:deptrac
+
   security:
     name: Security (${{ matrix.name }})
-    needs: [lint]
+    needs: [validate]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -107,9 +180,24 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Build PHP image
+      - name: Cache PHP image
         if: matrix.name == 'Dependencies'
-        run: tools/ci/docker-compose build php
+        id: php-image
+        uses: actions/cache@v6
+        with:
+          path: /tmp/crawlerx-php85.tar
+          key: crawlerx-php85-${{ hashFiles('Dockerfile') }}
+
+      - name: Load or build PHP image
+        if: matrix.name == 'Dependencies'
+        run: |
+          set -euo pipefail
+          if [[ -f /tmp/crawlerx-php85.tar ]]; then
+            docker load -i /tmp/crawlerx-php85.tar
+          else
+            tools/ci/docker-compose build php
+            docker save jooservices/crawlerx:php85 -o /tmp/crawlerx-php85.tar
+          fi
 
       - name: Cache Composer vendor
         if: matrix.name == 'Dependencies'
@@ -158,27 +246,55 @@ jobs:
             semgrep/semgrep@sha256:67319956da3dcb58baf5b322899c15458e3963e7018a86aeeb5cd224e69cb77a \
             semgrep scan --config p/php --error
 
-  test:
-    name: Test (${{ matrix.name }})
-    needs: [lint]
+  test-shards:
+    name: Test shard (${{ matrix.suite }} ${{ matrix.shard }}/${{ matrix.total }})
+    needs: [validate]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: true
       matrix:
         include:
-          - name: Unit
-            suite: Unit
-          - name: Feature
-            suite: Feature
+          - suite: Unit
+            shard: 1
+            total: 2
+          - suite: Unit
+            shard: 2
+            total: 2
+          - suite: Feature
+            shard: 1
+            total: 4
+          - suite: Feature
+            shard: 2
+            total: 4
+          - suite: Feature
+            shard: 3
+            total: 4
+          - suite: Feature
+            shard: 4
+            total: 4
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - name: Build PHP image
-        run: tools/ci/docker-compose build php
+      - name: Cache PHP image
+        id: php-image
+        uses: actions/cache@v6
+        with:
+          path: /tmp/crawlerx-php85.tar
+          key: crawlerx-php85-${{ hashFiles('Dockerfile') }}
+
+      - name: Load or build PHP image
+        run: |
+          set -euo pipefail
+          if [[ -f /tmp/crawlerx-php85.tar ]]; then
+            docker load -i /tmp/crawlerx-php85.tar
+          else
+            tools/ci/docker-compose build php
+            docker save jooservices/crawlerx:php85 -o /tmp/crawlerx-php85.tar
+          fi
 
       - name: Cache Composer vendor
         uses: actions/cache@v6
@@ -193,14 +309,96 @@ jobs:
         if: steps.vendor-cache.outputs.cache-hit != 'true'
         run: tools/ci/docker-compose run --rm php composer install --no-interaction --prefer-dist
 
-      - name: Run test suite with coverage
+      - name: Run sharded suite with coverage
         run: |
-          mkdir -p build/coverage
+          set -euo pipefail
+          mkdir -p build/coverage build/shards
+          list="build/shards/${{ matrix.suite }}-${{ matrix.shard }}.paths"
+          tools/ci/docker-compose run --rm php php tools/ci/phpunit-shard.php \
+            "tests/${{ matrix.suite }}" ${{ matrix.shard }} ${{ matrix.total }} "${list}"
+          mapfile -t files < "${list}"
           tools/ci/docker-compose run --rm php ./vendor/bin/phpunit \
-            --testsuite=${{ matrix.suite }} \
-            --coverage-clover=build/coverage/clover-${{ matrix.suite }}.xml
+            --coverage-clover="build/coverage/clover-${{ matrix.suite }}-${{ matrix.shard }}.xml" \
+            "${files[@]}"
 
-      - name: Upload coverage artifact
+      - name: Upload shard coverage artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-${{ matrix.suite }}-${{ matrix.shard }}
+          path: build/coverage/clover-${{ matrix.suite }}-${{ matrix.shard }}.xml
+          if-no-files-found: error
+
+  test:
+    name: Test (${{ matrix.name }})
+    needs: [test-shards]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - name: Unit
+            suite: Unit
+            total: 2
+          - name: Feature
+            suite: Feature
+            total: 4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Cache PHP image
+        id: php-image
+        uses: actions/cache@v6
+        with:
+          path: /tmp/crawlerx-php85.tar
+          key: crawlerx-php85-${{ hashFiles('Dockerfile') }}
+
+      - name: Load or build PHP image
+        run: |
+          set -euo pipefail
+          if [[ -f /tmp/crawlerx-php85.tar ]]; then
+            docker load -i /tmp/crawlerx-php85.tar
+          else
+            tools/ci/docker-compose build php
+            docker save jooservices/crawlerx:php85 -o /tmp/crawlerx-php85.tar
+          fi
+
+      - name: Cache Composer vendor
+        uses: actions/cache@v6
+        id: vendor-cache
+        with:
+          path: vendor
+          key: composer-vendor-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            composer-vendor-
+
+      - name: Install dependencies
+        if: steps.vendor-cache.outputs.cache-hit != 'true'
+        run: tools/ci/docker-compose run --rm php composer install --no-interaction --prefer-dist
+
+      - name: Download shard coverage artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: coverage-${{ matrix.suite }}-*
+          path: build/coverage/shards
+          merge-multiple: true
+
+      - name: Merge shard coverage
+        run: |
+          set -euo pipefail
+          mkdir -p build/coverage
+          inputs=()
+          for shard in $(seq 1 ${{ matrix.total }}); do
+            inputs+=("build/coverage/shards/clover-${{ matrix.suite }}-${shard}.xml")
+          done
+          tools/ci/docker-compose run --rm php php tools/coverage-merge-clovers.php \
+            "build/coverage/clover-${{ matrix.suite }}.xml" "${inputs[@]}"
+          ls -la build/coverage
+
+      - name: Upload suite coverage artifact
         uses: actions/upload-artifact@v7
         with:
           name: coverage-${{ matrix.suite }}
@@ -219,8 +417,22 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Build PHP image
-        run: tools/ci/docker-compose build php
+      - name: Cache PHP image
+        id: php-image
+        uses: actions/cache@v6
+        with:
+          path: /tmp/crawlerx-php85.tar
+          key: crawlerx-php85-${{ hashFiles('Dockerfile') }}
+
+      - name: Load or build PHP image
+        run: |
+          set -euo pipefail
+          if [[ -f /tmp/crawlerx-php85.tar ]]; then
+            docker load -i /tmp/crawlerx-php85.tar
+          else
+            tools/ci/docker-compose build php
+            docker save jooservices/crawlerx:php85 -o /tmp/crawlerx-php85.tar
+          fi
 
       - name: Download coverage artifacts
         uses: actions/download-artifact@v8
@@ -231,6 +443,8 @@ jobs:
 
       - name: Enforce coverage and merge Clover reports
         run: |
+          set -euo pipefail
+          # Ignore shard-only clover files; the suite aggregators upload clover-Unit/Feature.xml
           tools/ci/docker-compose run --rm php php tools/coverage-enforce.php build/coverage/matrix/clover-Unit.xml
           tools/ci/docker-compose run --rm php php tools/coverage-enforce.php build/coverage/matrix/clover-Feature.xml
           tools/ci/docker-compose run --rm php php tools/coverage-union.php \

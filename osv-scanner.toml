@@ -1,6 +1,3 @@
 # OSV-Scanner exceptions. Every entry needs a reason and an expiry; remove it as soon as a fix exists.
-
-[[IgnoredVulns]]
-id = "GHSA-gcqx-w48m-w2h4"
-ignoreUntil = 2026-12-31
-reason = "deepmerge 4.3.1 is the latest release and has no fix. It is used by puppeteer-extra and its user-preferences plugin in the private, dev-only crawlerx-scripts tooling to merge trusted local launch options; no attacker-controlled input reaches mergeObject()."
+# deepmerge (GHSA-gcqx-w48m-w2h4) is cleared by the local patched override in package.json
+# (tools/vendor/deepmerge@4.3.2) — do not re-add an ignore unless the override is removed.
