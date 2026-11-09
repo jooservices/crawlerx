@@ -50,9 +50,11 @@ final class ClientFactory
 
     public static function boundedHttpClient(float $timeout, int $maxResponseBytes): HttpClient
     {
-        $builder = ClientBuilder::create()->withTimeout($timeout);
+        $builder = ClientBuilder::create();
         if (! ClientBuilder::isFaked()) {
-            $builder = $builder->withTransport(new BoundedCurlTransport($maxResponseBytes));
+            $builder = $builder
+                ->withTimeout($timeout)
+                ->withTransport(new BoundedCurlTransport($maxResponseBytes));
         }
 
         return $builder->build();
@@ -185,10 +187,6 @@ final class ClientFactory
      */
     private function allowRedirects(array $options): bool|array
     {
-        if (self::resolveProxy($options) !== null) {
-            return false;
-        }
-
         $configured = $options['allow_redirects'] ?? null;
         if (is_array($configured)) {
             $redirectOptions = [];
@@ -203,6 +201,10 @@ final class ClientFactory
             return $redirectOptions;
         }
 
-        return is_bool($configured) ? $configured : true;
+        if (is_bool($configured)) {
+            return $configured;
+        }
+
+        return self::resolveProxy($options) === null;
     }
 }

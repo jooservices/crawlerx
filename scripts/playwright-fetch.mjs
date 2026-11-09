@@ -5,9 +5,9 @@ import { existsSync, readFileSync, readdirSync, renameSync, writeFileSync } from
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { assertSafeBrowserUrl, SsrfBlockedError } from './ssrf-guard.mjs';
-import { createSsrfProxyServer } from './ssrf-proxy.mjs';
+import { createSsrfProxyServer, ssrfProxyCertificateSpkiHash } from './ssrf-proxy.mjs';
 import { assertResponseBodyWithinLimit, configuredMaxResponseBytes, ResponseBodyTooLargeError } from './fetch-limits.mjs';
-import { browserCookiesFromHeader, headersForOrigin, splitBrowserHeaders, withoutConfiguredCookies } from './request-security.mjs';
+import { browserCookiesFromHeader, headersForOrigin, splitBrowserHeaders } from './request-security.mjs';
 
 export const DEFAULT_USER_AGENT =
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
@@ -194,6 +194,7 @@ export async function fetchWithBrowser(config, browser) {
             locale: config.locale ?? 'en-US',
             viewport,
             serviceWorkers: 'block',
+            ignoreHTTPSErrors: true,
             extraHTTPHeaders: {
                 'Accept-Language': 'en-US,en;q=0.9',
                 ...configuredHeaders.safe,
@@ -215,7 +216,11 @@ export async function fetchWithBrowser(config, browser) {
             };
         }
 
-        ssrfProxy = await createSsrfProxyServer({ maxResponseBytes: maximumResponseBytes });
+        ssrfProxy = await createSsrfProxyServer({
+            maxResponseBytes: maximumResponseBytes,
+            requestOrigin: startOrigin,
+            sensitiveHeaders: Object.keys(sensitiveHeaders),
+        });
         contextOptions.proxy = { server: ssrfProxy.url };
         context = await browser.newContext(contextOptions);
         if (configuredCookies.cookies.length > 0) {
@@ -256,26 +261,7 @@ export async function fetchWithBrowser(config, browser) {
                 sensitiveHeaders,
                 sameOrigin,
             );
-            const safeHeaders = withoutConfiguredCookies(requestHeaders, sameOrigin ? [] : configuredCookies.names);
-            const mustStopRedirects = configuredCookies.names.length > 0
-                || (sameOrigin && Object.keys(sensitiveHeaders).length > 0);
-
-            if (mustStopRedirects) {
-                try {
-                    const response = await route.fetch({ headers: safeHeaders, maxRedirects: 0 });
-                    const status = response.status();
-                    if ([301, 302, 303, 307, 308].includes(status) && response.headers().location) {
-                        await route.abort('blockedbyclient');
-                        return;
-                    }
-                    await route.fulfill({ response });
-                } catch {
-                    await route.abort('failed').catch(() => {});
-                }
-                return;
-            }
-
-            await route.continue({ headers: safeHeaders });
+            await route.continue({ headers: requestHeaders });
         });
         try {
             const hostname = new URL(url).hostname;
@@ -492,7 +478,11 @@ async function main() {
     const launcher = browserType(config.browser ?? 'chromium');
     const browser = await launcher.launch({
         headless: config.headless ?? true,
-        args: ['--disable-blink-features=AutomationControlled', '--proxy-bypass-list=<-loopback>'],
+        args: [
+            '--disable-blink-features=AutomationControlled',
+            '--proxy-bypass-list=<-loopback>',
+            `--ignore-certificate-errors-spki-list=${ssrfProxyCertificateSpkiHash()}`,
+        ],
     });
 
     try {

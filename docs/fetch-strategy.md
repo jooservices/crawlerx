@@ -58,6 +58,10 @@ login wall returns `auth_required` and is not retryable.
 
 `PLAYWRIGHT_URL` is the one browser service for the node and `FLARESOLVERR_URL` the one FlareSolverr service; both are plain addresses set in `.env`, so they can point at this project's Docker, the Workspaces Dev VM (through `scripts/docker/playwright-fetch-vm` and `scripts/docker/flaresolverr-vm`) or any other host. The browser service binds `PLAYWRIGHT_HOST` (default `0.0.0.0`, use `127.0.0.1` behind a tunnel). Playwright runs the `node` binary on PATH
 when `PLAYWRIGHT_URL` is empty.
+FlareSolverr runs navigation outside CrawlerX's SSRF guard. Set
+`CRAWLERX_FLARESOLVERR_PROXY_URL` to a proxy reachable by FlareSolverr that
+blocks private and reserved destination addresses; the FlareSolverr fallback
+is skipped when this proxy is not configured.
 `CRAWLERX_USER_AGENT` sets the user agent. The default is a modern Chrome user
 agent. `CRAWLERX_USER_AGENT_POOL` accepts a comma-separated pool; after three
 consecutive challenges for a site, CrawlerX switches to the next user agent and

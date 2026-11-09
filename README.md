@@ -457,6 +457,7 @@ Everything is configured through environment variables. Copy `.env.example` to `
 | --- | --- |
 | `PLAYWRIGHT_URL` | One Playwright container for this node |
 | `FLARESOLVERR_URL` | One FlareSolverr container for this node |
+| `CRAWLERX_FLARESOLVERR_PROXY_URL` | SSRF-filtering egress proxy used by FlareSolverr; FlareSolverr fallback is skipped when unset |
 | `CRAWLERX_PLAYWRIGHT_SCRIPT` | Path to `playwright-fetch.mjs` |
 | `CRAWLERX_PUPPETEER_SCRIPT` | Path to `puppeteer-stealth-fetch.mjs` |
 | `CRAWLERX_CURL_IMPERSONATE` | curl-impersonate executable |

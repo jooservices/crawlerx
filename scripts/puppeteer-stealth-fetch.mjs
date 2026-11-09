@@ -60,7 +60,10 @@ try {
 }
 
 const maximumResponseBytes = configuredMaxResponseBytes(config.maxResponseBytes);
-const ssrfProxy = await createSsrfProxyServer({ maxResponseBytes: maximumResponseBytes });
+const ssrfProxy = await createSsrfProxyServer({
+    maxResponseBytes: maximumResponseBytes,
+    requestOrigin: new URL(url).origin,
+});
 let ssrfViolation = false;
 let ssrfError = null;
 let browser = null;
@@ -75,6 +78,7 @@ try {
             '--disable-blink-features=AutomationControlled',
             '--proxy-server=' + ssrfProxy.url,
             '--proxy-bypass-list=<-loopback>',
+            '--ignore-certificate-errors-spki-list=' + ssrfProxy.certificateSpkiHash,
         ],
     });
     const page = await browser.newPage();

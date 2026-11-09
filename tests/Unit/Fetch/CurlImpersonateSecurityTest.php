@@ -20,13 +20,62 @@ final class CurlImpersonateSecurityTest extends TestCase
     {
         $this->requireCurlBinary();
         $requestLog = sys_get_temp_dir() . '/crawlerx-curl-redirect-' . bin2hex(random_bytes(8));
-        $server = LocalHttpServer::start($this->redirectRouter($requestLog));
+        $destinationLog = sys_get_temp_dir() . '/crawlerx-curl-redirect-destination-' . bin2hex(random_bytes(8));
+        $destination = LocalHttpServer::start($this->logRouter($destinationLog));
+        $server = LocalHttpServer::start($this->redirectRouter($requestLog, $destination->url('/private')));
 
         try {
             $result = $this->handler(4096)->fetch($server->url('/start'), $this->profile(), FetchMethod::CurlImpersonate);
 
             self::assertFalse($result->ok);
+            self::assertSame('redirect changed origin', $result->error);
             self::assertSame(['/start'], $this->requestLog($requestLog));
+            self::assertFileDoesNotExist($destinationLog);
+        } finally {
+            $server->stop();
+            $destination->stop();
+            if (is_file($requestLog)) {
+                unlink($requestLog);
+            }
+            if (is_file($destinationLog)) {
+                unlink($destinationLog);
+            }
+        }
+    }
+
+    public function test_curl_follows_same_origin_redirects(): void
+    {
+        $this->requireCurlBinary();
+        $requestLog = sys_get_temp_dir() . '/crawlerx-curl-same-origin-' . bin2hex(random_bytes(8));
+        $server = LocalHttpServer::start($this->sameOriginRedirectRouter($requestLog));
+
+        try {
+            $result = $this->handler(4096)->fetch($server->url('/start'), $this->profile(), FetchMethod::CurlImpersonate);
+
+            self::assertTrue($result->ok);
+            self::assertSame($server->url('/done'), $result->finalUrl);
+            self::assertSame(['/start', '/done'], $this->requestLog($requestLog));
+        } finally {
+            $server->stop();
+            if (is_file($requestLog)) {
+                unlink($requestLog);
+            }
+        }
+    }
+
+    public function test_curl_keeps_cookies_set_by_same_origin_redirects(): void
+    {
+        $this->requireCurlBinary();
+        $requestLog = sys_get_temp_dir() . '/crawlerx-curl-redirect-cookie-' . bin2hex(random_bytes(8));
+        $server = LocalHttpServer::start($this->redirectCookieRouter($requestLog));
+
+        try {
+            $result = $this->handler(4096)->fetch($server->url('/start'), $this->profile(), FetchMethod::CurlImpersonate);
+
+            self::assertTrue($result->ok);
+            self::assertSame($server->url('/final'), $result->finalUrl);
+            self::assertSame(['/start', '/final'], $this->requestLog($requestLog));
+            self::assertStringContainsString('alice', $result->body);
         } finally {
             $server->stop();
             if (is_file($requestLog)) {
@@ -78,7 +127,7 @@ final class CurlImpersonateSecurityTest extends TestCase
         );
     }
 
-    private function redirectRouter(string $requestLog): string
+    private function redirectRouter(string $requestLog, string $destination): string
     {
         return sprintf(
             <<<'PHP'
@@ -87,11 +136,64 @@ final class CurlImpersonateSecurityTest extends TestCase
             $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
             file_put_contents($requestLog, $path . PHP_EOL, FILE_APPEND | LOCK_EX);
             if ($path === '/start') {
-                header('Location: /private', true, 302);
+                header('Location: ' . %s, true, 302);
                 exit;
             }
             header('Content-Type: text/html; charset=utf-8');
             echo '<html><body>private redirect response body</body></html>';
+            PHP,
+            var_export($requestLog, true),
+            var_export($destination, true),
+        );
+    }
+
+    private function sameOriginRedirectRouter(string $requestLog): string
+    {
+        return sprintf(
+            <<<'PHP'
+            <?php
+            $requestLog = %s;
+            $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+            file_put_contents($requestLog, $path . PHP_EOL, FILE_APPEND | LOCK_EX);
+            if ($path === '/start') {
+                header('Location: /done', true, 302);
+                exit;
+            }
+            header('Content-Type: text/html; charset=utf-8');
+            echo '<html><body>usable same origin response</body></html>';
+            PHP,
+            var_export($requestLog, true),
+        );
+    }
+
+    private function redirectCookieRouter(string $requestLog): string
+    {
+        return sprintf(
+            <<<'PHP'
+            <?php
+            $requestLog = %s;
+            $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+            file_put_contents($requestLog, $path . PHP_EOL, FILE_APPEND | LOCK_EX);
+            if ($path === '/start') {
+                setcookie('user', 'alice');
+                header('Location: /final', true, 302);
+                exit;
+            }
+            header('Content-Type: text/html; charset=utf-8');
+            echo '<html><body>user=' . htmlspecialchars((string) ($_COOKIE['user'] ?? 'anonymous')) . '</body></html>';
+            PHP,
+            var_export($requestLog, true),
+        );
+    }
+
+    private function logRouter(string $requestLog): string
+    {
+        return sprintf(
+            <<<'PHP'
+            <?php
+            file_put_contents(%s, ($_SERVER['REQUEST_URI'] ?? '/') . PHP_EOL, FILE_APPEND | LOCK_EX);
+            header('Content-Type: text/html; charset=utf-8');
+            echo '<html><body>private destination</body></html>';
             PHP,
             var_export($requestLog, true),
         );

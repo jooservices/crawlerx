@@ -57,14 +57,37 @@ final class BoundedCurlTransport implements TransportInterface
         if ($scheme !== 'http' && $scheme !== 'https') {
             throw new RequestException($request, 'CurlTransport only sends HTTP and HTTPS requests.');
         }
+        $proxyOrigin = $options->proxy === null ? null : $this->origin((string) $request->getUri());
+        if ($proxyOrigin === '') {
+            throw new RequestException($request, 'A proxied request must use an HTTP or HTTPS origin.');
+        }
 
         return $this->redirects->send(
             $request,
             $options,
-            function (RequestInterface $current, RequestOptions $inner, ?array $pinnedAddresses): ResponseInterface {
+            function (RequestInterface $current, RequestOptions $inner, ?array $pinnedAddresses) use ($proxyOrigin): ResponseInterface {
+                if ($proxyOrigin !== null && $this->origin((string) $current->getUri()) !== $proxyOrigin) {
+                    throw new RequestException($current, 'A proxied redirect changed origin.');
+                }
+
                 ($this->beforeRequest)?->__invoke($current);
 
-                return $this->exchange->send($current, $inner, $pinnedAddresses);
+                // An empty CURLOPT_PROXY disables libcurl's implicit http_proxy,
+                // https_proxy and ALL_PROXY environment handling. Only an
+                // explicitly configured CrawlerX proxy may be used.
+                $transportOptions = $inner->proxy === null
+                    ? new RequestOptions(
+                        timeout: $inner->timeout,
+                        connectTimeout: $inner->connectTimeout,
+                        proxy: '',
+                        verifySsl: $inner->verifySsl,
+                        allowRedirects: $inner->allowRedirects,
+                        extra: $inner->extra,
+                        compression: $inner->compression,
+                    )
+                    : $inner;
+
+                return $this->exchange->send($current, $transportOptions, $pinnedAddresses);
             },
         );
     }
@@ -72,5 +95,22 @@ final class BoundedCurlTransport implements TransportInterface
     public function __destruct()
     {
         $this->exchange->close();
+    }
+
+    private function origin(string $url): string
+    {
+        $parts = parse_url($url);
+        if (! is_array($parts)) {
+            return '';
+        }
+
+        $scheme = is_string($parts['scheme'] ?? null) ? strtolower($parts['scheme']) : '';
+        $host = is_string($parts['host'] ?? null) ? strtolower($parts['host']) : '';
+        if (! in_array($scheme, ['http', 'https'], true) || $host === '') {
+            return '';
+        }
+        $port = $parts['port'] ?? ($scheme === 'https' ? 443 : 80);
+
+        return $scheme . '://' . $host . ':' . $port;
     }
 }

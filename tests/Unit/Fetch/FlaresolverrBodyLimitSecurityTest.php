@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Tests\Unit\Fetch;
 
+use JOOservices\Client\Client\ClientBuilder;
+use JOOservices\Client\Testing\TestResponse;
+use JOOservices\Client\Testing\TestResponseSequence;
 use JOOservices\CrawlerX\Contracts\FetchMethodHandler;
+use JOOservices\CrawlerX\CrawlerXFactory;
 use JOOservices\CrawlerX\Dto\CrawlOptionsDto;
 use JOOservices\CrawlerX\Dto\FetchResultDto;
 use JOOservices\CrawlerX\Dto\HttpProfileDto;
@@ -25,6 +29,68 @@ use Psr\Http\Message\ResponseInterface;
 
 final class FlaresolverrBodyLimitSecurityTest extends TestCase
 {
+    public function test_default_factory_uses_configured_flaresolverr_when_robots_are_disabled(): void
+    {
+        $originalUrl = getenv('FLARESOLVERR_URL');
+        $originalProxy = getenv('CRAWLERX_FLARESOLVERR_PROXY_URL');
+        $originalRespect = getenv('CRAWLERX_RESPECT_ROBOTS');
+        putenv('FLARESOLVERR_URL=https://flaresolverr.test/v1');
+        putenv('CRAWLERX_FLARESOLVERR_PROXY_URL=http://ssrf-egress.test:8080');
+        putenv('CRAWLERX_RESPECT_ROBOTS=false');
+
+        try {
+            ClientBuilder::fake();
+            ClientBuilder::respond('POST', 'https://flaresolverr.test/v1', (new TestResponseSequence())
+                ->push(TestResponse::make(200, [], $this->response('<html><body>solved page</body></html>'))));
+            $factory = new \ReflectionMethod(CrawlerXFactory::class, 'defaultFetchChain');
+            $chain = $factory->invoke(null);
+            $result = $chain->fetch('https://example.test/page', $this->profile(), [FetchMethod::Flaresolverr]);
+
+            self::assertTrue($result->ok);
+            self::assertSame('<html><body>solved page</body></html>', $result->body);
+            self::assertCount(1, ClientBuilder::recorded());
+            $payload = json_decode(ClientBuilder::recorded()[0]->request->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
+            self::assertSame(['url' => 'http://ssrf-egress.test:8080'], $payload['proxy']);
+        } finally {
+            ClientBuilder::clearFake();
+            CrawlerXFactory::reset();
+            $this->restoreEnvironment('FLARESOLVERR_URL', $originalUrl);
+            $this->restoreEnvironment('CRAWLERX_FLARESOLVERR_PROXY_URL', $originalProxy);
+            $this->restoreEnvironment('CRAWLERX_RESPECT_ROBOTS', $originalRespect);
+        }
+    }
+
+    public function test_default_factory_skips_flaresolverr_without_an_egress_proxy(): void
+    {
+        $originalUrl = getenv('FLARESOLVERR_URL');
+        $originalProxy = getenv('CRAWLERX_FLARESOLVERR_PROXY_URL');
+        $originalRespect = getenv('CRAWLERX_RESPECT_ROBOTS');
+        putenv('FLARESOLVERR_URL=https://flaresolverr.test/v1');
+        putenv('CRAWLERX_FLARESOLVERR_PROXY_URL');
+        putenv('CRAWLERX_RESPECT_ROBOTS=false');
+
+        try {
+            ClientBuilder::fake();
+            CrawlerXFactory::reset();
+            $factory = new \ReflectionMethod(CrawlerXFactory::class, 'defaultFetchChain');
+            $chain = $factory->invoke(null);
+
+            try {
+                $chain->fetch('https://example.test/page', $this->profile(), [FetchMethod::Flaresolverr]);
+                self::fail('FlareSolverr must not run without its SSRF egress proxy.');
+            } catch (CrawlFetchException $exception) {
+                self::assertSame('SSRF egress proxy unavailable', $exception->fetch?->attempts[0]['error']);
+                self::assertCount(0, ClientBuilder::recorded());
+            }
+        } finally {
+            ClientBuilder::clearFake();
+            CrawlerXFactory::reset();
+            $this->restoreEnvironment('FLARESOLVERR_URL', $originalUrl);
+            $this->restoreEnvironment('CRAWLERX_FLARESOLVERR_PROXY_URL', $originalProxy);
+            $this->restoreEnvironment('CRAWLERX_RESPECT_ROBOTS', $originalRespect);
+        }
+    }
+
     public function test_json_envelope_may_exceed_the_page_limit_when_the_decoded_page_fits(): void
     {
         $page = '<html><body>' . str_repeat('x', 90) . '</body></html>';
@@ -114,6 +180,17 @@ final class FlaresolverrBodyLimitSecurityTest extends TestCase
                 'cookies' => [],
             ],
         ], JSON_THROW_ON_ERROR);
+    }
+
+    private function restoreEnvironment(string $name, string|false $value): void
+    {
+        if (is_string($value)) {
+            putenv($name . '=' . $value);
+
+            return;
+        }
+
+        putenv($name);
     }
 
     private function profile(): SiteProfileDto

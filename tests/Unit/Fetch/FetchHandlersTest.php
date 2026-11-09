@@ -65,6 +65,10 @@ final class FetchHandlersTest extends TestCase
             {
                 $this->command = $command;
                 $this->timeout = $timeoutSeconds;
+                $headerIndex = array_search('--dump-header', $command, true);
+                if (is_int($headerIndex) && isset($command[$headerIndex + 1])) {
+                    file_put_contents($command[$headerIndex + 1], "HTTP/1.1 200 OK\r\n\r\n");
+                }
 
                 return new ProcessResultDto(0, '<html><body>usable curl response body</body></html>');
             }

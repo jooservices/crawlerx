@@ -23,6 +23,7 @@ use JOOservices\CrawlerX\Fetch\Guard\HostThrottle;
 use JOOservices\CrawlerX\Fetch\Guard\PreFetchGuard;
 use JOOservices\CrawlerX\Fetch\Guard\RobotsGuard;
 use JOOservices\CrawlerX\Fetch\Guard\TransientRetry;
+use JOOservices\CrawlerX\Fetch\Handlers\FlaresolverrFetchHandler;
 use JOOservices\CrawlerX\Fetch\Outcome\FetchRejections;
 use JOOservices\CrawlerX\Fetch\Request\AuthWallDetector;
 use JOOservices\CrawlerX\Fetch\Request\FetchRequest;
@@ -102,8 +103,24 @@ final class FetchFallbackChain
         $runner = new MethodAttemptRunner(new PreFetchGuard($this->hostThrottle, $this->hostCircuit, $robotsDelaySeconds), $this->retrySleeper, $this->maxTransientRetries);
 
         foreach ($plan as $method) {
-            if ($method === FetchMethod::Flaresolverr && $this->robotsGuard !== null) {
-                // FlareSolverr follows redirects internally, outside this chain's per-hop SSRF and robots guard.
+            $handler = $this->handlers[$method->value] ?? null;
+            if (
+                $method === FetchMethod::Flaresolverr
+                && $handler instanceof FlaresolverrFetchHandler
+                && $this->runtime !== null
+                && ($this->runtime->flaresolverrProxyUrl === null || trim($this->runtime->flaresolverrProxyUrl) === '')
+            ) {
+                $run->attempts[] = AttemptRow::build($method, 0, 0, false, false, 'SSRF egress proxy unavailable', skipped: true);
+                continue;
+            }
+
+            if (
+                $this->robotsGuard !== null
+                && $this->respectsRobots($profile)
+                && ($method === FetchMethod::Flaresolverr || $this->isBrowserMethod($method))
+            ) {
+                // These engines own redirects internally; until each hop can be guarded,
+                // fail closed before they request the initial URL.
                 $run->attempts[] = AttemptRow::build($method, 0, 0, false, false, 'redirect guard unavailable', skipped: true);
                 continue;
             }
@@ -122,7 +139,6 @@ final class FetchFallbackChain
                 break;
             }
 
-            $handler = $this->handlers[$method->value] ?? null;
             if (! $handler instanceof FetchMethodHandler || ! $handler->supports($method)) {
                 $run->attempts[] = AttemptRow::build($method, 0, 0, false, false, 'handler not registered', skipped: true);
                 continue;
@@ -227,5 +243,15 @@ final class FetchFallbackChain
         }
 
         return $this->runtime === null || $this->runtime->respectRobots;
+    }
+
+    private function isBrowserMethod(FetchMethod $method): bool
+    {
+        return in_array($method, [
+            FetchMethod::Playwright,
+            FetchMethod::PlaywrightStealth,
+            FetchMethod::ChromeStealth,
+            FetchMethod::PuppeteerStealth,
+        ], true);
     }
 }

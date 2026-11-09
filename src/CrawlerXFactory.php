@@ -170,7 +170,7 @@ final class CrawlerXFactory
 
         return new FetchFallbackChain([
             FetchMethod::Http->value => $httpHandler,
-            FetchMethod::CurlImpersonate->value => new CurlImpersonateFetchHandler($runtime, $curlRunner, $cookies, $sessions, self::$loginCookieProvider),
+            FetchMethod::CurlImpersonate->value => new CurlImpersonateFetchHandler($runtime, $curlRunner, $cookies, $sessions, self::$loginCookieProvider, $robotsGuard),
             FetchMethod::Playwright->value => $playwright,
             FetchMethod::PlaywrightStealth->value => $playwright,
             FetchMethod::ChromeStealth->value => $playwright,

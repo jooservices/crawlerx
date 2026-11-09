@@ -22,6 +22,7 @@ final readonly class FetchRuntimeConfig
         public bool $respectRobots = true,
         public int $responseCacheTtlSeconds = 0,
         public int $maxResponseBytes = 10_485_760,
+        public ?string $flaresolverrProxyUrl = null,
     ) {
     }
 
@@ -32,6 +33,7 @@ final readonly class FetchRuntimeConfig
         $puppeteer = getenv('CRAWLERX_PUPPETEER_SCRIPT');
         $curl = getenv('CRAWLERX_CURL_IMPERSONATE');
         $flare = getenv('FLARESOLVERR_URL');
+        $flareProxy = getenv('CRAWLERX_FLARESOLVERR_PROXY_URL');
         $playwrightUrl = getenv('PLAYWRIGHT_URL');
         $userAgentPool = getenv('CRAWLERX_USER_AGENT_POOL');
         $nodeId = getenv('CRAWLERX_NODE');
@@ -78,6 +80,7 @@ final readonly class FetchRuntimeConfig
             respectRobots: self::resolveRespectRobots(getenv('CRAWLERX_RESPECT_ROBOTS')),
             responseCacheTtlSeconds: $responseCacheTtlSeconds,
             maxResponseBytes: is_int($configuredMaxResponseBytes) ? $configuredMaxResponseBytes : 10_485_760,
+            flaresolverrProxyUrl: is_string($flareProxy) && trim($flareProxy) !== '' ? trim($flareProxy) : null,
         );
     }
 

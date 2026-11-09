@@ -21,7 +21,7 @@ use PHPUnit\Framework\TestCase;
 
 final class HttpRedirectSecurityTest extends TestCase
 {
-    public function test_cache_does_not_store_a_response_personalized_by_a_redirect_cookie(): void
+    public function test_cache_does_not_store_a_round_trip_redirect_response_personalized_by_a_cookie(): void
     {
         $requestLog = sys_get_temp_dir() . '/crawlerx-redirect-cache-' . bin2hex(random_bytes(8));
         $server = LocalHttpServer::start($this->cacheRedirectRouter($requestLog));
@@ -39,14 +39,16 @@ final class HttpRedirectSecurityTest extends TestCase
             $first = $handler->fetch($url, $profile, FetchMethod::Http);
             $second = $handler->fetch($url, $profile, FetchMethod::Http);
 
-            self::assertSame($server->url('/private'), $first->finalUrl);
+            self::assertSame($url, $first->finalUrl);
             self::assertSame('<html><body>personalized alice response</body></html>', $first->body);
             self::assertSame($first->body, $second->body);
             self::assertSame([
                 '/start|',
-                '/private|session=alice',
+                '/set|',
+                '/start|session=alice',
                 '/start|',
-                '/private|session=alice',
+                '/set|',
+                '/start|session=alice',
             ], $this->requestLog($requestLog));
         } finally {
             $server->stop();
@@ -83,6 +85,104 @@ final class HttpRedirectSecurityTest extends TestCase
             self::assertSame(['/start'], $this->requestLog($requestLog));
         } finally {
             $server->stop();
+            if (is_file($requestLog)) {
+                unlink($requestLog);
+            }
+        }
+    }
+
+    public function test_authenticated_same_origin_redirects_are_followed(): void
+    {
+        $requestLog = sys_get_temp_dir() . '/crawlerx-auth-redirect-' . bin2hex(random_bytes(8));
+        $server = LocalHttpServer::start($this->sameOriginAuthRedirectRouter($requestLog));
+
+        try {
+            $profile = $this->profile();
+            $profile = new SiteProfileDto(
+                slug: $profile->slug,
+                displayName: $profile->displayName,
+                baseUrl: $profile->baseUrl,
+                fetchProfile: $profile->fetchProfile,
+                fetchChain: $profile->fetchChain,
+                http: new HttpProfileDto(
+                    headers: ['Accept' => 'text/html', 'Authorization' => 'Bearer test-token'],
+                ),
+            );
+            $result = (new HttpFetchHandler(new ClientFactory(), new CookieHandoffStore()))
+                ->fetch($server->url('/start'), $profile, FetchMethod::Http);
+
+            self::assertTrue($result->ok);
+            self::assertSame($server->url('/done'), $result->finalUrl);
+            self::assertSame(['Bearer test-token', 'Bearer test-token'], $this->requestLog($requestLog));
+        } finally {
+            $server->stop();
+            if (is_file($requestLog)) {
+                unlink($requestLog);
+            }
+        }
+    }
+
+    public function test_sensitive_headers_are_not_forwarded_to_a_different_origin_port(): void
+    {
+        $requestLog = sys_get_temp_dir() . '/crawlerx-cross-port-redirect-' . bin2hex(random_bytes(8));
+        $destination = LocalHttpServer::start($this->privateRedirectDestinationRouter($requestLog));
+        $source = LocalHttpServer::start($this->crossPortRedirectRouter($destination->url('/private')));
+
+        try {
+            $profile = $this->profile();
+            $profile = new SiteProfileDto(
+                slug: $profile->slug,
+                displayName: $profile->displayName,
+                baseUrl: $profile->baseUrl,
+                fetchProfile: $profile->fetchProfile,
+                fetchChain: $profile->fetchChain,
+                http: new HttpProfileDto(
+                    headers: ['Accept' => 'text/html', 'Authorization' => 'Bearer test-token'],
+                ),
+            );
+            $result = (new HttpFetchHandler(new ClientFactory(), new CookieHandoffStore()))
+                ->fetch($source->url('/start'), $profile, FetchMethod::Http);
+
+            self::assertFalse($result->ok);
+            self::assertSame([], is_file($requestLog) ? $this->requestLog($requestLog) : []);
+        } finally {
+            $source->stop();
+            $destination->stop();
+            if (is_file($requestLog)) {
+                unlink($requestLog);
+            }
+        }
+    }
+
+    public function test_proxied_same_origin_redirects_succeed_and_origin_changes_are_blocked(): void
+    {
+        $requestLog = sys_get_temp_dir() . '/crawlerx-proxy-redirect-' . bin2hex(random_bytes(8));
+        $proxy = LocalHttpServer::start($this->proxyRedirectRouter($requestLog));
+        $proxyUrl = rtrim($proxy->url('/'), '/');
+        $profile = new SiteProfileDto(
+            slug: 'http-proxy-redirect-test',
+            displayName: 'HTTP proxy redirect test',
+            baseUrl: 'http://public.example',
+            fetchProfile: FetchProfile::HttpOnly,
+            fetchChain: [FetchMethod::Http],
+            http: new HttpProfileDto(headers: ['Accept' => 'text/html', 'Authorization' => 'Bearer test-token'], proxy: $proxyUrl),
+        );
+
+        try {
+            $handler = new HttpFetchHandler(new ClientFactory(), new CookieHandoffStore());
+            $sameOrigin = $handler->fetch('http://public.example/start', $profile, FetchMethod::Http);
+            $crossOrigin = $handler->fetch('http://public.example/cross', $profile, FetchMethod::Http);
+
+            self::assertTrue($sameOrigin->ok);
+            self::assertSame('http://public.example/done', $sameOrigin->finalUrl);
+            self::assertFalse($crossOrigin->ok);
+            self::assertSame([
+                '/start|Bearer test-token',
+                '/done|Bearer test-token',
+                '/cross|Bearer test-token',
+            ], $this->requestLog($requestLog));
+        } finally {
+            $proxy->stop();
             if (is_file($requestLog)) {
                 unlink($requestLog);
             }
@@ -139,8 +239,13 @@ final class HttpRedirectSecurityTest extends TestCase
             file_put_contents($requestLog, $path . '|' . ($_SERVER['HTTP_COOKIE'] ?? '') . PHP_EOL, FILE_APPEND | LOCK_EX);
 
             if ($path === '/start') {
+                if (($_COOKIE['session'] ?? '') !== 'alice') {
+                    header('Location: /set', true, 302);
+                    exit;
+                }
+            } elseif ($path === '/set') {
                 header('Set-Cookie: session=alice; Path=/; HttpOnly');
-                header('Location: /private', true, 302);
+                header('Location: /start', true, 302);
                 exit;
             }
 
@@ -148,6 +253,71 @@ final class HttpRedirectSecurityTest extends TestCase
             echo ($_COOKIE['session'] ?? '') === 'alice'
                 ? '<html><body>personalized alice response</body></html>'
                 : '<html><body>anonymous response body</body></html>';
+            PHP,
+            var_export($requestLog, true),
+        );
+    }
+
+    private function sameOriginAuthRedirectRouter(string $requestLog): string
+    {
+        return sprintf(
+            <<<'PHP'
+            <?php
+            $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+            file_put_contents(%s, ($_SERVER['HTTP_AUTHORIZATION'] ?? '') . PHP_EOL, FILE_APPEND | LOCK_EX);
+            if ($path === '/start') {
+                header('Location: /done', true, 302);
+                exit;
+            }
+            header('Content-Type: text/html; charset=utf-8');
+            echo '<html><body>same origin redirect body</body></html>';
+            PHP,
+            var_export($requestLog, true),
+        );
+    }
+
+    private function crossPortRedirectRouter(string $destination): string
+    {
+        return sprintf(
+            <<<'PHP'
+            <?php
+            header('Location: ' . %s, true, 302);
+            exit;
+            PHP,
+            var_export($destination, true),
+        );
+    }
+
+    private function privateRedirectDestinationRouter(string $requestLog): string
+    {
+        return sprintf(
+            <<<'PHP'
+            <?php
+            file_put_contents(%s, ($_SERVER['HTTP_AUTHORIZATION'] ?? '') . PHP_EOL, FILE_APPEND | LOCK_EX);
+            header('Content-Type: text/html; charset=utf-8');
+            echo '<html><body>private destination</body></html>';
+            PHP,
+            var_export($requestLog, true),
+        );
+    }
+
+    private function proxyRedirectRouter(string $requestLog): string
+    {
+        return sprintf(
+            <<<'PHP'
+            <?php
+            $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+            file_put_contents(%s, $path . '|' . ($_SERVER['HTTP_AUTHORIZATION'] ?? '') . PHP_EOL, FILE_APPEND | LOCK_EX);
+            if ($path === '/start') {
+                header('Location: http://public.example/done', true, 302);
+                exit;
+            }
+            if ($path === '/cross') {
+                header('Location: http://public.example:8080/private', true, 302);
+                exit;
+            }
+            header('Content-Type: text/html; charset=utf-8');
+            echo '<html><body>proxy redirect response body</body></html>';
             PHP,
             var_export($requestLog, true),
         );

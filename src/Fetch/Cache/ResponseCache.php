@@ -126,10 +126,22 @@ final class ResponseCache implements CacheAwareFetchMethodHandler
         return $result->ok
             && $result->status >= 200
             && $result->status < 300
+            && ! $this->wasRedirected($result)
             && ! $result->challengeDetected
             && ! ChallengeDetector::isChallenge($result->body, $result->status, $result->headers)
             && $this->cacheableResponseHeaders($result)
             && preg_match('/\b(?:captcha|recaptcha|hcaptcha|funcaptcha)\b/i', $result->body) !== 1;
+    }
+
+    private function wasRedirected(FetchResultDto $result): bool
+    {
+        foreach ($result->headers as $name => $values) {
+            if (strcasecmp($name, 'X-Joo-Redirect-History') === 0 && $values !== []) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** @param array<string, string> $headers */

@@ -22,6 +22,7 @@ use JOOservices\CrawlerX\Fetch\ResponseBodyTooLargeException;
 use JOOservices\CrawlerX\Exceptions\RobotsDisallowedException;
 use JOOservices\CrawlerX\Services\ClientFactory;
 use JOOservices\Client\Exceptions\DownloadSizeExceededException;
+use JOOservices\Client\Exceptions\RequestException;
 use Psr\Http\Message\RequestInterface;
 use Throwable;
 
@@ -70,13 +71,9 @@ final class HttpFetchHandler implements FetchMethodHandler
             static fn(string $name): bool => SensitiveHeaders::isSensitiveName($name),
             ARRAY_FILTER_USE_KEY,
         ));
-        $nonCookieSensitiveHeaders = array_filter(
-            $redirectSensitiveHeaders,
-            static fn(string $name): bool => ! in_array(strtolower($name), ['cookie', 'cookie2'], true),
-        );
         $urlParts = parse_url($url);
         $urlHasCredentials = is_array($urlParts) && (isset($urlParts['user']) || isset($urlParts['pass']));
-        $redirectsDisabled = $proxy !== null || $nonCookieSensitiveHeaders !== [] || $urlHasCredentials;
+        $redirectsDisabled = $urlHasCredentials;
         $redirectOptions = ['track_redirects' => true];
         if ($redirectSensitiveHeaders !== []) {
             $redirectOptions['sensitive_headers'] = $redirectSensitiveHeaders;
@@ -90,8 +87,34 @@ final class HttpFetchHandler implements FetchMethodHandler
             // A remote proxy resolves the redirect destination itself, so local DNS validation cannot pin its egress.
             'allow_redirects' => $redirectsDisabled ? false : $redirectOptions,
         ];
-        if ($this->beforeRequest !== null && ($profile->respectRobots ?? $this->defaultRespectRobots)) {
-            $clientOptions['before_request'] = $this->beforeRequest;
+        $respectRobots = $profile->respectRobots ?? $this->defaultRespectRobots;
+        if (($this->beforeRequest !== null && $respectRobots) || $proxy !== null || $redirectSensitiveHeaders !== []) {
+            $origin = self::origin($url);
+            $beforeRequest = $this->beforeRequest;
+            $clientOptions['before_request'] = static function (RequestInterface $request) use (
+                $beforeRequest,
+                $respectRobots,
+                $proxy,
+                $origin,
+                $redirectSensitiveHeaders,
+            ): void {
+                $requestOrigin = self::origin((string) $request->getUri());
+                if ($proxy !== null && $requestOrigin !== $origin) {
+                    throw new RequestException($request, 'A proxied redirect changed origin.');
+                }
+
+                if ($requestOrigin !== $origin) {
+                    foreach ($redirectSensitiveHeaders as $header) {
+                        if ($request->hasHeader($header)) {
+                            throw new RequestException($request, 'A sensitive redirect changed origin.');
+                        }
+                    }
+                }
+
+                if ($respectRobots) {
+                    $beforeRequest?->__invoke($request);
+                }
+            };
         }
 
         try {
@@ -137,7 +160,7 @@ final class HttpFetchHandler implements FetchMethodHandler
         }
 
         $challenge = ChallengeDetector::isChallenge($body, $status, $headerMap);
-        $redirectNotFollowed = $redirectsDisabled && $status >= 300 && $status < 400;
+        $redirectNotFollowed = $status >= 300 && $status < 400 && $this->finalUrl($headerMap, $url) === $url;
         $ok = ! $redirectNotFollowed && ! $challenge && ChallengeDetector::isUsableBody($body, $status);
 
         return new FetchResultDto(
@@ -219,5 +242,19 @@ final class HttpFetchHandler implements FetchMethodHandler
         }
 
         return false;
+    }
+
+    private static function origin(string $url): ?string
+    {
+        $parts = parse_url($url);
+        if (! is_array($parts) || ! is_string($parts['scheme'] ?? null) || ! is_string($parts['host'] ?? null)) {
+            return null;
+        }
+
+        $scheme = strtolower($parts['scheme']);
+        $host = strtolower(rtrim($parts['host'], '.'));
+        $port = $parts['port'] ?? ($scheme === 'https' ? 443 : 80);
+
+        return $scheme . '://' . $host . ':' . $port;
     }
 }

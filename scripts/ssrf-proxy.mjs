@@ -1,7 +1,14 @@
-import { connect, isIP } from 'node:net';
+import { isIP } from 'node:net';
 import { Transform } from 'node:stream';
 import { createServer, request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
+import { createServer as createTlsServer } from 'node:https';
+import { createPublicKey, createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { createBrotliDecompress, createGunzip, createInflate } from 'node:zlib';
 import { assertSafeBrowserUrl, SsrfBlockedError } from './ssrf-guard.mjs';
 import { configuredMaxResponseBytes } from './fetch-limits.mjs';
 
@@ -16,6 +23,37 @@ const hopByHopHeaderNames = new Set([
     'transfer-encoding',
     'upgrade',
 ]);
+
+let mitmCertificate = null;
+
+export function ssrfProxyCertificateSpkiHash() {
+    return certificate().spkiHash;
+}
+
+function certificate() {
+    if (mitmCertificate !== null) {
+        return mitmCertificate;
+    }
+
+    const directory = mkdtempSync(join(tmpdir(), 'crawlerx-ssrf-proxy-'));
+    const keyPath = join(directory, 'key.pem');
+    const certificatePath = join(directory, 'certificate.pem');
+    execFileSync('openssl', [
+        'req', '-x509', '-newkey', 'rsa:2048', '-nodes',
+        '-keyout', keyPath,
+        '-out', certificatePath,
+        '-days', '1',
+        '-subj', '/CN=crawlerx-ssrf-proxy.invalid',
+    ], { stdio: 'ignore' });
+
+    const cert = readFileSync(certificatePath);
+    const publicKey = createPublicKey(cert).export({ type: 'spki', format: 'der' });
+    const spkiHash = createHash('sha256').update(publicKey).digest('base64');
+    mitmCertificate = { key: readFileSync(keyPath), cert, spkiHash, directory };
+    process.once('exit', () => rmSync(directory, { recursive: true, force: true }));
+
+    return mitmCertificate;
+}
 
 function stripHopByHopHeaders(headers) {
     const filtered = { ...headers };
@@ -42,7 +80,10 @@ function stripHopByHopHeaders(headers) {
 export async function createSsrfProxyServer({
     assertSafeUrl = assertSafeBrowserUrl,
     maxResponseBytes = configuredMaxResponseBytes(),
+    requestOrigin = null,
+    sensitiveHeaders = [],
 } = {}) {
+    const normalizedSensitiveHeaders = new Set(sensitiveHeaders.map((name) => String(name).toLowerCase()));
     const sockets = new Set();
     let blocked = false;
     let blockedError = null;
@@ -106,11 +147,11 @@ export async function createSsrfProxyServer({
         }
     }
 
-    async function forwardHttpRequest(request, response) {
+    async function forwardHttpRequest(request, response, baseUrl = null) {
         let target;
         let resolved;
         try {
-            target = new URL(request.url ?? '');
+            target = new URL(request.url ?? '', baseUrl ?? undefined);
             if (!['http:', 'https:'].includes(target.protocol)) {
                 throw new SsrfBlockedError();
             }
@@ -126,8 +167,15 @@ export async function createSsrfProxyServer({
         }
 
         const headers = stripHopByHopHeaders(request.headers);
+        if (requestOrigin !== null && target.origin !== requestOrigin) {
+            for (const name of normalizedSensitiveHeaders) {
+                delete headers[name];
+            }
+            delete headers.cookie;
+        }
         headers.host = target.host;
         headers.connection = 'close';
+        headers['accept-encoding'] = 'gzip, deflate, br';
         const transport = target.protocol === 'https:' ? httpsRequest : httpRequest;
         const outbound = transport({
             protocol: target.protocol,
@@ -138,8 +186,25 @@ export async function createSsrfProxyServer({
             headers,
             lookup: pinnedLookup(resolved.addresses),
         }, (upstream) => {
+            const encoding = String(upstream.headers['content-encoding'] ?? '').toLowerCase();
+            const decoder = encoding === ''
+                ? null
+                : encoding === 'gzip' || encoding === 'x-gzip'
+                    ? createGunzip()
+                    : encoding === 'deflate'
+                        ? createInflate()
+                        : encoding === 'br'
+                            ? createBrotliDecompress()
+                            : null;
+            if (encoding !== '' && decoder === null) {
+                response.writeHead(502, { Connection: 'close', 'Content-Length': '0' });
+                response.end();
+                upstream.destroy();
+                return;
+            }
+
             const contentLength = upstream.headers['content-length'];
-            if (typeof contentLength === 'string' && /^\d+$/.test(contentLength) && Number(contentLength) > maxResponseBytes) {
+            if (encoding === '' && typeof contentLength === 'string' && /^\d+$/.test(contentLength) && Number(contentLength) > maxResponseBytes) {
                 responseTooLarge = true;
                 upstream.resume();
                 response.writeHead(413, { Connection: 'close', 'Content-Length': '0' });
@@ -147,11 +212,11 @@ export async function createSsrfProxyServer({
                 return;
             }
 
-            response.writeHead(
-                upstream.statusCode ?? 502,
-                upstream.statusMessage,
-                stripHopByHopHeaders(upstream.headers),
-            );
+            const responseHeaders = stripHopByHopHeaders(upstream.headers);
+            delete responseHeaders['content-encoding'];
+            delete responseHeaders['content-length'];
+            responseHeaders.connection = 'close';
+            response.writeHead(upstream.statusCode ?? 502, upstream.statusMessage, responseHeaders);
             upstream.on('error', () => response.destroy());
             let bytes = 0;
             const limiter = new Transform({
@@ -166,10 +231,19 @@ export async function createSsrfProxyServer({
                 },
             });
             limiter.on('error', () => {
+                decoder?.destroy();
                 upstream.destroy();
                 response.destroy();
             });
-            upstream.pipe(limiter).pipe(response);
+            if (decoder !== null) {
+                decoder.on('error', () => {
+                    upstream.destroy();
+                    response.destroy();
+                });
+                upstream.pipe(decoder).pipe(limiter).pipe(response);
+            } else {
+                upstream.pipe(limiter).pipe(response);
+            }
         });
         outbound.on('socket', trackSocket);
         response.on('error', () => outbound.destroy());
@@ -197,9 +271,8 @@ export async function createSsrfProxyServer({
             return;
         }
 
-        let resolved;
         try {
-            resolved = await resolveTarget(`https://${hostname.includes(':') ? `[${hostname}]` : hostname}:${port}/`);
+            await resolveTarget(`https://${hostname.includes(':') ? `[${hostname}]` : hostname}:${port}/`);
         } catch (error) {
             if (error instanceof SsrfBlockedError) {
                 rejectSocket(clientSocket);
@@ -209,36 +282,21 @@ export async function createSsrfProxyServer({
             return;
         }
 
-        const upstream = connect({ host: resolved.addresses[0].address, port });
-        trackSocket(upstream);
-        upstream.once('connect', () => {
-            if (clientSocket.destroyed) {
-                upstream.destroy();
-                return;
-            }
-            clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
-            if (head.length > 0) upstream.write(head);
-            let responseBytes = 0;
-            upstream.on('data', (chunk) => {
-                responseBytes += chunk.length;
-                if (responseBytes > maxResponseBytes) {
-                    responseTooLarge = true;
-                    upstream.destroy();
-                    clientSocket.destroy();
-                    return;
-                }
-                if (!clientSocket.destroyed) {
-                    clientSocket.write(chunk);
-                }
-            });
-            clientSocket.pipe(upstream);
+        const targetOrigin = `https://${hostname.includes(':') ? `[${hostname}]` : hostname}:${port}`;
+        const { key, cert } = certificate();
+        const secureServer = createTlsServer({ key, cert, ALPNProtocols: ['http/1.1'] }, (secureRequest, response) => {
+            void forwardHttpRequest(secureRequest, response, targetOrigin);
         });
-        upstream.once('error', () => {
-            if (!clientSocket.destroyed) {
-                clientSocket.end('HTTP/1.1 502 Bad Gateway\r\nConnection: close\r\n\r\n');
-            }
-        });
-        clientSocket.once('close', () => upstream.destroy());
+        secureServer.on('secureConnection', trackSocket);
+        secureServer.on('tlsClientError', () => clientSocket.destroy());
+        secureServer.on('clientError', () => clientSocket.destroy());
+        secureServer.on('upgrade', (_upgradeRequest, socket) => socket.destroy());
+
+        clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+        if (head.length > 0) {
+            clientSocket.unshift(head);
+        }
+        secureServer.emit('connection', clientSocket);
     }
 
     async function forwardUpgrade(request, clientSocket, head) {
@@ -260,6 +318,13 @@ export async function createSsrfProxyServer({
         }
 
         const headers = { ...request.headers, host: target.host, connection: 'Upgrade' };
+        const targetOrigin = `http://${target.host}`;
+        if (requestOrigin !== null && targetOrigin !== requestOrigin) {
+            for (const name of normalizedSensitiveHeaders) {
+                delete headers[name];
+            }
+            delete headers.cookie;
+        }
         delete headers['proxy-authorization'];
         delete headers['proxy-connection'];
         const outbound = httpRequest({
@@ -344,6 +409,7 @@ export async function createSsrfProxyServer({
 
     return {
         url: `http://127.0.0.1:${address.port}`,
+        certificateSpkiHash: certificate().spkiHash,
         wasBlocked: () => blocked,
         blockedError: () => blockedError,
         wasResponseTooLarge: () => responseTooLarge,

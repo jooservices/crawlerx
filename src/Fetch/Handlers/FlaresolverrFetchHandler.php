@@ -79,6 +79,7 @@ final class FlaresolverrFetchHandler implements FetchMethodHandler
             'maxTimeout' => $maxTimeoutMs,
             'cookies' => $flareCookies,
             'userAgent' => $userAgent,
+            ...$this->proxyPayload(),
         ], JSON_THROW_ON_ERROR);
         $maxEnvelopeBytes = $this->runtime->maxResponseBytes * 6 + 65_536;
 
@@ -213,6 +214,29 @@ final class FlaresolverrFetchHandler implements FetchMethodHandler
         }
 
         return $profile->playwright->userAgent;
+    }
+
+    /** @return array{proxy?: array{url: string}} */
+    private function proxyPayload(): array
+    {
+        $proxyUrl = $this->runtime->flaresolverrProxyUrl;
+        if ($proxyUrl === null || trim($proxyUrl) === '') {
+            return [];
+        }
+
+        $parts = parse_url($proxyUrl);
+        if (
+            ! is_array($parts)
+            || ! is_string($parts['scheme'] ?? null)
+            || ! in_array(strtolower($parts['scheme']), ['http', 'socks4', 'socks5'], true)
+            || ! is_string($parts['host'] ?? null)
+            || isset($parts['user'])
+            || isset($parts['pass'])
+        ) {
+            throw new \InvalidArgumentException('FlareSolverr SSRF proxy URL is invalid.');
+        }
+
+        return ['proxy' => ['url' => $proxyUrl]];
     }
 
     /** @return array<string, string> */

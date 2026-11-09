@@ -9,6 +9,7 @@ import { chromium } from 'playwright';
 import { fetchWithBrowser } from './playwright-fetch.mjs';
 import { assertSafeBrowserUrl, SsrfBlockedError } from './ssrf-guard.mjs';
 import { configuredMaxResponseBytes } from './fetch-limits.mjs';
+import { ssrfProxyCertificateSpkiHash } from './ssrf-proxy.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const port = Number.parseInt(process.env.PLAYWRIGHT_PORT ?? '3000', 10);
@@ -232,7 +233,11 @@ async function launchBrowser(relaunch = false) {
                 ...(process.env.CRAWLERX_BROWSER_EXECUTABLE_PATH
                     ? { executablePath: process.env.CRAWLERX_BROWSER_EXECUTABLE_PATH }
                     : {}),
-                args: ['--disable-blink-features=AutomationControlled', '--proxy-bypass-list=<-loopback>'],
+                args: [
+                    '--disable-blink-features=AutomationControlled',
+                    '--proxy-bypass-list=<-loopback>',
+                    `--ignore-certificate-errors-spki-list=${ssrfProxyCertificateSpkiHash()}`,
+                ],
             });
             browser = launched;
             hasLaunchedBrowser = true;
