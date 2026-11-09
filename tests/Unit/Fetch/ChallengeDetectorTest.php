@@ -31,6 +31,15 @@ final class ChallengeDetectorTest extends TestCase
         self::assertTrue(ChallengeDetector::isChallenge($html, 200));
     }
 
+    public function test_captcha_widgets_in_large_pages_are_not_captcha_challenges(): void
+    {
+        $html = str_repeat('<p>page content</p>', 2000)
+            . '<script src="https://www.google.com/recaptcha/api.js"></script>';
+
+        self::assertTrue(ChallengeDetector::isCaptchaChallenge('<form class="captcha">verify</form>'));
+        self::assertFalse(ChallengeDetector::isCaptchaChallenge($html));
+    }
+
     public function test_json_body_is_usable(): void
     {
         self::assertTrue(ChallengeDetector::isUsableBody('{"ok":true}', 200));
