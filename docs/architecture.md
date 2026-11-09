@@ -42,6 +42,7 @@ sequenceDiagram
     participant Planner as FetchPlanResolver
     participant Chain as FetchFallbackChain
     participant Robots as RobotsGuard
+    participant RobotsClient as ClientFactory HTTP client
     participant Runner as MethodAttemptRunner and guards
     participant Handler as Fetch method handler
     participant Registry as AdapterRegistry
@@ -63,6 +64,10 @@ sequenceDiagram
     Orchestrator->>Chain: fetch(url, profile, plan)
     opt robots policy is enabled
         Chain->>Robots: check rules and read crawl delay
+        opt robots.txt cache miss
+            Robots->>RobotsClient: GET /robots.txt
+            RobotsClient-->>Robots: body or unavailable
+        end
         Robots-->>Chain: allowed or blocked; optional delay
     end
     loop each method in the plan
@@ -77,8 +82,10 @@ sequenceDiagram
             opt HTTP method
                 Handler->>Handler: resolve configured proxy and make HTTP request
             end
-            opt browser method
-                Handler->>Handler: validate target through SSRF-protected egress proxy
+            alt Playwright-family or Puppeteer method
+                Handler->>Handler: browser script validates URL and uses SSRF egress proxy
+            else HTTP, curl-impersonate, or FlareSolverr method
+                Handler->>Handler: method transport has no browser-side SSRF guard
             end
             Handler-->>Runner: fetch result
         end
@@ -107,24 +114,47 @@ Key implementation points are [`CrawlerX.php`](../src/CrawlerX.php),
 
 ### Guard and transport behavior
 
-- The robots guard runs before the fetch plan. A site manifest can override the
-  runtime setting; when neither overrides it, robots checking is enabled.
-  Unavailable `robots.txt` fails open, while a matching `Disallow` rule stops
-  the crawl. The optional robots crawl delay is applied to host throttling.
+- `RobotsGuard` runs before any fetch-method attempt. An explicit boolean
+  `defaultCrawlConfig.respect_robots` in the source manifest overrides
+  `CRAWLERX_RESPECT_ROBOTS` in either direction; when the manifest omits it,
+  robots checking defaults to enabled. On a cache miss, the guard requests
+  `/robots.txt` through the default `ClientFactory` HTTP client. This request
+  happens before browser methods and is not protected by their SSRF scripts or
+  egress proxy, so it may reach a private host even if a later browser method
+  blocks the target. Unavailable `robots.txt` fails open, while a matching
+  `Disallow` rule stops the crawl. The optional robots crawl delay is applied to
+  host throttling.
 - On each method attempt, a cache-aware handler is checked first. A cache hit
   skips the host throttle and circuit breaker. On a miss, `PreFetchGuard`
   applies the host throttle and then checks the circuit breaker.
-- The HTTP handler can use an explicitly configured proxy. With no request,
-  site, or process proxy configured, the HTTP client connects directly. The
-  optional response cache wraps HTTP only and is disabled by default.
-- Browser methods validate destinations through the browser-side SSRF guard
-  and its egress proxy. That policy blocks unsafe hostnames and network
-  addresses by default and pins approved DNS results. Private IP allowances
-  require both `CRAWLERX_FETCH_LAB=1` and
-  `CRAWLERX_BROWSER_ALLOW_PRIVATE_IPS=1`. This browser-specific protection is
-  implemented in [`scripts/ssrf-guard.mjs`](../scripts/ssrf-guard.mjs) and
-  [`scripts/ssrf-proxy.mjs`](../scripts/ssrf-proxy.mjs); it is separate from
-  the configurable HTTP proxy.
+- The HTTP page handler selects a proxy from request options, the site HTTP
+  profile, then `CRAWLERX_HTTP_PROXY`. The robots request does not receive the
+  request or site proxy; use `CRAWLERX_HTTP_PROXY` or the applicable libcurl
+  proxy environment variable when it must also use a proxy. When CrawlerX
+  leaves libcurl's proxy unset, libcurl may use `http_proxy` or `all_proxy`;
+  `NO_PROXY` may bypass a configured proxy. An
+  unset CrawlerX proxy therefore does not guarantee a direct connection. The
+  optional response cache wraps successful HTTP responses only and is disabled
+  by default.
+- The browser-side SSRF guard applies to the Playwright-family methods
+  (`Playwright`, `PlaywrightStealth`, and `ChromeStealth`) and `PuppeteerStealth`,
+  whose scripts validate destinations and route browser traffic through the
+  guarded egress proxy. The guard blocks unsafe hostnames and network addresses
+  by default and pins approved DNS results. Private IP allowances require both
+  `CRAWLERX_FETCH_LAB=1` and `CRAWLERX_BROWSER_ALLOW_PRIVATE_IPS=1`. This
+  protection is implemented in [`scripts/ssrf-guard.mjs`](../scripts/ssrf-guard.mjs),
+  [`scripts/ssrf-proxy.mjs`](../scripts/ssrf-proxy.mjs),
+  [`scripts/playwright-fetch.mjs`](../scripts/playwright-fetch.mjs), and
+  [`scripts/puppeteer-stealth-fetch.mjs`](../scripts/puppeteer-stealth-fetch.mjs),
+  called by [`PlaywrightFamilyFetchHandler`](../src/Fetch/Handlers/PlaywrightFamilyFetchHandler.php)
+  and [`PuppeteerStealthFetchHandler`](../src/Fetch/Handlers/PuppeteerStealthFetchHandler.php).
+  It does not cover the `BrowserLikely` profile as a whole:
+  [`FlaresolverrFetchHandler`](../src/Fetch/Handlers/FlaresolverrFetchHandler.php)
+  submits the target URL to an external service and needs separate destination
+  or network controls. [`HttpFetchHandler`](../src/Fetch/Handlers/HttpFetchHandler.php),
+  the robots request, and
+  [`CurlImpersonateFetchHandler`](../src/Fetch/Handlers/CurlImpersonateFetchHandler.php)
+  also do not use this browser-side guard and need separate controls.
 
 These paths are implemented by [`FetchFallbackChain`](../src/Fetch/FetchFallbackChain.php),
 [`RobotsGuard`](../src/Fetch/Guard/RobotsGuard.php),
