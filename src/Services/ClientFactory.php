@@ -77,6 +77,11 @@ final class ClientFactory
             $builder = $builder->withVerifySsl($options['verify_ssl']);
         }
 
+        $proxy = self::resolveProxy($options);
+        if (! $isFaked && $proxy !== null) {
+            $builder = $builder->withProxy($proxy);
+        }
+
         /** @var HttpClient $client */
         $client = $builder->build();
 
@@ -101,6 +106,24 @@ final class ClientFactory
     }
 
     /**
+     * The outbound proxy for a client: the explicit `proxy` option, else the process-wide CRAWLERX_HTTP_PROXY.
+     * Unset or blank means a direct connection. The URL may carry credentials, so it is never logged.
+     *
+     * @param  array<string, mixed>  $options
+     */
+    public static function resolveProxy(array $options): ?string
+    {
+        $explicit = $options['proxy'] ?? null;
+        if (is_string($explicit) && trim($explicit) !== '') {
+            return trim($explicit);
+        }
+
+        $env = getenv('CRAWLERX_HTTP_PROXY');
+
+        return is_string($env) && trim($env) !== '' ? trim($env) : null;
+    }
+
+    /**
      * @param  array<string, mixed>  $options
      */
     private function cacheKey(?string $site, array $options): ?string
@@ -118,6 +141,10 @@ final class ClientFactory
         ];
         if (is_string($options['base_uri'] ?? null)) {
             $transportOptions['base_uri'] = $options['base_uri'];
+        }
+        $proxy = self::resolveProxy($options);
+        if ($proxy !== null) {
+            $transportOptions['proxy'] = $proxy;
         }
         $optionsHash = hash('sha256', json_encode($transportOptions, JSON_THROW_ON_ERROR));
 

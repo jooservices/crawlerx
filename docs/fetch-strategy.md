@@ -172,3 +172,7 @@ period. Timeout/network failure metadata contains all completed attempts,
 transport exceptions and the first fallback skipped when the budget is spent.
 Custom fetch handlers must honor `methodTimeoutSeconds`; the chain cannot
 preempt arbitrary PHP code inside a consumer-supplied synchronous handler.
+
+## Outbound proxy
+
+The HTTP fetch method can go through a proxy, for example a Japan exit for sources that geo-block other countries. The proxy is off by default. Set it process-wide with `CRAWLERX_HTTP_PROXY=http://host:port`, or per site profile and per request with `HttpProfileDto::$proxy` and `HttpOptionsDto::$proxy`; a request option wins over the profile, which wins over the environment. The proxy URL may contain credentials and is never logged. Browser-based methods (Playwright, FlareSolverr) are not routed through it.
