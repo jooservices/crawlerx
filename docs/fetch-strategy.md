@@ -88,14 +88,27 @@ node. Ten consecutive non-terminal fetch failures open the circuit for five
 minutes. The first request after that interval is a half-open probe; an
 additional request waits for its 30-second probe lease. An open circuit returns
 retryable `rate_limited` with the remaining time in `Retry-After`. Circuit cache
-failures fall back to worker-local state.
+failures fall back to worker-local state. During one fetch, the circuit is
+consulted at most once, after the first uncached method attempt passes host
+throttling; later fallback attempts do not re-check it. Host throttling still
+runs before every uncached method attempt.
 
 ## Robots.txt compliance
 
-Before it fetches a URL, the chain consults the host's `robots.txt` through
-`RobotsGuard`. The guard fetches `https://<host>/robots.txt` once per host,
-caches the parsed rules for an hour, and evaluates the request path against the
-library's user agent and the `*` group. Disallow/Allow rules follow RFC 9309:
+Before any fetch-method attempt, the chain consults the host's `robots.txt`
+through `RobotsGuard`. On a cache miss, the guard fetches
+`<scheme>://<host>/robots.txt` through the default `ClientFactory` HTTP client.
+The scheme comes from the target URL, defaults to HTTPS when absent, and an
+explicit port is omitted. Parsed rules are memoized in worker memory without
+expiry. An unreachable file fails open as an empty ruleset, which is also
+memoized, so a long-running worker does not retry it. The optional shared
+PSR-16 cache stores the raw robots.txt body for one hour; it does not refresh
+rules already held in worker memory. The guard evaluates the most specific
+matching user-agent group, falling back to `*`; groups are not combined. This
+request does not receive request or site proxy options and is not covered by
+the browser-side SSRF guard; it may reach a private host before a browser
+method later blocks the target. Use the process-level `CRAWLERX_HTTP_PROXY`
+setting when the robots request must use a proxy. The rules follow RFC 9309:
 the longest matching pattern wins, `*` is a wildcard, a trailing `$` anchors to
 the end of the path, and an Allow of equal length overrides a Disallow. An
 explicit Disallow aborts the request with a `RobotsDisallowedException`
@@ -104,8 +117,9 @@ explicit Disallow aborts the request with a `RobotsDisallowedException`
 
 The guard is on by default. Disable it globally with
 `CRAWLERX_RESPECT_ROBOTS=false`, or per site with
-`runtime.defaultCrawlConfig.respect_robots: false` in the adapter manifest. A
-per-site value takes precedence over the global default.
+`runtime.defaultCrawlConfig.respect_robots: false` in the adapter manifest. An
+explicit manifest value takes precedence in either direction; when omitted,
+the runtime setting applies.
 
 `Crawl-delay` is parsed per user-agent group and applied as an additional
 minimum gap on top of the site's `defaultThrottle`.
@@ -113,12 +127,13 @@ minimum gap on top of the site's `defaultThrottle`.
 ## HTTP response cache
 
 HTTP response caching is disabled by default. Set `CRAWLERX_RESPONSE_CACHE_TTL`
-to a positive number of seconds and pass a PSR-16 cache as the third argument
-to `CrawlerXFactory::configure($logins, $throttleCache, $responseCache)` to
-enable it. The cache key includes the HTTP method, URL and request headers,
+to a positive integer number of seconds and pass a PSR-16 cache as the third
+argument to `CrawlerXFactory::configure($logins, $throttleCache, $responseCache)`
+to enable it. The cache key includes the HTTP method, URL and request headers,
 including cookies and the user agent. Only successful 2xx responses are cached;
 HTTP errors, detected challenges and captcha pages are fetched again. Cache
-hits still pass the host circuit guard and do not wait for the host throttle.
+hits bypass both the host circuit and throttle checks for that method attempt;
+the earlier robots check still runs.
 
 ## Budgets
 
@@ -179,4 +194,16 @@ preempt arbitrary PHP code inside a consumer-supplied synchronous handler.
 
 ## Outbound proxy
 
-The HTTP fetch method can go through a proxy, for example a Japan exit for sources that geo-block other countries. The proxy is off by default. Set it process-wide with `CRAWLERX_HTTP_PROXY=http://host:port`, or per site profile and per request with `HttpProfileDto::$proxy` and `HttpOptionsDto::$proxy`; a request option wins over the profile, which wins over the environment. The proxy URL may contain credentials and is never logged. Browser-based methods (Playwright, FlareSolverr) are not routed through it.
+The HTTP fetch method can go through a proxy, for example a Japan exit for
+sources that geo-block other countries. At the CrawlerX level, select it
+process-wide with `CRAWLERX_HTTP_PROXY=http://host:port`, or per site profile
+and per request with `HttpProfileDto::$proxy` and `HttpOptionsDto::$proxy`; a
+request option wins over the profile, which wins over the environment. If
+CrawlerX leaves libcurl's proxy unset, libcurl may still use `http_proxy` or
+`all_proxy`; `NO_PROXY` may bypass a configured proxy, so an unset CrawlerX
+proxy does not guarantee a direct connection. The default robots request does
+not receive request or site proxy options. The proxy URL may contain credentials
+and is never logged. Browser-based methods and FlareSolverr are not routed
+through the CrawlerX HTTP page proxy. Playwright and Puppeteer use their
+separate SSRF egress proxy; FlareSolverr requires separate destination or
+network controls.
