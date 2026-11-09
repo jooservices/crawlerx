@@ -527,8 +527,9 @@ extension points, see [the architecture guide](docs/architecture.md).
 
 Layer boundaries for Adapters, Fetch, Dto, Support and Contracts are declared in
 [`deptrac.yaml`](deptrac.yaml). Run `composer lint:deptrac` locally; CI runs the
-same analysis as the report-only `Architecture (Deptrac)` job (not a required
-check yet). See [CONTRIBUTING.md](CONTRIBUTING.md).
+same analysis in the `Architecture (Deptrac)` job. The required
+`Coverage upload` check fails unless architecture succeeds. See
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 The 1.7 architecture decisions are recorded in these short ADRs:
 
@@ -536,7 +537,7 @@ The 1.7 architecture decisions are recorded in these short ADRs:
 - [Robots checking on by default](docs/decisions/002-robots-default-on.md)
 - [Outbound proxies are opt-in](docs/decisions/003-proxy-opt-in.md)
 - [Response caching is off by default](docs/decisions/004-response-cache-default-off.md)
-- [Deptrac remains report-only in CI](docs/decisions/005-deptrac-report-only.md)
+- [Deptrac CI enforcement and the superseded report-only decision](docs/decisions/005-deptrac-report-only.md)
 
 Adapter behavior and supported page types are declared under
 `src/Adapters/*/manifest.json`. `CrawlerXFactory::reset()` is available for

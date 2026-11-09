@@ -18,18 +18,23 @@ Deptrac layers.
 | Support | [`src/Support/`](../src/Support/) | Shared parsing and normalization utilities. | Contracts, Dto |
 | Contracts | [`src/Contracts/`](../src/Contracts/) | Interfaces for adapters, adapter capabilities, clients, and fetch handlers. | Dto |
 
-The rules describe intended dependency direction. In particular, Adapters must
-not depend directly on Fetch; `deptrac.yaml` records the current `AbstractType`
-to `ChallengeDetector` dependency as known debt. CI reports Deptrac output but
-does not make that job a required gate; see
-[`CONTRIBUTING.md`](../CONTRIBUTING.md) and [ADR-005](decisions/005-deptrac-report-only.md).
+The rules describe the intended dependency direction. Adapters may depend on
+Support, and [`AbstractType`](../src/Adapters/AbstractType.php) uses
+[`ChallengeResponseDetector`](../src/Support/ChallengeResponseDetector.php)
+from that layer; Adapters must not depend directly on Fetch. CI runs
+`composer lint:deptrac` in the `Architecture (Deptrac)` job, and the required
+`Coverage upload` check fails unless that job succeeds. See
+[`CONTRIBUTING.md`](../CONTRIBUTING.md) and [ADR-005](decisions/005-deptrac-report-only.md)
+for the current enforcement and the superseded report-only decision.
 
 ## Request lifecycle
 
 `CrawlerX::url()` delegates to the factory and returns a clone-on-write request
 builder. Calling `crawl()` classifies the URL, resolves the adapter manifest,
-chooses a fetch plan, fetches the page, builds a `CrawlRequestDto`, dispatches
-to the adapter capability, and returns a list or item result DTO.
+chooses a fetch plan, and tries eligible methods in order. The chain returns on
+the first successful result, stops on a terminal outcome, and falls back only
+after an eligible failure. It then builds a `CrawlRequestDto`, dispatches to the
+adapter capability, and returns a list or item result DTO.
 
 ```mermaid
 sequenceDiagram
@@ -68,33 +73,66 @@ sequenceDiagram
             Robots->>RobotsClient: GET /robots.txt
             RobotsClient-->>Robots: body or unavailable
         end
-        Robots-->>Chain: allowed or blocked; optional delay
+        alt robots rules allow the URL
+            Robots-->>Chain: allowed; optional crawl delay
+        else robots rules disallow the URL
+            Robots-->>Chain: blocked
+            Chain-->>Orchestrator: throw RobotsDisallowedException
+            Orchestrator-->>Builder: propagate exception
+            Builder-->>Caller: propagate exception from crawl()
+        end
     end
-    loop each method in the plan
+    Note over Chain: The method loop is skipped when robots disallow the URL.
+    loop each planned method while robots allow and no success or terminal outcome
         Chain->>Runner: run method attempt
         opt handler supports response caching
-            Runner->>Handler: check cached response
+            Runner->>Handler: look up cached response
             Handler-->>Runner: cached result or cache miss
         end
-        opt cache miss
-            Runner->>Runner: apply host throttle
-            opt first uncached attempt that passes throttle in this fetch
-                Runner->>Runner: consult host circuit once
+        alt cache hit
+            Runner-->>Chain: cached fetch result
+        else cache miss
+            Runner->>Runner: apply host throttle; then circuit on first attempt that passes throttle
+            alt guard rejects with synthetic 429
+                Runner-->>Chain: guard rejection
+                break terminal guard result
+                    Chain->>Chain: reject terminal synthetic 429; do not call Handler.fetch()
+                    Chain-->>Orchestrator: throw terminal CrawlFetchException
+                    Orchestrator-->>Builder: propagate exception
+                    Builder-->>Caller: propagate exception from crawl()
+                end
+            else guards allow the attempt
+                Runner->>Handler: fetch(url, profile, options)
+                opt HTTP method
+                    Handler->>Handler: resolve configured proxy and make HTTP request
+                end
+                alt Playwright-family or Puppeteer method
+                    Handler->>Handler: browser script validates URL and uses SSRF egress proxy
+                else HTTP, curl-impersonate, or FlareSolverr method
+                    Handler->>Handler: method transport has no browser-side SSRF guard
+                end
+                Handler-->>Runner: fetch result
             end
-            Runner->>Handler: fetch(url, profile, options)
-            opt HTTP method
-                Handler->>Handler: resolve configured proxy and make HTTP request
-            end
-            alt Playwright-family or Puppeteer method
-                Handler->>Handler: browser script validates URL and uses SSRF egress proxy
-            else HTTP, curl-impersonate, or FlareSolverr method
-                Handler->>Handler: method transport has no browser-side SSRF guard
-            end
-            Handler-->>Runner: fetch result
         end
-        Runner-->>Chain: result or retryable failure
+        alt successful result
+            Runner-->>Chain: successful fetch result
+            Chain->>Chain: remember success and return
+            break success
+                Chain-->>Orchestrator: successful fetch result and metadata
+            end
+        else terminal result
+            Runner-->>Chain: terminal fetch result
+            Chain->>Chain: reject and stop the plan
+            break terminal outcome
+                Chain-->>Orchestrator: throw terminal CrawlFetchException
+                Orchestrator-->>Builder: propagate exception
+                Builder-->>Caller: propagate exception from crawl()
+            end
+        else eligible non-terminal failure
+            Runner-->>Chain: failure eligible for fallback
+            Chain->>Chain: continue with the next planned method
+        end
     end
-    Chain-->>Orchestrator: successful fetch result and metadata
     Orchestrator->>Orchestrator: build CrawlRequestDto with final URL and fetch result
     Orchestrator->>Registry: resolve source adapter
     Registry-->>Orchestrator: SiteAdapter

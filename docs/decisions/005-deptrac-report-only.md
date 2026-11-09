@@ -1,14 +1,17 @@
-# ADR-005: Keep Deptrac report-only in CI
+# ADR-005: Deptrac was initially report-only
 
-- **Status:** Accepted
-- **Context:** `deptrac.yaml` records the intended Adapters, Fetch, Dto,
-  Support, and Contracts dependencies. The current tree still has a known
-  Adapters-to-Fetch dependency.
-- **Decision:** Run Deptrac in CI and publish violations as a warning, without
-  making the architecture job a required check yet. Keep the intended rules in
-  the configuration so the report exposes boundary drift.
-- **Consequences:** Contributors can see violations, but passing CI does not
-  prove that every dependency follows the declared layers.
+- **Status:** Superseded
+- **Context:** The initial 1.7 decision was to report Deptrac violations without
+  blocking CI while the layer boundaries were introduced. That policy no longer
+  describes the current workflow, and the current configuration has no recorded
+  `AbstractType`-to-Fetch debt.
+- **Decision:** The historical report-only policy is superseded. CI runs
+  `composer lint:deptrac` in `Architecture (Deptrac)` without
+  `continue-on-error`; the required `Coverage upload` check fails unless the
+  architecture job succeeds. Deptrac failures therefore fail the required CI
+  workflow check.
+- **Consequences:** The declared layer rules are enforced by CI. Run
+  `composer lint:deptrac` locally and keep dependencies within those rules.
 - **References:** [`deptrac.yaml`](../../deptrac.yaml),
   [CI architecture job](../../.github/workflows/ci.yml),
   [`CONTRIBUTING.md`](../../CONTRIBUTING.md).
