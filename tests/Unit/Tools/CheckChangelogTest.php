@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Tests\Unit\Tools;
 
 use JOOservices\CrawlerX\Tools\CheckChangelog;
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 
 require_once __DIR__ . '/../../../tools/CheckChangelog.php';
 
-#[CoversClass(CheckChangelog::class)]
+#[CoversNothing]
 final class CheckChangelogTest extends TestCase
 {
     public function test_accepts_valid_changelog_with_unreleased_and_descending_versions(): void
