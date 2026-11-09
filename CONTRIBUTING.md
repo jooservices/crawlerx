@@ -89,6 +89,7 @@ CI runs the Deptrac rules in `deptrac.yaml` through `Architecture (Deptrac)`. Th
 - every behavior change ships with tests; bug fixes ship with a regression test
 - unit and feature suites each independently stay above the 85% CI coverage floor
 - test data is generated with Faker / factories, never hard-coded literals; live-captured HTML fixtures under `tests/Fixtures/` are allowed only where tests must behave against real content
+- when following the [add-a-source checklist](docs/adding-a-source.md), run `composer check:readme-sites` to confirm the README supported-sites table matches adapter manifests
 - public API changes update the README / relevant docs in the same PR
 
 ## Pull requests
