@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX;
 
+use JOOservices\Client\Client\ClientBuilder;
 use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Contracts\LoginCookieProvider;
 use JOOservices\CrawlerX\Fetch\BrowserServiceProcessRunner;
@@ -12,6 +13,7 @@ use JOOservices\CrawlerX\Fetch\FetchPlanResolver;
 use JOOservices\CrawlerX\Fetch\FetchRuntimeConfig;
 use JOOservices\CrawlerX\Fetch\Guard\HostCircuit;
 use JOOservices\CrawlerX\Fetch\Guard\HostThrottle;
+use JOOservices\CrawlerX\Fetch\Guard\RobotsGuard;
 use JOOservices\CrawlerX\Fetch\Handlers\CurlImpersonateFetchHandler;
 use JOOservices\CrawlerX\Fetch\Handlers\FlaresolverrFetchHandler;
 use JOOservices\CrawlerX\Fetch\Handlers\HttpFetchHandler;
@@ -28,6 +30,7 @@ use JOOservices\CrawlerX\Services\CrawlOrchestrator;
 use JOOservices\CrawlerX\Services\CrawlerXService;
 use JOOservices\CrawlerX\Services\UrlClassifier;
 use Psr\SimpleCache\CacheInterface;
+use Throwable;
 
 final class CrawlerXFactory
 {
@@ -95,6 +98,38 @@ final class CrawlerXFactory
         $clientFactory = new ClientFactory();
 
         $playwright = new PlaywrightFamilyFetchHandler($runtime, $browserRunner);
+        $robotsGuard = new RobotsGuard(
+            fetchRobotsTxt: static function (string $url) use ($clientFactory, $runtime): ?string {
+                // A faked client serves fixtures and records every request; there is no robots.txt
+                // fixture, so skip the fetch and treat the host as unrestricted (fail-open).
+                if (ClientBuilder::isFaked()) {
+                    return '';
+                }
+
+                try {
+                    $response = $clientFactory->factory([
+                        'timeout' => 10,
+                        'headers' => $runtime->userAgent !== null && $runtime->userAgent !== ''
+                            ? ['User-Agent' => $runtime->userAgent]
+                            : [],
+                    ])->get($url);
+                    $psr = $response->toPsrResponse();
+                    $status = $psr->getStatusCode();
+
+                    if ($status === 404) {
+                        return '';
+                    }
+
+                    return $status >= 200 && $status < 300 ? (string) $psr->getBody() : null;
+                } catch (Throwable) {
+                    return null;
+                }
+            },
+            cache: self::$throttleCache,
+            logger: static function (string $message): void {
+                error_log($message);
+            },
+        );
 
         return new FetchFallbackChain([
             FetchMethod::Http->value => new HttpFetchHandler($clientFactory, $cookies, $sessions, self::$loginCookieProvider),
@@ -110,6 +145,6 @@ final class CrawlerXFactory
         ), hostCircuit: new HostCircuit(
             cache: self::$throttleCache,
             nodeId: $runtime->nodeId,
-        ));
+        ), robotsGuard: $robotsGuard);
     }
 }

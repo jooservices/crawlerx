@@ -21,6 +21,7 @@ use JOOservices\CrawlerX\Exceptions\CrawlFetchException;
 use JOOservices\CrawlerX\Fetch\Budget\FetchBudget;
 use JOOservices\CrawlerX\Fetch\Guard\HostCircuit;
 use JOOservices\CrawlerX\Fetch\Guard\HostThrottle;
+use JOOservices\CrawlerX\Fetch\Guard\RobotsGuard;
 use JOOservices\CrawlerX\Fetch\Guard\TransientRetry;
 use JOOservices\CrawlerX\Fetch\Session\CookieHandoffStore;
 use JOOservices\CrawlerX\Fetch\Session\SessionStore;
@@ -41,6 +42,8 @@ final class FetchFallbackChain
 
     private readonly ?HostCircuit $hostCircuit;
 
+    private readonly ?RobotsGuard $robotsGuard;
+
     /**
      * @param  array<string, FetchMethodHandler>  $handlers
      * @param  Closure(int): void|null  $retrySleeper
@@ -54,6 +57,7 @@ final class FetchFallbackChain
         ?Closure $retrySleeper = null,
         ?HostThrottle $hostThrottle = null,
         ?HostCircuit $hostCircuit = null,
+        ?RobotsGuard $robotsGuard = null,
         private readonly int $maxTransientRetries = TransientRetry::MAX_RETRIES,
         /** @var Closure(): (int|float)|null */
         private readonly ?Closure $budgetClock = null,
@@ -66,6 +70,7 @@ final class FetchFallbackChain
         };
         $this->hostThrottle = $hostThrottle;
         $this->hostCircuit = $hostCircuit;
+        $this->robotsGuard = $robotsGuard;
     }
 
     /**
@@ -95,6 +100,10 @@ final class FetchFallbackChain
             ?? $this->profileUserAgent($profile)
             ?? $profile->http->headers['User-Agent']
             ?? null;
+
+        if ($this->robotsGuard !== null && $this->respectsRobots($profile)) {
+            $this->robotsGuard->assertAllowed($url, $requestUserAgent ?? '');
+        }
 
         foreach ($plan as $method) {
             // FlareSolverr is the expensive last resort. It is skipped only when an earlier method got a real
@@ -426,7 +435,7 @@ final class FetchFallbackChain
         if ($this->hostThrottle !== null && is_string($host) && $host !== '') {
             $retryAfter = $this->hostThrottle->waitBeforeFetch(
                 $host,
-                $profile->defaultThrottle,
+                $this->throttleSettings($profile, $url, $requestUserAgent),
                 $budget,
                 $method,
             );
@@ -743,5 +752,34 @@ final class FetchFallbackChain
         }
 
         return $profile->playwright->userAgent;
+    }
+
+    private function respectsRobots(SiteProfileDto $profile): bool
+    {
+        if ($profile->respectRobots !== null) {
+            return $profile->respectRobots;
+        }
+
+        return $this->runtime === null || $this->runtime->respectRobots;
+    }
+
+    /** @return array<string, float>|null */
+    private function throttleSettings(SiteProfileDto $profile, string $url, ?string $requestUserAgent): ?array
+    {
+        if ($this->robotsGuard === null || ! $this->respectsRobots($profile)) {
+            return $profile->defaultThrottle;
+        }
+
+        $delay = $this->robotsGuard->crawlDelaySeconds($url, $requestUserAgent ?? '');
+        if ($delay === null || $delay <= 0.0) {
+            return $profile->defaultThrottle;
+        }
+
+        $settings = $profile->defaultThrottle ?? [];
+        $default = $settings['default_gap_seconds'] ?? 0.0;
+        $settings['default_gap_seconds'] = max($default, $delay);
+        $settings['max_gap_seconds'] = max($settings['max_gap_seconds'] ?? $settings['default_gap_seconds'], $delay);
+
+        return $settings;
     }
 }

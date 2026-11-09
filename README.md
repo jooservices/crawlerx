@@ -459,6 +459,7 @@ Everything is configured through environment variables. Copy `.env.example` to `
 | `CRAWLERX_PLAYWRIGHT_SCRIPT` | Path to `playwright-fetch.mjs` |
 | `CRAWLERX_PUPPETEER_SCRIPT` | Path to `puppeteer-stealth-fetch.mjs` |
 | `CRAWLERX_CURL_IMPERSONATE` | curl-impersonate executable |
+| `CRAWLERX_RESPECT_ROBOTS` | Disable the `robots.txt` guard (`false`/`0`/`no`/`off`); default on |
 
 ## Testing
 

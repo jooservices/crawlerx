@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add the Asagei Plus (`asagei`) gravure adapter with paged tag/category/home listings and article galleries (every in-article photo, cover, categories, tags, dates, prev/next and source fields), captured fixtures and URL inference (JOOXCR-461).
 - Add the WPB Web Gravure (`wpb`) adapter for Weekly Playboy (週プレNEWS) public gravure listing and gallery pages: cover at full resolution with thumbnails, profile, credits, tags, source fields and captured fixtures (JOOXCR-460).
+- Add an opt-out `robots.txt` guard to the fetch pipeline: parse robots.txt per host with a TTL cache, evaluate the library user agent and `*` group, honour Disallow/Allow/Crawl-delay, fail-open on an unreachable robots.txt and fail-closed on an explicit Disallow; default on, disable per site or globally with `respect_robots` (JOOXCR-464).
 
 ### Fixed
 

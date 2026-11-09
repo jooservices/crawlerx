@@ -86,6 +86,26 @@ additional request waits for its 30-second probe lease. An open circuit returns
 retryable `rate_limited` with the remaining time in `Retry-After`. Circuit cache
 failures fall back to worker-local state.
 
+## Robots.txt compliance
+
+Before it fetches a URL, the chain consults the host's `robots.txt` through
+`RobotsGuard`. The guard fetches `https://<host>/robots.txt` once per host,
+caches the parsed rules for an hour, and evaluates the request path against the
+library's user agent and the `*` group. Disallow/Allow rules follow RFC 9309:
+the longest matching pattern wins, `*` is a wildcard, a trailing `$` anchors to
+the end of the path, and an Allow of equal length overrides a Disallow. An
+explicit Disallow aborts the request with a `RobotsDisallowedException`
+(fail-closed); an unreachable `robots.txt` is logged and the request proceeds
+(fail-open).
+
+The guard is on by default. Disable it globally with
+`CRAWLERX_RESPECT_ROBOTS=false`, or per site with
+`runtime.defaultCrawlConfig.respect_robots: false` in the adapter manifest. A
+per-site value takes precedence over the global default.
+
+`Crawl-delay` is parsed per user-agent group and applied as an additional
+minimum gap on top of the site's `defaultThrottle`.
+
 ## Budgets
 
 The default total budget is 60 seconds. Individual method caps are 20 seconds
