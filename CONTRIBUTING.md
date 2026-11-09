@@ -63,6 +63,7 @@ Run the relevant gates before every push — CI runs the same chain and **every 
 | Command | Purpose |
 | --- | --- |
 | `make validate` | `composer validate --strict` |
+| `composer check:changelog` | Validate Keep a Changelog structure |
 | `make lint` | Pint (`per` preset), PHPCS, PHPStan, PHPMD, PHP-CS-Fixer |
 | `composer lint:deptrac` | Deptrac architecture layers (Adapters, Fetch, Dto, Support, Contracts) |
 | `make test` | PHPUnit Unit + Feature suites |
