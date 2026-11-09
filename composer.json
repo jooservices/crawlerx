@@ -63,6 +63,7 @@
         "hooks:install": "captainhook install --force --skip-existing"
     },
     "config": {
+        "process-timeout": 1800,
         "sort-packages": true,
         "audit": {"abandoned": "ignore"}
     },

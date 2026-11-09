@@ -10,11 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add the shared parsing traits `ParsesUrlParts` and `CoercesValues` (external id and page-number extraction, scalar coercion) and migrate the exact duplicates in the Asagei, Avfan, Jable, JavDatabase, Javbtc, Missav, Smartflash, Wpb and Xcity adapters to them (no behaviour change, JOOXCR-462).
+- Add the Wikidata (`wikidata`) performer adapter on the official Query Service and wbgetentities API: paged listing of Japanese pornographic film actors and item detail with ja/en labels, descriptions and aliases, birth date, height, Commons image (original and thumbnail), Wikipedia sitelinks and every statement (typed values, ranks, qualifiers, property and item labels), 2 requests a listing page and 1 + ceil(ids/50) per item (JOOXCR-456).
 - Add the Asagei Plus (`asagei`) gravure adapter with paged tag/category/home listings and article galleries (every in-article photo, cover, categories, tags, dates, prev/next and source fields), captured fixtures and URL inference (JOOXCR-461).
 - Add the WPB Web Gravure (`wpb`) adapter for Weekly Playboy (週プレNEWS) public gravure listing and gallery pages: cover at full resolution with thumbnails, profile, credits, tags, source fields and captured fixtures (JOOXCR-460).
 
 ### Fixed
 
+- Raise the composer process timeout to 1800 seconds so the release gate (`composer ci`, full coverage run) is not cut off at the 300 second default (the v1.6.0 Release workflow failed on it) (JOOXCR-457).
 - Browser SSRF guard drops loopback/unspecified decoy DNS answers and pins only remaining public addresses, so hosts such as Jable/MissAV with Cloudflare A records plus `127.0.0.1`/`0.0.0.0` decoys fetch normally while private-only answers stay blocked; blocked responses carry a clear `ssrfReason` into the fetch exception message (JOOXCR-399 / JOOXCR-363).
 
 ## [1.6.0] - 2026-11-08
@@ -23,7 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Complete the images of the uncensored paysite and WordPress/custom maker adapters: Heyzo locked-gallery and special-gallery thumbnails, Tokyo-Hot jacket and package images and the cover of products without a sample, DUGA full-size jacket and sample poster, FC2 original sample files, Rocket origin files instead of Jetpack copies, Aisex actress photos on cards and related actresses, Falenogroup maker logos without CDN recompression (JOOXCR-423).
 - Audit Maker CMS family images (28 adapters, JOOXCR-423): lazy `data-original`/`data-lazy-src`/`srcset` fallbacks in the shared image reader and per-adapter regression counts for every slider, profile and listing cover image.
-- Add the Wikidata (`wikidata`) performer adapter on the official Query Service and wbgetentities API: paged listing of Japanese pornographic film actors and item detail with ja/en labels, descriptions and aliases, birth date, height, Commons image (original and thumbnail), Wikipedia sitelinks and every statement (typed values, ranks, qualifiers, property and item labels), 2 requests a listing page and 1 + ceil(ids/50) per item (JOOXCR-456).
 - Add the JAVMenu (`javmenu`) adapter with its own parser: paged work listings (sections, code prefixes, makers, series, genres, directors), work detail with code, dates, duration, director, maker, series, genres, idols, poster, magnets and stream lines, the paged performer index and performer pages with their work grid, in every interface language (JOOXCR-453).
 - Add the AV-Actress (`avactress`) adapter: paged actress rankings and lists (popular, bust, young, new) and actress profiles with measurements, birthday, blood type, birthplace, hobbies and every listed work with its large and thumbnail covers and sample movie (JOOXCR-454).
 - Add the DAHLIA (`dahlia`) adapter with its own parser: work listing with pagination, work detail with every labelled row, cover, all gallery stills with thumbnails, sample video and store links, performer roster and performer profiles (JOOXCR-415).
