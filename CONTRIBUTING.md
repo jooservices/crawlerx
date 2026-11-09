@@ -112,6 +112,7 @@ make live-check SITE=--site=javbus   # crawl one live target for an adapter
 ```
 
 See [tools/fixtures/README.md](tools/fixtures/README.md) for the capture procedure.
+Run `composer check:fixtures-meta` after capture to validate each fixture's provenance metadata.
 
 ## Reporting issues
 
