@@ -121,7 +121,6 @@ jobs:
     needs: [validate]
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -158,16 +157,8 @@ jobs:
         if: steps.vendor-cache.outputs.cache-hit != 'true'
         run: tools/ci/docker-compose run --rm php composer install --no-interaction --prefer-dist
 
-      - name: Deptrac analyse (report-only)
-        run: |
-          set +e
-          tools/ci/docker-compose run --rm php composer lint:deptrac
-          status=$?
-          echo "Deptrac finished with exit code ${status} (report-only; not a required gate)."
-          if [[ "${status}" -ne 0 ]]; then
-            echo "::warning title=Deptrac::Architecture violations or errors reported (exit ${status})."
-          fi
-          exit 0
+      - name: Deptrac analyse
+        run: tools/ci/docker-compose run --rm php composer lint:deptrac
 
   security:
     name: Security (${{ matrix.name }})
@@ -415,10 +406,17 @@ jobs:
 
   coverage:
     name: Coverage upload
-    needs: [test, security]
+    needs: [test, security, architecture]
+    if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      - name: Require successful test, security, and architecture checks
+        if: ${{ needs.test.result != 'success' || needs.security.result != 'success' || needs.architecture.result != 'success' }}
+        run: |
+          echo "::error::Coverage upload requires successful test, security, and architecture checks."
+          exit 1
+
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

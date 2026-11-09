@@ -58,13 +58,13 @@ Rules: imperative mood, uppercase first letter of the subject, no trailing perio
 
 ## Quality gates
 
-Run the relevant gates before every push — CI runs the same chain and **every required job must stay green** (the report-only `Architecture (Deptrac)` job is not required):
+Run the relevant gates before every push — CI runs the same chain and **every required job must stay green**:
 
 | Command | Purpose |
 | --- | --- |
 | `make validate` | `composer validate --strict` |
 | `make lint` | Pint (`per` preset), PHPCS, PHPStan, PHPMD, PHP-CS-Fixer |
-| `composer lint:deptrac` | Deptrac architecture layers (Adapters, Fetch, Dto, Support, Contracts) — report-only in CI |
+| `composer lint:deptrac` | Deptrac architecture layers (Adapters, Fetch, Dto, Support, Contracts) |
 | `make test` | PHPUnit Unit + Feature suites |
 | `make test-coverage` | Coverage run (CI enforces an 85% per-suite Clover floor) |
 | `make audit` | Composer audit |
@@ -75,8 +75,11 @@ Coding rules:
 - linters run at **maximum strictness** — fix the source, do not suppress findings; new PHPStan `ignoreErrors` entries are not accepted
 - when formatting rules conflict, **Pint wins**
 - `declare(strict_types=1);` everywhere; follow existing module boundaries (`src/Adapters/<Site>`, `src/Dto`, …)
-- Deptrac (`deptrac.yaml`) describes the intended layer ruleset; the CI job `Architecture (Deptrac)` is report-only and is not a required check yet
 - keep changes consistent with SOLID, DRY, KISS, YAGNI; avoid unrelated refactors
+
+## Architecture checks
+
+CI runs the Deptrac rules in `deptrac.yaml` through `Architecture (Deptrac)`. The required `Coverage upload` check also requires that architecture job to succeed, so an architecture failure blocks merging without changing the required check names. Run `composer lint:deptrac` locally and keep dependencies within the declared layer rules before opening a pull request.
 
 ## Testing expectations
 
