@@ -19,8 +19,9 @@ A new source touches only its own folders plus one CHANGELOG line. No shared tes
    ```
 
    Each follow-up is served from `tests/Fixtures/<slug>/<name>`.
-5. Add one line under `[Unreleased]` in `CHANGELOG.md`.
-6. Add the site's row to the supported-sites table in `README.md` (a documentation step; no test depends on it).
+5. If the default fixture URLs are unsuitable for a manual live health check, add optional `runtime.live.listing` and/or `runtime.live.detail` objects with `url`, `type`, and an optional `name`. The type must be one of the adapter's capabilities. See [the live report guide](testing/live-check-report.md).
+6. Add one line under `[Unreleased]` in `CHANGELOG.md`.
+7. Add the site's row to the supported-sites table in `README.md` (a documentation step; no test depends on it).
 
 No count is hand-maintained per site; the registry-count tests compare the registry with the number of manifest files, so a manifest that fails to register fails the build.
 
