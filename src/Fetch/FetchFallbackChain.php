@@ -56,6 +56,7 @@ final class FetchFallbackChain
         private readonly int $maxTransientRetries = TransientRetry::MAX_RETRIES,
         /** @var Closure(): (int|float)|null */
         private readonly ?Closure $budgetClock = null,
+        private readonly bool $requireFlareEgressProxy = false,
     ) {
         $this->sessions = $sessions ?? new SessionStore();
         $this->circuit = new HostCircuitReporter($hostCircuit);
@@ -107,6 +108,7 @@ final class FetchFallbackChain
             if (
                 $method === FetchMethod::Flaresolverr
                 && $handler instanceof FlaresolverrFetchHandler
+                && $this->requireFlareEgressProxy
                 && $this->runtime !== null
                 && ($this->runtime->flaresolverrProxyUrl === null || trim($this->runtime->flaresolverrProxyUrl) === '')
             ) {

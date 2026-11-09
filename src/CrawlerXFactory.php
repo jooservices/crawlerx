@@ -182,6 +182,6 @@ final class CrawlerXFactory
         ), hostCircuit: new HostCircuit(
             cache: self::$throttleCache,
             nodeId: $runtime->nodeId,
-        ), robotsGuard: $robotsGuard);
+        ), robotsGuard: $robotsGuard, requireFlareEgressProxy: true);
     }
 }
