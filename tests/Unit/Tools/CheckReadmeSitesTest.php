@@ -103,6 +103,19 @@ final class CheckReadmeSitesTest extends TestCase
         self::assertSame(['MISSING_IN_README alpha'], $result->messages);
     }
 
+    /** Ensures an overlapping annotated row is reassigned when a later row needs its first match. */
+    public function test_overlapping_annotated_rows_find_a_complete_one_to_one_assignment(): void
+    {
+        $this->writeManifest('alpha', 'Alpha');
+        $this->writeManifest('alpha-japan', 'Alpha (Japan)');
+        $this->writeReadme(['Alpha (Japan) (premium)', 'Alpha (special)']);
+
+        $result = $this->check();
+
+        self::assertSame(0, $result->exitCode);
+        self::assertSame([], $result->messages);
+    }
+
     /** Ensures a heading without a Markdown separator is rejected as a table. */
     public function test_missing_table_separator_returns_exit_code_two(): void
     {

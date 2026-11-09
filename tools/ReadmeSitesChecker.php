@@ -45,30 +45,13 @@ final class ReadmeSitesChecker
             return new ReadmeSitesCheckResult(2, [$exception->getMessage()]);
         }
 
-        $matchedManifestIndexes = [];
-        $matchedReadmeIndexes = [];
-        foreach ([false, true] as $allowAnnotatedSuffix) {
-            foreach ($readmeNames as $readmeIndex => $readmeName) {
-                if (isset($matchedReadmeIndexes[$readmeIndex])) {
-                    continue;
-                }
-
-                foreach ($manifests as $manifestIndex => $manifest) {
-                    if (isset($matchedManifestIndexes[$manifestIndex])) {
-                        continue;
-                    }
-
-                    if (! $this->matchesIdentifier($readmeName, $manifest['slug'], $allowAnnotatedSuffix)
-                        && ! $this->matchesIdentifier($readmeName, $manifest['name'], $allowAnnotatedSuffix)) {
-                        continue;
-                    }
-
-                    $matchedManifestIndexes[$manifestIndex] = true;
-                    $matchedReadmeIndexes[$readmeIndex] = true;
-                    break;
-                }
-            }
+        $manifestReadmeIndexes = [];
+        foreach (array_keys($readmeNames) as $readmeIndex) {
+            $visitedManifestIndexes = [];
+            $this->matchReadmeRow($readmeIndex, $readmeNames, $manifests, $manifestReadmeIndexes, $visitedManifestIndexes);
         }
+        $matchedManifestIndexes = array_fill_keys(array_keys($manifestReadmeIndexes), true);
+        $matchedReadmeIndexes = array_fill_keys(array_values($manifestReadmeIndexes), true);
 
         $messages = [];
         foreach ($manifests as $manifestIndex => $manifest) {
@@ -85,6 +68,43 @@ final class ReadmeSitesChecker
         sort($messages, SORT_STRING);
 
         return new ReadmeSitesCheckResult($messages === [] ? 0 : 1, $messages);
+    }
+
+    /**
+     * Assigns a README row to one manifest, moving earlier matches when needed.
+     *
+     * @param list<string> $readmeNames
+     * @param list<array{slug: string, name: string}> $manifests
+     * @param array<int, int> $manifestReadmeIndexes
+     * @param array<int, true> $visitedManifestIndexes
+     */
+    private function matchReadmeRow(
+        int $readmeIndex,
+        array $readmeNames,
+        array $manifests,
+        array &$manifestReadmeIndexes,
+        array &$visitedManifestIndexes,
+    ): bool {
+        foreach ([false, true] as $allowAnnotatedSuffix) {
+            foreach ($manifests as $manifestIndex => $manifest) {
+                if (isset($visitedManifestIndexes[$manifestIndex])
+                    || (! $this->matchesIdentifier($readmeNames[$readmeIndex], $manifest['slug'], $allowAnnotatedSuffix)
+                        && ! $this->matchesIdentifier($readmeNames[$readmeIndex], $manifest['name'], $allowAnnotatedSuffix))) {
+                    continue;
+                }
+
+                $visitedManifestIndexes[$manifestIndex] = true;
+                $previousReadmeIndex = $manifestReadmeIndexes[$manifestIndex] ?? null;
+                if ($previousReadmeIndex === null
+                    || $this->matchReadmeRow($previousReadmeIndex, $readmeNames, $manifests, $manifestReadmeIndexes, $visitedManifestIndexes)) {
+                    $manifestReadmeIndexes[$manifestIndex] = $readmeIndex;
+
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
