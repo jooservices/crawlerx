@@ -15,9 +15,11 @@ use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Support\CodeNormalizer;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
+use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 
 final class Detail extends AbstractType implements TypeInterface
 {
+    use ParsesUrlParts;
     use InteractsWithMissavHtml;
 
     public function __construct(
@@ -31,7 +33,7 @@ final class Detail extends AbstractType implements TypeInterface
         $response = $this->client->get($request->url);
         $html = $this->htmlFromResponse($response->toPsrResponse(), 'MissAV', 'detail');
         $crawler = new Crawler($html, $request->url);
-        $externalId = $this->externalId($request->url);
+        $externalId = $this->lastPathSegment($request->url);
         $rows = $this->rows($crawler);
         $heading = $this->firstText($crawler, 'h1');
         $title = $heading ?? $this->firstText($crawler, Selectors::DETAIL_TITLE) ?? $externalId;
@@ -190,13 +192,6 @@ final class Detail extends AbstractType implements TypeInterface
         }
 
         return $other;
-    }
-
-    private function externalId(string $url): ?string
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-
-        return is_string($path) && trim($path, '/') !== '' ? trim(basename($path), '/') : null;
     }
 
     private function releaseDate(Crawler $crawler): ?string

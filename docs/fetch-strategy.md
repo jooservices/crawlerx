@@ -106,6 +106,16 @@ per-site value takes precedence over the global default.
 `Crawl-delay` is parsed per user-agent group and applied as an additional
 minimum gap on top of the site's `defaultThrottle`.
 
+## HTTP response cache
+
+HTTP response caching is disabled by default. Set `CRAWLERX_RESPONSE_CACHE_TTL`
+to a positive number of seconds and pass a PSR-16 cache as the third argument
+to `CrawlerXFactory::configure($logins, $throttleCache, $responseCache)` to
+enable it. The cache key includes the HTTP method, URL and request headers,
+including cookies and the user agent. Only successful 2xx responses are cached;
+HTTP errors, detected challenges and captcha pages are fetched again. Cache
+hits still pass the host circuit guard and do not wait for the host throttle.
+
 ## Budgets
 
 The default total budget is 60 seconds. Individual method caps are 20 seconds

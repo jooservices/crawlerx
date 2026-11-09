@@ -17,9 +17,11 @@ use JOOservices\CrawlerX\Support\CodeNormalizer;
 use JOOservices\CrawlerX\Support\JableStreamParser;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
+use JOOservices\CrawlerX\Adapters\Concerns\ParsesUrlParts;
 
 final class Detail extends AbstractType implements TypeInterface
 {
+    use ParsesUrlParts;
     use ParsesHtml;
 
     public function __construct(
@@ -33,7 +35,7 @@ final class Detail extends AbstractType implements TypeInterface
         $response = $this->client->get($request->url);
         $html = $this->htmlFromResponse($response->toPsrResponse(), 'Jable', 'detail');
         $crawler = new Crawler($html, $request->url);
-        $externalId = $this->externalId($request->url);
+        $externalId = $this->lastPathSegment($request->url);
         $rawTitle = $this->firstText($crawler, Selectors::DETAIL_TITLE)
             ?? $this->firstAttribute($crawler, 'meta[property="og:title"]', 'content')
             ?? $externalId;
@@ -68,13 +70,6 @@ final class Detail extends AbstractType implements TypeInterface
         $this->assertUsableDetail($item, 'Jable');
 
         return $item;
-    }
-
-    private function externalId(string $url): ?string
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-
-        return is_string($path) && trim($path, '/') !== '' ? trim(basename($path), '/') : null;
     }
 
     private function titleWithoutCode(?string $title, string $code): ?string
