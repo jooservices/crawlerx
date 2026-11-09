@@ -61,6 +61,16 @@ final class ChangedTestRunnerTest extends TestCase
         self::assertSame(['tests/Unit/Adapters'], $plan->testPaths);
     }
 
+    public function test_root_level_adapter_classes_select_the_full_adapter_unit_suite(): void
+    {
+        $this->addFile('tests/Unit/Adapters/ExampleSite/ExampleSiteTest.php');
+
+        $plan = (new ChangedTestMapper($this->root))->map(['src/Adapters/AbstractHtmlType.php']);
+
+        self::assertFalse($plan->fullSuite);
+        self::assertSame(['tests/Unit/Adapters'], $plan->testPaths);
+    }
+
     public function test_shared_support_changes_select_adapter_and_support_unit_tests(): void
     {
         $this->addFile('tests/Unit/Adapters/ExampleSite/ExampleSiteTest.php');
@@ -122,6 +132,28 @@ final class ChangedTestRunnerTest extends TestCase
 
         self::assertTrue($plan->fullSuite);
         self::assertSame('No targeted mapping for src/Unknown/Service.php.', $plan->reason);
+    }
+
+    public function test_unknown_adapter_falls_back_even_when_snapshot_test_exists(): void
+    {
+        $this->addFile('tests/Feature/Snapshots/SnapshotParseTest.php');
+
+        $plan = (new ChangedTestMapper($this->root))->map(['src/Adapters/UnknownSite/Detail.php']);
+
+        self::assertTrue($plan->fullSuite);
+        self::assertSame('No targeted mapping for src/Adapters/UnknownSite/Detail.php.', $plan->reason);
+    }
+
+    public function test_removed_adapter_falls_back_even_when_snapshot_test_exists(): void
+    {
+        $this->addAdapter('RemovedSite', 'removed-site', ['detail.html']);
+        $this->addFile('tests/Feature/Snapshots/SnapshotParseTest.php');
+        $this->removeDirectory($this->root . '/src/Adapters/RemovedSite');
+
+        $plan = (new ChangedTestMapper($this->root))->map(['src/Adapters/RemovedSite/Types/Detail.php']);
+
+        self::assertTrue($plan->fullSuite);
+        self::assertSame('No targeted mapping for src/Adapters/RemovedSite/Types/Detail.php.', $plan->reason);
     }
 
     public function test_an_empty_change_set_falls_back_to_the_full_suite(): void

@@ -120,10 +120,13 @@ final readonly class ChangedTestMapper
      */
     private function mapAdapter(string $site, array &$testPaths, array &$fixtureSlugs): bool
     {
+        $slug = $this->adapterSlug($site);
+        if (! is_dir($this->repositoryRoot . '/src/Adapters/' . $site) || $slug === null) {
+            return false;
+        }
+
         $unitPath = 'tests/Unit/Adapters/' . $site;
         $mapped = $this->addExistingPath($unitPath, $testPaths);
-        $mapped = $this->addExistingPath('tests/Feature/Snapshots/SnapshotParseTest.php', $testPaths) || $mapped;
-        $slug = $this->adapterSlug($site);
 
         foreach ($this->featureTests() as $featureTest) {
             if ($this->featureTestMatchesAdapter($featureTest, $site, $slug)) {
@@ -134,7 +137,11 @@ final readonly class ChangedTestMapper
 
         if ($slug !== null && $this->hasFixtureTests()) {
             $fixtureSlugs[] = $slug;
-            $mapped = true;
+            $mapped = $this->hasFixtureSamples($site) || $mapped;
+        }
+
+        if ($mapped) {
+            $this->addExistingPath('tests/Feature/Snapshots/SnapshotParseTest.php', $testPaths);
         }
 
         return $mapped;
@@ -142,9 +149,18 @@ final readonly class ChangedTestMapper
 
     private function isSharedAdapterCode(string $path): bool
     {
-        return preg_match('#^src/Adapters/Concerns(?:/|$)#', $path) === 1
+        return preg_match('#^src/Adapters/[^/]+\.php$#', $path) === 1
+            || preg_match('#^src/Adapters/Concerns(?:/|$)#', $path) === 1
             || preg_match('#^src/Adapters/Shared(?:/|$)#', $path) === 1
             || preg_match('#^src/Support(?:/|$)#', $path) === 1;
+    }
+
+    private function hasFixtureSamples(string $site): bool
+    {
+        $manifest = $this->readManifest('src/Adapters/' . $site . '/manifest.json');
+        $samples = $manifest['runtime']['fixtureSamples'] ?? null;
+
+        return is_array($samples) && $samples !== [];
     }
 
     private function adapterSlug(string $site): ?string
