@@ -5,7 +5,9 @@ import { existsSync, readFileSync, readdirSync, renameSync, writeFileSync } from
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { assertSafeBrowserUrl, SsrfBlockedError } from './ssrf-guard.mjs';
-import { createSsrfProxyServer } from './ssrf-proxy.mjs';
+import { createSsrfProxyServer, ssrfProxyCertificateSpkiHash } from './ssrf-proxy.mjs';
+import { assertResponseBodyWithinLimit, configuredMaxResponseBytes, ResponseBodyTooLargeError } from './fetch-limits.mjs';
+import { browserCookiesFromHeader, headersForOrigin, splitBrowserHeaders } from './request-security.mjs';
 
 export const DEFAULT_USER_AGENT =
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
@@ -158,11 +160,13 @@ export async function fetchWithBrowser(config, browser) {
     const navigationTimeoutMs = positiveTimeout(config.navigationTimeoutMs, 90000);
     const viewport = config.viewport ?? { width: 1440, height: 900 };
     const userAgent = config.userAgent ?? DEFAULT_USER_AGENT;
+    const maximumResponseBytes = configuredMaxResponseBytes(config.maxResponseBytes);
     const phases = [];
     let context = null;
     let ssrfProxy = null;
     let ssrfViolation = false;
     let ssrfError = null;
+    let sensitiveHeaders = {};
 
     const closePhase = (id, label, startMs, status = 'ok') => {
         phases.push({
@@ -176,15 +180,24 @@ export async function fetchWithBrowser(config, browser) {
 
     try {
         await assertSafeBrowserUrl(url);
+        const startOrigin = new URL(url).origin;
+        const configuredHeaders = splitBrowserHeaders(config.extraHttpHeaders ?? {});
+        const cookieHeader = Object.entries(configuredHeaders.sensitive)
+            .find(([name]) => name.toLowerCase() === 'cookie')?.[1];
+        const configuredCookies = browserCookiesFromHeader(cookieHeader);
+        sensitiveHeaders = Object.fromEntries(
+            Object.entries(configuredHeaders.sensitive).filter(([name]) => name.toLowerCase() !== 'cookie'),
+        );
         const contextStarted = Date.now();
         const contextOptions = {
             userAgent,
             locale: config.locale ?? 'en-US',
             viewport,
             serviceWorkers: 'block',
+            ignoreHTTPSErrors: true,
             extraHTTPHeaders: {
                 'Accept-Language': 'en-US,en;q=0.9',
-                ...(config.extraHttpHeaders ?? {}),
+                ...configuredHeaders.safe,
             },
         };
 
@@ -203,9 +216,25 @@ export async function fetchWithBrowser(config, browser) {
             };
         }
 
-        ssrfProxy = await createSsrfProxyServer();
+        ssrfProxy = await createSsrfProxyServer({
+            maxResponseBytes: maximumResponseBytes,
+            requestOrigin: startOrigin,
+            sensitiveHeaders: Object.keys(sensitiveHeaders),
+            configuredCookieNames: configuredCookies.names,
+            respectRobots: config.respectRobots === true,
+            robotsUserAgent: config.robotsUserAgent ?? userAgent,
+        });
         contextOptions.proxy = { server: ssrfProxy.url };
         context = await browser.newContext(contextOptions);
+        if (configuredCookies.cookies.length > 0) {
+            const target = new URL(url);
+            await context.addCookies(configuredCookies.cookies.map((cookie) => ({
+                ...cookie,
+                domain: target.hostname,
+                path: '/',
+                secure: target.protocol === 'https:',
+            })));
+        }
         await context.route('**/*', async (route) => {
             const requestUrl = route.request().url();
             const protocol = new URL(requestUrl).protocol;
@@ -229,7 +258,13 @@ export async function fetchWithBrowser(config, browser) {
                 await route.abort();
                 return;
             }
-            await route.continue();
+            const sameOrigin = new URL(requestUrl).origin === startOrigin;
+            const requestHeaders = headersForOrigin(
+                route.request().headers(),
+                sensitiveHeaders,
+                sameOrigin,
+            );
+            await route.continue({ headers: requestHeaders });
         });
         try {
             const hostname = new URL(url).hostname;
@@ -261,11 +296,26 @@ export async function fetchWithBrowser(config, browser) {
         if (ssrfViolation || ssrfProxy.wasBlocked()) {
             throw ssrfError ?? ssrfProxy.blockedError() ?? new SsrfBlockedError();
         }
+        if (ssrfProxy.wasCredentialRedirectBlocked()) {
+            throw new Error('Sensitive headers cannot cross redirect origins.');
+        }
+        if (ssrfProxy.wasRobotsBlocked()) {
+            throw new Error('robots_disallowed');
+        }
+        if (ssrfProxy.wasResponseTooLarge()) {
+            throw new ResponseBodyTooLargeError();
+        }
         closePhase('navigation', 'Load page (domcontentloaded)', navigationStarted);
 
         await dismissInterstitials(page, context, url);
         if (ssrfViolation || ssrfProxy.wasBlocked()) {
             throw ssrfError ?? ssrfProxy.blockedError() ?? new SsrfBlockedError();
+        }
+        if (ssrfProxy.wasCredentialRedirectBlocked()) {
+            throw new Error('Sensitive headers cannot cross redirect origins.');
+        }
+        if (ssrfProxy.wasRobotsBlocked()) {
+            throw new Error('robots_disallowed');
         }
 
         const waitStarted = Date.now();
@@ -309,8 +359,12 @@ export async function fetchWithBrowser(config, browser) {
 
         const extractStarted = Date.now();
         const html = await page.content();
+        assertResponseBodyWithinLimit(html, maximumResponseBytes);
         if (ssrfProxy.wasBlocked()) {
             throw ssrfError ?? ssrfProxy.blockedError() ?? new SsrfBlockedError();
+        }
+        if (ssrfProxy.wasResponseTooLarge()) {
+            throw new ResponseBodyTooLargeError();
         }
         const finalUrl = page.url();
         const pageTitle = await page.title();
@@ -367,6 +421,23 @@ export async function fetchWithBrowser(config, browser) {
                 challenge: false,
                 ssrfReason: blockedError?.reason ?? 'blocked',
                 ssrfHostname: blockedError?.hostname ?? null,
+            };
+        }
+        if (ssrfProxy?.wasRobotsBlocked()) {
+            return {
+                error: 'robots_disallowed',
+                status: 403,
+                elapsedMs: Date.now() - started,
+                challenge: false,
+                blockedUrl: ssrfProxy.robotsBlockedUrl(),
+            };
+        }
+        if (error?.code === 'response_too_large' || ssrfProxy?.wasResponseTooLarge()) {
+            return {
+                error: 'response_too_large',
+                status: 413,
+                elapsedMs: Date.now() - started,
+                challenge: false,
             };
         }
         return {
@@ -431,7 +502,11 @@ async function main() {
     const launcher = browserType(config.browser ?? 'chromium');
     const browser = await launcher.launch({
         headless: config.headless ?? true,
-        args: ['--disable-blink-features=AutomationControlled', '--proxy-bypass-list=<-loopback>'],
+        args: [
+            '--disable-blink-features=AutomationControlled',
+            '--proxy-bypass-list=<-loopback>',
+            `--ignore-certificate-errors-spki-list=${ssrfProxyCertificateSpkiHash()}`,
+        ],
     });
 
     try {

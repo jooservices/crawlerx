@@ -72,6 +72,7 @@ final class SessionProfile
             readyMarkers: $profile->readyMarkers,
             soft404Markers: $profile->soft404Markers,
             defaultThrottle: $profile->defaultThrottle,
+            respectRobots: $profile->respectRobots,
         );
     }
 

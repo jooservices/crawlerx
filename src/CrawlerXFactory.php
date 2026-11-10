@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX;
 
 use JOOservices\Client\Client\ClientBuilder;
+use JOOservices\Client\Exceptions\DownloadSizeExceededException;
+use JOOservices\Client\Exceptions\RequestException;
 use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Contracts\LoginCookieProvider;
 use JOOservices\CrawlerX\Fetch\BrowserServiceProcessRunner;
@@ -21,6 +23,8 @@ use JOOservices\CrawlerX\Fetch\Handlers\HttpFetchHandler;
 use JOOservices\CrawlerX\Fetch\Handlers\PlaywrightFamilyFetchHandler;
 use JOOservices\CrawlerX\Fetch\Handlers\PuppeteerStealthFetchHandler;
 use JOOservices\CrawlerX\Fetch\ProcOpenProcessRunner;
+use JOOservices\CrawlerX\Fetch\ResponseBodyReader;
+use JOOservices\CrawlerX\Fetch\ResponseBodyTooLargeException;
 use JOOservices\CrawlerX\Fetch\Session\CookieHandoffStore;
 use JOOservices\CrawlerX\Fetch\Session\SessionStore;
 use JOOservices\CrawlerX\Registry\AdapterRegistry;
@@ -31,11 +35,14 @@ use JOOservices\CrawlerX\Services\CrawlOrchestrator;
 use JOOservices\CrawlerX\Services\CrawlerXService;
 use JOOservices\CrawlerX\Services\UrlClassifier;
 use Psr\SimpleCache\CacheInterface;
+use Psr\Http\Message\RequestInterface;
 use Closure;
 use Throwable;
 
 final class CrawlerXFactory
 {
+    private const MAX_ROBOTS_REDIRECTS = 5;
+
     private static ?CrawlOrchestrator $orchestrator = null;
 
     private static ?FetchFallbackChain $fetchChain = null;
@@ -129,24 +136,20 @@ final class CrawlerXFactory
     private static function defaultFetchChain(): FetchFallbackChain
     {
         $runtime = FetchRuntimeConfig::fromEnvironment();
-        $runner = new ProcOpenProcessRunner();
+        $runner = new ProcOpenProcessRunner($runtime->maxResponseBytes * 6 + 65_536);
+        $curlRunner = new ProcOpenProcessRunner($runtime->maxResponseBytes);
         $browserRunner = $runtime->playwrightUrl === null
             ? $runner
-            : new BrowserServiceProcessRunner($runtime->playwrightUrl);
+            : new BrowserServiceProcessRunner($runtime->playwrightUrl, maxResponseBytes: $runtime->maxResponseBytes);
         $cookies = new CookieHandoffStore();
         $sessions = new SessionStore();
         $clientFactory = new ClientFactory(self::$beforeOutboundRequest, self::$onUnsupportedRedirect);
-        $robotsClientFactory = new ClientFactory(
-            self::$beforeRobotsRequest ?? self::$beforeOutboundRequest,
-        );
+        $robotsClientFactory = new ClientFactory();
+        $beforeRobotsRequest = self::$beforeRobotsRequest ?? self::$beforeOutboundRequest;
 
         $playwright = new PlaywrightFamilyFetchHandler($runtime, $browserRunner);
-        $http = new HttpFetchHandler($clientFactory, $cookies, $sessions, self::$loginCookieProvider);
-        $httpHandler = self::$responseCache !== null && $runtime->responseCacheTtlSeconds > 0
-            ? new ResponseCache($http, self::$responseCache, $runtime->responseCacheTtlSeconds)
-            : $http;
         $robotsGuard = new RobotsGuard(
-            fetchRobotsTxt: static function (string $url) use ($robotsClientFactory, $runtime): ?string {
+            fetchRobotsTxt: static function (string $url) use ($robotsClientFactory, $runtime, $beforeRobotsRequest): ?string {
                 // A faked client serves fixtures and records every request; there is no robots.txt
                 // fixture, so skip the fetch and treat the host as unrestricted (fail-open).
                 if (ClientBuilder::isFaked()) {
@@ -156,9 +159,18 @@ final class CrawlerXFactory
                 try {
                     $response = $robotsClientFactory->factory([
                         'timeout' => 10,
+                        'max_response_bytes' => $runtime->maxResponseBytes,
+                        'allow_redirects' => ['max' => self::MAX_ROBOTS_REDIRECTS],
                         'headers' => $runtime->userAgent !== null && $runtime->userAgent !== ''
                             ? ['User-Agent' => $runtime->userAgent]
                             : [],
+                        'before_request' => $beforeRobotsRequest === null
+                            ? null
+                            : static function (RequestInterface $request) use ($beforeRobotsRequest): void {
+                                if (! $beforeRobotsRequest((string) $request->getUri())) {
+                                    throw new RequestException($request, 'Robots.txt redirect destination was rejected.');
+                                }
+                            },
                     ])->get($url);
                     $psr = $response->toPsrResponse();
                     $status = $psr->getStatusCode();
@@ -167,7 +179,13 @@ final class CrawlerXFactory
                         return '';
                     }
 
-                    return $status >= 200 && $status < 300 ? (string) $psr->getBody() : null;
+                    return $status >= 200 && $status < 300
+                        ? (new ResponseBodyReader($runtime->maxResponseBytes))->read($psr->getBody())
+                        : null;
+                } catch (ResponseBodyTooLargeException) {
+                    return "User-agent: *\nDisallow: /\n";
+                } catch (DownloadSizeExceededException) {
+                    return "User-agent: *\nDisallow: /\n";
                 } catch (Throwable) {
                     return null;
                 }
@@ -177,10 +195,23 @@ final class CrawlerXFactory
                 error_log($message);
             },
         );
+        $http = new HttpFetchHandler(
+            $clientFactory,
+            $cookies,
+            $sessions,
+            self::$loginCookieProvider,
+            $runtime->maxResponseBytes,
+            $robotsGuard,
+            $runtime->userAgent,
+            $runtime->respectRobots,
+        );
+        $httpHandler = self::$responseCache !== null && $runtime->responseCacheTtlSeconds > 0
+            ? new ResponseCache($http, self::$responseCache, $runtime->responseCacheTtlSeconds)
+            : $http;
 
         return new FetchFallbackChain([
             FetchMethod::Http->value => $httpHandler,
-            FetchMethod::CurlImpersonate->value => new CurlImpersonateFetchHandler($runtime, $runner, $cookies, $sessions, self::$loginCookieProvider),
+            FetchMethod::CurlImpersonate->value => new CurlImpersonateFetchHandler($runtime, $curlRunner, $cookies, $sessions, self::$loginCookieProvider, $robotsGuard),
             FetchMethod::Playwright->value => $playwright,
             FetchMethod::PlaywrightStealth->value => $playwright,
             FetchMethod::ChromeStealth->value => $playwright,
@@ -192,6 +223,6 @@ final class CrawlerXFactory
         ), hostCircuit: new HostCircuit(
             cache: self::$throttleCache,
             nodeId: $runtime->nodeId,
-        ), robotsGuard: $robotsGuard, beforeOutboundRequest: self::$beforeOutboundRequest);
+        ), robotsGuard: $robotsGuard, beforeOutboundRequest: self::$beforeOutboundRequest, requireFlareEgressProxy: true);
     }
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Fetch\Handlers;
 
-use JOOservices\CrawlerX\Contracts\FetchMethodHandler;
+use JOOservices\CrawlerX\Contracts\GuardedRedirectFetchMethodHandler;
 use JOOservices\CrawlerX\Contracts\ProcessRunner;
 use JOOservices\CrawlerX\Dto\CrawlOptionsDto;
 use JOOservices\CrawlerX\Dto\FetchResultDto;
@@ -15,7 +15,7 @@ use JOOservices\CrawlerX\Fetch\BrowserServiceHint;
 use JOOservices\CrawlerX\Fetch\ChallengeDetector;
 use JOOservices\CrawlerX\Fetch\FetchRuntimeConfig;
 
-final class PlaywrightFamilyFetchHandler implements FetchMethodHandler
+final class PlaywrightFamilyFetchHandler implements GuardedRedirectFetchMethodHandler
 {
     public function __construct(
         private readonly FetchRuntimeConfig $runtime,
@@ -30,6 +30,11 @@ final class PlaywrightFamilyFetchHandler implements FetchMethodHandler
             FetchMethod::PlaywrightStealth,
             FetchMethod::ChromeStealth,
         ], true);
+    }
+
+    public function supportsGuardedRedirects(): bool
+    {
+        return true;
     }
 
     public function fetch(
@@ -61,11 +66,14 @@ final class PlaywrightFamilyFetchHandler implements FetchMethodHandler
             'timezoneId' => $playwright->timezoneId,
             'stealthEnabled' => true,
             'stealthLevel' => 'enhanced',
-            'extraHttpHeaders' => $profile->http->headers,
+            'extraHttpHeaders' => (object) $profile->http->headers,
             'storageStatePath' => $playwright->storageStatePath,
             'storageState' => $options?->storageState,
             'blockResources' => $playwright->blockResources,
             'userAgent' => $playwright->userAgent,
+            'maxResponseBytes' => $this->runtime->maxResponseBytes,
+            'respectRobots' => $profile->respectRobots ?? $this->runtime->respectRobots,
+            'robotsUserAgent' => $this->runtime->userAgent ?? $playwright->userAgent,
         ];
 
         $configPath = tempnam(sys_get_temp_dir(), 'crawlerx-pw-');

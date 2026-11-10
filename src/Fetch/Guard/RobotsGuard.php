@@ -52,23 +52,24 @@ final class RobotsGuard
 
     private function robotsTxtFor(string $url): RobotsTxt
     {
-        $host = $this->hostOf($url);
-        if ($host === '') {
+        $origin = $this->originOf($url);
+        if ($origin === null) {
             return new RobotsTxt();
         }
 
-        if (array_key_exists($host, $this->memory)) {
-            return $this->memory[$host];
+        $originKey = $origin['scheme'] . '://' . $origin['host'] . ':' . $origin['port'];
+        if (array_key_exists($originKey, $this->memory)) {
+            return $this->memory[$originKey];
         }
 
-        $key = $this->cacheKey($host);
+        $key = $this->cacheKey($originKey);
         $content = $this->readCache($key);
         if ($content === null) {
-            $content = ($this->fetchRobotsTxt)($this->robotsUrl($url));
+            $content = ($this->fetchRobotsTxt)($this->robotsUrl($origin));
 
             if ($content === null) {
                 // An unreachable robots.txt is not cached, so the next fetch of the host tries again.
-                ($this->logger)("robots.txt is unreachable for host [{$host}]; failing open.");
+                ($this->logger)("robots.txt is unreachable for host [{$origin['host']}]; failing open.");
                 $content = '';
             } else {
                 $this->writeCache($key, $content);
@@ -76,7 +77,7 @@ final class RobotsGuard
         }
 
         $robots = $content === '' ? new RobotsTxt() : RobotsTxtParser::parse($content);
-        $this->memory[$host] = $robots;
+        $this->memory[$originKey] = $robots;
 
         return $robots;
     }
@@ -109,11 +110,31 @@ final class RobotsGuard
         }
     }
 
-    private function robotsUrl(string $url): string
+    /** @param array{scheme: string, host: string, port: int} $origin */
+    private function robotsUrl(array $origin): string
+    {
+        $host = str_contains($origin['host'], ':') ? '[' . $origin['host'] . ']' : $origin['host'];
+        $defaultPort = $origin['scheme'] === 'https' ? 443 : 80;
+        $port = $origin['port'] === $defaultPort ? '' : ':' . $origin['port'];
+
+        return $origin['scheme'] . '://' . $host . $port . '/robots.txt';
+    }
+
+    /** @return array{scheme: string, host: string, port: int}|null */
+    private function originOf(string $url): ?array
     {
         $scheme = parse_url($url, PHP_URL_SCHEME);
+        $host = parse_url($url, PHP_URL_HOST);
+        if (! is_string($host) || trim($host) === '') {
+            return null;
+        }
 
-        return (is_string($scheme) && $scheme !== '' ? $scheme : 'https') . '://' . $this->hostOf($url) . '/robots.txt';
+        $scheme = is_string($scheme) && strtolower($scheme) === 'http' ? 'http' : 'https';
+        $host = strtolower(rtrim(trim($host, '[]'), '.'));
+        $explicitPort = parse_url($url, PHP_URL_PORT);
+        $port = is_int($explicitPort) ? $explicitPort : ($scheme === 'https' ? 443 : 80);
+
+        return ['scheme' => $scheme, 'host' => $host, 'port' => $port];
     }
 
     private function pathOf(string $url): string
@@ -123,15 +144,8 @@ final class RobotsGuard
         return is_string($path) && $path !== '' ? $path : '/';
     }
 
-    private function hostOf(string $url): string
+    private function cacheKey(string $origin): string
     {
-        $host = parse_url($url, PHP_URL_HOST);
-
-        return is_string($host) ? strtolower(rtrim(trim($host), '.')) : '';
-    }
-
-    private function cacheKey(string $host): string
-    {
-        return 'crawlerx.robots.' . substr(hash('sha256', $host), 0, 50);
+        return 'crawlerx.robots.' . substr(hash('sha256', $origin), 0, 50);
     }
 }

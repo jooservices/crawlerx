@@ -63,6 +63,7 @@ final class BudgetBounds
             readyMarkers: $profile->readyMarkers,
             soft404Markers: $profile->soft404Markers,
             defaultThrottle: $profile->defaultThrottle,
+            respectRobots: $profile->respectRobots,
         );
     }
 

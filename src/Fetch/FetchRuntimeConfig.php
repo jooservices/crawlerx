@@ -21,6 +21,8 @@ final readonly class FetchRuntimeConfig
         public string $nodeId = 'local',
         public bool $respectRobots = true,
         public int $responseCacheTtlSeconds = 0,
+        public int $maxResponseBytes = 10_485_760,
+        public ?string $flaresolverrProxyUrl = null,
     ) {
     }
 
@@ -31,10 +33,12 @@ final readonly class FetchRuntimeConfig
         $puppeteer = getenv('CRAWLERX_PUPPETEER_SCRIPT');
         $curl = getenv('CRAWLERX_CURL_IMPERSONATE');
         $flare = getenv('FLARESOLVERR_URL');
+        $flareProxy = getenv('CRAWLERX_FLARESOLVERR_PROXY_URL');
         $playwrightUrl = getenv('PLAYWRIGHT_URL');
         $userAgentPool = getenv('CRAWLERX_USER_AGENT_POOL');
         $nodeId = getenv('CRAWLERX_NODE');
         $responseCacheTtl = getenv('CRAWLERX_RESPONSE_CACHE_TTL');
+        $maxResponseBytes = getenv('CRAWLERX_MAX_RESPONSE_BYTES');
         $configuredUserAgent = CrawlerUserAgent::fromEnvironment();
         $pool = is_string($userAgentPool) && trim($userAgentPool) !== ''
             ? array_values(array_filter(
@@ -55,6 +59,9 @@ final readonly class FetchRuntimeConfig
         $responseCacheTtlSeconds = is_string($responseCacheTtl) && ctype_digit(trim($responseCacheTtl))
             ? (int) trim($responseCacheTtl)
             : 0;
+        $configuredMaxResponseBytes = is_string($maxResponseBytes) && ctype_digit(trim($maxResponseBytes))
+            ? filter_var(trim($maxResponseBytes), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 104_857_600]])
+            : false;
 
         return new self(
             nodeBinary: 'node',
@@ -72,6 +79,8 @@ final readonly class FetchRuntimeConfig
             nodeId: $resolvedNodeId,
             respectRobots: self::resolveRespectRobots(getenv('CRAWLERX_RESPECT_ROBOTS')),
             responseCacheTtlSeconds: $responseCacheTtlSeconds,
+            maxResponseBytes: is_int($configuredMaxResponseBytes) ? $configuredMaxResponseBytes : 10_485_760,
+            flaresolverrProxyUrl: is_string($flareProxy) && trim($flareProxy) !== '' ? trim($flareProxy) : null,
         );
     }
 

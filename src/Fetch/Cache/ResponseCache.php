@@ -11,6 +11,8 @@ use JOOservices\CrawlerX\Dto\SiteProfileDto;
 use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Fetch\ChallengeDetector;
 use JOOservices\CrawlerX\Fetch\Handlers\HttpFetchHandler;
+use JOOservices\CrawlerX\Fetch\Request\SensitiveHeaders;
+use JOOservices\CrawlerX\Services\ClientFactory;
 use Psr\SimpleCache\CacheInterface;
 use Throwable;
 
@@ -38,14 +40,19 @@ final class ResponseCache implements CacheAwareFetchMethodHandler
             return $this->handler->fetch($url, $profile, $method, $options);
         }
 
+        $headers = $this->handler->requestHeaders($url, $profile, $options);
+        if (! $this->cacheableRequest($url, $headers, $profile, $options)) {
+            return $this->handler->fetch($url, $profile, $method, $options);
+        }
+
         $cached = $this->cachedResponse($url, $profile, $method, $options);
         if ($cached !== null) {
             return $cached;
         }
 
         $result = $this->handler->fetch($url, $profile, $method, $options);
-        if ($this->isCacheable($result)) {
-            $this->store($url, $method, $this->handler->requestHeaders($url, $profile, $options), $result);
+        if ($result->finalUrl === $url && $this->isCacheable($result)) {
+            $this->store($url, $method, $headers, $result);
         }
 
         return $result;
@@ -61,9 +68,24 @@ final class ResponseCache implements CacheAwareFetchMethodHandler
             return null;
         }
 
-        $key = ResponseCacheKey::for($method, $url, $this->handler->requestHeaders($url, $profile, $options));
+        $headers = $this->handler->requestHeaders($url, $profile, $options);
+        if (! $this->cacheableRequest($url, $headers, $profile, $options)) {
+            return null;
+        }
+
+        $key = ResponseCacheKey::for($method, $url, $headers);
         try {
             $entry = $this->cache->get($key);
+        } catch (Throwable) {
+            return null;
+        }
+
+        if (! is_string($entry)) {
+            return null;
+        }
+
+        try {
+            $entry = json_decode($entry, true, flags: JSON_THROW_ON_ERROR);
         } catch (Throwable) {
             return null;
         }
@@ -75,7 +97,12 @@ final class ResponseCache implements CacheAwareFetchMethodHandler
         $headers = $this->responseHeaders($entry['headers'] ?? null);
         $cookies = $this->cookies($entry['cookies'] ?? null);
         $finalUrl = $entry['finalUrl'] ?? null;
-        if ($headers === null || $cookies === null || ($finalUrl !== null && ! is_string($finalUrl))) {
+        if (
+            $headers === null
+            || $cookies === null
+            || ($finalUrl !== null && ! is_string($finalUrl))
+            || ($finalUrl !== null && $finalUrl !== $url)
+        ) {
             return null;
         }
 
@@ -99,9 +126,85 @@ final class ResponseCache implements CacheAwareFetchMethodHandler
         return $result->ok
             && $result->status >= 200
             && $result->status < 300
+            && ! $this->wasRedirected($result)
             && ! $result->challengeDetected
             && ! ChallengeDetector::isChallenge($result->body, $result->status, $result->headers)
+            && $this->cacheableResponseHeaders($result)
             && ! ChallengeDetector::isCaptchaChallenge($result->body);
+    }
+
+    private function wasRedirected(FetchResultDto $result): bool
+    {
+        foreach ($result->headers as $name => $values) {
+            if (strcasecmp($name, 'X-Joo-Redirect-History') === 0 && $values !== []) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** @param array<string, string> $headers */
+    private function cacheableRequest(
+        string $url,
+        array $headers,
+        SiteProfileDto $profile,
+        ?CrawlOptionsDto $options,
+    ): bool {
+        $proxy = $options?->http?->proxy;
+        if ($proxy === null || trim($proxy) === '') {
+            $proxy = $profile->http->proxy;
+        }
+        if (ClientFactory::resolveProxy(['proxy' => $proxy]) !== null) {
+            return false;
+        }
+
+        $parts = parse_url($url);
+        if (is_array($parts) && (isset($parts['user']) || isset($parts['pass']))) {
+            return false;
+        }
+
+        $query = is_array($parts) ? ($parts['query'] ?? null) : null;
+        if (is_string($query)) {
+            foreach (explode('&', $query) as $parameter) {
+                $name = rawurldecode(explode('=', $parameter, 2)[0]);
+                if (SensitiveHeaders::isSensitiveName($name)) {
+                    return false;
+                }
+            }
+        }
+
+        if (SensitiveHeaders::contains($headers)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private function cacheableResponseHeaders(FetchResultDto $result): bool
+    {
+        if ($result->cookies !== []) {
+            return false;
+        }
+
+        foreach ($result->headers as $name => $values) {
+            if (strcasecmp($name, 'Set-Cookie') === 0 || SensitiveHeaders::isSensitiveName($name)) {
+                return false;
+            }
+
+            if (strcasecmp($name, 'Cache-Control') === 0 && preg_match('/(?:^|,)\s*(?:private|no-store)\b/i', implode(',', $values)) === 1) {
+                return false;
+            }
+
+            if (strcasecmp($name, 'Vary') === 0) {
+                $varyTokens = array_map('trim', explode(',', implode(',', $values)));
+                if (in_array('*', $varyTokens, true)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     /** @param array<string, string> $headers */
@@ -116,7 +219,11 @@ final class ResponseCache implements CacheAwareFetchMethodHandler
         ];
 
         try {
-            $this->cache->set(ResponseCacheKey::for($method, $url, $headers), $entry, $this->ttlSeconds);
+            $this->cache->set(
+                ResponseCacheKey::for($method, $url, $headers),
+                json_encode($entry, JSON_THROW_ON_ERROR),
+                $this->ttlSeconds,
+            );
         } catch (Throwable) {
             // A cache outage must not turn a successful HTTP fetch into a failure.
         }

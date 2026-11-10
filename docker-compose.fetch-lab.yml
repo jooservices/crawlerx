@@ -1,4 +1,8 @@
 services:
+  php:
+    environment:
+      # FlareSolverr's browser is confined to the local fixture server in this lab.
+      CRAWLERX_FLARESOLVERR_PROXY_URL: http://fixture-site:8080
   node:
     environment:
       CRAWLERX_FETCH_LAB: "1"
