@@ -6,6 +6,7 @@ namespace JOOservices\CrawlerX\Fetch;
 
 use Closure;
 use JOOservices\CrawlerX\Contracts\FetchMethodHandler;
+use JOOservices\CrawlerX\Contracts\GuardedRedirectFetchMethodHandler;
 use JOOservices\CrawlerX\Contracts\LoginCookieProvider;
 use JOOservices\CrawlerX\Dto\CrawlOptionsDto;
 use JOOservices\CrawlerX\Dto\FetchResultDto;
@@ -23,6 +24,7 @@ use JOOservices\CrawlerX\Fetch\Guard\HostThrottle;
 use JOOservices\CrawlerX\Fetch\Guard\PreFetchGuard;
 use JOOservices\CrawlerX\Fetch\Guard\RobotsGuard;
 use JOOservices\CrawlerX\Fetch\Guard\TransientRetry;
+use JOOservices\CrawlerX\Fetch\Handlers\FlaresolverrFetchHandler;
 use JOOservices\CrawlerX\Fetch\Outcome\FetchRejections;
 use JOOservices\CrawlerX\Fetch\Request\AuthWallDetector;
 use JOOservices\CrawlerX\Fetch\Request\FetchRequest;
@@ -55,6 +57,7 @@ final class FetchFallbackChain
         private readonly int $maxTransientRetries = TransientRetry::MAX_RETRIES,
         /** @var Closure(): (int|float)|null */
         private readonly ?Closure $budgetClock = null,
+        private readonly bool $requireFlareEgressProxy = false,
         /** @var Closure(string): bool|null */
         private readonly ?Closure $beforeOutboundRequest = null,
     ) {
@@ -110,6 +113,28 @@ final class FetchFallbackChain
         );
 
         foreach ($plan as $method) {
+            $handler = $this->handlers[$method->value] ?? null;
+            if (
+                $method === FetchMethod::Flaresolverr
+                && $handler instanceof FlaresolverrFetchHandler
+                && $this->requireFlareEgressProxy
+                && $this->runtime !== null
+                && ($this->runtime->flaresolverrProxyUrl === null || trim($this->runtime->flaresolverrProxyUrl) === '')
+            ) {
+                $run->attempts[] = AttemptRow::build($method, 0, 0, false, false, 'SSRF egress proxy unavailable', skipped: true);
+                continue;
+            }
+
+            if (
+                $this->robotsGuard !== null
+                && $this->respectsRobots($profile)
+                && ($method === FetchMethod::Flaresolverr || $this->isBrowserMethod($method))
+                && (! $handler instanceof GuardedRedirectFetchMethodHandler || ! $handler->supportsGuardedRedirects())
+            ) {
+                $run->attempts[] = AttemptRow::build($method, 0, 0, false, false, 'redirect guard unavailable', skipped: true);
+                continue;
+            }
+
             // FlareSolverr is the expensive last resort. It is skipped only when an earlier method got a real
             // answer from the site (an HTTP status) that was not a challenge. When nothing answered (a method
             // could not run, or a browser timed out on a page that never settles, as Cloudflare interstitials
@@ -124,7 +149,6 @@ final class FetchFallbackChain
                 break;
             }
 
-            $handler = $this->handlers[$method->value] ?? null;
             if (! $handler instanceof FetchMethodHandler || ! $handler->supports($method)) {
                 $run->attempts[] = AttemptRow::build($method, 0, 0, false, false, 'handler not registered', skipped: true);
                 continue;
@@ -137,6 +161,14 @@ final class FetchFallbackChain
 
             $run->last = $result->withAttempts($run->attempts);
             $run->sawChallenge = $run->sawChallenge || $result->challengeDetected;
+            if (
+                $result->finalUrl !== null
+                && $result->finalUrl !== $request->url
+                && $this->robotsGuard !== null
+                && $this->respectsRobots($profile)
+            ) {
+                $this->robotsGuard->assertAllowed($result->finalUrl, $request->userAgent ?? '');
+            }
             $this->rejectIfFinal($result, $run->last, $request->url, $host);
 
             if ($result->challengeDetected && $request->session !== null) {
@@ -221,5 +253,15 @@ final class FetchFallbackChain
         }
 
         return $this->runtime === null || $this->runtime->respectRobots;
+    }
+
+    private function isBrowserMethod(FetchMethod $method): bool
+    {
+        return in_array($method, [
+            FetchMethod::Playwright,
+            FetchMethod::PlaywrightStealth,
+            FetchMethod::ChromeStealth,
+            FetchMethod::PuppeteerStealth,
+        ], true);
     }
 }

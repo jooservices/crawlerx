@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Fetch;
 
-use JOOservices\Client\Client\ClientBuilder;
 use JOOservices\CrawlerX\Contracts\ProcessRunner;
 use JOOservices\CrawlerX\Dto\ProcessResultDto;
+use JOOservices\CrawlerX\Services\ClientFactory;
+use JOOservices\Client\Exceptions\DownloadSizeExceededException;
 use Nyholm\Psr7\Request;
 use Psr\Http\Client\ClientInterface;
 use RuntimeException;
@@ -17,6 +18,7 @@ final class BrowserServiceProcessRunner implements ProcessRunner
     public function __construct(
         private readonly string $endpoint,
         private readonly ?ClientInterface $client = null,
+        private readonly int $maxResponseBytes = 10_485_760,
     ) {
     }
 
@@ -31,18 +33,22 @@ final class BrowserServiceProcessRunner implements ProcessRunner
         $script = isset($command[1]) && str_contains($command[1], 'puppeteer') ? 'puppeteer' : 'playwright';
         $payload = json_encode([
             'script' => $script,
-            'config' => json_decode($config, true, flags: JSON_THROW_ON_ERROR),
+            'config' => json_decode($config, flags: JSON_THROW_ON_ERROR),
         ], JSON_THROW_ON_ERROR);
 
         try {
-            $client = $this->client ?? ClientBuilder::create()->withTimeout($timeoutSeconds)->build();
+            $client = $this->client ?? ClientFactory::boundedHttpClient($timeoutSeconds, $this->maxResponseBytes * 6 + 65_536);
             $response = $client->sendRequest(new Request('POST', rtrim($this->endpoint, '/') . '/fetch', [
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
             ], $payload));
-            $raw = (string) $response->getBody();
+            $raw = (new ResponseBodyReader($this->maxResponseBytes * 6 + 65_536))->read($response->getBody());
+        } catch (ResponseBodyTooLargeException) {
+            return new ProcessResultDto(1, '', 'Browser service response exceeded the configured size limit.');
+        } catch (DownloadSizeExceededException) {
+            return new ProcessResultDto(1, '', 'Browser service response exceeded the configured size limit.');
         } catch (Throwable $exception) {
-            return new ProcessResultDto(1, '', 'Browser service request failed: ' . $exception->getMessage());
+            return new ProcessResultDto(1, '', 'Browser service request failed.');
         }
 
         /** @var array<string, mixed>|null $decoded */
