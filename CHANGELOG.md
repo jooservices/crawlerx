@@ -42,6 +42,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Raise the composer process timeout to 1800 seconds so the release gate (`composer ci`, full coverage run) is not cut off at the 300 second default (the v1.6.0 Release workflow failed on it) (JOOXCR-457).
 - Browser SSRF guard drops loopback/unspecified decoy DNS answers and pins only remaining public addresses, so hosts such as Jable/MissAV with Cloudflare A records plus `127.0.0.1`/`0.0.0.0` decoys fetch normally while private-only answers stay blocked; blocked responses carry a clear `ssrfReason` into the fetch exception message (JOOXCR-399 / JOOXCR-363).
 
+## [1.6.1] - 2026-11-08
+
+### Fixed
+
+- Allow public pins beside decoy DNS answers in the browser SSRF guard (JOOXCR-399)
+
 ## [1.6.0] - 2026-11-08
 
 ### Added
@@ -341,6 +347,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Catalog `external_id` for HEYZO/FC2 included the code prefix inconsistently.
 
 [1.7.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.7.0
+[1.6.1]: https://github.com/jooservices/crawlerx/releases/tag/v1.6.1
 [1.3.1]: https://github.com/jooservices/crawlerx/releases/tag/v1.3.1
 [1.3.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.3.0
 [1.2.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.2.0
