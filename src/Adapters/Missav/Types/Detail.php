@@ -4,20 +4,22 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\Missav\Types;
 
-use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Adapters\AbstractType;
+use JOOservices\CrawlerX\Adapters\Concerns\ReadsLastPathSegment;
 use JOOservices\CrawlerX\Adapters\Missav\Selectors;
 use JOOservices\CrawlerX\Adapters\Missav\UrlNormalizer;
+use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
-use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
+use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Support\CodeNormalizer;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class Detail extends AbstractType implements TypeInterface
 {
+    use ReadsLastPathSegment;
     use InteractsWithMissavHtml;
 
     public function __construct(
@@ -31,7 +33,7 @@ final class Detail extends AbstractType implements TypeInterface
         $response = $this->client->get($request->url);
         $html = $this->htmlFromResponse($response->toPsrResponse(), 'MissAV', 'detail');
         $crawler = new Crawler($html, $request->url);
-        $externalId = $this->externalId($request->url);
+        $externalId = $this->lastPathSegment($request->url);
         $rows = $this->rows($crawler);
         $heading = $this->firstText($crawler, 'h1');
         $title = $heading ?? $this->firstText($crawler, Selectors::DETAIL_TITLE) ?? $externalId;
@@ -190,13 +192,6 @@ final class Detail extends AbstractType implements TypeInterface
         }
 
         return $other;
-    }
-
-    private function externalId(string $url): ?string
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-
-        return is_string($path) && trim($path, '/') !== '' ? trim(basename($path), '/') : null;
     }
 
     private function releaseDate(Crawler $crawler): ?string

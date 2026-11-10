@@ -151,7 +151,8 @@ class FieldsTest extends TestCase
         self::assertSame('4971756', $first['external_id']);
         self::assertSame('FC2-PPV-4971756', $first['code']);
         self::assertStringStartsWith('【野獣妻】', $first['title']);
-        self::assertSame('https://contents-thumbnail2.fc2.com/w360/storage201000.contents.fc2.com/file/389/38893931/1788425526.79.jpg', $first['cover_url']);
+        self::assertSame('https://storage201000.contents.fc2.com/file/389/38893931/1788425526.79.jpg', $first['cover_url']);
+        self::assertSame('https://contents-thumbnail2.fc2.com/w360/storage201000.contents.fc2.com/file/389/38893931/1788425526.79.jpg', $first['metadata']['thumbnail_url']);
         self::assertSame(59, $first['duration']);
         self::assertSame(1490.0, $first['metadata']['price']['amount']);
         self::assertSame(2980.0, $first['metadata']['list_price']['amount']);

@@ -1,0 +1,10 @@
+{
+  "source_url": "https://www.wikidata.org/w/api.php?action=wbgetentities&ids=Q100715228%7CQ102247563%7CQ10295539%7CQ10313825%7CQ10358931&props=labels%7Cdescriptions%7Caliases%7Cclaims%7Csitelinks%2Furls&languages=ja%7Cen&sitefilter=jawiki%7Cenwiki&format=json",
+  "final_url": "https://www.wikidata.org/w/api.php?action=wbgetentities&ids=Q100715228%7CQ102247563%7CQ10295539%7CQ10313825%7CQ10358931&props=labels%7Cdescriptions%7Caliases%7Cclaims%7Csitelinks%2Furls&languages=ja%7Cen&sitefilter=jawiki%7Cenwiki&format=json",
+  "captured_at": "2026-11-08T02:01:55.700436+00:00",
+  "http_status": 200,
+  "content_hash": "503a283acd7717200bc26a74f4b120945dfa3f2d4ff6241833ba5668b7d591cf",
+  "target_type": "supporting",
+  "fetch_method": "http",
+  "sanitized": false
+}

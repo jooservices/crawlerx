@@ -4,21 +4,25 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\JavDatabase\Types;
 
-use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Adapters\AbstractType;
+use JOOservices\CrawlerX\Adapters\Concerns\CleansText;
+use JOOservices\CrawlerX\Adapters\Concerns\MatchesUrlPath;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
 use JOOservices\CrawlerX\Adapters\JavDatabase\Selectors;
+use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
-use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
-use Psr\Http\Message\ResponseInterface;
+use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Support\MovieMeta;
+use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\DomCrawler\UriResolver;
 
 final class PerformerDetail extends AbstractType implements TypeInterface
 {
+    use CleansText;
+    use MatchesUrlPath;
     use ParsesHtml;
 
     public function __construct(
@@ -113,6 +117,36 @@ final class PerformerDetail extends AbstractType implements TypeInterface
         });
 
         return array_values($works);
+    }
+
+    /**
+     * Lightbox stills of the performer: full-size `data-image-src` plus the grid thumbnail, with the movie they come from.
+     *
+     * @return list<array{url: string, thumbnail_url: ?string, movie_url: ?string, movie_code: ?string, position: int}>
+     */
+    private function galleryImages(Crawler $crawler, string $baseUrl): array
+    {
+        $images = [];
+        $crawler->filter(Selectors::GALLERY_LINKS)->each(function (Crawler $link) use (&$images, $baseUrl): void {
+            $full = trim((string) $link->attr('data-image-src'));
+            if ($full === '') {
+                return;
+            }
+
+            $url = UriResolver::resolve($full, $baseUrl);
+            $thumbnail = $link->filter('img')->count() > 0 ? trim((string) $link->filter('img')->first()->attr('src')) : '';
+            $movie = trim((string) $link->attr('data-post-link'));
+            $code = $this->cleanText((string) $link->attr('data-post-title'));
+            $images[$url] ??= [
+                'url' => $url,
+                'thumbnail_url' => $thumbnail === '' ? null : UriResolver::resolve($thumbnail, $baseUrl),
+                'movie_url' => $movie === '' ? null : UriResolver::resolve($movie, $baseUrl),
+                'movie_code' => $code === '' ? null : $code,
+                'position' => count($images),
+            ];
+        });
+
+        return array_values($images);
     }
 
     private function nextPage(Crawler $crawler, string $baseUrl): ?string
@@ -229,6 +263,7 @@ final class PerformerDetail extends AbstractType implements TypeInterface
             'social_links' => $this->socialLinks($crawler),
             'movie_count' => $this->movieCount($crawler),
             'filmography' => $this->filmography($crawler),
+            'gallery_images' => $this->galleryImages($crawler, $request->url),
             'filmography_next_url' => $this->nextPage($crawler, $request->url),
         ], fn(mixed $value): bool => $value !== null && $value !== '' && $value !== []);
 
@@ -270,16 +305,6 @@ final class PerformerDetail extends AbstractType implements TypeInterface
 
     private function externalId(string $url): ?string
     {
-        $path = parse_url($url, PHP_URL_PATH);
-        if (is_string($path) && preg_match('#/idols/([^/]+)/?#i', $path, $match) === 1) {
-            return $match[1];
-        }
-
-        return null;
-    }
-
-    private function cleanText(string $value): string
-    {
-        return trim((string) preg_replace('/\s+/u', ' ', html_entity_decode($value, ENT_QUOTES | ENT_HTML5)));
+        return $this->pathMatch($url, '#/idols/([^/]+)/?#i');
     }
 }

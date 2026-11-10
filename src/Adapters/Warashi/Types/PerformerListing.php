@@ -4,56 +4,33 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\Warashi\Types;
 
-use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Adapters\AbstractType;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
+use JOOservices\CrawlerX\Adapters\Concerns\ReadsPathNumbers;
 use JOOservices\CrawlerX\Adapters\Warashi\Selectors;
+use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
-use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
-use Psr\Http\Message\ResponseInterface;
+use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\DomCrawler\UriResolver;
 
 final class PerformerListing extends AbstractType implements TypeInterface
 {
     use ParsesHtml;
+    use ReadsPathNumbers;
 
     public function __construct(
         private readonly CrawlHttpClient $client,
     ) {
     }
 
-    protected function htmlFromResponse(ResponseInterface $response, string $site, string $context): string
-    {
-        $html = (string) $response->getBody();
-
-        if ($response->getStatusCode() >= 400) {
-            throw new \RuntimeException("{$site} {$context} page is blocked or unavailable.");
-        }
-
-        $isChallenge = str_contains($html, 'cf-browser-verification')
-            || str_contains($html, 'cf-mitigated')
-            || str_contains($html, 'Just a moment...')
-            || str_contains($html, 'Attention Required!');
-
-        if ($isChallenge) {
-            throw new \RuntimeException("{$site} {$context} page is blocked or unavailable.");
-        }
-
-        if (trim($html) === '') {
-            throw new \RuntimeException("{$site} {$context} page is empty.");
-        }
-
-        return $html;
-    }
-
     public function execute(CrawlRequestDto $request): CrawlListResultDto
     {
         $response = $this->client->get($request->url);
-        $html = $this->htmlFromResponse($response->toPsrResponse(), 'warashi', 'performer_listing');
+        $html = $this->htmlResponse($response->toPsrResponse(), 'warashi', 'performer_listing');
         $crawler = new Crawler($html, $request->url);
         $items = [];
 
@@ -66,15 +43,17 @@ final class PerformerListing extends AbstractType implements TypeInterface
                 }
 
                 $url = UriResolver::resolve($href, $request->url);
-                $externalId = $this->externalId($url);
+                $externalId = $this->pathMatch($url, '#/asian-female-pornstar/(\d+)/?$#i');
                 if ($externalId === null) {
                     return;
                 }
 
+                $image = $this->cardImage($node, $request->url);
                 $items[$url] = PerformerDto::item(
                     url: $url,
                     externalId: $externalId,
                     title: $name,
+                    data: $image === null ? [] : ['profile_image_url' => $image],
                 );
             });
 
@@ -90,11 +69,20 @@ final class PerformerListing extends AbstractType implements TypeInterface
             pagination: new CrawlPaginationDto(
                 currentPage: $currentPage,
                 lastPage: $lastPageNum,
-                nextPage: $nextUrl !== null ? $this->pageNumber($nextUrl) : null,
+                nextPage: $nextUrl !== null ? $this->pathInteger($nextUrl, '#/page/(\d+)/?#') : null,
                 nextUrl: $nextUrl,
                 hasNextPage: $nextUrl !== null,
             ),
         );
+    }
+
+    /** The portrait is the image link of the same `<figure>` as the name link. */
+    private function cardImage(Crawler $name, string $baseUrl): ?string
+    {
+        $card = $name->closest('figure');
+        $src = $card === null ? null : $this->firstAttribute($card, Selectors::PERFORMER_CARD_IMAGE, 'src');
+
+        return $src === null ? null : UriResolver::resolve($src, $baseUrl);
     }
 
     private function performerNameFromNode(Crawler $node): string
@@ -116,7 +104,7 @@ final class PerformerListing extends AbstractType implements TypeInterface
             }
         }
 
-        return $this->pageNumber($url) ?? 1;
+        return $this->pathInteger($url, '#/page/(\d+)/?#') ?? 1;
     }
 
     private function nextPageUrl(Crawler $crawler, string $baseUrl, int $currentPage): ?string
@@ -168,25 +156,5 @@ final class PerformerListing extends AbstractType implements TypeInterface
         });
 
         return $lastPage;
-    }
-
-    private function pageNumber(string $url): ?int
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-        if (is_string($path) && preg_match('#/page/(\d+)/?#', $path, $match) === 1) {
-            return (int) $match[1];
-        }
-
-        return null;
-    }
-
-    private function externalId(string $url): ?string
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-        if (is_string($path) && preg_match('#/asian-female-pornstar/(\d+)/?$#i', $path, $match) === 1) {
-            return $match[1];
-        }
-
-        return null;
     }
 }

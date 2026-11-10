@@ -54,10 +54,12 @@ flowchart TD
 
     CI --> V[Validate]
     V --> L[Lint matrix]
-    L --> T[Test matrix]
+    V --> TS[Test shards]
+    TS --> T[Test aggregators]
     V --> DS[Dependency security]
     V --> SS[Secret scan]
     V --> SA[SAST]
+    V --> AD[Architecture Deptrac report-only]
     T --> CU[Coverage gate and uploads]
     DS --> CU
     SS --> CU
@@ -74,24 +76,29 @@ Concurrent runs for the same Git ref cancel older in-progress runs.
 
 ```mermaid
 flowchart LR
-    V[Validate] --> L[Lint matrix] --> T[Test matrix] --> C[Coverage upload]
+    V[Validate] --> L[Lint matrix]
+    V --> TS[Test shards]
+    TS --> T[Test Unit / Feature]
+    T --> C[Coverage upload]
     V --> D[Dependency security]
     V --> S[Secret scan]
     V --> A[SAST]
+    V --> AD[Architecture Deptrac]
     D --> C
     S --> C
     A --> C
 
-    V --- V1[Checkout, build PHP image]
+    V --- V1[Checkout, cache/load PHP image]
     V --- V2[Restore/install Composer dependencies]
     V --- V3[composer validate --strict]
 
     L --- L1[Pint, PHPCS, PHPStan, PHPMD, PHP-CS-Fixer]
-    T --- T1[Unit suite + coverage artifact]
-    T --- T2[Feature suite + coverage artifact]
+    TS --- TS1[Unit 2 shards + Feature 4 shards]
+    T --- T1[Merge shard coverage; required names unchanged]
     D --- D1[Composer audit + OSV Scanner + PR Dependency Review]
     S --- S1[Gitleaks OSS CLI in pinned Docker image]
     A --- A1[Semgrep OSS]
+    AD --- AD1[deptrac analyse report-only]
     C --- C1[Download coverage artifact]
     C --- C2[Enforce 85% per-suite floor and merge reports]
     C --- C3[Upload to Codecov and SonarQube]

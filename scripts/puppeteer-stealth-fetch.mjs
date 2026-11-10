@@ -4,6 +4,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { chromium } from 'playwright';
 import { assertSafeBrowserUrl, SsrfBlockedError } from './ssrf-guard.mjs';
 import { createSsrfProxyServer } from './ssrf-proxy.mjs';
+import { assertResponseBodyWithinLimit, configuredMaxResponseBytes, ResponseBodyTooLargeError } from './fetch-limits.mjs';
 
 const args = process.argv.slice(2);
 let configPath = '';
@@ -51,7 +52,6 @@ try {
             status: 403,
             challenge: false,
             ssrfReason: error.reason,
-            ssrfAddress: error.address,
             ssrfHostname: error.hostname,
         }));
         process.exit(1);
@@ -59,8 +59,15 @@ try {
     throw error;
 }
 
-const ssrfProxy = await createSsrfProxyServer();
+const maximumResponseBytes = configuredMaxResponseBytes(config.maxResponseBytes);
+const ssrfProxy = await createSsrfProxyServer({
+    maxResponseBytes: maximumResponseBytes,
+    requestOrigin: new URL(url).origin,
+    respectRobots: config.respectRobots === true,
+    robotsUserAgent: config.robotsUserAgent ?? config.userAgent,
+});
 let ssrfViolation = false;
+let ssrfError = null;
 let browser = null;
 
 try {
@@ -73,6 +80,7 @@ try {
             '--disable-blink-features=AutomationControlled',
             '--proxy-server=' + ssrfProxy.url,
             '--proxy-bypass-list=<-loopback>',
+            '--ignore-certificate-errors-spki-list=' + ssrfProxy.certificateSpkiHash,
         ],
     });
     const page = await browser.newPage();
@@ -89,8 +97,11 @@ try {
                 await assertSafeBrowserUrl(requestUrl);
                 allowed = true;
             }
-        } catch {
+        } catch (error) {
             ssrfViolation = true;
+            if (error instanceof SsrfBlockedError) {
+                ssrfError = error;
+            }
             if (!request.isInterceptResolutionHandled()) {
                 await request.abort('blockedbyclient').catch(() => {});
             }
@@ -115,7 +126,13 @@ try {
         timeout: config.navigationTimeoutMs ?? 90000,
     });
     if (ssrfViolation) {
-        throw new SsrfBlockedError();
+        throw ssrfError ?? ssrfProxy.blockedError() ?? new SsrfBlockedError();
+    }
+    if (ssrfProxy.wasRobotsBlocked()) {
+        throw new Error('robots_disallowed');
+    }
+    if (ssrfProxy.wasResponseTooLarge()) {
+        throw new ResponseBodyTooLargeError();
     }
 
     try {
@@ -168,8 +185,12 @@ try {
     await page.evaluate(() => window.scrollTo(0, Math.max(document.body.scrollHeight / 2, 0)));
     await new Promise((resolve) => setTimeout(resolve, 1000));
     const html = await page.content();
+    assertResponseBodyWithinLimit(html, maximumResponseBytes);
+    if (ssrfProxy.wasResponseTooLarge()) {
+        throw new ResponseBodyTooLargeError();
+    }
     if (ssrfViolation) {
-        throw new SsrfBlockedError();
+        throw ssrfError ?? ssrfProxy.blockedError() ?? new SsrfBlockedError();
     }
     const pageTitle = await page.title();
     const normalizedTitle = pageTitle.toLowerCase();
@@ -193,15 +214,19 @@ try {
     }));
 } catch (error) {
     const ssrfBlocked = ssrfViolation || error instanceof SsrfBlockedError;
+    const blockedError = error instanceof SsrfBlockedError
+        ? error
+        : ssrfError ?? ssrfProxy.blockedError();
+    const responseTooLarge = error?.code === 'response_too_large' || ssrfProxy.wasResponseTooLarge();
+    const robotsDisallowed = ssrfProxy.wasRobotsBlocked();
     console.log(JSON.stringify({
-        error: ssrfBlocked ? 'ssrf_blocked' : (error instanceof Error ? error.message : String(error)),
+        error: ssrfBlocked ? 'ssrf_blocked' : robotsDisallowed ? 'robots_disallowed' : responseTooLarge ? 'response_too_large' : 'browser_fetch_failed',
         ...(ssrfBlocked ? {
             errorCode: 'ssrf_blocked',
-            ssrfReason: error instanceof SsrfBlockedError ? error.reason : 'blocked',
-            ssrfAddress: error instanceof SsrfBlockedError ? error.address : null,
-            ssrfHostname: error instanceof SsrfBlockedError ? error.hostname : null,
+            ssrfReason: blockedError?.reason ?? 'blocked',
+            ssrfHostname: blockedError?.hostname ?? null,
         } : {}),
-        status: ssrfBlocked ? 403 : 1,
+        status: ssrfBlocked || robotsDisallowed ? 403 : responseTooLarge ? 413 : 1,
         elapsedMs: Date.now() - started,
         challenge: false,
     }));

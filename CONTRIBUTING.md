@@ -58,16 +58,20 @@ Rules: imperative mood, uppercase first letter of the subject, no trailing perio
 
 ## Quality gates
 
-Run the relevant gates before every push — CI runs the same chain and **every job is required**:
+Run the relevant gates before every push — CI runs the same chain and **every required job must stay green**:
 
 | Command | Purpose |
 | --- | --- |
 | `make validate` | `composer validate --strict` |
+| `composer check:changelog` | Validate Keep a Changelog structure |
 | `make lint` | Pint (`per` preset), PHPCS, PHPStan, PHPMD, PHP-CS-Fixer |
+| `composer lint:deptrac` | Deptrac architecture layers (Adapters, Fetch, Dto, Support, Contracts) |
 | `make test` | PHPUnit Unit + Feature suites |
 | `make test-coverage` | Coverage run (CI enforces an 85% per-suite Clover floor) |
 | `make audit` | Composer audit |
 | `make ci` | lint + coverage run (local CI parity) |
+
+During development, run only tests mapped from changes against `origin/develop` with `composer test:changed` or `make test-changed`. Use `composer test:changed -- --base=<git-ref>` or `make test-changed BASE=<git-ref>` to compare with another ref. The runner targets adapter, fetch, shared concern, and fixture tests where it can; it runs the full suite when a changed file has no safe mapping. Run the full suite once before pushing.
 
 Coding rules:
 
@@ -76,11 +80,16 @@ Coding rules:
 - `declare(strict_types=1);` everywhere; follow existing module boundaries (`src/Adapters/<Site>`, `src/Dto`, …)
 - keep changes consistent with SOLID, DRY, KISS, YAGNI; avoid unrelated refactors
 
+## Architecture checks
+
+CI runs the Deptrac rules in `deptrac.yaml` through `Architecture (Deptrac)`. The required `Coverage upload` check also requires that architecture job to succeed, so an architecture failure blocks merging without changing the required check names. Run `composer lint:deptrac` locally and keep dependencies within the declared layer rules before opening a pull request.
+
 ## Testing expectations
 
 - every behavior change ships with tests; bug fixes ship with a regression test
 - unit and feature suites each independently stay above the 85% CI coverage floor
 - test data is generated with Faker / factories, never hard-coded literals; live-captured HTML fixtures under `tests/Fixtures/` are allowed only where tests must behave against real content
+- when following the [add-a-source checklist](docs/adding-a-source.md), run `composer check:readme-sites` to confirm the README supported-sites table matches adapter manifests
 - public API changes update the README / relevant docs in the same PR
 
 ## Pull requests
@@ -99,6 +108,8 @@ Also:
 
 ## Live crawling and fixtures
 
+When adding an adapter, run `composer check:manifests` to validate every adapter manifest.
+
 Live crawls are never run in CI. Capture real DOM fixtures with:
 
 ```bash
@@ -107,6 +118,7 @@ make live-check SITE=--site=javbus   # crawl one live target for an adapter
 ```
 
 See [tools/fixtures/README.md](tools/fixtures/README.md) for the capture procedure.
+Run `composer check:fixtures-meta` after capture to validate each fixture's provenance metadata.
 
 ## Reporting issues
 

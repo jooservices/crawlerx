@@ -5,18 +5,22 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Adapters\Jable\Types;
 
 use JOOservices\CrawlerX\Adapters\AbstractType;
+use JOOservices\CrawlerX\Adapters\Concerns\MatchesUrlPath;
 use JOOservices\CrawlerX\Adapters\Concerns\NormalizesUrls;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
+use JOOservices\CrawlerX\Adapters\Jable\Selectors;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
+use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class PerformerListing extends AbstractType implements TypeInterface
 {
+    use MatchesUrlPath;
     use NormalizesUrls;
     use ParsesHtml;
 
@@ -56,10 +60,15 @@ final class PerformerListing extends AbstractType implements TypeInterface
                 return;
             }
 
+            $photo = $link->filter(Selectors::MODEL_PHOTO);
+            $src = $photo->count() > 0 ? ($photo->first()->attr('data-src') ?? $photo->first()->attr('src')) : null;
             $items[$url] = PerformerDto::item(
                 url: $url,
                 externalId: $externalId,
                 title: $name,
+                data: MovieMeta::filter([
+                    'profile_image_url' => is_string($src) && trim($src) !== '' ? $this->absolute($request->url, trim($src)) : null,
+                ]),
             )->withNextCrawlType('performer_detail');
         });
 
@@ -110,13 +119,6 @@ final class PerformerListing extends AbstractType implements TypeInterface
 
     private function externalId(string $url): ?string
     {
-        $path = parse_url($url, PHP_URL_PATH);
-        if (! is_string($path) || preg_match('#/models/([^/]+)/?#i', $path, $match) !== 1) {
-            return null;
-        }
-
-        $slug = trim($match[1], '/');
-
-        return $slug !== '' ? $slug : null;
+        return $this->pathMatch($url, '#/models/([^/]+)/?#i');
     }
 }

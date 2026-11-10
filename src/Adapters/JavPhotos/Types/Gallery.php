@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Adapters\JavPhotos\Types;
 
 use JOOservices\CrawlerX\Adapters\AbstractHtmlType;
+use JOOservices\CrawlerX\Adapters\Concerns\MatchesUrlPath;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
 use JOOservices\CrawlerX\Adapters\JavPhotos\Selectors;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
@@ -17,6 +18,7 @@ use Symfony\Component\DomCrawler\Crawler;
 
 final class Gallery extends AbstractHtmlType implements TypeInterface
 {
+    use MatchesUrlPath;
     use ParsesHtml;
 
     protected function siteLabel(): string
@@ -147,13 +149,8 @@ final class Gallery extends AbstractHtmlType implements TypeInterface
 
     private function externalId(string $url): ?string
     {
-        $path = parse_url($url, PHP_URL_PATH);
-        if (is_string($path) && preg_match('#^/free/([^/]+)/?$#i', $path, $match) === 1) {
-            $slug = $match[1];
+        $slug = $this->pathMatch($url, '#^/free/([^/]+)/?$#i');
 
-            return ! is_numeric($slug) ? $slug : null;
-        }
-
-        return null;
+        return $slug !== null && ! is_numeric($slug) ? $slug : null;
     }
 }

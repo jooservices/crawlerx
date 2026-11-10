@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Adapters\Eporner\Types;
 
 use JOOservices\CrawlerX\Adapters\AbstractHtmlType;
+use JOOservices\CrawlerX\Adapters\Concerns\MatchesUrlPath;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
 use JOOservices\CrawlerX\Adapters\Eporner\Selectors;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
@@ -17,6 +18,8 @@ use Symfony\Component\DomCrawler\Crawler;
 
 final class Gallery extends AbstractHtmlType implements TypeInterface
 {
+    use MatchesUrlPath;
+
     use ParsesHtml;
 
     protected function siteLabel(): string
@@ -32,7 +35,7 @@ final class Gallery extends AbstractHtmlType implements TypeInterface
     public function execute(CrawlRequestDto $request): CrawlItemResultDto
     {
         $crawler = $this->fetchCrawler($request);
-        $externalId = $this->externalId($request->url);
+        $externalId = $this->pathMatch($request->url, '#^/gallery/([^/]+)/#i');
         $title = $this->firstText($crawler, Selectors::GALLERY_TITLE) ?? $externalId;
         $photos = $this->photos($crawler, $request->url);
 
@@ -89,15 +92,6 @@ final class Gallery extends AbstractHtmlType implements TypeInterface
         return $photos;
     }
 
-    private function externalId(string $url): ?string
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-        if (is_string($path) && preg_match('#^/gallery/([^/]+)/#i', $path, $match) === 1) {
-            return $match[1];
-        }
-
-        return null;
-    }
 
     private function photoCount(Crawler $crawler): ?int
     {

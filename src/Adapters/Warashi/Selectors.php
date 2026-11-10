@@ -8,6 +8,8 @@ final class Selectors
 {
     public const PERFORMER_LINKS = '.listing-pornostars figcaption a';
 
+    public const PERFORMER_CARD_IMAGE = 'a img[src]';
+
     public const PAGINATION_NAV = '.listing-navigation ul';
 
     public const PAGINATION_CURRENT = '.listing-navigation li.page-courante';
@@ -35,6 +37,10 @@ final class Selectors
     public const GALLERY_TITLE = '#main h1';
 
     public const GALLERY_PERFORMER_LINK = '#fiche-galerie-infos-pornostar p a[href*="/asian-female-pornstar/"], #fiche-galerie-infos-pornostar p a[href*="/asian-male-pornstar/"]';
+
+    public const GALLERY_PERFORMER_IMAGE = '#fiche-galerie-infos-pornostar a img[src]';
+
+    public const GALLERY_COVER = 'meta[property="og:image"]';
 
     public const GALLERY_SOURCE_LINK = '#fiche-galerie-infos-credits a';
 

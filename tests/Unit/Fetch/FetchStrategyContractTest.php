@@ -208,7 +208,6 @@ final class FetchStrategyContractTest extends TestCase
                 status: 403,
                 error: 'ssrf_blocked',
                 ssrfReason: 'no_public_address',
-                ssrfAddress: '127.0.0.1',
             ),
             FetchMethod::PuppeteerStealth->value => $this->handler(
                 ok: true,
@@ -218,10 +217,9 @@ final class FetchStrategyContractTest extends TestCase
             ),
         ]);
 
-        $url = 'https://fixture-user:fixture-password@example.test/path?token=fixture-token';
         try {
             $chain->fetch(
-                $url,
+                'https://user-marker:credential-marker@example.test/path-marker?token=query-marker#fragment-marker',
                 $this->profile(),
                 [FetchMethod::Playwright, FetchMethod::PuppeteerStealth],
             );
@@ -230,11 +228,17 @@ final class FetchStrategyContractTest extends TestCase
             self::assertSame('ssrf_blocked', $exception->errorCode->value);
             self::assertFalse($exception->retryable);
             self::assertCount(1, $exception->fetch?->attempts ?? []);
+            self::assertSame(
+                'Fetch blocked by SSRF policy. reason=no_public_address',
+                $exception->getMessage(),
+            );
             self::assertStringContainsString('reason=no_public_address', $exception->getMessage());
-            self::assertStringContainsString('address=127.0.0.1', $exception->getMessage());
-            self::assertStringNotContainsString($url, $exception->getMessage());
-            self::assertStringNotContainsString('fixture-password', $exception->getMessage());
-            self::assertStringNotContainsString('fixture-token', $exception->getMessage());
+            self::assertStringNotContainsString('127.0.0.1', $exception->getMessage());
+            self::assertStringNotContainsString('user-marker', $exception->getMessage());
+            self::assertStringNotContainsString('credential-marker', $exception->getMessage());
+            self::assertStringNotContainsString('path-marker', $exception->getMessage());
+            self::assertStringNotContainsString('query-marker', $exception->getMessage());
+            self::assertStringNotContainsString('fragment-marker', $exception->getMessage());
         }
 
         self::assertSame(0, $calls->fallback);
@@ -335,9 +339,8 @@ final class FetchStrategyContractTest extends TestCase
         ?\stdClass $calls = null,
         ?string $callProperty = null,
         ?string $ssrfReason = null,
-        ?string $ssrfAddress = null,
     ): FetchMethodHandler {
-        return new class ($ok, $status, $body, $error, $calls, $callProperty, $ssrfReason, $ssrfAddress) implements FetchMethodHandler {
+        return new class ($ok, $status, $body, $error, $calls, $callProperty, $ssrfReason) implements FetchMethodHandler {
             public function __construct(
                 private readonly bool $ok,
                 private readonly int $status,
@@ -346,7 +349,6 @@ final class FetchStrategyContractTest extends TestCase
                 private readonly ?\stdClass $calls,
                 private readonly ?string $callProperty,
                 private readonly ?string $ssrfReason,
-                private readonly ?string $ssrfAddress,
             ) {
             }
 
@@ -375,7 +377,6 @@ final class FetchStrategyContractTest extends TestCase
                     finalUrl: $url,
                     error: $this->error ?? ($this->ok ? null : 'failed'),
                     ssrfReason: $this->ssrfReason,
-                    ssrfAddress: $this->ssrfAddress,
                 );
             }
         };

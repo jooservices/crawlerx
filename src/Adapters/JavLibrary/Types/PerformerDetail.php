@@ -4,18 +4,20 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\JavLibrary\Types;
 
-use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Adapters\AbstractType;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
+use JOOservices\CrawlerX\Adapters\Concerns\ReadsQueryParams;
 use JOOservices\CrawlerX\Adapters\JavLibrary\Selectors;
+use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
-use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
+use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class PerformerDetail extends AbstractType implements TypeInterface
 {
+    use ReadsQueryParams;
     use ParsesHtml;
 
     public function __construct(
@@ -72,14 +74,6 @@ final class PerformerDetail extends AbstractType implements TypeInterface
 
     private function externalId(string $url): ?string
     {
-        $query = parse_url($url, PHP_URL_QUERY);
-        if (! is_string($query) || $query === '') {
-            return null;
-        }
-
-        parse_str($query, $params);
-        $id = $params['st'] ?? $params['s'] ?? null;
-
-        return is_string($id) && trim($id) !== '' ? trim($id) : null;
+        return $this->firstQueryParam($url, 'st', 's');
     }
 }

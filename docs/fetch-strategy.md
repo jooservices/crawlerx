@@ -58,6 +58,19 @@ login wall returns `auth_required` and is not retryable.
 
 `PLAYWRIGHT_URL` is the one browser service for the node and `FLARESOLVERR_URL` the one FlareSolverr service; both are plain addresses set in `.env`, so they can point at this project's Docker, the Workspaces Dev VM (through `scripts/docker/playwright-fetch-vm` and `scripts/docker/flaresolverr-vm`) or any other host. The browser service binds `PLAYWRIGHT_HOST` (default `0.0.0.0`, use `127.0.0.1` behind a tunnel). Playwright runs the `node` binary on PATH
 when `PLAYWRIGHT_URL` is empty.
+Playwright and Puppeteer route every HTTP request, including redirects, through
+a request-scoped proxy. It checks SSRF destinations and the destination
+origin's `robots.txt` before forwarding each hop. Robots redirects are followed
+up to five times; each target is checked by the SSRF guard and the final rules
+apply to the original origin.
+
+FlareSolverr runs navigation outside CrawlerX and does not expose its redirect
+hops. Set `CRAWLERX_FLARESOLVERR_PROXY_URL` to a policy-aware egress proxy
+reachable by FlareSolverr. That proxy must block private and reserved
+destinations and enforce robots rules before forwarding every redirect. The
+FlareSolverr fallback is skipped when this proxy is not configured. CrawlerX
+cannot verify the external proxy's policy; the proxy operator owns that
+enforcement.
 `CRAWLERX_USER_AGENT` sets the user agent. The default is a modern Chrome user
 agent. `CRAWLERX_USER_AGENT_POOL` accepts a comma-separated pool; after three
 consecutive challenges for a site, CrawlerX switches to the next user agent and
@@ -84,7 +97,54 @@ node. Ten consecutive non-terminal fetch failures open the circuit for five
 minutes. The first request after that interval is a half-open probe; an
 additional request waits for its 30-second probe lease. An open circuit returns
 retryable `rate_limited` with the remaining time in `Retry-After`. Circuit cache
-failures fall back to worker-local state.
+failures fall back to worker-local state. During one fetch, the circuit is
+consulted at most once, after the first uncached method attempt passes host
+throttling; later fallback attempts do not re-check it. Host throttling still
+runs before every uncached method attempt.
+
+## Robots.txt compliance
+
+Before any fetch-method attempt, the chain consults the host's `robots.txt`
+through `RobotsGuard`. On a cache miss, the guard fetches
+`<scheme>://<host>/robots.txt` through the bounded default HTTP client, follows
+up to five redirects and applies the resulting rules to the original origin.
+The HTTP transport validates each redirect destination before requesting it.
+The scheme comes from the target URL, defaults to HTTPS when absent, and an
+explicit port is omitted. Parsed rules are memoized in worker memory without
+expiry. An unreachable file fails open as an empty ruleset, which is also
+memoized, so a long-running worker does not retry it. The optional shared
+PSR-16 cache stores the raw robots.txt body for one hour; it does not refresh
+rules already held in worker memory. The guard evaluates the most specific
+matching user-agent group, falling back to `*`; groups are not combined. This
+request does not receive request or site proxy options and is not covered by
+the browser-side SSRF guard; it may reach a private host before a browser
+method later blocks the target. Use the process-level `CRAWLERX_HTTP_PROXY`
+setting when the robots request must use a proxy. The rules follow RFC 9309:
+the longest matching pattern wins, `*` is a wildcard, a trailing `$` anchors to
+the end of the path, and an Allow of equal length overrides a Disallow. An
+explicit Disallow aborts the request with a `RobotsDisallowedException`
+(fail-closed); an unreachable `robots.txt` is logged and the request proceeds
+(fail-open).
+
+The guard is on by default. Disable it globally with
+`CRAWLERX_RESPECT_ROBOTS=false`, or per site with
+`runtime.defaultCrawlConfig.respect_robots: false` in the adapter manifest. An
+explicit manifest value takes precedence in either direction; when omitted,
+the runtime setting applies.
+
+`Crawl-delay` is parsed per user-agent group and applied as an additional
+minimum gap on top of the site's `defaultThrottle`.
+
+## HTTP response cache
+
+HTTP response caching is disabled by default. Set `CRAWLERX_RESPONSE_CACHE_TTL`
+to a positive integer number of seconds and pass a PSR-16 cache as the third
+argument to `CrawlerXFactory::configure($logins, $throttleCache, $responseCache)`
+to enable it. The cache key includes the HTTP method, URL and request headers,
+including cookies and the user agent. Only successful 2xx responses are cached;
+HTTP errors, detected challenges and captcha pages are fetched again. Cache
+hits bypass both the host circuit and throttle checks for that method attempt;
+the earlier robots check still runs.
 
 ## Budgets
 
@@ -142,3 +202,18 @@ period. Timeout/network failure metadata contains all completed attempts,
 transport exceptions and the first fallback skipped when the budget is spent.
 Custom fetch handlers must honor `methodTimeoutSeconds`; the chain cannot
 preempt arbitrary PHP code inside a consumer-supplied synchronous handler.
+
+## Outbound proxy
+
+The HTTP fetch method can go through a proxy, for example a Japan exit for
+sources that geo-block other countries. At the CrawlerX level, select it
+process-wide with `CRAWLERX_HTTP_PROXY=http://host:port`, or per site profile
+and per request with `HttpProfileDto::$proxy` and `HttpOptionsDto::$proxy`; a
+request option wins over the profile, which wins over the environment. The
+bounded transport disables implicit libcurl proxy environment variables unless
+CrawlerX has an explicit proxy configured. The default robots request does not
+receive request or site proxy options. The proxy URL may contain credentials
+and is never logged. Browser-based methods and FlareSolverr are not routed
+through the CrawlerX HTTP page proxy. Playwright and Puppeteer use their
+separate SSRF and robots egress proxy; FlareSolverr requires a separate
+policy-aware egress proxy because it does not expose its redirect hops.

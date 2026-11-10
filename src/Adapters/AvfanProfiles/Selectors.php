@@ -8,6 +8,8 @@ final class Selectors
 {
     public const PERFORMER_CARDS = 'li a.actress-list-title[href*="/actress/"]';
 
+    public const PERFORMER_CARD_IMAGE = 'a img[src]';
+
     public const PERFORMER_NAME = '.a-name';
 
     public const PERFORMER_NAME_KANA = '.a-hurigana';

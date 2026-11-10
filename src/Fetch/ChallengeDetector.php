@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Fetch;
 
+use JOOservices\CrawlerX\Support\ChallengeResponseDetector;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class ChallengeDetector
@@ -13,35 +14,22 @@ final class ChallengeDetector
      */
     public static function isChallenge(string $body, int $status, array $headers = []): bool
     {
-        $mitigated = strtolower(self::header($headers, 'cf-mitigated'));
-        if (str_contains($mitigated, 'challenge')) {
+        return ChallengeResponseDetector::isChallenge($body, $status, $headers);
+    }
+
+    public static function isCaptchaChallenge(string $body): bool
+    {
+        if (self::hasCaptchaForm($body)) {
             return true;
         }
 
-        if (preg_match('/<title>[^<]*(Just a moment|Attention Required)/i', $body) === 1) {
+        $visibleText = trim(self::visibleText($body));
+        if (self::isStandaloneCaptchaMessage($visibleText)) {
             return true;
         }
 
-        $isJavBusWall = preg_match('/<title>[^<]*Age Verification JavBus/i', $body) === 1
-            || str_contains($body, 'driver-verify');
-        if ($isJavBusWall) {
-            return true;
-        }
-
-        if (str_contains($body, 'cf-browser-verification')) {
-            return true;
-        }
-
-        $looksLikeInterstitial = str_contains($body, 'Just a moment...')
-            && str_contains($body, 'challenges.cloudflare.com')
-            && strlen($body) < 20000;
-
-        if ($looksLikeInterstitial) {
-            return true;
-        }
-
-        return in_array($status, [403, 503], true)
-            && str_contains($body, 'Just a moment...');
+        return preg_match('/<script\b[^>]*\bsrc=["\'][^"\']*(?:captcha|recaptcha|hcaptcha|funcaptcha)[^"\']*["\']/i', $body) === 1
+            && preg_match('/\b(?:verify|verification|human|robot|security check)\b/i', $visibleText) === 1;
     }
 
     /** @param list<string> $readyMarkers */
@@ -105,19 +93,73 @@ final class ChallengeDetector
         }
     }
 
-    /**
-     * @param  array<string, list<string>|string>  $headers
-     */
-    private static function header(array $headers, string $name): string
+    private static function hasCaptchaForm(string $body): bool
     {
-        foreach ($headers as $key => $value) {
-            if (strcasecmp($key, $name) !== 0) {
-                continue;
-            }
-
-            return is_array($value) ? implode(' ', $value) : $value;
+        if (
+            stripos($body, '<form') === false
+            || (stripos($body, 'captcha') === false && stripos($body, 'data-sitekey') === false)
+        ) {
+            return false;
         }
 
-        return '';
+        $letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $lowercase = 'abcdefghijklmnopqrstuvwxyz';
+        $captchaAttribute = sprintf(
+            'contains(translate(concat(@class, " ", @id, " ", @name, " ", @action, " ", @src), "%s", "%s"), "captcha")',
+            $letters,
+            $lowercase,
+        );
+        $formAttribute = sprintf(
+            'contains(translate(concat(@class, " ", @id, " ", @name, " ", @action), "%s", "%s"), "captcha")',
+            $letters,
+            $lowercase,
+        );
+
+        $captchaForms = (new Crawler($body))->filterXPath(
+            sprintf('//form[%s or .//*[%s or @data-sitekey]]', $formAttribute, $captchaAttribute),
+        );
+        if ($captchaForms->count() === 0) {
+            return false;
+        }
+
+        $bodyWithoutForms = preg_replace('/<form\b[^>]*>.*?<\/form\s*>/is', '', $body) ?? $body;
+        $outsideText = trim(self::visibleText($bodyWithoutForms));
+
+        return $outsideText === ''
+            || preg_match('/\b(?:captcha|challenge|robot|human)\b|verify you are human|security check/i', $outsideText) === 1
+            || (strlen($outsideText) <= 80 && ! self::hasSubstantiveContentRegion($bodyWithoutForms));
+    }
+
+    private static function hasSubstantiveContentRegion(string $body): bool
+    {
+        $crawler = new Crawler($body);
+        $regions = $crawler->filterXPath('//article|//main|//section');
+        foreach ($regions as $region) {
+            if (strlen(trim((new Crawler($region))->text(''))) > 20) {
+                return true;
+            }
+        }
+
+        $headings = $crawler->filterXPath('//h1|//h2|//h3|//h4|//h5|//h6');
+        $paragraphs = $crawler->filterXPath('//p');
+
+        return $headings->count() > 0
+            && $paragraphs->count() > 0
+            && strlen(trim(self::visibleText($body))) > 20;
+    }
+
+    private static function isStandaloneCaptchaMessage(string $visibleText): bool
+    {
+        return preg_match(
+            '/^(?:captcha|recaptcha|hcaptcha|funcaptcha)(?:\s+(?:challenge|page|verification(?:\s+(?:is\s+)?required)?|is required))?[.!]?$/i',
+            $visibleText,
+        ) === 1;
+    }
+
+    private static function visibleText(string $body): string
+    {
+        $withoutExecutableText = preg_replace('/<(script|style)\b[^>]*>.*?<\/\1\s*>/is', '', $body);
+
+        return html_entity_decode(strip_tags($withoutExecutableText ?? $body), ENT_QUOTES | ENT_HTML5);
     }
 }

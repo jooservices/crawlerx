@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Adapters\Avjoho\Types;
 
 use JOOservices\CrawlerX\Adapters\AbstractType;
+use JOOservices\CrawlerX\Adapters\Avjoho\ParsesAvjohoIds;
+use JOOservices\CrawlerX\Adapters\Avjoho\Selectors;
 use JOOservices\CrawlerX\Adapters\Concerns\NormalizesUrls;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
-use JOOservices\CrawlerX\Adapters\Avjoho\Selectors;
+use JOOservices\CrawlerX\Adapters\Concerns\ReadsPathNumbers;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
@@ -15,10 +17,14 @@ use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
+use JOOservices\CrawlerX\Support\DmmCover;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class PerformerListing extends AbstractType implements TypeInterface
 {
+    use ParsesAvjohoIds;
+    use ReadsPathNumbers;
+
     use NormalizesUrls;
     use ParsesHtml;
 
@@ -47,10 +53,15 @@ final class PerformerListing extends AbstractType implements TypeInterface
                 return;
             }
 
+            $thumbnail = $this->cardImage($node, $request->url);
             $items[$url] = PerformerDto::item(
                 url: $url,
                 externalId: $externalId,
                 title: $title,
+                data: $thumbnail === null ? [] : [
+                    'profile_image_url' => DmmCover::large($thumbnail),
+                    'thumbnail_url' => $thumbnail,
+                ],
             );
         });
 
@@ -58,7 +69,7 @@ final class PerformerListing extends AbstractType implements TypeInterface
             throw new CrawlParseException('Avjoho listing page did not contain performer cards.');
         }
 
-        $currentPage = $this->currentPage($crawler) ?? $this->pageNumber($request->url) ?? 1;
+        $currentPage = $this->currentPage($crawler) ?? $this->pathNumber($request->url, '#/page/(\d+)/?#') ?? 1;
         $nextUrl = $this->nextUrl($crawler, $request->url, $currentPage);
         $lastPage = $this->lastPage($crawler);
 
@@ -70,11 +81,20 @@ final class PerformerListing extends AbstractType implements TypeInterface
             pagination: new CrawlPaginationDto(
                 currentPage: $currentPage,
                 lastPage: $lastPage,
-                nextPage: $nextUrl === null ? null : $this->pageNumber($nextUrl),
+                nextPage: $nextUrl === null ? null : $this->pathNumber($nextUrl, '#/page/(\d+)/?#'),
                 nextUrl: $nextUrl,
                 hasNextPage: $nextUrl !== null,
             ),
         );
+    }
+
+    /** The card shows the newest work of the performer as a small package thumbnail. */
+    private function cardImage(Crawler $title, string $baseUrl): ?string
+    {
+        $post = $title->closest('.post');
+        $src = $post === null ? null : $this->firstAttribute($post, Selectors::CARD_IMAGE, 'src');
+
+        return $src === null ? null : $this->absolute($baseUrl, $src);
     }
 
     private function currentPage(Crawler $crawler): ?int
@@ -130,27 +150,5 @@ final class PerformerListing extends AbstractType implements TypeInterface
         });
 
         return $last;
-    }
-
-    private function pageNumber(string $url): ?int
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-        if (is_string($path) && preg_match('#/page/(\d+)/?#', $path, $match) === 1) {
-            return (int) $match[1];
-        }
-
-        return null;
-    }
-
-    private function externalId(string $url): ?string
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-        if (is_string($path) && preg_match('#^/([^/]+)/?$#', $path, $match) === 1) {
-            $slug = $match[1];
-
-            return $slug !== 'sitemap' ? $slug : null;
-        }
-
-        return null;
     }
 }

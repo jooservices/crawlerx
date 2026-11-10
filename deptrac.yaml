@@ -1,0 +1,42 @@
+# Architecture layers for CrawlerX.
+deptrac:
+  paths:
+    - ./src
+  exclude_files:
+    - '#.*test.*#'
+  layers:
+    - name: Adapters
+      collectors:
+        - type: directory
+          value: src/Adapters/.*
+    - name: Fetch
+      collectors:
+        - type: directory
+          value: src/Fetch/.*
+    - name: Dto
+      collectors:
+        - type: directory
+          value: src/Dto/.*
+    - name: Support
+      collectors:
+        - type: directory
+          value: src/Support/.*
+    - name: Contracts
+      collectors:
+        - type: directory
+          value: src/Contracts/.*
+  ruleset:
+    Adapters:
+      - Contracts
+      - Dto
+      - Support
+    Fetch:
+      - Contracts
+      - Dto
+      - Support
+    Support:
+      - Contracts
+      - Dto
+    Contracts:
+      - Dto
+    Dto: ~

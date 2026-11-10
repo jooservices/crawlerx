@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Services;
 
+use Closure;
 use JOOservices\Client\Client\ClientBuilder;
 use JOOservices\Client\Client\HttpClient;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
@@ -16,6 +17,16 @@ final class ClientFactory
 
     /** @var array<string, HttpClient> */
     private static array $clients = [];
+
+    /**
+     * @param Closure(string): bool|null $beforeOutboundRequest
+     * @param Closure(): void|null $onUnsupportedRedirect
+     */
+    public function __construct(
+        private readonly ?Closure $beforeOutboundRequest = null,
+        private readonly ?Closure $onUnsupportedRedirect = null,
+    ) {
+    }
 
     /**
      * @param  array<string, mixed>  $options
@@ -44,7 +55,19 @@ final class ClientFactory
 
         $client = $this->client($options, $site);
 
-        return new ClientCrawlHttpClient($client, $headers);
+        return new ClientCrawlHttpClient($client, $headers, $this->beforeOutboundRequest, $this->onUnsupportedRedirect);
+    }
+
+    public static function boundedHttpClient(float $timeout, int $maxResponseBytes): HttpClient
+    {
+        $builder = ClientBuilder::create();
+        if (! ClientBuilder::isFaked()) {
+            $builder = $builder
+                ->withTimeout($timeout)
+                ->withTransport(new BoundedCurlTransport($maxResponseBytes));
+        }
+
+        return $builder->build();
     }
 
     /**
@@ -77,6 +100,22 @@ final class ClientFactory
             $builder = $builder->withVerifySsl($options['verify_ssl']);
         }
 
+        $proxy = self::resolveProxy($options);
+        if (! $isFaked) {
+            $builder = $builder->withRedirects($this->allowRedirects($options));
+        }
+        if (! $isFaked && $proxy !== null) {
+            $builder = $builder->withProxy($proxy);
+        }
+        $maxResponseBytes = $options['max_response_bytes'] ?? null;
+        if (! $isFaked && is_int($maxResponseBytes) && $maxResponseBytes > 0) {
+            $beforeRequest = $options['before_request'] ?? null;
+            $builder = $builder->withTransport(new BoundedCurlTransport(
+                $maxResponseBytes,
+                $beforeRequest instanceof Closure ? $beforeRequest : null,
+            ));
+        }
+
         /** @var HttpClient $client */
         $client = $builder->build();
 
@@ -101,11 +140,29 @@ final class ClientFactory
     }
 
     /**
+     * The outbound proxy for a client: the explicit `proxy` option, else the process-wide CRAWLERX_HTTP_PROXY.
+     * Unset or blank means a direct connection. The URL may carry credentials, so it is never logged.
+     *
+     * @param  array<string, mixed>  $options
+     */
+    public static function resolveProxy(array $options): ?string
+    {
+        $explicit = $options['proxy'] ?? null;
+        if (is_string($explicit) && trim($explicit) !== '') {
+            return trim($explicit);
+        }
+
+        $env = getenv('CRAWLERX_HTTP_PROXY');
+
+        return is_string($env) && trim($env) !== '' ? trim($env) : null;
+    }
+
+    /**
      * @param  array<string, mixed>  $options
      */
     private function cacheKey(?string $site, array $options): ?string
     {
-        if ($site === null) {
+        if ($site === null || ($options['before_request'] ?? null) instanceof Closure) {
             return null;
         }
 
@@ -115,12 +172,50 @@ final class ClientFactory
                 : 30.0,
             'connect_timeout' => $this->connectTimeout($options),
             'verify_ssl' => is_bool($options['verify_ssl'] ?? null) ? $options['verify_ssl'] : true,
+            'allow_redirects' => $this->allowRedirects($options),
         ];
+        if (is_int($options['max_response_bytes'] ?? null)) {
+            $transportOptions['max_response_bytes'] = $options['max_response_bytes'];
+        }
         if (is_string($options['base_uri'] ?? null)) {
             $transportOptions['base_uri'] = $options['base_uri'];
+        }
+        $proxy = self::resolveProxy($options);
+        if ($proxy !== null) {
+            $transportOptions['proxy'] = $proxy;
         }
         $optionsHash = hash('sha256', json_encode($transportOptions, JSON_THROW_ON_ERROR));
 
         return $site . ':' . $optionsHash;
+    }
+
+    /** @param array<string, mixed> $options
+     *  @return bool|array<string, mixed>
+     */
+    private function allowRedirects(array $options): bool|array
+    {
+        if (self::resolveProxy($options) !== null && !(($options['before_request'] ?? null) instanceof Closure)) {
+            return false;
+        }
+
+        $configured = $options['allow_redirects'] ?? null;
+        if (is_array($configured)) {
+            $redirectOptions = [];
+            foreach ($configured as $key => $value) {
+                if (! is_string($key)) {
+                    return false;
+                }
+
+                $redirectOptions[$key] = $value;
+            }
+
+            return $redirectOptions;
+        }
+
+        if (is_bool($configured)) {
+            return $configured;
+        }
+
+        return self::resolveProxy($options) === null;
     }
 }

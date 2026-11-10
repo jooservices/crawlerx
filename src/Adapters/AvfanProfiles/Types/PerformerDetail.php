@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Adapters\AvfanProfiles\Types;
 
 use JOOservices\CrawlerX\Adapters\AbstractType;
+use JOOservices\CrawlerX\Adapters\AvfanProfiles\Selectors;
+use JOOservices\CrawlerX\Adapters\Concerns\MatchesUrlPath;
 use JOOservices\CrawlerX\Adapters\Concerns\NormalizesUrls;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
-use JOOservices\CrawlerX\Adapters\AvfanProfiles\Selectors;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
@@ -19,6 +20,8 @@ use Symfony\Component\DomCrawler\Crawler;
 
 final class PerformerDetail extends AbstractType implements TypeInterface
 {
+    use MatchesUrlPath;
+
     use NormalizesUrls;
     use ParsesHtml;
 
@@ -39,7 +42,7 @@ final class PerformerDetail extends AbstractType implements TypeInterface
         }
 
         $name = $this->normalizeText($nameNode->first()->text('')) ?? '';
-        $externalId = $this->externalId($request->url);
+        $externalId = $this->pathMatch($request->url, '#^/actress/([^/]+)\\.html$#i');
         if ($name === '') {
             throw new CrawlParseException('AvfanProfiles performer detail is missing a valid name.');
         }
@@ -218,17 +221,5 @@ final class PerformerDetail extends AbstractType implements TypeInterface
         }
 
         return $this->absolute($baseUrl, $src);
-    }
-
-    private function externalId(string $url): ?string
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-        if (is_string($path) && preg_match('#^/actress/([^/]+)\.html$#i', $path, $match) === 1) {
-            $slug = $match[1];
-
-            return $slug;
-        }
-
-        return null;
     }
 }

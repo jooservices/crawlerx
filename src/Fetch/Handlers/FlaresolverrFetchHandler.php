@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Fetch\Handlers;
 
-use JOOservices\Client\Client\ClientBuilder;
-use JOOservices\CrawlerX\Contracts\FetchMethodHandler;
+use JOOservices\CrawlerX\Contracts\GuardedRedirectFetchMethodHandler;
 use JOOservices\CrawlerX\Contracts\LoginCookieProvider;
 use JOOservices\CrawlerX\Dto\CrawlOptionsDto;
 use JOOservices\CrawlerX\Dto\FetchResultDto;
@@ -13,12 +12,17 @@ use JOOservices\CrawlerX\Dto\SiteProfileDto;
 use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Fetch\ChallengeDetector;
 use JOOservices\CrawlerX\Fetch\FetchRuntimeConfig;
+use JOOservices\CrawlerX\Fetch\ResponseBodyReader;
+use JOOservices\CrawlerX\Fetch\ResponseBodyTooLargeException;
 use JOOservices\CrawlerX\Fetch\Session\SessionStore;
+use JOOservices\CrawlerX\Services\ClientFactory;
+use JOOservices\Client\Exceptions\DownloadSizeExceededException;
+use JOOservices\Client\Exceptions\TimeoutException;
 use Nyholm\Psr7\Request;
 use Psr\Http\Client\ClientInterface;
 use Throwable;
 
-final class FlaresolverrFetchHandler implements FetchMethodHandler
+final class FlaresolverrFetchHandler implements GuardedRedirectFetchMethodHandler
 {
     public function __construct(
         private readonly FetchRuntimeConfig $runtime,
@@ -31,6 +35,14 @@ final class FlaresolverrFetchHandler implements FetchMethodHandler
     public function supports(FetchMethod $method): bool
     {
         return $method === FetchMethod::Flaresolverr;
+    }
+
+    public function supportsGuardedRedirects(): bool
+    {
+        // FlareSolverr does not expose redirect hops. The configured egress proxy
+        // must enforce SSRF and robots policy before forwarding each destination.
+        return $this->runtime->flaresolverrProxyUrl !== null
+            && trim($this->runtime->flaresolverrProxyUrl) !== '';
     }
 
     public function fetch(
@@ -75,17 +87,23 @@ final class FlaresolverrFetchHandler implements FetchMethodHandler
             'maxTimeout' => $maxTimeoutMs,
             'cookies' => $flareCookies,
             'userAgent' => $userAgent,
+            ...$this->proxyPayload(),
         ], JSON_THROW_ON_ERROR);
+        $maxEnvelopeBytes = $this->runtime->maxResponseBytes * 6 + 65_536;
 
         try {
-            $client = $this->client ?? ClientBuilder::create()->withTimeout($timeoutSeconds)->build();
+            $client = $this->client ?? ClientFactory::boundedHttpClient($timeoutSeconds, $maxEnvelopeBytes);
             $response = $client->sendRequest(new Request('POST', $endpoint, [
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
             ], $payload));
-            $raw = (string) $response->getBody();
+            $raw = (new ResponseBodyReader($maxEnvelopeBytes))->read($response->getBody());
+        } catch (ResponseBodyTooLargeException) {
+            return $this->fail($method, $started, $url, 'response_too_large');
+        } catch (DownloadSizeExceededException) {
+            return $this->fail($method, $started, $url, 'response_too_large');
         } catch (Throwable $exception) {
-            return $this->fail($method, $started, $url, 'FlareSolverr request failed: ' . $exception->getMessage());
+            return $this->fail($method, $started, $url, $this->transportError($exception));
         }
 
         /** @var array<string, mixed>|null $decoded */
@@ -97,6 +115,9 @@ final class FlaresolverrFetchHandler implements FetchMethodHandler
         $status = is_string($decoded['status'] ?? null) ? $decoded['status'] : '';
         $solution = is_array($decoded['solution'] ?? null) ? $decoded['solution'] : [];
         $html = is_string($solution['response'] ?? null) ? $solution['response'] : '';
+        if (strlen($html) > $this->runtime->maxResponseBytes) {
+            return $this->fail($method, $started, $url, 'response_too_large');
+        }
         $httpStatus = is_numeric($solution['status'] ?? null) ? (int) $solution['status'] : 0;
         $cookies = $this->cookies($solution['cookies'] ?? null);
         $solutionCookies = is_array($solution['cookies'] ?? null) ? $solution['cookies'] : [];
@@ -117,8 +138,34 @@ final class FlaresolverrFetchHandler implements FetchMethodHandler
             cookies: $cookies,
             storageState: $storageState,
             userAgent: $userAgent,
-            error: $ok ? null : (is_string($decoded['message'] ?? null) ? $decoded['message'] : 'flaresolverr failed'),
+            error: $ok ? null : $this->serviceError($decoded['message'] ?? null),
         );
+    }
+
+    private function transportError(Throwable $exception): string
+    {
+        if ($exception instanceof TimeoutException || preg_match('/\btime(?:d?\s*out)\b/i', $exception->getMessage()) === 1) {
+            return 'Request timed out';
+        }
+
+        if (str_contains(strtolower($exception->getMessage()), 'offline')) {
+            return 'FlareSolverr offline';
+        }
+
+        return 'FlareSolverr request failed';
+    }
+
+    private function serviceError(mixed $message): string
+    {
+        if (! is_string($message)) {
+            return 'flaresolverr failed';
+        }
+
+        return match (strtolower(trim($message))) {
+            'request timed out' => 'Request timed out',
+            'offline' => 'FlareSolverr offline',
+            default => 'flaresolverr failed',
+        };
     }
 
     /**
@@ -175,6 +222,29 @@ final class FlaresolverrFetchHandler implements FetchMethodHandler
         }
 
         return $profile->playwright->userAgent;
+    }
+
+    /** @return array{proxy?: array{url: string}} */
+    private function proxyPayload(): array
+    {
+        $proxyUrl = $this->runtime->flaresolverrProxyUrl;
+        if ($proxyUrl === null || trim($proxyUrl) === '') {
+            return [];
+        }
+
+        $parts = parse_url($proxyUrl);
+        if (
+            ! is_array($parts)
+            || ! is_string($parts['scheme'] ?? null)
+            || ! in_array(strtolower($parts['scheme']), ['http', 'socks4', 'socks5'], true)
+            || ! is_string($parts['host'] ?? null)
+            || isset($parts['user'])
+            || isset($parts['pass'])
+        ) {
+            throw new \InvalidArgumentException('FlareSolverr SSRF proxy URL is invalid.');
+        }
+
+        return ['proxy' => ['url' => $proxyUrl]];
     }
 
     /** @return array<string, string> */

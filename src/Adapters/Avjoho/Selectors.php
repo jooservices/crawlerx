@@ -30,5 +30,7 @@ final class Selectors
 
     public const BIO_TEXT = '.database .profile2';
 
+    public const CARD_IMAGE = '.gazou img[src]';
+
     public const COVER_IMAGE = '.database .gazou img[src]';
 }

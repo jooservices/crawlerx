@@ -12,12 +12,16 @@ use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
+use JOOservices\CrawlerX\Support\ImageUrl;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
+use JOOservices\CrawlerX\Adapters\Fc2\ParsesPoints;
 
 /** FC2 product cards: title, thumbnail, duration, price and discount, stock, favourites, seller. */
 final class Listing extends AbstractHtmlType implements TypeInterface
 {
+    use ParsesPoints;
+
     use ParsesHtml;
 
     private const ROOT_URL = 'https://adult.contents.fc2.com/';
@@ -65,9 +69,10 @@ final class Listing extends AbstractHtmlType implements TypeInterface
                 title: $this->firstAttribute($card, 'a.c-cntCard-110-f_thumb_link', 'title') ?? $match[1],
                 data: MovieMeta::filter([
                     'code' => 'FC2-PPV-' . $match[1],
-                    'cover_url' => $thumb === null ? null : $this->absolute($fetchUrl, $thumb),
+                    'cover_url' => $thumb === null ? null : ImageUrl::original($this->absolute($fetchUrl, $thumb)),
                     'duration' => MovieMeta::durationMinutes($this->firstText($card, '.c-cntCard-110-f_thumb_num')),
                     'metadata' => MovieMeta::filter([
+                        'thumbnail_url' => $thumb === null ? null : $this->absolute($fetchUrl, $thumb),
                         MovieMeta::PRICE => $current === null ? null : MovieMeta::price($current, 'pt', $salePrice ?? $listPrice),
                         'list_price' => $salePrice !== null && $this->points($listPrice) !== null ? MovieMeta::price($this->points($listPrice), 'pt', $listPrice) : null,
                         'discount_percent' => $discount !== null && preg_match('/(\d+)/', $discount, $d) === 1 ? (int) $d[1] : null,
@@ -106,10 +111,6 @@ final class Listing extends AbstractHtmlType implements TypeInterface
         );
     }
 
-    private function points(?string $text): ?float
-    {
-        return $text !== null && preg_match('/([\d,]+)\s*pt/i', $text, $match) === 1 ? (float) str_replace(',', '', $match[1]) : null;
-    }
 
     private function integer(?string $text): ?int
     {

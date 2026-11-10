@@ -4,22 +4,24 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\MinnanoAv\Types;
 
-use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Adapters\AbstractType;
+use JOOservices\CrawlerX\Adapters\Concerns\MatchesUrlPath;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
 use JOOservices\CrawlerX\Adapters\MinnanoAv\Selectors;
 use JOOservices\CrawlerX\Adapters\MinnanoAv\UrlNormalizer;
+use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
-use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
+use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class PerformerListing extends AbstractType implements TypeInterface
 {
+    use MatchesUrlPath;
     use ParsesHtml;
 
     public function __construct(
@@ -63,6 +65,8 @@ final class PerformerListing extends AbstractType implements TypeInterface
             $items = $this->itemsFromLinks($crawler, $request->url);
         }
 
+        $items = $this->withPhotos($items, $this->cardPhotos($crawler, $request->url));
+
         $nextUrl = $this->nextPageUrl($crawler, $request->url);
         $lastPage = $this->lastPageNumber($crawler, $html);
 
@@ -79,6 +83,49 @@ final class PerformerListing extends AbstractType implements TypeInterface
                 hasNextPage: $nextUrl !== null,
             ),
         );
+    }
+
+    /**
+     * First photo of every actress row, keyed by canonical actress URL (a row may repeat the same actress with a newer photo).
+     *
+     * @return array<string, string>
+     */
+    private function cardPhotos(Crawler $crawler, string $baseUrl): array
+    {
+        $photos = [];
+        $crawler->filter(Selectors::PERFORMER_LIST_PHOTOS)->each(function (Crawler $image) use (&$photos, $baseUrl): void {
+            $href = $image->closest('a')?->attr('href');
+            $src = $image->attr('src');
+            if (! is_string($href) || ! is_string($src) || trim($src) === '') {
+                return;
+            }
+
+            $url = $this->normalizer->canonicalActressUrl($this->normalizer->absolute($baseUrl, $href));
+            $photos[$url] ??= $this->normalizer->absolute($baseUrl, $src);
+        });
+
+        return $photos;
+    }
+
+    /**
+     * @param  array<string, CrawlItemResultDto>  $items
+     * @param  array<string, string>  $photos
+     * @return array<string, CrawlItemResultDto>
+     */
+    private function withPhotos(array $items, array $photos): array
+    {
+        foreach ($items as $url => $item) {
+            $performer = $item->meta['performer'] ?? null;
+            if (isset($photos[$url]) && is_array($performer)) {
+                $items[$url] = new CrawlItemResultDto(
+                    url: $item->url,
+                    entityType: $item->entityType,
+                    meta: ['performer' => ['profile_image_url' => $photos[$url]] + $performer],
+                );
+            }
+        }
+
+        return $items;
     }
 
     /**
@@ -224,11 +271,6 @@ final class PerformerListing extends AbstractType implements TypeInterface
 
     private function externalId(string $url): ?string
     {
-        $path = parse_url($url, PHP_URL_PATH);
-        if (is_string($path) && preg_match('#/actress(\d+)\.html$#i', $path, $match) === 1) {
-            return $match[1];
-        }
-
-        return null;
+        return $this->pathMatch($url, '#/actress(\d+)\.html$#i');
     }
 }

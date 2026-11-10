@@ -5,19 +5,23 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Adapters\Avjoho\Types;
 
 use JOOservices\CrawlerX\Adapters\AbstractType;
+use JOOservices\CrawlerX\Adapters\Avjoho\ParsesAvjohoIds;
+use JOOservices\CrawlerX\Adapters\Avjoho\Selectors;
 use JOOservices\CrawlerX\Adapters\Concerns\NormalizesUrls;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
-use JOOservices\CrawlerX\Adapters\Avjoho\Selectors;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
+use JOOservices\CrawlerX\Support\DmmCover;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class PerformerDetail extends AbstractType implements TypeInterface
 {
+    use ParsesAvjohoIds;
+
     use NormalizesUrls;
     use ParsesHtml;
 
@@ -200,18 +204,6 @@ final class PerformerDetail extends AbstractType implements TypeInterface
             return null;
         }
 
-        return $this->absolute($baseUrl, $src);
-    }
-
-    private function externalId(string $url): ?string
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-        if (is_string($path) && preg_match('#^/([^/]+)/?$#', $path, $match) === 1) {
-            $slug = $match[1];
-
-            return $slug !== 'sitemap' ? $slug : null;
-        }
-
-        return null;
+        return DmmCover::large($this->absolute($baseUrl, $src));
     }
 }

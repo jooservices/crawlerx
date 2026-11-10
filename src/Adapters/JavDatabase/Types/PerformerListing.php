@@ -4,21 +4,23 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\JavDatabase\Types;
 
-use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Adapters\AbstractType;
+use JOOservices\CrawlerX\Adapters\Concerns\MatchesUrlPath;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
 use JOOservices\CrawlerX\Adapters\JavDatabase\Selectors;
+use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
-use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
+use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\DomCrawler\UriResolver;
 
 final class PerformerListing extends AbstractType implements TypeInterface
 {
+    use MatchesUrlPath;
     use ParsesHtml;
 
     public function __construct(
@@ -71,10 +73,12 @@ final class PerformerListing extends AbstractType implements TypeInterface
                     return;
                 }
 
+                $thumbnail = $this->cardThumbnail($node, $request->url);
                 $items[$url] = PerformerDto::item(
                     url: $url,
                     externalId: $externalId,
                     title: $name,
+                    data: $thumbnail === null ? [] : ['profile_image_url' => $thumbnail],
                 );
             });
 
@@ -94,6 +98,15 @@ final class PerformerListing extends AbstractType implements TypeInterface
                 hasNextPage: $nextUrl !== null,
             ),
         );
+    }
+
+    /** The portrait sits in `.idol-thumb` of the same card as the name link. */
+    private function cardThumbnail(Crawler $nameLink, string $baseUrl): ?string
+    {
+        $card = $nameLink->closest('.card');
+        $src = $card === null ? null : $this->firstAttribute($card, Selectors::PERFORMER_CARD_IMAGE, 'src');
+
+        return $src === null ? null : UriResolver::resolve($src, $baseUrl);
     }
 
     private function nextPageUrl(Crawler $crawler, string $baseUrl): ?string
@@ -142,11 +155,6 @@ final class PerformerListing extends AbstractType implements TypeInterface
 
     private function externalId(string $url): ?string
     {
-        $path = parse_url($url, PHP_URL_PATH);
-        if (is_string($path) && preg_match('#/idols/([^/]+)/?#i', $path, $match) === 1) {
-            return $match[1];
-        }
-
-        return null;
+        return $this->pathMatch($url, '#/idols/([^/]+)/?#i');
     }
 }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Fetch;
 
+use JOOservices\CrawlerX\Support\CrawlerUserAgent;
+
 final readonly class FetchRuntimeConfig
 {
     public function __construct(
@@ -17,6 +19,10 @@ final readonly class FetchRuntimeConfig
         /** @var list<string> */
         public array $userAgentPool = [],
         public string $nodeId = 'local',
+        public bool $respectRobots = true,
+        public int $responseCacheTtlSeconds = 0,
+        public int $maxResponseBytes = 10_485_760,
+        public ?string $flaresolverrProxyUrl = null,
     ) {
     }
 
@@ -27,12 +33,13 @@ final readonly class FetchRuntimeConfig
         $puppeteer = getenv('CRAWLERX_PUPPETEER_SCRIPT');
         $curl = getenv('CRAWLERX_CURL_IMPERSONATE');
         $flare = getenv('FLARESOLVERR_URL');
+        $flareProxy = getenv('CRAWLERX_FLARESOLVERR_PROXY_URL');
         $playwrightUrl = getenv('PLAYWRIGHT_URL');
-        $userAgent = getenv('CRAWLERX_USER_AGENT');
         $userAgentPool = getenv('CRAWLERX_USER_AGENT_POOL');
         $nodeId = getenv('CRAWLERX_NODE');
-        $defaultUserAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
-        $configuredUserAgent = is_string($userAgent) && trim($userAgent) !== '' ? trim($userAgent) : $defaultUserAgent;
+        $responseCacheTtl = getenv('CRAWLERX_RESPONSE_CACHE_TTL');
+        $maxResponseBytes = getenv('CRAWLERX_MAX_RESPONSE_BYTES');
+        $configuredUserAgent = CrawlerUserAgent::fromEnvironment();
         $pool = is_string($userAgentPool) && trim($userAgentPool) !== ''
             ? array_values(array_filter(
                 array_map('trim', explode(',', $userAgentPool)),
@@ -49,6 +56,13 @@ final readonly class FetchRuntimeConfig
             $resolvedNodeId = is_string($hostname) && $hostname !== '' ? $hostname : 'local';
         }
 
+        $responseCacheTtlSeconds = is_string($responseCacheTtl) && ctype_digit(trim($responseCacheTtl))
+            ? (int) trim($responseCacheTtl)
+            : 0;
+        $configuredMaxResponseBytes = is_string($maxResponseBytes) && ctype_digit(trim($maxResponseBytes))
+            ? filter_var(trim($maxResponseBytes), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 104_857_600]])
+            : false;
+
         return new self(
             nodeBinary: 'node',
             playwrightScript: is_string($playwright) && $playwright !== ''
@@ -63,7 +77,20 @@ final readonly class FetchRuntimeConfig
             userAgent: $configuredUserAgent,
             userAgentPool: $pool,
             nodeId: $resolvedNodeId,
+            respectRobots: self::resolveRespectRobots(getenv('CRAWLERX_RESPECT_ROBOTS')),
+            responseCacheTtlSeconds: $responseCacheTtlSeconds,
+            maxResponseBytes: is_int($configuredMaxResponseBytes) ? $configuredMaxResponseBytes : 10_485_760,
+            flaresolverrProxyUrl: is_string($flareProxy) && trim($flareProxy) !== '' ? trim($flareProxy) : null,
         );
+    }
+
+    private static function resolveRespectRobots(mixed $value): bool
+    {
+        if (! is_string($value) || trim($value) === '') {
+            return true;
+        }
+
+        return ! in_array(strtolower(trim($value)), ['0', 'false', 'no', 'off'], true);
     }
 
     private static function detectCurlImpersonate(): ?string

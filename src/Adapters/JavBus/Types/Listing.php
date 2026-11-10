@@ -4,22 +4,24 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\JavBus\Types;
 
-use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Adapters\AbstractHtmlType;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
+use JOOservices\CrawlerX\Adapters\Concerns\StripsTitleCode;
 use JOOservices\CrawlerX\Adapters\JavBus\Selectors;
 use JOOservices\CrawlerX\Adapters\JavBus\UrlNormalizer;
+use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
-use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
+use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Support\CodeNormalizer;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class Listing extends AbstractHtmlType implements TypeInterface
 {
+    use StripsTitleCode;
     use ParsesHtml;
 
     public function __construct(
@@ -212,22 +214,11 @@ final class Listing extends AbstractHtmlType implements TypeInterface
             return null;
         }
 
-        if (preg_match('#^/(?:en/)?([A-Za-z0-9-]+)/?$#i', $path, $match) !== 1) {
+        if (preg_match('#^/(?:en/)?([A-Za-z0-9_-]+)/?$#i', $path, $match) !== 1) {
             return null;
         }
 
         return $match[1];
-    }
-
-    private function titleWithoutCode(?string $title, string $code): ?string
-    {
-        if ($title === null) {
-            return null;
-        }
-
-        $stripped = preg_replace('/^' . preg_quote($code, '/') . '\s*/i', '', $title);
-
-        return is_string($stripped) && trim($stripped) !== '' ? trim($stripped) : $title;
     }
 
     private function pageFromUrl(string $url): ?int

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Adapters\Duga\Types;
 
 use JOOservices\CrawlerX\Adapters\AbstractHtmlType;
+use JOOservices\CrawlerX\Adapters\Concerns\MatchesUrlPath;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
@@ -21,6 +22,8 @@ use Symfony\Component\DomCrawler\Crawler;
  */
 final class Detail extends AbstractHtmlType implements TypeInterface
 {
+    use MatchesUrlPath;
+
     use ParsesHtml;
 
     private const KNOWN_ROWS = ['配信開始日', '配信終了日', '発売日', '出演者', '監督', 'メーカー', 'レーベル', 'シリーズ', '作品ID', 'メーカー品番', '品番', 'カテゴリ', 'ランキング'];
@@ -39,7 +42,7 @@ final class Detail extends AbstractHtmlType implements TypeInterface
     {
         $crawler = $this->fetchCrawler($request);
         $rows = $this->rows($crawler);
-        $externalId = $this->externalId($request->url);
+        $externalId = $this->pathMatch($request->url, '~/ppv/([^/]+)/?$~i');
         $sku = $this->cellText($rows, '作品ID');
         $productNumber = $this->cellText($rows, 'メーカー品番') ?? $this->cellText($rows, '品番');
         $prices = $this->prices($crawler);
@@ -50,7 +53,7 @@ final class Detail extends AbstractHtmlType implements TypeInterface
             title: $this->firstText($crawler, 'h1.title, h1[itemprop="name"]') ?? $externalId,
             data: MovieMeta::filter([
                 'code' => $productNumber ?? $sku ?? $externalId,
-                'cover_url' => $this->firstAttribute($crawler, 'meta[property="og:image"]', 'content'),
+                'cover_url' => $this->fullJacket($crawler, $request->url) ?? $this->firstAttribute($crawler, 'meta[property="og:image"]', 'content'),
                 'description' => $this->firstText($crawler, 'p.introduction'),
                 'date' => $this->dateOf($rows, '発売日'),
                 'duration' => $this->duration($crawler),
@@ -66,7 +69,9 @@ final class Detail extends AbstractHtmlType implements TypeInterface
                     MovieMeta::FAVORITE_COUNT => $this->count($this->firstText($crawler, '.mylistcount .count')),
                     MovieMeta::PRICE => $prices[0] ?? null,
                     'prices' => $prices,
+                    'thumbnail_url' => $this->firstAttribute($crawler, '#productjpg', 'src') ?? $this->firstAttribute($crawler, 'meta[property="og:image"]', 'content'),
                     MovieMeta::SAMPLE_VIDEO_URL => $this->firstAttribute($crawler, 'meta[property="og:video:url"]', 'content'),
+                    'sample_video_poster_url' => $this->firstAttribute($crawler, '.sample-rapper img[src]', 'src'),
                     MovieMeta::DOWNLOADS => $this->files($crawler),
                     MovieMeta::RELEASE_DATE_RAW => $this->cellText($rows, '発売日'),
                     'distribution_start_date' => $this->dateOf($rows, '配信開始日'),
@@ -309,6 +314,14 @@ final class Detail extends AbstractHtmlType implements TypeInterface
         return $files;
     }
 
+    /** The jacket's full-size image: the page links the 240px jacket to `jacket.jpg`. */
+    private function fullJacket(Crawler $crawler, string $baseUrl): ?string
+    {
+        $href = $this->firstAttribute($crawler, 'a[itemprop="image"][href]', 'href');
+
+        return $href === null ? null : $this->absolute($baseUrl, $href);
+    }
+
     /** @return list<array{url: string, thumbnail_url: ?string, position: int}> */
     private function digest(Crawler $crawler, string $baseUrl): array
     {
@@ -349,12 +362,5 @@ final class Detail extends AbstractHtmlType implements TypeInterface
         }
 
         return $other;
-    }
-
-    private function externalId(string $url): ?string
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-
-        return is_string($path) && preg_match('~/ppv/([^/]+)/?$~i', $path, $match) === 1 ? $match[1] : null;
     }
 }

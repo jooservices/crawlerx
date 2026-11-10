@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-11-10
+
+### Added
+
+- Add a manual live health report for adapter samples with per-host pacing, a two-outbound-request budget including robots and redirects, accurate failure classifications, fallback-aware challenge results, optional HTTP proxy routing, and Markdown/JSON output (JOOXCR-474).
+- Add a Keep a Changelog structure check via `composer check:changelog` (JOOXCR-484).
+- Add a changed-file test runner with adapter, fetch and fixture targeting plus full-suite fallback (`composer test:changed`, `make test-changed`) (JOOXCR-473).
+- Add `composer check:fixtures-meta` to validate captured fixture provenance metadata, with a baseline for known legacy offenders (JOOXCR-485).
+- Add `composer check:readme-sites` to verify README supported-site rows match adapter manifests (JOOXCR-482).
+- Add `composer check:manifests` to check adapter manifest keys, slugs, base URLs, classes and capabilities (JOOXCR-483).
+- Add the MGStage source (`mgstage`): paged work listing (search, new releases, maker, series, genre, actor) and work detail with every labelled row, large cover with thumbnail, all sample stills with thumbnails, prices and sale end, reviews, rating, counters and the sample-video URL; the site needs a Japan exit (`CRAWLERX_HTTP_PROXY`) and the `adc=1` age cookie (JOOXCR-471).
+- Add an optional outbound HTTP proxy for the HTTP fetch method (`CRAWLERX_HTTP_PROXY`, `HttpProfileDto::$proxy`, `HttpOptionsDto::$proxy`), off by default (JOOXCR-470).
+- Add Deptrac architecture rules for the Adapters, Fetch, Dto, Support and Contracts layers (`deptrac.yaml`, `composer lint:deptrac`) and a report-only CI job (JOOXCR-466).
+- Add an opt-in PSR-16 HTTP response cache with configurable TTL, challenge/captcha exclusions and throttle bypass on cache hits (JOOXCR-465).
+
+- Add the shared parsing traits `ParsesUrlParts` and `CoercesValues` (external id and page-number extraction, scalar coercion) and migrate the exact duplicates in the Asagei, Avfan, Jable, JavDatabase, Javbtc, Missav, Smartflash, Wpb and Xcity adapters to them (no behaviour change, JOOXCR-462).
+- Add the Wikidata (`wikidata`) performer adapter on the official Query Service and wbgetentities API: paged listing of Japanese pornographic film actors and item detail with ja/en labels, descriptions and aliases, birth date, height, Commons image (original and thumbnail), Wikipedia sitelinks and every statement (typed values, ranks, qualifiers, property and item labels), 2 requests a listing page and 1 + ceil(ids/50) per item (JOOXCR-456).
+- Add the Asagei Plus (`asagei`) gravure adapter with paged tag/category/home listings and article galleries (every in-article photo, cover, categories, tags, dates, prev/next and source fields), captured fixtures and URL inference (JOOXCR-461).
+- Add the WPB Web Gravure (`wpb`) adapter for Weekly Playboy (週プレNEWS) public gravure listing and gallery pages: cover at full resolution with thumbnails, profile, credits, tags, source fields and captured fixtures (JOOXCR-460).
+- Add an opt-out `robots.txt` guard to the fetch pipeline: parse robots.txt per host with a TTL cache, evaluate the library user agent and `*` group, honour Disallow/Allow/Crawl-delay, fail-open on an unreachable robots.txt and fail-closed on an explicit Disallow; default on, disable per site or globally with `respect_robots` (JOOXCR-464).
+
+### Changed
+
+- Split the grab-bag `CoercesValues` and `ParsesUrlParts` traits into 13 single-responsibility concerns (`MatchesUrlPath`, `ReadsQueryParams`, `CoercesNumbers`, `CleansText`, ...), one file and one unit test each, update every adapter's imports and document the one-concern-per-helper rule (no behaviour change, JOOXCR-472).
+- Migrate the remaining duplicated N–Z adapter helpers to the shared parsing and coercion concerns without changing crawl output (JOOXCR-469).
+- Migrate the exact duplicate private helpers of the G-M adapters (Jable, Jav321, JavBus, JavDatabase, JavLibrary, JavPhotos, MinnanoAv) to the shared `ParsesUrlParts` and `CoercesValues` traits, adding `firstQueryParam`, `titleWithoutCode` and `integerStat` (no behaviour change, JOOXCR-468).
+- Migrate adapters A–F onto the shared parsing helpers (`ParsesUrlParts`, `CoercesValues`, `ResolvesLinkUrls`) and drop their private duplicates; extend those helpers with `dateString`, `arrayValue` and `linkUrl` (unit-tested, no behaviour change, JOOXCR-467).
+- Cut CI wall time by caching the PHP image, running security and sharded Unit/Feature suites in parallel after Validate, and keeping the required check names unchanged (JOOXCR-466).
+- Split `FetchFallbackChain` (747 lines) into single-responsibility collaborators under `src/Fetch` (attempt log rows and method runner with transient retry, pre-fetch throttle/circuit guard, session and budget request shaping, ready-marker gate, login-wall detection, rejection builders, circuit reporting); the chain stays a thin orchestrator and fetch behaviour, config keys, exceptions and the SSRF guard are unchanged (JOOXCR-463).
+
+### Fixed
+
+- Raise the composer process timeout to 1800 seconds so the release gate (`composer ci`, full coverage run) is not cut off at the 300 second default (the v1.6.0 Release workflow failed on it) (JOOXCR-457).
+- Browser SSRF guard drops loopback/unspecified decoy DNS answers and pins only remaining public addresses, so hosts such as Jable/MissAV with Cloudflare A records plus `127.0.0.1`/`0.0.0.0` decoys fetch normally while private-only answers stay blocked; blocked responses carry a clear `ssrfReason` into the fetch exception message (JOOXCR-399 / JOOXCR-363).
+
 ## [1.6.1] - 2026-11-08
 
 ### Fixed
@@ -17,6 +52,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Complete the images of the uncensored paysite and WordPress/custom maker adapters: Heyzo locked-gallery and special-gallery thumbnails, Tokyo-Hot jacket and package images and the cover of products without a sample, DUGA full-size jacket and sample poster, FC2 original sample files, Rocket origin files instead of Jetpack copies, Aisex actress photos on cards and related actresses, Falenogroup maker logos without CDN recompression (JOOXCR-423).
+- Audit Maker CMS family images (28 adapters, JOOXCR-423): lazy `data-original`/`data-lazy-src`/`srcset` fallbacks in the shared image reader and per-adapter regression counts for every slider, profile and listing cover image.
 - Add the JAVMenu (`javmenu`) adapter with its own parser: paged work listings (sections, code prefixes, makers, series, genres, directors), work detail with code, dates, duration, director, maker, series, genres, idols, poster, magnets and stream lines, the paged performer index and performer pages with their work grid, in every interface language (JOOXCR-453).
 - Add the AV-Actress (`avactress`) adapter: paged actress rankings and lists (popular, bust, young, new) and actress profiles with measurements, birthday, blood type, birthplace, hobbies and every listed work with its large and thumbnail covers and sample movie (JOOXCR-454).
 - Add the DAHLIA (`dahlia`) adapter with its own parser: work listing with pagination, work detail with every labelled row, cover, all gallery stills with thumbnails, sample video and store links, performer roster and performer profiles (JOOXCR-415).
@@ -52,7 +89,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Complete the images of the torrent/streaming indexes and remaining adapters (Missav, Jable, Javbtc, Onejav family, Avfan, Aisex, Avjoho, AvfanProfiles, Duga, FC2): resolve lazy-loaded covers, give the full-size cover next to its thumbnail, add the listing covers and performer photos the pages show, drop CDN re-compression and stop using a work screenshot as a performer photo (JOOXCR-423).
 - Register follow-up fixtures from manifests (`runtime.fixtureSamples[].followUps`) and derive adapter-count assertions from the manifest directory, so adding a source no longer edits shared tests or docs (JOOXCR-392).
+- Complete the images of the community-database and photo/gallery adapters (JOOXCR-423): JavBus cast photos and listing ids with an underscore, JavLibrary preview stills, JavDatabase and MinnanoAv portraits, lightbox stills and works jackets, Avjoho/AV-Fan/XCITY/Warashi card portraits, Warashi gallery cover and cast photo, Jav321 sample-video poster, with image-count tests over every real fixture.
 
 ## [1.5.0] - 2026-11-03
 
@@ -99,13 +138,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Recognize removed AVfanProfiles pages, refresh its live profile sample, and wait for DUGA product content rather than navigation links (JOOXCR-260).
 - Try the proven solver before a slow browser on Jable/JAVLibrary, and let the canary use project-configured browser endpoints (JOOXCR-260).
 
-### Documentation
+### Changed
 
 - Canary: refresh the 1.4.x status after the fetch-budget and source-fallback changes (57/68 samples pass), and publish the observed failures in `docs/testing/canary-latest.json`. Shared-service load is a possible, unconfirmed timing factor (JOOXCR-182).
 
 ## [1.4.2] - 2026-10-24
 
-### Documentation
+### Changed
 
 - Fetch strategy: a status log of sources that are down or walled; warashi is offline (Dedibox maintenance, port 443 refused) and is not behind a challenge (JOOXCR-244).
 
@@ -149,7 +188,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The unused generic `Shared\Catalog\Detail` and `Listing` parsers (every catalog site has a dedicated parser).
 
-### Also in this release
+### Fixed
 
 - Standard metadata keys and builders for movie data (`Support\MovieMeta`, `docs/dto-conventions.md`).
 
@@ -178,7 +217,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Treat Avfan Profiles (`av-fan.tokyo`) as public for the covered views and
   refresh the 63-sample live canary status.
 
-### Migration
+### Removed
 
 - Remove the `cache:` argument from `CrawlerXFactory::configure()`. Set
   `PLAYWRIGHT_URL` and `FLARESOLVERR_URL` for service containers; `CRAWLERX_NODE`
@@ -307,10 +346,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   implementation (Jable performer listing was an alias to the movie parser).
 - Catalog `external_id` for HEYZO/FC2 included the code prefix inconsistently.
 
+[1.7.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.7.0
+[1.6.1]: https://github.com/jooservices/crawlerx/releases/tag/v1.6.1
 [1.3.1]: https://github.com/jooservices/crawlerx/releases/tag/v1.3.1
 [1.3.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.3.0
 [1.2.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.2.0
 [1.1.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.1.0
 
+[1.7.0...1.6.0]: https://github.com/jooservices/crawlerx/compare/v1.6.0...v1.7.0
 [1.3.1...1.3.0]: https://github.com/jooservices/crawlerx/compare/v1.3.0...v1.3.1
 [1.3.0...1.2.0]: https://github.com/jooservices/crawlerx/compare/v1.2.0...v1.3.0

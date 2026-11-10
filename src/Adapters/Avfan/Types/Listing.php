@@ -6,17 +6,25 @@ namespace JOOservices\CrawlerX\Adapters\Avfan\Types;
 
 use JOOservices\CrawlerX\Adapters\AbstractHtmlType;
 use JOOservices\CrawlerX\Adapters\Avfan\Selectors;
+use JOOservices\CrawlerX\Adapters\Concerns\MatchesUrlPath;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
+use JOOservices\CrawlerX\Adapters\Concerns\ReadsQueryNumbers;
+use JOOservices\CrawlerX\Adapters\Concerns\StripsTitleCode;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
-use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
+use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Support\CodeNormalizer;
+use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class Listing extends AbstractHtmlType implements TypeInterface
 {
+    use MatchesUrlPath;
+    use ReadsQueryNumbers;
+    use StripsTitleCode;
+
     use ParsesHtml;
 
     protected function siteLabel(): string
@@ -42,17 +50,18 @@ final class Listing extends AbstractHtmlType implements TypeInterface
 
             $url = $this->absolute($request->url, $href);
             $title = $this->itemTitle($node);
-            $externalId = $this->externalId($url);
+            $externalId = $this->pathMatch($url, '#/en/movies/([^/]+)#');
             if ($externalId === null || $title === null || isset($items[$url])) {
                 return;
             }
 
             $code = $this->itemCode($node, $title, $externalId);
+            $cover = $this->cover($node, $request->url);
             $items[$url] = MovieDto::item(
                 url: $url,
                 externalId: $externalId,
                 title: $this->titleWithoutCode($title, $code),
-                data: ['code' => $code],
+                data: MovieMeta::filter(['code' => $code, 'cover_url' => $cover]),
             );
         });
 
@@ -77,7 +86,7 @@ final class Listing extends AbstractHtmlType implements TypeInterface
             }
 
             $absolute = $this->absolute($url, $href);
-            $page = $this->pageFromUrl($absolute);
+            $page = $this->queryNumber($absolute, 'page');
             if ($page !== null) {
                 $links[$page] = $absolute;
             }
@@ -89,7 +98,7 @@ final class Listing extends AbstractHtmlType implements TypeInterface
             }
         });
 
-        $nextPage = $nextUrl !== null ? $this->pageFromUrl($nextUrl) : null;
+        $nextPage = $nextUrl !== null ? $this->queryNumber($nextUrl, 'page') : null;
         if ($nextPage === null) {
             $greaterPages = array_values(array_filter(array_keys($links), fn(int $page): bool => $page > $currentPage));
             sort($greaterPages);
@@ -106,11 +115,19 @@ final class Listing extends AbstractHtmlType implements TypeInterface
         );
     }
 
-    private function externalId(string $url): ?string
-    {
-        $path = parse_url($url, PHP_URL_PATH);
 
-        return is_string($path) && preg_match('#/en/movies/([^/]+)#', $path, $match) === 1 ? $match[1] : null;
+    /** The card's cover: an `img` in the cover link, which sits next to the title link in the same card box. */
+    private function cover(Crawler $titleLink, string $baseUrl): ?string
+    {
+        $card = $titleLink->ancestors()->first();
+        $image = $card->filter('img[src], img[data-src]');
+        if ($image->count() === 0) {
+            return null;
+        }
+
+        $src = $image->first()->attr('data-src') ?? $image->first()->attr('src');
+
+        return is_string($src) && trim($src) !== '' ? $this->absolute($baseUrl, trim($src)) : null;
     }
 
     private function itemTitle(Crawler $node): ?string
@@ -145,18 +162,5 @@ final class Listing extends AbstractHtmlType implements TypeInterface
         $trimmed = trim(preg_replace('/^\[' . preg_quote($code, '/') . '\]\s*/i', '', $title) ?? $title);
 
         return $trimmed !== '' ? $trimmed : $title;
-    }
-
-    private function pageFromUrl(string $url): ?int
-    {
-        $query = parse_url($url, PHP_URL_QUERY);
-        if (! is_string($query) || $query === '') {
-            return null;
-        }
-
-        parse_str($query, $params);
-        $page = $params['page'] ?? null;
-
-        return is_numeric($page) && (int) $page > 0 ? (int) $page : null;
     }
 }

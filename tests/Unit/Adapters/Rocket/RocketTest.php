@@ -22,6 +22,8 @@ final class RocketTest extends TestCase
 
     private const IMAGES = 'https://i0.wp.com/rocket-inc.net/wp-content/uploads/';
 
+    private const ORIGINALS = 'https://rocket-inc.net/wp-content/uploads/';
+
     public function test_detail_fields_from_real_capture_exclude_navigation(): void
     {
         $result = (new Detail($this->clientWithFixture('rocket/detail-rctd-774.html')))->execute(new CrawlRequestDto(url: self::BASE . '/works/rctd-774/'));
@@ -34,16 +36,16 @@ final class RocketTest extends TestCase
         self::assertSame('身近な女をサキュバスに変身させてヤられたい！彼女とSEXレスに悩む主人公が謎の紳士から禍々しい光線銃を貰う。上から目線のドS、優しくてラブラブ…自分好みのサキュバスを召喚！ベロチュー、淫語フェラ、スパイダー騎乗位で搾精SEX！美しい淫魔との激しいSEXを夢見ていたはずが…結末は本編のお楽しみ。', $movie['description']);
         self::assertSame('2026-12-03', $movie['date']);
         self::assertSame(130, $movie['duration']);
-        self::assertSame(self::IMAGES . '2026/11/rctd-774-jacket.jpg?fit=800%2C538&ssl=1', $movie['cover_url']);
+        self::assertSame(self::ORIGINALS . '2026/11/rctd-774-jacket.jpg', $movie['cover_url']);
         self::assertSame(['有村のぞみ', '虹村ゆみ'], array_column($movie['performers'], 'name'));
         self::assertSame(['有村のぞみ', '虹村ゆみ'], array_column($movie['performers'], 'name_japanese'));
         self::assertSame(['有村のぞみ', '虹村ゆみ'], array_column($movie['performers'], 'external_id'));
         self::assertSame([self::BASE . '/works_actress/%e6%9c%89%e6%9d%91%e3%81%ae%e3%81%9e%e3%81%bf/', self::BASE . '/works_actress/%e8%99%b9%e6%9d%91%e3%82%86%e3%81%bf/'], array_column($movie['performers'], 'url'));
         self::assertSame(['企画', '妄想'], $movie['tags']);
         self::assertCount(10, $movie['screenshots']);
-        self::assertSame(self::IMAGES . '2026/11/rctd-774-sample-1.jpg?fit=800%2C535&ssl=1', $movie['screenshots'][0]['url']);
+        self::assertSame(self::ORIGINALS . '2026/11/rctd-774-sample-1.jpg', $movie['screenshots'][0]['url']);
         self::assertSame(self::IMAGES . '2026/11/rctd-774-sample-1.jpg?resize=480%2C360&ssl=1', $movie['screenshots'][0]['thumbnail_url']);
-        self::assertSame(self::IMAGES . '2026/11/rctd-774-sample-10.jpg?fit=800%2C535&ssl=1', $movie['screenshots'][9]['url']);
+        self::assertSame(self::ORIGINALS . '2026/11/rctd-774-sample-10.jpg', $movie['screenshots'][9]['url']);
         $meta = $movie['metadata'];
         self::assertSame('ROCKET', $meta['maker']);
         self::assertSame('セントラル山本', $meta['director']);
@@ -121,7 +123,7 @@ final class RocketTest extends TestCase
         $movie = $first->meta['movie'];
         self::assertSame('rctd-770', $movie['external_id']);
         self::assertSame('最もエロくて強いレズは誰だ！？　ガチンコ全裸レズバトルリターンズ9　真っ正面からノーガードのイカセ合い4人制トーナメント戦', $movie['title']);
-        self::assertSame(self::IMAGES . '2026/11/rctd-770-jacket.jpg?fit=800%2C538&ssl=1', $movie['cover_url']);
+        self::assertSame(self::ORIGINALS . '2026/11/rctd-770-jacket.jpg', $movie['cover_url']);
         self::assertSame('2026-12-03', $movie['date']);
         self::assertSame('ROCKET', $movie['metadata']['maker']);
         self::assertSame(['name' => '2026年12月3日 発売作品', 'date' => '2026-12-03'], $movie['metadata']['release_group']);
@@ -148,7 +150,7 @@ final class RocketTest extends TestCase
         $movie = $result->items[1]->meta['movie'];
         self::assertSame('ROCKET17周年記念ユーザーリクエスト祭り　無様エロ再び！裸より恥ずかしい爆発黒焦げ女', $movie['title']);
         self::assertNull($movie['date']);
-        self::assertSame(self::IMAGES . '2025/08/rctd-683-jacket.jpg?fit=800%2C538&ssl=1', $movie['cover_url']);
+        self::assertSame(self::ORIGINALS . '2025/08/rctd-683-jacket.jpg', $movie['cover_url']);
         self::assertSame(['type' => 'actress', 'slug' => '虹村ゆみ', 'heading' => '虹村ゆみの作品', 'name' => '虹村ゆみ'], $movie['metadata']['taxonomy']);
         self::assertArrayNotHasKey('release_group', $movie['metadata']);
         self::assertSame(1, $result->pagination?->currentPage);

@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Adapters\AvfanProfiles\Types;
 
 use JOOservices\CrawlerX\Adapters\AbstractType;
+use JOOservices\CrawlerX\Adapters\AvfanProfiles\Selectors;
+use JOOservices\CrawlerX\Adapters\Concerns\MatchesUrlPath;
 use JOOservices\CrawlerX\Adapters\Concerns\NormalizesUrls;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
-use JOOservices\CrawlerX\Adapters\AvfanProfiles\Selectors;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
@@ -19,6 +20,8 @@ use Symfony\Component\DomCrawler\Crawler;
 
 final class PerformerListing extends AbstractType implements TypeInterface
 {
+    use MatchesUrlPath;
+
     use NormalizesUrls;
     use ParsesHtml;
 
@@ -42,15 +45,17 @@ final class PerformerListing extends AbstractType implements TypeInterface
             }
 
             $url = $this->absolute($request->url, $href);
-            $externalId = $this->externalId($url);
+            $externalId = $this->pathMatch($url, '#^/actress/([^/]+)\\.html$#i');
             if ($externalId === null || isset($items[$url])) {
                 return;
             }
 
+            $image = $this->cardImage($node, $request->url);
             $items[$url] = PerformerDto::item(
                 url: $url,
                 externalId: $externalId,
                 title: $title,
+                data: $image === null ? [] : ['profile_image_url' => $image],
             );
         });
 
@@ -73,15 +78,12 @@ final class PerformerListing extends AbstractType implements TypeInterface
         );
     }
 
-    private function externalId(string $url): ?string
+    /** The round portrait sits in the same `<li>` as the name link. */
+    private function cardImage(Crawler $title, string $baseUrl): ?string
     {
-        $path = parse_url($url, PHP_URL_PATH);
-        if (is_string($path) && preg_match('#^/actress/([^/]+)\.html$#i', $path, $match) === 1) {
-            $slug = $match[1];
+        $card = $title->closest('li');
+        $src = $card === null ? null : $this->firstAttribute($card, Selectors::PERFORMER_CARD_IMAGE, 'src');
 
-            return $slug;
-        }
-
-        return null;
+        return $src === null ? null : $this->absolute($baseUrl, $src);
     }
 }

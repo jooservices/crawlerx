@@ -25,6 +25,7 @@
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
+        "deptrac/deptrac": "^4.0",
         "phpunit/phpunit": "^13.0",
         "squizlabs/php_codesniffer": "^3.12 || ^4.0"
     },
@@ -39,10 +40,14 @@
         }
     },
     "scripts": {
+        "check:changelog": "php tools/check-changelog.php",
         "test": "phpunit --no-coverage",
+        "test:changed": "php tools/test-changed.php",
         "test:unit": "phpunit --no-coverage --testsuite Unit",
         "test:feature": "phpunit --no-coverage --testsuite Feature",
+        "check:readme-sites": "php tools/check-readme-sites.php",
         "test:coverage": "mkdir -p build/coverage && phpunit --coverage-clover build/coverage/clover-Unit.xml --testsuite Unit && phpunit --coverage-clover build/coverage/clover-Feature.xml --testsuite Feature",
+        "check:fixtures-meta": "php tools/check-fixtures-meta.php",
         "coverage:check": [
             "php tools/coverage-enforce.php build/coverage/clover-Unit.xml",
             "php tools/coverage-enforce.php build/coverage/clover-Feature.xml",
@@ -56,13 +61,17 @@
         "lint:phpmd": "php -d error_reporting=6143 vendor/bin/phpmd analyze src --format text --ruleset phpmd.xml",
         "lint:cs": "php-cs-fixer fix --config=.php-cs-fixer.dist.php --dry-run --diff --sequential",
         "lint:cs:fix": "php-cs-fixer fix --config=.php-cs-fixer.dist.php --sequential",
+        "lint:deptrac": "deptrac analyse --config-file=deptrac.yaml --no-cache",
+        "live-check:report": "php tools/live-check/report.php",
         "lint": ["@lint:pint", "@lint:phpcs", "@lint:phpstan", "@lint:phpmd", "@lint:cs"],
         "lint:fix": ["@lint:pint:fix", "@lint:cs:fix"],
         "check": ["@lint", "@test"],
+        "check:manifests": "php tools/check-manifests.php",
         "ci": ["@lint", "@test:coverage", "@coverage:check"],
         "hooks:install": "captainhook install --force --skip-existing"
     },
     "config": {
+        "process-timeout": 1800,
         "sort-packages": true,
         "audit": {"abandoned": "ignore"}
     },

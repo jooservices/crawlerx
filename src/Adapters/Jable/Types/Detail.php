@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\Jable\Types;
 
-use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Adapters\AbstractType;
+use JOOservices\CrawlerX\Adapters\Concerns\CoercesNumbers;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
+use JOOservices\CrawlerX\Adapters\Concerns\ReadsLastPathSegment;
+use JOOservices\CrawlerX\Adapters\Concerns\StripsTitleCode;
 use JOOservices\CrawlerX\Adapters\Jable\Selectors;
 use JOOservices\CrawlerX\Adapters\Jable\UrlNormalizer;
+use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
-use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
+use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Support\CodeNormalizer;
 use JOOservices\CrawlerX\Support\JableStreamParser;
 use JOOservices\CrawlerX\Support\MovieMeta;
@@ -20,6 +23,9 @@ use Symfony\Component\DomCrawler\Crawler;
 
 final class Detail extends AbstractType implements TypeInterface
 {
+    use CoercesNumbers;
+    use ReadsLastPathSegment;
+    use StripsTitleCode;
     use ParsesHtml;
 
     public function __construct(
@@ -33,7 +39,7 @@ final class Detail extends AbstractType implements TypeInterface
         $response = $this->client->get($request->url);
         $html = $this->htmlFromResponse($response->toPsrResponse(), 'Jable', 'detail');
         $crawler = new Crawler($html, $request->url);
-        $externalId = $this->externalId($request->url);
+        $externalId = $this->lastPathSegment($request->url);
         $rawTitle = $this->firstText($crawler, Selectors::DETAIL_TITLE)
             ?? $this->firstAttribute($crawler, 'meta[property="og:title"]', 'content')
             ?? $externalId;
@@ -68,24 +74,6 @@ final class Detail extends AbstractType implements TypeInterface
         $this->assertUsableDetail($item, 'Jable');
 
         return $item;
-    }
-
-    private function externalId(string $url): ?string
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-
-        return is_string($path) && trim($path, '/') !== '' ? trim(basename($path), '/') : null;
-    }
-
-    private function titleWithoutCode(?string $title, string $code): ?string
-    {
-        if ($title === null) {
-            return null;
-        }
-
-        $stripped = preg_replace('/^' . preg_quote($code, '/') . '\s*/i', '', $title);
-
-        return is_string($stripped) && trim($stripped) !== '' ? trim($stripped) : $title;
     }
 
     private function coverUrl(Crawler $crawler, string $baseUrl): ?string
@@ -132,7 +120,7 @@ final class Detail extends AbstractType implements TypeInterface
      * The name is the avatar tooltip (`title`) so models with a hashed url slug are not dropped; the slug is the id.
      *
      * @param  list<string>  $keywords
-     * @return list<array{external_id: ?string, name: string, url: ?string}>
+     * @return list<array{external_id: ?string, name: string, url: ?string, profile_image_url?: string}>
      */
     private function performers(Crawler $crawler, array $keywords, string $baseUrl): array
     {
@@ -151,7 +139,13 @@ final class Detail extends AbstractType implements TypeInterface
             $name = $tooltip === null ? null : $this->normalizeText($tooltip);
             $name ??= $this->isRomanModelSlug($slug) ? $this->slugToRomanName($slug) : null;
             if ($name !== null && $name !== '') {
-                $performers[$slug] ??= MovieMeta::performer($name, $slug, $this->normalizer->absolute($baseUrl, $href));
+                $performer = MovieMeta::performer($name, $slug, $this->normalizer->absolute($baseUrl, $href));
+                $photo = $this->firstAttribute($node, Selectors::MODEL_PHOTO, 'data-src') ?? $this->firstAttribute($node, Selectors::MODEL_PHOTO, 'src');
+                if ($photo !== null) {
+                    $performer['profile_image_url'] = $this->normalizer->absolute($baseUrl, $photo);
+                }
+
+                $performers[$slug] ??= $performer;
             }
         });
 
@@ -195,13 +189,6 @@ final class Detail extends AbstractType implements TypeInterface
             'age_label' => $age,
             MovieMeta::VIEWS => $views !== null && preg_match('/^\d[\d,\s.]*$/', $views) === 1 ? $this->integerStat($views) : null,
         ];
-    }
-
-    private function integerStat(string $value): int
-    {
-        $normalized = str_replace([',', ' '], '', $value);
-
-        return is_numeric($normalized) ? (int) $normalized : 0;
     }
 
     private function isRomanModelSlug(string $slug): bool

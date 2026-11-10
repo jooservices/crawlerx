@@ -4,21 +4,28 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\Avfan\Types;
 
-use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Adapters\AbstractType;
 use JOOservices\CrawlerX\Adapters\Avfan\Selectors;
 use JOOservices\CrawlerX\Adapters\Avfan\UrlNormalizer;
+use JOOservices\CrawlerX\Adapters\Concerns\CleansText;
+use JOOservices\CrawlerX\Adapters\Concerns\MatchesUrlPath;
+use JOOservices\CrawlerX\Adapters\Concerns\ParsesDateStrings;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
+use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
-use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
+use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Support\CodeNormalizer;
 use JOOservices\CrawlerX\Support\SizeParser;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class Detail extends AbstractType implements TypeInterface
 {
+    use CleansText;
+    use MatchesUrlPath;
+    use ParsesDateStrings;
+
     use ParsesHtml;
 
     public function __construct(
@@ -33,7 +40,7 @@ final class Detail extends AbstractType implements TypeInterface
         $html = $this->htmlFromResponse($response->toPsrResponse(), 'Avfan', 'detail');
         $crawler = new Crawler($html, $request->url);
         $fields = $this->fields($crawler);
-        $externalId = $this->externalId($request->url);
+        $externalId = $this->pathMatch($request->url, '#/en/movies/([^/]+)#');
         $title = $this->firstText($crawler, Selectors::DETAIL_TITLE) ?? $externalId;
         $code = $this->dataNumber($crawler) ?? $this->numberField($fields['Number'] ?? null) ?? CodeNormalizer::canonical($title, $externalId, $request->url);
         $coverUrl = $this->firstAttribute($crawler, Selectors::DETAIL_COVER, 'src');
@@ -46,7 +53,7 @@ final class Detail extends AbstractType implements TypeInterface
                 'code' => $code,
                 'cover_url' => $coverUrl === null ? null : $this->normalizer->absolute($request->url, $coverUrl),
                 'description' => $this->description($crawler),
-                'date' => $this->date($fields['Released Date'] ?? null),
+                'date' => $this->dateString($fields['Released Date'] ?? null),
                 'duration' => $this->durationMinutes($fields['Duration'] ?? null),
                 'director' => $this->firstText($crawler, Selectors::DETAIL_DIRECTOR),
                 'maker' => $this->firstText($crawler, Selectors::DETAIL_MAKER),
@@ -91,12 +98,6 @@ final class Detail extends AbstractType implements TypeInterface
         return $fields;
     }
 
-    private function externalId(string $url): ?string
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-
-        return is_string($path) && preg_match('#/en/movies/([^/]+)#', $path, $match) === 1 ? $match[1] : null;
-    }
 
     private function dataNumber(Crawler $crawler): ?string
     {
@@ -121,16 +122,6 @@ final class Detail extends AbstractType implements TypeInterface
             : null;
     }
 
-    private function date(?string $value): ?string
-    {
-        if ($value === null || trim($value) === '') {
-            return null;
-        }
-
-        $date = date_create_immutable(trim($value));
-
-        return $date === false ? null : $date->format('Y-m-d');
-    }
 
     private function durationMinutes(?string $value): ?int
     {
@@ -222,7 +213,7 @@ final class Detail extends AbstractType implements TypeInterface
     private function magnetDetails(Crawler $node): array
     {
         $text = $this->firstText($node, '.text-sm') ?? '';
-        $date = preg_match('/(\d{2}\/\d{2}\/\d{4})/', $text, $dateMatch) === 1 ? $this->date($dateMatch[1]) : null;
+        $date = preg_match('/(\d{2}\/\d{2}\/\d{4})/', $text, $dateMatch) === 1 ? $this->dateString($dateMatch[1]) : null;
         $filesCount = preg_match('/(\d+)\s*file\(s\)/i', $text, $filesMatch) === 1 ? (int) $filesMatch[1] : null;
         $sizeLabel = preg_match('/(\d+(?:[.,]\d+)?)\s*(B|KB|KIB|MB|MIB|GB|GIB|TB|TIB)\b/i', $text, $sizeMatch) === 1
             ? str_replace(',', '.', $sizeMatch[1]) . ' ' . strtoupper($sizeMatch[2])
@@ -242,10 +233,5 @@ final class Detail extends AbstractType implements TypeInterface
         }
 
         return preg_match('/(\d+(?:\.\d+)?)\s*star/i', $value, $match) === 1 ? (float) $match[1] : null;
-    }
-
-    private function cleanText(string $value): string
-    {
-        return trim((string) preg_replace('/\s+/u', ' ', html_entity_decode($value, ENT_QUOTES | ENT_HTML5)));
     }
 }

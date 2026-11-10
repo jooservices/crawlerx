@@ -8,30 +8,39 @@ use JOOservices\Client\Exceptions\NetworkConnectionException;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\CrawlHttpResponse;
 use JOOservices\CrawlerX\Dto\FetchResultDto;
+use JOOservices\CrawlerX\Fetch\Cache\RequestScopedResponseMemo;
 use Nyholm\Psr7\Response;
 
 final readonly class SeededCrawlHttpClient implements CrawlHttpClient
 {
+    private RequestScopedResponseMemo $responses;
+
     public function __construct(
         private CrawlHttpClient $inner,
         private FetchResultDto $fetch,
     ) {
+        $this->responses = new RequestScopedResponseMemo();
     }
 
     public function get(string $url, array $headers = []): CrawlHttpResponse
     {
-        if ($this->matches($url)) {
-            $responseHeaders = ['Content-Type' => $this->contentType()];
-            foreach ($this->fetch->headers as $name => $values) {
-                // Keep every value: a page can set several cookies (Set-Cookie) that a follow-up request needs.
-                $responseHeaders[$name] = $values === [] ? '' : $values;
-            }
+        return $this->responses->fetch($url, $headers, fn(): CrawlHttpResponse => $this->fetch($url, $headers));
+    }
 
-            return new PsrCrawlHttpResponse(new Response(
-                $this->fetch->status > 0 ? $this->fetch->status : 200,
-                $responseHeaders,
-                $this->fetch->body,
-            ));
+    /** @param array<string, string> $headers */
+    private function fetch(string $url, array $headers): CrawlHttpResponse
+    {
+        if ($this->matches($url)) {
+            $seed = $this->seededResponse();
+            if (
+                RequestScopedResponseMemo::isCacheable(
+                    $seed->toPsrResponse(),
+                    $this->fetch->body,
+                    $this->fetch->challengeDetected,
+                )
+            ) {
+                return $seed;
+            }
         }
 
         try {
@@ -39,6 +48,21 @@ final readonly class SeededCrawlHttpClient implements CrawlHttpClient
         } catch (NetworkConnectionException) {
             return new PsrCrawlHttpResponse(new Response(404, ['Content-Type' => 'text/plain'], ''));
         }
+    }
+
+    private function seededResponse(): CrawlHttpResponse
+    {
+        $responseHeaders = ['Content-Type' => $this->contentType()];
+        foreach ($this->fetch->headers as $name => $values) {
+            // Keep every value: a page can set several cookies (Set-Cookie) that a follow-up request needs.
+            $responseHeaders[$name] = $values === [] ? '' : $values;
+        }
+
+        return new PsrCrawlHttpResponse(new Response(
+            $this->fetch->status > 0 ? $this->fetch->status : 200,
+            $responseHeaders,
+            $this->fetch->body,
+        ));
     }
 
     private function matches(string $url): bool

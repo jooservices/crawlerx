@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\Smartflash\Types;
 
+use JOOservices\CrawlerX\Adapters\Concerns\CoercesNumbers;
 use JOOservices\CrawlerX\Adapters\Smartflash\Selectors;
 use JOOservices\CrawlerX\Adapters\Smartflash\Urls;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
@@ -17,6 +18,8 @@ use Symfony\Component\DomCrawler\Crawler;
 
 final class Gallery extends SmartflashHtmlType implements TypeInterface
 {
+    use CoercesNumbers;
+
     protected function contextLabel(): string
     {
         return 'gallery';
@@ -101,8 +104,8 @@ final class Gallery extends SmartflashHtmlType implements TypeInterface
                 'url' => $this->absolute($baseUrl, $src),
                 'alt' => $this->normalizeText((string) $img->attr('alt')),
                 'caption' => $caption === null || $caption->count() === 0 ? null : $this->normalizeText($caption->text('')),
-                'width' => $this->dimension($img->attr('width')),
-                'height' => $this->dimension($img->attr('height')),
+                'width' => $this->positiveInt($img->attr('width')),
+                'height' => $this->positiveInt($img->attr('height')),
             ]);
         }), static fn(?array $image): bool => $image !== null));
     }
@@ -216,8 +219,8 @@ final class Gallery extends SmartflashHtmlType implements TypeInterface
 
         return $url === null ? null : MovieMeta::filter([
             'url' => $url,
-            'width' => $this->dimension($image['width'] ?? null),
-            'height' => $this->dimension($image['height'] ?? null),
+            'width' => $this->positiveInt($image['width'] ?? null),
+            'height' => $this->positiveInt($image['height'] ?? null),
             'mime_type' => Urls::mimeType($url),
         ]);
     }
@@ -263,11 +266,6 @@ final class Gallery extends SmartflashHtmlType implements TypeInterface
         }
 
         return null;
-    }
-
-    private function dimension(mixed $value): ?int
-    {
-        return is_numeric($value) && (int) $value > 0 ? (int) $value : null;
     }
 
     private function stringValue(mixed $value): ?string

@@ -10,6 +10,10 @@ use RuntimeException;
 
 final class ProcOpenProcessRunner implements ProcessRunner
 {
+    public function __construct(private readonly int $maxOutputBytes = 64 * 1024 * 1024)
+    {
+    }
+
     /**
      * @param  list<string>  $command
      */
@@ -40,8 +44,21 @@ final class ProcOpenProcessRunner implements ProcessRunner
 
         while (true) {
             $status = proc_get_status($process);
-            $stdout .= (string) stream_get_contents($pipes[1]);
-            $stderr .= (string) stream_get_contents($pipes[2]);
+            $stdoutChunk = (string) stream_get_contents($pipes[1]);
+            $stderrChunk = (string) stream_get_contents($pipes[2]);
+            if (
+                strlen($stdout) + strlen($stdoutChunk) > $this->maxOutputBytes
+                || strlen($stderr) + strlen($stderrChunk) > min($this->maxOutputBytes, 1_048_576)
+            ) {
+                proc_terminate($process);
+                fclose($pipes[1]);
+                fclose($pipes[2]);
+                proc_close($process);
+
+                return new ProcessResultDto(1, '', 'process output exceeded the configured size limit.');
+            }
+            $stdout .= $stdoutChunk;
+            $stderr .= $stderrChunk;
 
             if (! $status['running']) {
                 break;
@@ -49,8 +66,20 @@ final class ProcOpenProcessRunner implements ProcessRunner
 
             if (microtime(true) > $deadline) {
                 proc_terminate($process);
-                $stdout .= (string) stream_get_contents($pipes[1]);
-                $stderr .= (string) stream_get_contents($pipes[2]);
+                $stdoutChunk = (string) stream_get_contents($pipes[1]);
+                $stderrChunk = (string) stream_get_contents($pipes[2]);
+                if (
+                    strlen($stdout) + strlen($stdoutChunk) > $this->maxOutputBytes
+                    || strlen($stderr) + strlen($stderrChunk) > min($this->maxOutputBytes, 1_048_576)
+                ) {
+                    fclose($pipes[1]);
+                    fclose($pipes[2]);
+                    proc_close($process);
+
+                    return new ProcessResultDto(1, '', 'process output exceeded the configured size limit.');
+                }
+                $stdout .= $stdoutChunk;
+                $stderr .= $stderrChunk;
                 fclose($pipes[1]);
                 fclose($pipes[2]);
                 proc_close($process);
@@ -61,8 +90,20 @@ final class ProcOpenProcessRunner implements ProcessRunner
             usleep(50_000);
         }
 
-        $stdout .= (string) stream_get_contents($pipes[1]);
-        $stderr .= (string) stream_get_contents($pipes[2]);
+        $stdoutChunk = (string) stream_get_contents($pipes[1]);
+        $stderrChunk = (string) stream_get_contents($pipes[2]);
+        if (
+            strlen($stdout) + strlen($stdoutChunk) > $this->maxOutputBytes
+            || strlen($stderr) + strlen($stderrChunk) > min($this->maxOutputBytes, 1_048_576)
+        ) {
+            fclose($pipes[1]);
+            fclose($pipes[2]);
+            proc_close($process);
+
+            return new ProcessResultDto(1, '', 'process output exceeded the configured size limit.');
+        }
+        $stdout .= $stdoutChunk;
+        $stderr .= $stderrChunk;
         fclose($pipes[1]);
         fclose($pipes[2]);
         $exitCode = proc_close($process);

@@ -4,18 +4,21 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\Xcity\Types;
 
-use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Adapters\AbstractType;
+use JOOservices\CrawlerX\Adapters\Concerns\CleansText;
 use JOOservices\CrawlerX\Adapters\Xcity\UrlNormalizer;
+use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
 use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
-use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
+use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class Detail extends AbstractType implements TypeInterface
 {
+    use CleansText;
+
     public function __construct(
         private readonly CrawlHttpClient $client,
         private readonly UrlNormalizer $normalizer = new UrlNormalizer(),
@@ -304,10 +307,5 @@ final class Detail extends AbstractType implements TypeInterface
         }
 
         return preg_match('/\d+/', $value, $match) === 1 ? (int) $match[0] : null;
-    }
-
-    private function cleanText(string $value): string
-    {
-        return trim((string) preg_replace('/\s+/u', ' ', html_entity_decode($value, ENT_QUOTES | ENT_HTML5)));
     }
 }

@@ -38,7 +38,7 @@ final class Selectors
 
     public const DETAIL_COVER = 'img#video_jacket_img';
 
-    public const DETAIL_SCREENSHOTS = '#video_preview a.previewthumbs';
+    public const DETAIL_SCREENSHOTS = '#video_preview a.previewthumbs, div.previewthumbs > a[href]';
 
     public const PERFORMER_LINKS = 'div.starbox a[href*="star_info.php"], div.starbox a[href*="vl_star.php"]';
 

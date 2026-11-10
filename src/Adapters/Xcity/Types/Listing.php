@@ -4,19 +4,26 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\Xcity\Types;
 
-use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Adapters\AbstractType;
+use JOOservices\CrawlerX\Adapters\Concerns\CleansText;
+use JOOservices\CrawlerX\Adapters\Concerns\CoercesStrings;
+use JOOservices\CrawlerX\Adapters\Concerns\ReadsQueryNumbers;
 use JOOservices\CrawlerX\Adapters\Xcity\UrlNormalizer;
+use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
-use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
+use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class Listing extends AbstractType implements TypeInterface
 {
+    use CleansText;
+    use CoercesStrings;
+    use ReadsQueryNumbers;
+
     public function __construct(
         private readonly CrawlHttpClient $client,
         private readonly UrlNormalizer $normalizer = new UrlNormalizer(),
@@ -39,7 +46,7 @@ final class Listing extends AbstractType implements TypeInterface
             }
 
             $absolute = $this->normalizer->absolute($request->url, $href);
-            $externalId = $this->externalId($absolute);
+            $externalId = $this->nonEmptyString($this->queryParam($absolute, 'id'));
             if ($externalId === null || isset($items[$absolute])) {
                 return;
             }
@@ -100,7 +107,7 @@ final class Listing extends AbstractType implements TypeInterface
             $nextUrl = is_string($href) && trim($href) !== '' ? $this->normalizer->absolute($url, $href) : null;
         }
 
-        $nextPage = $nextUrl !== null ? $this->pageFromUrl($nextUrl) : null;
+        $nextPage = $nextUrl !== null ? $this->positiveNumericQueryNumber($nextUrl, 'page') : null;
 
         return new CrawlPaginationDto(
             currentPage: $currentPage,
@@ -109,19 +116,6 @@ final class Listing extends AbstractType implements TypeInterface
             nextUrl: $nextUrl,
             hasNextPage: $nextUrl !== null,
         );
-    }
-
-    private function externalId(string $url): ?string
-    {
-        $query = parse_url($url, PHP_URL_QUERY);
-        if (! is_string($query) || $query === '') {
-            return null;
-        }
-
-        parse_str($query, $params);
-        $id = $params['id'] ?? null;
-
-        return is_string($id) && trim($id) !== '' ? trim($id) : null;
     }
 
     private function itemTitle(Crawler $node): ?string
@@ -138,23 +132,5 @@ final class Listing extends AbstractType implements TypeInterface
         }
 
         return null;
-    }
-
-    private function pageFromUrl(string $url): ?int
-    {
-        $query = parse_url($url, PHP_URL_QUERY);
-        if (! is_string($query) || $query === '') {
-            return null;
-        }
-
-        parse_str($query, $params);
-        $page = $params['page'] ?? null;
-
-        return is_numeric($page) && (int) $page > 0 ? (int) $page : null;
-    }
-
-    private function cleanText(string $value): string
-    {
-        return trim((string) preg_replace('/\s+/u', ' ', html_entity_decode($value, ENT_QUOTES | ENT_HTML5)));
     }
 }

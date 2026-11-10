@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Adapters\Jable\Types;
 
 use JOOservices\CrawlerX\Adapters\AbstractType;
+use JOOservices\CrawlerX\Adapters\Concerns\MatchesUrlPath;
 use JOOservices\CrawlerX\Adapters\Concerns\ParsesHtml;
+use JOOservices\CrawlerX\Adapters\Jable\Selectors;
 use JOOservices\CrawlerX\Adapters\Jable\UrlNormalizer;
 use JOOservices\CrawlerX\Contracts\CrawlHttpClient;
 use JOOservices\CrawlerX\Contracts\TypeInterface;
@@ -13,10 +15,12 @@ use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Dto\Entity\PerformerDto;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
+use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class PerformerDetail extends AbstractType implements TypeInterface
 {
+    use MatchesUrlPath;
     use ParsesHtml;
 
     public function __construct(
@@ -48,6 +52,7 @@ final class PerformerDetail extends AbstractType implements TypeInterface
             data: [
                 'name' => $name,
                 'profile_image_url' => $this->imageUrl($crawler, $request->url),
+                'raw_profile' => MovieMeta::filter(['videos' => $this->firstText($crawler, '.title-box span.inactive-color')]),
             ],
         );
 
@@ -71,33 +76,16 @@ final class PerformerDetail extends AbstractType implements TypeInterface
         return null;
     }
 
+    /** The model's own photo; a page without one gives null (a video screenshot or the avatar placeholder is not it). */
     private function imageUrl(Crawler $crawler, string $baseUrl): ?string
     {
-        $src = null;
-        foreach (['.title-box img', 'section img', 'img[alt]'] as $selector) {
-            $nodes = $crawler->filter($selector);
-            if ($nodes->count() === 0) {
-                continue;
-            }
+        $src = $this->firstAttribute($crawler, Selectors::MODEL_PHOTO, 'data-src') ?? $this->firstAttribute($crawler, Selectors::MODEL_PHOTO, 'src');
 
-            $src = $nodes->first()->attr('src');
-            if (is_string($src) && trim($src) !== '') {
-                break;
-            }
-        }
-
-        return is_string($src) && trim($src) !== '' ? $this->normalizer->absolute($baseUrl, trim($src)) : null;
+        return $src === null ? null : $this->normalizer->absolute($baseUrl, $src);
     }
 
     private function externalId(string $url): ?string
     {
-        $path = parse_url($url, PHP_URL_PATH);
-        if (! is_string($path) || preg_match('#/models/([^/]+)/?#i', $path, $match) !== 1) {
-            return null;
-        }
-
-        $slug = trim($match[1], '/');
-
-        return $slug !== '' ? $slug : null;
+        return $this->pathMatch($url, '#/models/([^/]+)/?#i');
     }
 }

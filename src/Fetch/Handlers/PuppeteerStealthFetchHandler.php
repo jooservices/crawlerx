@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Fetch\Handlers;
 
-use JOOservices\CrawlerX\Contracts\FetchMethodHandler;
+use JOOservices\CrawlerX\Contracts\GuardedRedirectFetchMethodHandler;
 use JOOservices\CrawlerX\Contracts\ProcessRunner;
 use JOOservices\CrawlerX\Dto\CrawlOptionsDto;
 use JOOservices\CrawlerX\Dto\FetchResultDto;
@@ -15,7 +15,7 @@ use JOOservices\CrawlerX\Fetch\BrowserServiceHint;
 use JOOservices\CrawlerX\Fetch\ChallengeDetector;
 use JOOservices\CrawlerX\Fetch\FetchRuntimeConfig;
 
-final class PuppeteerStealthFetchHandler implements FetchMethodHandler
+final class PuppeteerStealthFetchHandler implements GuardedRedirectFetchMethodHandler
 {
     public function __construct(
         private readonly FetchRuntimeConfig $runtime,
@@ -26,6 +26,11 @@ final class PuppeteerStealthFetchHandler implements FetchMethodHandler
     public function supports(FetchMethod $method): bool
     {
         return $method === FetchMethod::PuppeteerStealth;
+    }
+
+    public function supportsGuardedRedirects(): bool
+    {
+        return true;
     }
 
     public function fetch(
@@ -52,6 +57,9 @@ final class PuppeteerStealthFetchHandler implements FetchMethodHandler
             'headless' => $playwright->headless,
             'navigationTimeoutMs' => $playwright->navigationTimeoutMs,
             'userAgent' => $playwright->userAgent,
+            'maxResponseBytes' => $this->runtime->maxResponseBytes,
+            'respectRobots' => $profile->respectRobots ?? $this->runtime->respectRobots,
+            'robotsUserAgent' => $this->runtime->userAgent ?? $playwright->userAgent,
         ], JSON_THROW_ON_ERROR));
 
         try {
@@ -90,7 +98,6 @@ final class PuppeteerStealthFetchHandler implements FetchMethodHandler
             cookies: $cookies,
             error: $ok ? null : (is_string($decoded['error'] ?? null) ? $decoded['error'] : 'puppeteer fetch failed'),
             ssrfReason: is_string($decoded['ssrfReason'] ?? null) ? $decoded['ssrfReason'] : null,
-            ssrfAddress: is_string($decoded['ssrfAddress'] ?? null) ? $decoded['ssrfAddress'] : null,
         );
     }
 

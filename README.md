@@ -5,7 +5,7 @@
 [![Quality Gate (master)](https://sonarcloud.io/api/project_badges/measure?project=jooservices_crawlerx&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=jooservices_crawlerx)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/jooservices/crawlerx/badge)](https://securityscorecards.dev/viewer/?uri=github.com/jooservices/crawlerx)
 [![PHP Version](https://img.shields.io/badge/PHP-8.5%2B-blue.svg)](https://www.php.net/)
-[![Release 1.3.1](https://img.shields.io/badge/release-1.3.1-blue.svg)](CHANGELOG.md)
+[![Release 1.7.0](https://img.shields.io/badge/release-1.7.0-blue.svg)](CHANGELOG.md)
 [![GitHub Release](https://img.shields.io/github/v/release/jooservices/crawlerx?display_name=tag)](https://github.com/jooservices/crawlerx/releases)
 [![Packagist Version](https://img.shields.io/packagist/v/jooservices/crawlerx)](https://packagist.org/packages/jooservices/crawlerx)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -26,7 +26,7 @@ echo $item->meta['movie']['code'];              // YMDS-282
 
 > [!NOTE]
 > Packagist `v1.0.0` is the retired Laravel implementation. This
-> framework-agnostic rebuild is released as `1.3.1` and provides the API
+> framework-agnostic rebuild is released as `1.7.0` and provides the API
 > documented here.
 
 ## Features
@@ -71,10 +71,10 @@ The path installation uses this checkout's actual requirements, including
 
 ### Tagged release
 
-Released as `1.3.1` — install from Packagist:
+Released as `1.7.0` — install from Packagist:
 
 ```bash
-composer require jooservices/crawlerx:^1.3
+composer require jooservices/crawlerx:^1.7
 ```
 
 The retired `v1.0.0` is the previous Laravel implementation and does not
@@ -296,6 +296,7 @@ below come from each adapter's current manifest. To add a source, see
 | PLUM | `plum` | Yes | Yes | — | — | — |
 | 1Pondo | `onepondo` | Yes | Yes | — | — | — |
 | 10Musume | `10musume` | Yes | Yes | — | — | — |
+| Asagei Plus | `asagei` | Yes | — | Yes | — | — |
 | Aisex | `aisex` | — | — | — | Yes | Yes |
 | Avfan | `avfan` | Yes | Yes | — | — | — |
 | Avfan Profiles | `avfan_profiles` | — | — | — | Yes | Yes |
@@ -320,15 +321,18 @@ below come from each adapter's current manifest. To add a source, see
 | JAVLibrary | `javlibrary` | Yes | Yes | — | Yes | Yes |
 | JAVMenu | `javmenu` | Yes | Yes | — | Yes | Yes |
 | JavPhotos | `javphotos` | Yes | — | Yes | — | — |
+| MGStage (needs a Japan exit) | `mgstage` | Yes | Yes | — | — | — |
 | Minnano AV | `minnanoav` | Yes | Yes | — | Yes | Yes |
 | MissAV | `missav` | Yes | Yes | — | — | — |
 | Muramura | `muramura` | Yes | Yes | — | — | — |
 | Next11 | `next11` | Yes | Yes | — | — | — |
 | OneJav | `onejav` | Yes | Yes | — | — | — |
 | Smart FLASH | `smartflash` | Yes | — | Yes | — | — |
+| WPB Web Gravure | `wpb` | Yes | — | Yes | — | — |
 | Tokyo-Hot | `tokyohot` | Yes | Yes | — | — | — |
 | Warashi | `warashi` | — | — | Yes | Yes | Yes |
 | Wikimedia Commons | `commons` | Yes | — | Yes | — | Yes |
+| Wikidata | `wikidata` | Yes | — | — | — | Yes |
 | XCITY | `xcity` | Yes | Yes | — | Yes | Yes |
 
 DUGA, Tokyo-Hot, Caribbeancom, HEYZO, and JavBus use accepted adult landing
@@ -339,6 +343,25 @@ URL shape and parser are implemented; availability can still be affected by
 site downtime, blocking, region restrictions, or DOM changes.
 
 ## Live crawl
+
+### Adapter health report
+
+Run a manual health report across adapter samples. This performs live requests,
+spaces requests to each hostname by at least 10 seconds, and writes Markdown and
+JSON files to `build/live-check/`. It is not part of CI.
+
+```bash
+composer live-check:report
+composer live-check:report -- --only=javbus
+composer live-check:report -- --only=javbus --proxy=http://127.0.0.1:8080
+```
+
+`--proxy` sets CrawlerX's HTTP fetch proxy. Browser and solver sidecars use
+their own proxy configuration.
+
+The report checks at most one listing and one detail sample for each adapter
+that supports them. See [the health report guide](docs/testing/live-check-report.md)
+for sample selection and the optional manifest `runtime.live` override.
 
 The live tools read `PLAYWRIGHT_URL` and `FLARESOLVERR_URL` from `.env` (copy `.env.example`; real environment variables win) and start nothing themselves. Point `.env` at any running services. To use this project's own Docker services instead, start them and use the Docker values listed in `.env.example`:
 
@@ -431,14 +454,14 @@ further; use comma-separated exact hosts or `*.example.org` patterns. The
 allowlist does not override address blocking. Private-network access is enabled
 only by the dedicated `docker-compose.fetch-lab.yml` test overlay. Requests
 blocked by this policy return the non-retryable `ssrf_blocked` error (with
-`ssrfReason` / `ssrfAddress` when known) and stop the fetch fallback chain.
+`ssrfReason` when known) and stop the fetch fallback chain.
 
 The browser image is built with `CRAWLERX_VERSION` set to the matching
-CrawlerX package release (for example, `1.3.1`); the sidecar reports that value
+CrawlerX package release (for example, `1.7.0`); the sidecar reports that value
 in its health response. With Compose, set it when building:
 
 ```bash
-CRAWLERX_VERSION=1.3.1 docker compose build node
+CRAWLERX_VERSION=1.7.0 docker compose build node
 ```
 
 Compose's local image name remains
@@ -453,9 +476,11 @@ Everything is configured through environment variables. Copy `.env.example` to `
 | --- | --- |
 | `PLAYWRIGHT_URL` | One Playwright container for this node |
 | `FLARESOLVERR_URL` | One FlareSolverr container for this node |
+| `CRAWLERX_FLARESOLVERR_PROXY_URL` | Egress proxy that enforces SSRF and robots policy for FlareSolverr redirects; fallback is skipped when unset |
 | `CRAWLERX_PLAYWRIGHT_SCRIPT` | Path to `playwright-fetch.mjs` |
 | `CRAWLERX_PUPPETEER_SCRIPT` | Path to `puppeteer-stealth-fetch.mjs` |
 | `CRAWLERX_CURL_IMPERSONATE` | curl-impersonate executable |
+| `CRAWLERX_RESPECT_ROBOTS` | Disable the `robots.txt` guard (`false`/`0`/`no`/`off`); default on |
 
 ## Testing
 
@@ -517,14 +542,22 @@ HTML before committing it and keep live network access out of CI.
 
 ## Architecture
 
-```text
-CrawlerX facade
-    -> immutable CrawlRequestBuilder
-    -> URL/site/type detection
-    -> fetch-plan selection and fallback chain
-    -> site adapter parser
-    -> CrawlItemResultDto or CrawlListResultDto
-```
+For layer responsibilities, the request lifecycle diagram, fetch guards, and
+extension points, see [the architecture guide](docs/architecture.md).
+
+Layer boundaries for Adapters, Fetch, Dto, Support and Contracts are declared in
+[`deptrac.yaml`](deptrac.yaml). Run `composer lint:deptrac` locally; CI runs the
+same analysis in the `Architecture (Deptrac)` job. The required
+`Coverage upload` check fails unless architecture succeeds. See
+[CONTRIBUTING.md](CONTRIBUTING.md).
+
+The 1.7 architecture decisions are recorded in these short ADRs:
+
+- [Single-purpose concern traits](docs/decisions/001-concern-traits-per-responsibility.md)
+- [Robots checking on by default](docs/decisions/002-robots-default-on.md)
+- [Outbound proxies are opt-in](docs/decisions/003-proxy-opt-in.md)
+- [Response caching is off by default](docs/decisions/004-response-cache-default-off.md)
+- [Deptrac CI enforcement and the superseded report-only decision](docs/decisions/005-deptrac-report-only.md)
 
 Adapter behavior and supported page types are declared under
 `src/Adapters/*/manifest.json`. `CrawlerXFactory::reset()` is available for

@@ -4,20 +4,27 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX;
 
+use JOOservices\Client\Client\ClientBuilder;
+use JOOservices\Client\Exceptions\DownloadSizeExceededException;
+use JOOservices\Client\Exceptions\RequestException;
 use JOOservices\CrawlerX\Enums\FetchMethod;
 use JOOservices\CrawlerX\Contracts\LoginCookieProvider;
 use JOOservices\CrawlerX\Fetch\BrowserServiceProcessRunner;
+use JOOservices\CrawlerX\Fetch\Cache\ResponseCache;
 use JOOservices\CrawlerX\Fetch\FetchFallbackChain;
 use JOOservices\CrawlerX\Fetch\FetchPlanResolver;
 use JOOservices\CrawlerX\Fetch\FetchRuntimeConfig;
 use JOOservices\CrawlerX\Fetch\Guard\HostCircuit;
 use JOOservices\CrawlerX\Fetch\Guard\HostThrottle;
+use JOOservices\CrawlerX\Fetch\Guard\RobotsGuard;
 use JOOservices\CrawlerX\Fetch\Handlers\CurlImpersonateFetchHandler;
 use JOOservices\CrawlerX\Fetch\Handlers\FlaresolverrFetchHandler;
 use JOOservices\CrawlerX\Fetch\Handlers\HttpFetchHandler;
 use JOOservices\CrawlerX\Fetch\Handlers\PlaywrightFamilyFetchHandler;
 use JOOservices\CrawlerX\Fetch\Handlers\PuppeteerStealthFetchHandler;
 use JOOservices\CrawlerX\Fetch\ProcOpenProcessRunner;
+use JOOservices\CrawlerX\Fetch\ResponseBodyReader;
+use JOOservices\CrawlerX\Fetch\ResponseBodyTooLargeException;
 use JOOservices\CrawlerX\Fetch\Session\CookieHandoffStore;
 use JOOservices\CrawlerX\Fetch\Session\SessionStore;
 use JOOservices\CrawlerX\Registry\AdapterRegistry;
@@ -28,9 +35,14 @@ use JOOservices\CrawlerX\Services\CrawlOrchestrator;
 use JOOservices\CrawlerX\Services\CrawlerXService;
 use JOOservices\CrawlerX\Services\UrlClassifier;
 use Psr\SimpleCache\CacheInterface;
+use Psr\Http\Message\RequestInterface;
+use Closure;
+use Throwable;
 
 final class CrawlerXFactory
 {
+    private const MAX_ROBOTS_REDIRECTS = 5;
+
     private static ?CrawlOrchestrator $orchestrator = null;
 
     private static ?FetchFallbackChain $fetchChain = null;
@@ -39,6 +51,18 @@ final class CrawlerXFactory
 
     private static ?CacheInterface $throttleCache = null;
 
+    private static ?CacheInterface $responseCache = null;
+
+    /** @var Closure(string): bool|null */
+    private static ?Closure $beforeOutboundRequest = null;
+
+    /** @var Closure(string): bool|null */
+    private static ?Closure $beforeRobotsRequest = null;
+
+    /** @var Closure(): void|null */
+    private static ?Closure $onUnsupportedRedirect = null;
+
+    /** Builds the cached crawler orchestrator with the current factory configuration. */
     public static function create(): CrawlOrchestrator
     {
         if (self::$orchestrator instanceof CrawlOrchestrator) {
@@ -46,7 +70,10 @@ final class CrawlerXFactory
         }
 
         $manifests = new FileAdapterManifestRegistry();
-        $registry = new AdapterRegistry(new ClientFactory(), $manifests);
+        $registry = new AdapterRegistry(
+            new ClientFactory(self::$beforeOutboundRequest, self::$onUnsupportedRedirect),
+            $manifests,
+        );
         $registry->registerFromManifests($manifests);
 
         $service = new CrawlerXService($registry, new AdapterExecutor());
@@ -61,44 +88,130 @@ final class CrawlerXFactory
         return self::$orchestrator;
     }
 
+    /** Uses a custom fetch chain and invalidates the cached orchestrator. */
     public static function useFetchChain(FetchFallbackChain $chain): void
     {
         self::$fetchChain = $chain;
         self::$orchestrator = null;
     }
 
-    public static function configure(?LoginCookieProvider $logins = null, ?CacheInterface $throttleCache = null): void
-    {
+    /** Applies crawler dependencies and the optional outbound request callbacks.
+     *
+     * @param Closure(string): bool|null $beforeOutboundRequest
+     * @param Closure(string): bool|null $beforeRobotsRequest
+     * @param Closure(): void|null $onUnsupportedRedirect
+     */
+    public static function configure(
+        ?LoginCookieProvider $logins = null,
+        ?CacheInterface $throttleCache = null,
+        ?CacheInterface $responseCache = null,
+        ?Closure $beforeOutboundRequest = null,
+        ?Closure $beforeRobotsRequest = null,
+        ?Closure $onUnsupportedRedirect = null,
+    ): void {
         self::$loginCookieProvider = $logins;
         self::$throttleCache = $throttleCache;
+        self::$responseCache = $responseCache;
+        self::$beforeOutboundRequest = $beforeOutboundRequest;
+        self::$beforeRobotsRequest = $beforeRobotsRequest;
+        self::$onUnsupportedRedirect = $onUnsupportedRedirect;
         self::$fetchChain = null;
         self::$orchestrator = null;
     }
 
+    /** Clears configured dependencies and cached crawler state. */
     public static function reset(): void
     {
         self::$orchestrator = null;
         self::$fetchChain = null;
         self::$loginCookieProvider = null;
         self::$throttleCache = null;
+        self::$responseCache = null;
+        self::$beforeOutboundRequest = null;
+        self::$beforeRobotsRequest = null;
+        self::$onUnsupportedRedirect = null;
     }
 
+    /** Builds the default HTTP, browser, solver, and guard chain. */
     private static function defaultFetchChain(): FetchFallbackChain
     {
         $runtime = FetchRuntimeConfig::fromEnvironment();
-        $runner = new ProcOpenProcessRunner();
+        $runner = new ProcOpenProcessRunner($runtime->maxResponseBytes * 6 + 65_536);
+        $curlRunner = new ProcOpenProcessRunner($runtime->maxResponseBytes);
         $browserRunner = $runtime->playwrightUrl === null
             ? $runner
-            : new BrowserServiceProcessRunner($runtime->playwrightUrl);
+            : new BrowserServiceProcessRunner($runtime->playwrightUrl, maxResponseBytes: $runtime->maxResponseBytes);
         $cookies = new CookieHandoffStore();
         $sessions = new SessionStore();
-        $clientFactory = new ClientFactory();
+        $clientFactory = new ClientFactory(self::$beforeOutboundRequest, self::$onUnsupportedRedirect);
+        $robotsClientFactory = new ClientFactory();
+        $beforeRobotsRequest = self::$beforeRobotsRequest ?? self::$beforeOutboundRequest;
 
         $playwright = new PlaywrightFamilyFetchHandler($runtime, $browserRunner);
+        $robotsGuard = new RobotsGuard(
+            fetchRobotsTxt: static function (string $url) use ($robotsClientFactory, $runtime, $beforeRobotsRequest): ?string {
+                // A faked client serves fixtures and records every request; there is no robots.txt
+                // fixture, so skip the fetch and treat the host as unrestricted (fail-open).
+                if (ClientBuilder::isFaked()) {
+                    return '';
+                }
+
+                try {
+                    $response = $robotsClientFactory->factory([
+                        'timeout' => 10,
+                        'max_response_bytes' => $runtime->maxResponseBytes,
+                        'allow_redirects' => ['max' => self::MAX_ROBOTS_REDIRECTS],
+                        'headers' => $runtime->userAgent !== null && $runtime->userAgent !== ''
+                            ? ['User-Agent' => $runtime->userAgent]
+                            : [],
+                        'before_request' => $beforeRobotsRequest === null
+                            ? null
+                            : static function (RequestInterface $request) use ($beforeRobotsRequest): void {
+                                if (! $beforeRobotsRequest((string) $request->getUri())) {
+                                    throw new RequestException($request, 'Robots.txt redirect destination was rejected.');
+                                }
+                            },
+                    ])->get($url);
+                    $psr = $response->toPsrResponse();
+                    $status = $psr->getStatusCode();
+
+                    if ($status === 404) {
+                        return '';
+                    }
+
+                    return $status >= 200 && $status < 300
+                        ? (new ResponseBodyReader($runtime->maxResponseBytes))->read($psr->getBody())
+                        : null;
+                } catch (ResponseBodyTooLargeException) {
+                    return "User-agent: *\nDisallow: /\n";
+                } catch (DownloadSizeExceededException) {
+                    return "User-agent: *\nDisallow: /\n";
+                } catch (Throwable) {
+                    return null;
+                }
+            },
+            cache: self::$throttleCache,
+            logger: static function (string $message): void {
+                error_log($message);
+            },
+        );
+        $http = new HttpFetchHandler(
+            $clientFactory,
+            $cookies,
+            $sessions,
+            self::$loginCookieProvider,
+            $runtime->maxResponseBytes,
+            $robotsGuard,
+            $runtime->userAgent,
+            $runtime->respectRobots,
+        );
+        $httpHandler = self::$responseCache !== null && $runtime->responseCacheTtlSeconds > 0
+            ? new ResponseCache($http, self::$responseCache, $runtime->responseCacheTtlSeconds)
+            : $http;
 
         return new FetchFallbackChain([
-            FetchMethod::Http->value => new HttpFetchHandler($clientFactory, $cookies, $sessions, self::$loginCookieProvider),
-            FetchMethod::CurlImpersonate->value => new CurlImpersonateFetchHandler($runtime, $runner, $cookies, $sessions, self::$loginCookieProvider),
+            FetchMethod::Http->value => $httpHandler,
+            FetchMethod::CurlImpersonate->value => new CurlImpersonateFetchHandler($runtime, $curlRunner, $cookies, $sessions, self::$loginCookieProvider, $robotsGuard),
             FetchMethod::Playwright->value => $playwright,
             FetchMethod::PlaywrightStealth->value => $playwright,
             FetchMethod::ChromeStealth->value => $playwright,
@@ -110,6 +223,6 @@ final class CrawlerXFactory
         ), hostCircuit: new HostCircuit(
             cache: self::$throttleCache,
             nodeId: $runtime->nodeId,
-        ));
+        ), robotsGuard: $robotsGuard, beforeOutboundRequest: self::$beforeOutboundRequest, requireFlareEgressProxy: true);
     }
 }
