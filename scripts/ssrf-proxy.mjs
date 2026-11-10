@@ -112,6 +112,7 @@ export async function createSsrfProxyServer({
         void forwardUpgrade(request, clientSocket, head);
     });
 
+    const certificateSpkiHash = certificate().spkiHash;
     await new Promise((resolve, reject) => {
         server.once('error', reject);
         server.listen(0, '127.0.0.1', () => {
@@ -484,7 +485,7 @@ export async function createSsrfProxyServer({
 
     return {
         url: `http://127.0.0.1:${address.port}`,
-        certificateSpkiHash: certificate().spkiHash,
+        certificateSpkiHash,
         wasBlocked: () => blocked,
         blockedError: () => blockedError,
         wasCredentialRedirectBlocked: () => credentialRedirectBlocked,

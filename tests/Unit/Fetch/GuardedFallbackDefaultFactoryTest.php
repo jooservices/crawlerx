@@ -57,24 +57,7 @@ final class GuardedFallbackDefaultFactoryTest extends TestCase
 
     public function test_default_factory_runs_an_allowed_browser_fallback_with_robots_enabled(): void
     {
-        $nodeDirectory = sys_get_temp_dir() . '/crawlerx-node-' . bin2hex(random_bytes(8));
-        self::assertTrue(mkdir($nodeDirectory, 0700));
-        $nodeBinary = $nodeDirectory . '/node';
-        file_put_contents($nodeBinary, <<<'SH'
-            #!/bin/sh
-            if grep -q '"respectRobots":true' "${2#--config=}"; then
-                printf '%s\n' '{"html":"<html><body>allowed browser fallback</body></html>","status":200,"finalUrl":"https://example.test/page"}'
-            else
-                printf '%s\n' '{"html":"<html><body>allowed browser fallback</body></html>","status":500,"finalUrl":"https://example.test/page"}'
-            fi
-            SH);
-        chmod($nodeBinary, 0700);
-        putenv('PATH=' . $nodeDirectory . PATH_SEPARATOR . (getenv('PATH') ?: ''));
-
-        $script = tempnam(sys_get_temp_dir(), 'crawlerx-browser-fallback-');
-        self::assertNotFalse($script);
-        file_put_contents($script, 'browser script stub');
-        putenv('CRAWLERX_PLAYWRIGHT_SCRIPT=' . $script);
+        $stub = $this->installBrowserStub(true);
         ClientBuilder::fake();
 
         try {
@@ -90,9 +73,46 @@ final class GuardedFallbackDefaultFactoryTest extends TestCase
             self::assertSame('<html><body>allowed browser fallback</body></html>', $result->body);
             self::assertSame('ok', $result->attempts[0]['outcome']);
         } finally {
-            unlink($script);
-            unlink($nodeBinary);
-            rmdir($nodeDirectory);
+            $this->removeBrowserStub($stub);
+        }
+    }
+
+    public function test_browser_fallback_preserves_a_site_level_robots_opt_out(): void
+    {
+        $stub = $this->installBrowserStub(false);
+        ClientBuilder::fake();
+
+        try {
+            $result = $this->defaultChain()->fetch(
+                'https://example.test/page',
+                $this->profile(FetchMethod::Playwright, respectRobots: false),
+                [FetchMethod::Playwright],
+            );
+
+            self::assertTrue($result->ok);
+            self::assertSame(FetchMethod::Playwright, $result->methodUsed);
+        } finally {
+            $this->removeBrowserStub($stub);
+        }
+    }
+
+    public function test_browser_fallback_preserves_a_site_level_robots_opt_in(): void
+    {
+        putenv('CRAWLERX_RESPECT_ROBOTS=false');
+        $stub = $this->installBrowserStub(true);
+        ClientBuilder::fake();
+
+        try {
+            $result = $this->defaultChain()->fetch(
+                'https://example.test/page',
+                $this->profile(FetchMethod::Playwright, respectRobots: true),
+                [FetchMethod::Playwright],
+            );
+
+            self::assertTrue($result->ok);
+            self::assertSame(FetchMethod::Playwright, $result->methodUsed);
+        } finally {
+            $this->removeBrowserStub($stub);
         }
     }
 
@@ -144,7 +164,42 @@ final class GuardedFallbackDefaultFactoryTest extends TestCase
         ], JSON_THROW_ON_ERROR);
     }
 
-    private function profile(FetchMethod $method): SiteProfileDto
+    /** @return array{directory: string, binary: string, script: string} */
+    private function installBrowserStub(bool $expectedRobots): array
+    {
+        $directory = sys_get_temp_dir() . '/crawlerx-node-' . bin2hex(random_bytes(8));
+        self::assertTrue(mkdir($directory, 0700));
+        $binary = $directory . '/node';
+        $expected = $expectedRobots ? 'true' : 'false';
+        $shell = str_replace('__EXPECTED_ROBOTS__', $expected, <<<'SH'
+            #!/bin/sh
+            if grep -q '"respectRobots":__EXPECTED_ROBOTS__' "${2#--config=}"; then
+                printf '%s\n' '{"html":"<html><body>allowed browser fallback</body></html>","status":200,"finalUrl":"https://example.test/page"}'
+            else
+                printf '%s\n' '{"html":"<html><body>allowed browser fallback</body></html>","status":500,"finalUrl":"https://example.test/page"}'
+            fi
+            SH);
+        file_put_contents($binary, $shell);
+        chmod($binary, 0700);
+        putenv('PATH=' . $directory . PATH_SEPARATOR . (getenv('PATH') ?: ''));
+
+        $script = tempnam(sys_get_temp_dir(), 'crawlerx-browser-fallback-');
+        self::assertNotFalse($script);
+        file_put_contents($script, 'browser script stub');
+        putenv('CRAWLERX_PLAYWRIGHT_SCRIPT=' . $script);
+
+        return ['directory' => $directory, 'binary' => $binary, 'script' => $script];
+    }
+
+    /** @param array{directory: string, binary: string, script: string} $stub */
+    private function removeBrowserStub(array $stub): void
+    {
+        unlink($stub['script']);
+        unlink($stub['binary']);
+        rmdir($stub['directory']);
+    }
+
+    private function profile(FetchMethod $method, ?bool $respectRobots = null): SiteProfileDto
     {
         return new SiteProfileDto(
             slug: 'guarded-fallback-test',
@@ -154,6 +209,7 @@ final class GuardedFallbackDefaultFactoryTest extends TestCase
             fetchChain: [$method],
             http: new HttpProfileDto(),
             playwright: new PlaywrightProfileDto(userAgent: 'CrawlerX guarded fallback test'),
+            respectRobots: $respectRobots,
         );
     }
 }

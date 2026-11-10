@@ -52,12 +52,7 @@ export function allowsRobotsPath(content, path, userAgent) {
 
     let bestRule = null;
     for (const rule of group.rules) {
-        const anchored = rule.pattern.endsWith('$');
-        const pattern = anchored ? rule.pattern.slice(0, -1) : rule.pattern;
-        const expression = pattern
-            .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
-            .replaceAll('*', '.*');
-        if (!new RegExp(`^${expression}${anchored ? '$' : ''}`).test(path)) continue;
+        if (!matchesPattern(rule.pattern, path)) continue;
 
         if (
             bestRule === null
@@ -69,4 +64,30 @@ export function allowsRobotsPath(content, path, userAgent) {
     }
 
     return bestRule === null || bestRule.allow;
+}
+
+function matchesPattern(pattern, path) {
+    const anchored = pattern.endsWith('$');
+    const segments = (anchored ? pattern.slice(0, -1) : pattern).split('*');
+    let position = 0;
+
+    for (let index = 0; index < segments.length; index += 1) {
+        const segment = segments[index];
+        if (index === 0) {
+            if (!path.startsWith(segment)) return false;
+            position = segment.length;
+            continue;
+        }
+
+        if (anchored && index === segments.length - 1) {
+            const suffixPosition = path.length - segment.length;
+            return suffixPosition >= position && path.endsWith(segment);
+        }
+
+        const found = path.indexOf(segment, position);
+        if (found < 0) return false;
+        position = found + segment.length;
+    }
+
+    return !anchored || position === path.length;
 }
