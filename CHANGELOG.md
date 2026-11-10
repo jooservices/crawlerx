@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-11-10
+
 ### Added
 
 - Add a manual live health report for adapter samples with per-host pacing, a two-outbound-request budget including robots and redirects, accurate failure classifications, fallback-aware challenge results, optional HTTP proxy routing, and Markdown/JSON output (JOOXCR-474).
@@ -338,10 +340,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   implementation (Jable performer listing was an alias to the movie parser).
 - Catalog `external_id` for HEYZO/FC2 included the code prefix inconsistently.
 
+[1.7.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.7.0
 [1.3.1]: https://github.com/jooservices/crawlerx/releases/tag/v1.3.1
 [1.3.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.3.0
 [1.2.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.2.0
 [1.1.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.1.0
 
+[1.7.0...1.6.0]: https://github.com/jooservices/crawlerx/compare/v1.6.0...v1.7.0
 [1.3.1...1.3.0]: https://github.com/jooservices/crawlerx/compare/v1.3.0...v1.3.1
 [1.3.0...1.2.0]: https://github.com/jooservices/crawlerx/compare/v1.2.0...v1.3.0
