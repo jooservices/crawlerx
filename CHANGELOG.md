@@ -347,6 +347,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Catalog `external_id` for HEYZO/FC2 included the code prefix inconsistently.
 
 [1.7.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.7.0
+[1.6.1]: https://github.com/jooservices/crawlerx/releases/tag/v1.6.1
 [1.3.1]: https://github.com/jooservices/crawlerx/releases/tag/v1.3.1
 [1.3.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.3.0
 [1.2.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.2.0
