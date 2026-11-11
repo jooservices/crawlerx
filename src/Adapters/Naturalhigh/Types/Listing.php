@@ -87,20 +87,21 @@ final class Listing extends AbstractHtmlType implements TypeInterface
             : max(1, $requested);
     }
 
-    private function lastPage(Crawler $dom, int $current): int
+    private function lastPage(Crawler $dom, int $current): ?int
     {
-        $pages = [$current];
-        foreach ($dom->filter('.wp-pagenavi a[href]') as $element) {
-            $href = (new Crawler($element))->attr('href') ?? '';
-            $query = parse_url($href, PHP_URL_QUERY);
+        $last = $dom->filter('.wp-pagenavi a.last[href]')->first();
+        if ($last->count() > 0) {
+            $query = parse_url($last->attr('href') ?? '', PHP_URL_QUERY);
             parse_str(is_string($query) ? $query : '', $params);
             $page = $params['sf_paged'] ?? null;
             if (is_string($page) && ctype_digit($page)) {
-                $pages[] = (int) $page;
+                return (int) $page;
             }
         }
 
-        return max($pages);
+        $hasNext = $dom->filter('.wp-pagenavi a.nextpostslink[href], a[rel="next"][href]')->count() > 0;
+
+        return $hasNext ? null : $current;
     }
 
     private function nextUrl(Crawler $dom, Fields $fields): ?string

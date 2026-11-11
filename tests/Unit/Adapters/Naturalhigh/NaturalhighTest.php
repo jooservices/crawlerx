@@ -79,6 +79,18 @@ final class NaturalhighTest extends TestCase
         self::assertSame('https://www.naturalhigh.co.jp/all/?sf_paged=3', $result->pagination->nextUrl);
     }
 
+    public function test_listing_leaves_last_page_unknown_when_pagination_does_not_show_it(): void
+    {
+        $html = preg_replace('/<a class="last"[^>]*>.*?<\/a>/', '', $this->loadFixture('naturalhigh/listing-page-2.html'));
+        self::assertIsString($html);
+        $result = (new Listing($this->clientWithHtml($html)))
+            ->execute(new CrawlRequestDto(url: 'https://www.naturalhigh.co.jp/all/', type: CrawlType::Listing));
+
+        self::assertSame(2, $result->pagination->currentPage);
+        self::assertSame(3, $result->pagination->nextPage);
+        self::assertNull($result->pagination->lastPage);
+    }
+
     public function test_detail_maps_every_label_and_extracts_only_the_work_images_in_page_order(): void
     {
         $result = (new Detail($this->clientWithFixture('naturalhigh/detail-nhdtc-271.html')))
