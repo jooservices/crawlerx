@@ -5,7 +5,7 @@
 [![Quality Gate (master)](https://sonarcloud.io/api/project_badges/measure?project=jooservices_crawlerx&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=jooservices_crawlerx)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/jooservices/crawlerx/badge)](https://securityscorecards.dev/viewer/?uri=github.com/jooservices/crawlerx)
 [![PHP Version](https://img.shields.io/badge/PHP-8.5%2B-blue.svg)](https://www.php.net/)
-[![Release 1.7.0](https://img.shields.io/badge/release-1.7.0-blue.svg)](CHANGELOG.md)
+[![Release 1.8.0](https://img.shields.io/badge/release-1.8.0-blue.svg)](CHANGELOG.md)
 [![GitHub Release](https://img.shields.io/github/v/release/jooservices/crawlerx?display_name=tag)](https://github.com/jooservices/crawlerx/releases)
 [![Packagist Version](https://img.shields.io/packagist/v/jooservices/crawlerx)](https://packagist.org/packages/jooservices/crawlerx)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -26,7 +26,7 @@ echo $item->meta['movie']['code'];              // YMDS-282
 
 > [!NOTE]
 > Packagist `v1.0.0` is the retired Laravel implementation. This
-> framework-agnostic rebuild is released as `1.7.0` and provides the API
+> framework-agnostic rebuild is released as `1.8.0` and provides the API
 > documented here.
 
 ## Features
@@ -71,10 +71,10 @@ The path installation uses this checkout's actual requirements, including
 
 ### Tagged release
 
-Released as `1.7.0` — install from Packagist:
+Released as `1.8.0` — install from Packagist:
 
 ```bash
-composer require jooservices/crawlerx:^1.7
+composer require jooservices/crawlerx:^1.8
 ```
 
 The retired `v1.0.0` is the previous Laravel implementation and does not
@@ -249,9 +249,9 @@ Available methods are `http`, `curl_impersonate`, `playwright`,
 
 ## Supported sites
 
-CrawlerX registers one adapter per `src/Adapters/*/manifest.json`. Capabilities
-below come from each adapter's current manifest. To add a source, see
-[docs/adding-a-source.md](docs/adding-a-source.md).
+CrawlerX registers 87 adapters, one per `src/Adapters/*/manifest.json`.
+Capabilities below come from each adapter's current manifest. To add a source,
+see [docs/adding-a-source.md](docs/adding-a-source.md).
 
 | Site | Slug | Listing | Detail | Gallery | Performer listing | Performer detail |
 | --- | --- | :---: | :---: | :---: | :---: | :---: |
@@ -313,7 +313,9 @@ below come from each adapter's current manifest. To add a source, see
 | FFJav | `ffjav` | Yes | Yes | — | — | — |
 | Gentosha | `gentosha` | Yes | Yes | — | — | — |
 | Gravure-ch | `gravurech` | Yes | — | Yes | — | — |
+| Gravidia | `gravidia` | Yes | Yes | — | — | — |
 | HEYZO | `heyzo` | Yes | Yes | — | — | — |
+| Idol Gakuen | `idolgakuen` | Yes | Yes | — | — | — |
 | Jable | `jable` | Yes | Yes | — | Yes | Yes |
 | JAV Database | `javdatabase` | — | — | — | Yes | Yes |
 | Jav321 | `jav321` | Yes | Yes | — | Yes | — |
@@ -330,8 +332,10 @@ below come from each adapter's current manifest. To add a source, see
 | Next11 | `next11` | Yes | Yes | — | — | — |
 | OneJav | `onejav` | Yes | Yes | — | — | — |
 | Smart FLASH | `smartflash` | Yes | — | Yes | — | — |
+| Silk Labo | `silklabo` | Yes | Yes | — | — | — |
 | WPB Web Gravure | `wpb` | Yes | — | Yes | — | — |
 | Tokyo-Hot | `tokyohot` | Yes | Yes | — | — | — |
+| Tokuma Shoten | `tokuma` | Yes | Yes | — | — | — |
 | Warashi | `warashi` | — | — | Yes | Yes | Yes |
 | Wikimedia Commons | `commons` | Yes | — | Yes | — | Yes |
 | Wikidata | `wikidata` | Yes | — | — | — | Yes |
@@ -461,11 +465,11 @@ blocked by this policy return the non-retryable `ssrf_blocked` error (with
 `ssrfReason` when known) and stop the fetch fallback chain.
 
 The browser image is built with `CRAWLERX_VERSION` set to the matching
-CrawlerX package release (for example, `1.7.0`); the sidecar reports that value
+CrawlerX package release (for example, `1.8.0`); the sidecar reports that value
 in its health response. With Compose, set it when building:
 
 ```bash
-CRAWLERX_VERSION=1.7.0 docker compose build node
+CRAWLERX_VERSION=1.8.0 docker compose build node
 ```
 
 Compose's local image name remains
