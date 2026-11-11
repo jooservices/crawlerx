@@ -1,0 +1,128 @@
+{
+    "slug": "gentosha",
+    "name": "Gentosha",
+    "version": "1.0.0",
+    "description": "Crawler for Gentosha's public book catalog",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\Gentosha\\GentoshaCrawler",
+        "capabilities": [
+            "listing",
+            "detail"
+        ]
+    },
+    "base_url": "https://www.gentosha.co.jp",
+    "pagination": {
+        "strategy": "query",
+        "param": "p"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 5,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 5,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 3600,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        }
+    ],
+    "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [
+                    ".m-cardHighlight__item"
+                ],
+                "detail": [
+                    ".p-book-title"
+                ]
+            },
+            "soft404Markers": [
+                "page not found",
+                "404 not found",
+                "the page you requested was not found"
+            ]
+        },
+        "targetProfiles": {
+            "new_books": {
+                "label": "New books",
+                "url": "https://www.gentosha.co.jp/book/new/"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "new_books",
+                "url": "https://www.gentosha.co.jp/book/new/",
+                "paginated": true,
+                "loop": true,
+                "priority": 0,
+                "max_pages": 3,
+                "status": "paused"
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://www.gentosha.co.jp/book/new/",
+                "name": "listing-page1.html",
+                "type": "listing",
+                "followUps": [
+                    {
+                        "url": "https://www.gentosha.co.jp/book/new/?p=2",
+                        "name": "listing-page2.html"
+                    },
+                    {
+                        "url": "https://www.gentosha.co.jp/book/detail/9784344046368/",
+                        "name": "detail-9784344046368.html"
+                    }
+                ]
+            },
+            {
+                "url": "https://www.gentosha.co.jp/book/new/?p=2",
+                "name": "listing-page2.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://www.gentosha.co.jp/book/detail/9784344046368/",
+                "name": "detail-9784344046368.html",
+                "type": "detail"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 5,
+            "detail_delay_seconds": 5,
+            "cycle_delay_seconds": 3600
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 5,
+            "min_gap_seconds": 5,
+            "max_gap_seconds": 45
+        },
+        "playwrightFetchEnabled": false
+    },
+    "type": "site"
+}
