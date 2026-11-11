@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-11-11
+
+### Added
+
+- Add the MUTEKI (`muteki`) adapter for paged work listings and work details with performers, release formats and package images (JOOXCR-488).
+- Add the VENUS (`venus`) adapter for public work listings and details.
+- Add the Idol Gakuen (`idolgakuen`) adapter for public work listings and details.
+- Add the Silk Labo (`silklabo`) adapter for public work listings and details.
+- Add the Hiyoko (`hiyoko`) adapter for official work listings and details.
+- Add the Gentosha (`gentosha`) adapter for public book listings and details.
+- Add the Tokuma Shoten (`tokuma`) adapter for public new-book listings and book details.
+- Add the Gravidia (`gravidia`) adapter for product listings and work details.
+
+### Changed
+
+- Consolidate the supported-sites documentation and changelog for eight new adapters, bringing the registry to 87 sites.
+
 ## [1.7.1] - 2026-11-10
 
 ### Changed
@@ -353,6 +370,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   implementation (Jable performer listing was an alias to the movie parser).
 - Catalog `external_id` for HEYZO/FC2 included the code prefix inconsistently.
 
+[1.8.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.8.0
 [1.7.1]: https://github.com/jooservices/crawlerx/releases/tag/v1.7.1
 [1.7.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.7.0
 [1.6.1]: https://github.com/jooservices/crawlerx/releases/tag/v1.6.1
@@ -361,6 +379,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [1.2.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.2.0
 [1.1.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.1.0
 
+[1.8.0...1.7.1]: https://github.com/jooservices/crawlerx/compare/v1.7.1...v1.8.0
 [1.7.1...1.7.0]: https://github.com/jooservices/crawlerx/compare/v1.7.0...v1.7.1
 [1.7.0...1.6.0]: https://github.com/jooservices/crawlerx/compare/v1.6.0...v1.7.0
 [1.3.1...1.3.0]: https://github.com/jooservices/crawlerx/compare/v1.3.0...v1.3.1
