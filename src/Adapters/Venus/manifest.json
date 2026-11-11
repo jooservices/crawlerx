@@ -1,0 +1,121 @@
+{
+    "slug": "venus",
+    "name": "VENUS",
+    "version": "1.0.0",
+    "description": "Public VENUS work listings and work details",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\Venus\\VenusCrawler",
+        "capabilities": [
+            "listing",
+            "detail"
+        ]
+    },
+    "base_url": "https://venus-av.com",
+    "pagination": {
+        "strategy": "path",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 5,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 5,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        }
+    ],
+    "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [
+                    ".topNewreleaseList"
+                ],
+                "detail": [
+                    ".productsData"
+                ]
+            },
+            "soft404Markers": [
+                "page not found",
+                "404 not found"
+            ]
+        },
+        "targetProfiles": {
+            "all": {
+                "label": "All works",
+                "url": "https://venus-av.com/all/"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "all",
+                "url": "https://venus-av.com/all/",
+                "paginated": true,
+                "loop": true,
+                "priority": 0,
+                "max_pages": 3,
+                "status": "paused"
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://venus-av.com/all",
+                "name": "listing-page-1.html",
+                "type": "listing",
+                "followUps": [
+                    {
+                        "url": "https://venus-av.com/all/page/2/",
+                        "name": "listing-page-2.html"
+                    }
+                ]
+            },
+            {
+                "url": "https://venus-av.com/all/page/2/",
+                "name": "listing-page-2.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://venus-av.com/products/%e3%80%8c%e3%81%8a%e3%81%b0%e3%81%95%e3%82%93%e3%81%ae%e4%b8%8b%e7%9d%80%e3%81%a7%e8%88%88%e5%a5%ae%e3%81%99%e3%82%8b%e3%81%ae%ef%bc%9f%e3%80%8d%e8%84%b1%e3%81%8e%e3%81%9f%e3%81%a6%e3%81%ae-44/",
+                "name": "detail-VENX-388.html",
+                "type": "detail"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 5,
+            "detail_delay_seconds": 5,
+            "cycle_delay_seconds": 3600
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 5,
+            "min_gap_seconds": 5,
+            "max_gap_seconds": 30
+        },
+        "browserHeaders": {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "Accept": "application/json,text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9,ja;q=0.8"
+        },
+        "playwrightFetchEnabled": false
+    },
+    "type": "site"
+}
