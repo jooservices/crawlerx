@@ -1,0 +1,102 @@
+{
+    "slug": "gravidia",
+    "name": "Gravidia",
+    "version": "1.0.0",
+    "description": "Crawler for Gravidia product listings and work details",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\Gravidia\\GravidiaCrawler",
+        "capabilities": [
+            "listing",
+            "detail"
+        ]
+    },
+    "base_url": "https://gravidia.jp",
+    "pagination": {
+        "strategy": "path",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        }
+    ],
+    "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [
+                    ".tl-ProductListCol4_Item"
+                ],
+                "detail": [
+                    ".p-ProductDetail_Title"
+                ]
+            },
+            "soft404Markers": [
+                "page not found",
+                "404 not found",
+                "お探しのページは見つかりません"
+            ]
+        },
+        "targetProfiles": {
+            "new_products": {
+                "label": "New products",
+                "url": "https://gravidia.jp/search/?post_type=product&cts=cts&s="
+            },
+            "product_sample": {
+                "label": "Gravidia product detail",
+                "url": "https://gravidia.jp/product/48277"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "new_products",
+                "url": "https://gravidia.jp/search/?post_type=product&cts=cts&s=",
+                "paginated": true,
+                "loop": true,
+                "priority": 0
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://gravidia.jp/search/?post_type=product&cts=cts&s=",
+                "name": "listing-page-1.html",
+                "type": "listing",
+                "followUps": [
+                    {
+                        "url": "https://gravidia.jp/search/page/2?post_type=product&cts=cts&s=",
+                        "name": "listing-page-2.html"
+                    }
+                ]
+            },
+            {
+                "url": "https://gravidia.jp/search/page/2?post_type=product&cts=cts&s=",
+                "name": "listing-page-2.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://gravidia.jp/product/48277",
+                "name": "detail-48277.html",
+                "type": "detail"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 5,
+            "min_gap_seconds": 5,
+            "max_gap_seconds": 30
+        },
+        "playwrightFetchEnabled": false
+    },
+    "type": "site"
+}
