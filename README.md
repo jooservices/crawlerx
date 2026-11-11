@@ -249,7 +249,7 @@ Available methods are `http`, `curl_impersonate`, `playwright`,
 
 ## Supported sites
 
-CrawlerX registers 87 adapters, one per `src/Adapters/*/manifest.json`.
+CrawlerX registers 89 adapters, one per `src/Adapters/*/manifest.json`.
 Capabilities below come from each adapter's current manifest. To add a source,
 see [docs/adding-a-source.md](docs/adding-a-source.md).
 
@@ -342,6 +342,8 @@ see [docs/adding-a-source.md](docs/adding-a-source.md).
 | XCITY | `xcity` | Yes | Yes | — | Yes | Yes |
 | VENUS | `venus` | Yes | Yes | — | — | — |
 | Hiyoko | `hiyoko` | Yes | Yes | — | — | — |
+| NATURAL HIGH | `naturalhigh` | Yes | Yes | — | — | — |
+| FAIR＆WAY | `fairway` | Yes | Yes | — | — | — |
 
 DUGA, Tokyo-Hot, Caribbeancom, HEYZO, and JavBus use accepted adult landing
 routes when a root listing URL would otherwise return an age-verification page.
