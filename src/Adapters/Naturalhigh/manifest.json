@@ -1,0 +1,98 @@
+{
+    "slug": "naturalhigh",
+    "name": "NATURAL HIGH",
+    "version": "1.0.0",
+    "description": "Public NATURAL HIGH work catalog; sends the site's click-through age-gate cookie age_gate=18",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\Naturalhigh\\NaturalhighCrawler",
+        "capabilities": [
+            "listing",
+            "detail"
+        ]
+    },
+    "base_url": "https://www.naturalhigh.co.jp",
+    "pagination": {
+        "strategy": "query",
+        "param": "sf_paged"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        }
+    ],
+    "runtime": {
+        "fetch": {
+            "profile": "http_only",
+            "readyMarkers": {
+                "listing": [
+                    ".archive_style > li > a.p-style-list__item-img[href]"
+                ],
+                "detail": [
+                    ".single_main_image a[href]"
+                ]
+            },
+            "soft404Markers": [
+                "page not found",
+                "404 not found"
+            ]
+        },
+        "targetProfiles": {
+            "all": {
+                "label": "All works",
+                "url": "https://www.naturalhigh.co.jp/all/"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "all",
+                "url": "https://www.naturalhigh.co.jp/all/",
+                "paginated": true,
+                "loop": true,
+                "priority": 0,
+                "max_pages": 5,
+                "status": "paused"
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://www.naturalhigh.co.jp/all/",
+                "name": "listing-page-1.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://www.naturalhigh.co.jp/all/?sf_paged=2",
+                "name": "listing-page-2.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://www.naturalhigh.co.jp/all/nhdtc-271/",
+                "name": "detail-nhdtc-271.html",
+                "type": "detail"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 5,
+            "min_gap_seconds": 5,
+            "max_gap_seconds": 30
+        },
+        "browserHeaders": {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "ja,en;q=0.8",
+            "Cookie": "age_gate=18"
+        },
+        "playwrightFetchEnabled": false
+    },
+    "type": "site"
+}
