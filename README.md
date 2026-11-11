@@ -292,6 +292,7 @@ below come from each adapter's current manifest. To add a source, see
 | DEEP'S | `deeps` | Yes | Yes | — | — | — |
 | OPPAI | `oppai` | Yes | Yes | — | — | Yes |
 | MUKU | `muku` | Yes | Yes | — | — | — |
+| MUTEKI | `muteki` | Yes | Yes | — | — | — |
 | Pacopacomama | `pacopacomama` | Yes | Yes | — | — | — |
 | PLUM | `plum` | Yes | Yes | — | — | — |
 | 1Pondo | `onepondo` | Yes | Yes | — | — | — |
