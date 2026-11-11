@@ -35,4 +35,8 @@ final class Selectors
     public const DETAIL_ROWS = '.item-information .box_right table tr';
 
     public const DETAIL_IMAGES = '.photo .photo_thumbnail_table a[href]';
+
+    public const PERFORMER_NAME_KANA = '.profile .actor-kana';
+
+    public const PERFORMER_PROFILE = '.profile .profile-text';
 }

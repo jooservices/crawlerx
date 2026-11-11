@@ -39,12 +39,30 @@ final class Detail extends AbstractHtmlType implements TypeInterface
         }
 
         $rows = $this->rows($crawler);
+        $profile = $this->profile($crawler);
         $cover = $this->firstAttribute($crawler, Selectors::DETAIL_COVER, 'src');
         $images = $this->images($crawler, $request->url);
         $releaseDate = MovieMeta::isoDate($rows['発売日'] ?? null);
         $duration = MovieMeta::durationMinutes($rows['仕様'] ?? null);
         $price = $this->price($rows['価格'] ?? null);
         $performer = trim($rows['出演者'] ?? '');
+        $performerData = MovieMeta::performer($performer);
+        if ($performer !== '') {
+            $performerData += [
+                'name_japanese' => $performer,
+                'birth_date_raw' => $profile['fields']['生年月日'] ?? null,
+                'size_raw' => $profile['fields']['サイズ'] ?? null,
+                'raw_profile' => $profile['fields'],
+                'metadata' => MovieMeta::filter([
+                    'name_kana' => $profile['name_kana'],
+                    'birthplace' => $profile['fields']['出身地'] ?? null,
+                    'blood_type' => $profile['fields']['血液型'] ?? null,
+                    'hobby' => $profile['fields']['趣味'] ?? null,
+                    'special_skills' => $profile['fields']['特技'] ?? null,
+                    'x_url' => $profile['x_url'],
+                ]),
+            ];
+        }
 
         $item = MovieDto::item(
             url: $request->url,
@@ -56,13 +74,15 @@ final class Detail extends AbstractHtmlType implements TypeInterface
                 'description' => $this->firstText($crawler, Selectors::DETAIL_DESCRIPTION),
                 'date' => $releaseDate,
                 'duration' => $duration,
-                'performers' => $performer === '' ? [] : [MovieMeta::performer($performer)],
+                'performers' => $performer === '' ? [] : [$performerData],
                 'screenshots' => $images,
                 'metadata' => MovieMeta::filter([
                     MovieMeta::MAKER => Site::NAME,
                     MovieMeta::PRICE => $price,
                     'specification' => $rows['仕様'] ?? null,
-                    'source_fields' => $rows,
+                    'source_fields' => [...$rows, ...$profile['fields']],
+                    'performer_name_kana' => $profile['name_kana'],
+                    'performer_x_url' => $profile['x_url'],
                 ]),
             ],
         );
@@ -86,7 +106,56 @@ final class Detail extends AbstractHtmlType implements TypeInterface
         return $rows;
     }
 
-    /** @return list<string> */
+    /** @return array{name_kana: ?string, fields: array<string, string>, x_url: ?string} */
+    private function profile(Crawler $crawler): array
+    {
+        $fields = [];
+        $xUrl = null;
+        $profileNode = $crawler->filter(Selectors::PERFORMER_PROFILE);
+        if ($profileNode->count() > 0) {
+            $node = $profileNode->getNode(0);
+            if ($node === null) {
+                return [
+                    'name_kana' => $this->firstText($crawler, Selectors::PERFORMER_NAME_KANA),
+                    'fields' => [],
+                    'x_url' => null,
+                ];
+            }
+
+            $line = '';
+            foreach ($node->childNodes as $child) {
+                if ($child instanceof \DOMElement && strtolower($child->tagName) === 'br') {
+                    $this->addProfileField($line, $fields);
+                    $line = '';
+
+                    continue;
+                }
+
+                $line .= $child->textContent;
+                if ($child instanceof \DOMElement && strtolower($child->tagName) === 'a') {
+                    $href = $child->getAttribute('href');
+                    $xUrl = $href !== '' ? $href : null;
+                }
+            }
+            $this->addProfileField($line, $fields);
+        }
+
+        return [
+            'name_kana' => $this->firstText($crawler, Selectors::PERFORMER_NAME_KANA),
+            'fields' => $fields,
+            'x_url' => $xUrl,
+        ];
+    }
+
+    /** @param array<string, string> $fields */
+    private function addProfileField(string $line, array &$fields): void
+    {
+        if (preg_match('/^([^：:]+)[：:]\s*(.*)$/u', trim($line), $match) === 1) {
+            $fields[trim($match[1])] = trim($match[2]);
+        }
+    }
+
+    /** @return list<array{url: string, thumbnail_url: ?string}> */
     private function images(Crawler $crawler, string $baseUrl): array
     {
         $images = [];
@@ -94,7 +163,11 @@ final class Detail extends AbstractHtmlType implements TypeInterface
             $href = $link->attr('href');
             if ($href !== null && $href !== '') {
                 $url = $this->absolute($baseUrl, $href);
-                $images[$url] = $url;
+                $thumbnail = $this->firstAttribute($link, 'img[src]', 'src');
+                $images[$url] ??= [
+                    'url' => $url,
+                    'thumbnail_url' => $thumbnail === null ? null : $this->absolute($baseUrl, $thumbnail),
+                ];
             }
         });
 

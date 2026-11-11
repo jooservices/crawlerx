@@ -60,7 +60,7 @@ final class IdolgakuenTest extends TestCase
         self::assertSame('113629', $result->items[0]->meta['movie']['external_id']);
     }
 
-    public function test_detail_extracts_each_labelled_field_and_full_size_image_in_page_order(): void
+    public function test_detail_extracts_each_labelled_field_and_image_pair_in_page_order(): void
     {
         $result = (new Detail($this->clientWithFixture('idolgakuen/detail-117040.html')))
             ->execute(new CrawlRequestDto(url: self::BASE . '/item/117040/'));
@@ -78,12 +78,42 @@ final class IdolgakuenTest extends TestCase
         self::assertSame('2026-11-20', $movie['date']);
         self::assertSame(136, $movie['duration']);
         self::assertSame(['長野雅'], array_column($movie['performers'], 'name'));
+        self::assertSame('長野雅', $movie['performers'][0]['name_japanese']);
+        self::assertSame('ながの・みやび', $movie['performers'][0]['metadata']['name_kana']);
+        self::assertSame('1999年10月3日', $movie['performers'][0]['birth_date_raw']);
+        self::assertSame('T164cm', $movie['performers'][0]['size_raw']);
+        self::assertSame([
+            '生年月日' => '1999年10月3日',
+            'サイズ' => 'T164cm',
+            '出身地' => '愛知県',
+            '血液型' => 'O型',
+            '趣味' => '猫と遊ぶこと、ゲーム、映画鑑賞、アイドル鑑賞',
+            '特技' => '水泳、どこでも寝られること',
+            'X' => '@naganomiyabi',
+        ], $movie['performers'][0]['raw_profile']);
+        self::assertSame('愛知県', $movie['performers'][0]['metadata']['birthplace']);
+        self::assertSame('O型', $movie['performers'][0]['metadata']['blood_type']);
+        self::assertSame('猫と遊ぶこと、ゲーム、映画鑑賞、アイドル鑑賞', $movie['performers'][0]['metadata']['hobby']);
+        self::assertSame('水泳、どこでも寝られること', $movie['performers'][0]['metadata']['special_skills']);
+        self::assertSame('https://x.com/naganomiyabi', $movie['performers'][0]['metadata']['x_url']);
         self::assertCount(3, $movie['screenshots']);
         self::assertSame([
-            self::BASE . '/wp/wp-content/uploads/2026/08/miyabin-eternallove-h1-633x900.jpg',
-            self::BASE . '/wp/wp-content/uploads/2026/08/miyabin-eternallove-h4-631x900.jpg',
-            self::BASE . '/wp/wp-content/uploads/2026/08/miyabin-eternallove-h1h4-900x604.jpg',
-        ], array_column($movie['screenshots'], 'url'));
+            [
+                'url' => self::BASE . '/wp/wp-content/uploads/2026/08/miyabin-eternallove-h1-633x900.jpg',
+                'thumbnail_url' => self::BASE . '/wp/wp-content/uploads/2026/08/miyabin-eternallove-h1-89x126.jpg',
+                'metadata' => [],
+            ],
+            [
+                'url' => self::BASE . '/wp/wp-content/uploads/2026/08/miyabin-eternallove-h4-631x900.jpg',
+                'thumbnail_url' => self::BASE . '/wp/wp-content/uploads/2026/08/miyabin-eternallove-h4-88x126.jpg',
+                'metadata' => [],
+            ],
+            [
+                'url' => self::BASE . '/wp/wp-content/uploads/2026/08/miyabin-eternallove-h1h4-900x604.jpg',
+                'thumbnail_url' => self::BASE . '/wp/wp-content/uploads/2026/08/miyabin-eternallove-h1h4-126x85.jpg',
+                'metadata' => [],
+            ],
+        ], $movie['screenshots']);
         self::assertSame('Idol Gakuen', $movie['metadata']['maker']);
         self::assertSame([
             'amount' => 4730.0,
@@ -97,7 +127,16 @@ final class IdolgakuenTest extends TestCase
             '価格' => '4,730円（本体4,300円 税率10％）',
             '品番' => 'TSDS-43134',
             '仕様' => '本編136分＋特典映像4分／カラー／日本語（ステレオ）／16：9 ビスタサイズ／NTSC／片面・一層',
+            '生年月日' => '1999年10月3日',
+            'サイズ' => 'T164cm',
+            '出身地' => '愛知県',
+            '血液型' => 'O型',
+            '趣味' => '猫と遊ぶこと、ゲーム、映画鑑賞、アイドル鑑賞',
+            '特技' => '水泳、どこでも寝られること',
+            'X' => '@naganomiyabi',
         ], $movie['metadata']['source_fields']);
+        self::assertSame('ながの・みやび', $movie['metadata']['performer_name_kana']);
+        self::assertSame('https://x.com/naganomiyabi', $movie['metadata']['performer_x_url']);
     }
 
     public function test_url_detection_matches_only_captured_listing_and_detail_routes(): void
