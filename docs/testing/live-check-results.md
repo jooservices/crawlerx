@@ -7,8 +7,9 @@ See [live-check-report.md](live-check-report.md) for the tool guide (exit status
 ## Summary
 
 - Adapters checked: 88; samples: 175.
-- Listing samples: **ok 67**, blocked 2, network 13 (the rest not checked).
-- **Detail samples were not checked for most adapters (93 not-checked, reason `request_limit`)**: the two-request budget is spent on the robots lookup and the listing, so a detail check rarely fits. Treat this report as a listing-level health check only; widening the budget or checking details first is a tool follow-up.
+- Listing samples (87): ok 66, blocked 1, network 13, not-checked 7.
+- Detail/gallery samples (88): ok 1, blocked 1, network 0, not-checked 86 (reason `request_limit`).
+- **86 of 88 detail samples were not checked (reason `request_limit`; 7 listing samples were also not checked)**: the two-request budget is spent on the robots lookup and the listing, so a detail check rarely fits. Treat this report as a listing-level health check only; widening the budget or checking details first is a tool follow-up.
 
 ## Needs attention (15 samples)
 
