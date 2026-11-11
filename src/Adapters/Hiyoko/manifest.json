@@ -1,0 +1,117 @@
+{
+    "slug": "hiyoko",
+    "name": "Hiyoko",
+    "version": "1.0.0",
+    "description": "Official Hiyoko work listings and movie details",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\Hiyoko\\HiyokoCrawler",
+        "capabilities": [
+            "listing",
+            "detail"
+        ]
+    },
+    "base_url": "https://www.hiyoko-av.com",
+    "pagination": {
+        "strategy": "path",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        },
+        {
+            "key": "page_delay_seconds",
+            "type": "int",
+            "default": 5,
+            "tier": "operational",
+            "label": "Page Delay Seconds"
+        },
+        {
+            "key": "detail_delay_seconds",
+            "type": "int",
+            "default": 5,
+            "tier": "operational",
+            "label": "Detail Delay Seconds"
+        },
+        {
+            "key": "cycle_delay_seconds",
+            "type": "int",
+            "default": 3600,
+            "tier": "operational",
+            "label": "Cycle Delay Seconds"
+        }
+    ],
+    "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [
+                    "#second-block-in03 > ul.list-07"
+                ],
+                "detail": [
+                    ".kobetsu-left .list-08"
+                ]
+            },
+            "soft404Markers": [
+                "page not found",
+                "404 not found",
+                "the page you requested was not found"
+            ]
+        },
+        "targetProfiles": {
+            "all_titles": {
+                "label": "All Hiyoko works",
+                "url": "https://www.hiyoko-av.com/title/"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "listing",
+                "url": "https://www.hiyoko-av.com/title/",
+                "paginated": true,
+                "loop": true,
+                "priority": 0,
+                "status": "paused"
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://www.hiyoko-av.com/title/",
+                "name": "listing-page1.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://www.hiyoko-av.com/title/page/2/",
+                "name": "listing-page2.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://www.hiyoko-av.com/title/piyo-242/",
+                "name": "detail-piyo-242.html",
+                "type": "detail"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 5,
+            "detail_delay_seconds": 5,
+            "cycle_delay_seconds": 3600
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 5,
+            "min_gap_seconds": 5,
+            "max_gap_seconds": 45
+        },
+        "playwrightFetchEnabled": false
+    },
+    "type": "site"
+}
