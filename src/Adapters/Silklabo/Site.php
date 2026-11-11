@@ -36,5 +36,4 @@ final class Site
             ? (int) $match[1]
             : (self::isListing($url) ? 1 : null);
     }
-
 }
