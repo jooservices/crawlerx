@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add the MUTEKI (`muteki`) adapter for paged work listings and work details with performers, release formats and package images (JOOXCR-488).
+
 ## [1.7.1] - 2026-11-10
 
 ### Changed
