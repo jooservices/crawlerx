@@ -36,6 +36,10 @@ final class Listing extends AbstractHtmlType implements TypeInterface
         foreach ($dom->filter('#second-block-in03 > ul.list-07 > li') as $element) {
             $card = new Crawler($element);
             $link = $card->filter('a[href]')->first();
+            if ($link->count() === 0) {
+                continue;
+            }
+
             $href = $link->attr('href');
             $code = $link->attr('title');
             $title = $this->firstText($card, 'a > div');
