@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add the MUTEKI (`muteki`) adapter for paged work listings and work details with performers, release formats and package images (JOOXCR-488).
+- Add the VENUS (`venus`) adapter for public work listings and details.
+- Add the Hiyoko (`hiyoko`) adapter for official work listings and details.
+- Add the Gentosha (`gentosha`) adapter for public book listings and details.
 
 ## [1.7.1] - 2026-11-10
 
