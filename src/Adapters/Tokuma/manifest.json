@@ -39,7 +39,13 @@
                 "detail": [
                     "#main .detail"
                 ]
-            }
+            },
+            "soft404Markers": [
+                "page not found",
+                "404 not found",
+                "the page you requested was not found",
+                "お探しのページは見つかりませんでした。"
+            ]
         },
         "targetProfiles": {
             "new_books": {
