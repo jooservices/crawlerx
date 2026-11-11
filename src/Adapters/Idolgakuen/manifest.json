@@ -97,6 +97,11 @@
                 ]
             },
             {
+                "url": "https://idol-gakuen.jp/item-list/page/2/",
+                "name": "listing-page2.html",
+                "type": "listing"
+            },
+            {
                 "url": "https://idol-gakuen.jp/item/117040/",
                 "name": "detail-117040.html",
                 "type": "detail"
