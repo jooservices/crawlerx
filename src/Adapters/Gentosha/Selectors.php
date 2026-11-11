@@ -42,6 +42,12 @@ final class Selectors
 
     public const DETAIL_COVER_FULL = '.p-book-img__modalSlider-itemBack img';
 
+    public const DETAIL_SLIDER_MAIN_IMAGES = '.p-book-img__sliderMain-item img';
+
+    public const DETAIL_SLIDER_THUMBNAIL_IMAGES = '.p-book-img__sliderThum-item img';
+
+    public const DETAIL_SLIDER_FULL_IMAGES = '.p-book-img__modalSlider-itemBack img';
+
     public const DETAIL_RELEASE_DATE = '.p-book-published time[datetime]';
 
     public const DETAIL_RELEASE_TEXT = '.p-book-published';

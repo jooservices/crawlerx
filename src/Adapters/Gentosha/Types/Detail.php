@@ -174,7 +174,39 @@ final class Detail extends AbstractHtmlType implements TypeInterface
     private function screenshots(Crawler $crawler, ?string $cover, ?string $coverThumbnail): array
     {
         $images = [];
-        if ($cover !== null) {
+        $mainImages = $crawler->filter(Selectors::DETAIL_SLIDER_MAIN_IMAGES);
+        $fullImages = $crawler->filter(Selectors::DETAIL_SLIDER_FULL_IMAGES);
+        $thumbnails = $crawler->filter(Selectors::DETAIL_SLIDER_THUMBNAIL_IMAGES);
+        $sliderCount = max($mainImages->count(), $fullImages->count());
+
+        for ($index = 0; $index < $sliderCount; $index++) {
+            $src = $this->imageSource($fullImages, $index)
+                ?? $this->imageSource($mainImages, $index);
+
+            if ($src === null && $index === 0) {
+                $src = $cover;
+            }
+            if ($src === null) {
+                continue;
+            }
+
+            $url = $this->absolute(Site::BASE_URL, $src);
+            $thumbnailSrc = $this->imageSource($thumbnails, $index)
+                ?? ($index === 0 ? $coverThumbnail : null);
+            $thumbnailUrl = $thumbnailSrc === null ? null : $this->absolute(Site::BASE_URL, $thumbnailSrc);
+
+            if (! isset($images[$url])) {
+                $images[$url] = [
+                    'url' => $url,
+                    'thumbnail_url' => $thumbnailUrl,
+                    'position' => count($images),
+                ];
+            } elseif ($images[$url]['thumbnail_url'] === null && $thumbnailUrl !== null) {
+                $images[$url]['thumbnail_url'] = $thumbnailUrl;
+            }
+        }
+
+        if ($images === [] && $cover !== null) {
             $images[$cover] = [
                 'url' => $cover,
                 'thumbnail_url' => $coverThumbnail,
@@ -200,6 +232,17 @@ final class Detail extends AbstractHtmlType implements TypeInterface
         }
 
         return array_values($images);
+    }
+
+    private function imageSource(Crawler $images, int $index): ?string
+    {
+        if ($images->count() <= $index) {
+            return null;
+        }
+
+        $image = $images->eq($index);
+
+        return $this->attributeValue($image, 'data-src') ?? $this->attributeValue($image, 'src');
     }
 
     /** @param list<array{name: string, url: ?string, external_id: ?string}> $authors

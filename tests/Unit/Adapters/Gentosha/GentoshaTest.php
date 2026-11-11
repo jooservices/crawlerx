@@ -123,6 +123,53 @@ final class GentoshaTest extends TestCase
         ], $metadata['source_fields']);
     }
 
+    public function test_detail_extracts_all_slider_images_with_matching_thumbnails_before_introduction_images(): void
+    {
+        $html = $this->loadFixture('gentosha/detail-9784344046368.html');
+        $html = str_replace(
+            '<div class="p-book-img__sliderMain-item splide__slide"><img src="https://img.gentosha.co.jp/_cover_/9784344046368.jpg?p=book-sd&v=01" width="330" height="468" alt="FRUITS ZIPPER 4th Anniversary写真集『SYNERGY』の表紙画像" fetchpriority="high"></div>',
+            '<div class="p-book-img__sliderMain-item splide__slide"><img src="https://img.gentosha.co.jp/_cover_/9784344046368.jpg?p=book-sd&v=01"></div>'
+                . '<div class="p-book-img__sliderMain-item splide__slide"><img src="https://img.gentosha.co.jp/_cover_/9784344046368-02.jpg?p=book-sd"></div>'
+                . '<div class="p-book-img__sliderMain-item splide__slide"><img src="https://img.gentosha.co.jp/_cover_/9784344046368-02.jpg?p=book-sd"></div>',
+            $html,
+        );
+        $html = str_replace(
+            '<div class="p-book-img__sliderThum-item splide__slide"><img src="https://img.gentosha.co.jp/_cover_/9784344046368.jpg?p=book-thumb&v=01" width="48" height="48" alt="" decoding="async"></div>',
+            '<div class="p-book-img__sliderThum-item splide__slide"><img src="https://img.gentosha.co.jp/_cover_/9784344046368.jpg?p=book-thumb&v=01"></div>'
+                . '<div class="p-book-img__sliderThum-item splide__slide"><img src="https://img.gentosha.co.jp/_cover_/9784344046368-02.jpg?p=book-thumb"></div>'
+                . '<div class="p-book-img__sliderThum-item splide__slide"><img src="https://img.gentosha.co.jp/_cover_/9784344046368-02.jpg?p=book-thumb"></div>',
+            $html,
+        );
+        $html = str_replace(
+            '<div class="p-book-img__modalSlider-itemBack -loading"><div class="c-loader"><div class="c-loader-spin"></div></div><img data-src="https://img.gentosha.co.jp/_cover_/9784344046368.jpg?p=book-hq&v=01" alt="FRUITS ZIPPER 4th Anniversary写真集『SYNERGY』の高画質表紙画像" decoding="async"></div>',
+            '<div class="p-book-img__modalSlider-itemBack"><img data-src="https://img.gentosha.co.jp/_cover_/9784344046368.jpg?p=book-hq&v=01"></div>'
+                . '<div class="p-book-img__modalSlider-itemBack"><img data-src="https://img.gentosha.co.jp/_cover_/9784344046368-02.jpg?p=book-hq"></div>'
+                . '<div class="p-book-img__modalSlider-itemBack"><img data-src="https://img.gentosha.co.jp/_cover_/9784344046368-02.jpg?p=book-hq"></div>',
+            $html,
+        );
+
+        $result = (new Detail($this->clientWithHtml($html)))
+            ->execute(new CrawlRequestDto(url: self::BASE . '/book/detail/9784344046368/'));
+
+        self::assertSame([
+            [
+                'url' => 'https://img.gentosha.co.jp/_cover_/9784344046368.jpg?p=book-hq&v=01',
+                'thumbnail_url' => 'https://img.gentosha.co.jp/_cover_/9784344046368.jpg?p=book-thumb&v=01',
+                'metadata' => ['position' => 0],
+            ],
+            [
+                'url' => 'https://img.gentosha.co.jp/_cover_/9784344046368-02.jpg?p=book-hq',
+                'thumbnail_url' => 'https://img.gentosha.co.jp/_cover_/9784344046368-02.jpg?p=book-thumb',
+                'metadata' => ['position' => 1],
+            ],
+            [
+                'url' => 'https://img.gentosha.co.jp/_book_/9784344046368-01.jpg?p=post-body',
+                'thumbnail_url' => null,
+                'metadata' => ['position' => 2],
+            ],
+        ], $result->meta['movie']['screenshots']);
+    }
+
     public function test_only_captured_listing_and_detail_paths_are_detected(): void
     {
         $manifests = new FileAdapterManifestRegistry();
