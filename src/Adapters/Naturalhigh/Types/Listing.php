@@ -74,7 +74,7 @@ final class Listing extends AbstractHtmlType implements TypeInterface
 
     private function currentPage(Crawler $dom, string $url, int $requested): int
     {
-        $current = $dom->filter('.pagination .current, .page-numbers.current, [aria-current="page"]')->first();
+        $current = $dom->filter('.wp-pagenavi [aria-current="page"], .pagination .current, .page-numbers.current')->first();
         if ($current->count() > 0 && preg_match('/\d+/', $current->text(''), $match) === 1) {
             return (int) $match[0];
         }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Tests\Unit\Adapters\Naturalhigh;
 
+use JOOservices\Client\Client\ClientBuilder;
+use JOOservices\Client\Testing\TestResponseSequence;
 use JOOservices\CrawlerX\Adapters\Naturalhigh\NaturalhighCrawler;
 use JOOservices\CrawlerX\Adapters\Naturalhigh\Types\Detail;
 use JOOservices\CrawlerX\Adapters\Naturalhigh\Types\Listing;
@@ -11,11 +13,21 @@ use JOOservices\CrawlerX\Registry\AdapterRegistry;
 use JOOservices\CrawlerX\Registry\FileAdapterManifestRegistry;
 use JOOservices\CrawlerX\Enums\CrawlType;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
+use JOOservices\CrawlerX\Dto\CrawlOptionsDto;
+use JOOservices\CrawlerX\Dto\HttpOptionsDto;
 use JOOservices\CrawlerX\Services\ClientFactory;
+use JOOservices\CrawlerX\Services\AdapterExecutor;
 use JOOservices\CrawlerX\Tests\TestCase;
+use Nyholm\Psr7\Response;
 
 final class NaturalhighTest extends TestCase
 {
+    protected function tearDown(): void
+    {
+        ClientBuilder::clearFake();
+        parent::tearDown();
+    }
+
     public function test_listing_fields_and_real_pagination_from_captured_page_one(): void
     {
         $result = (new Listing($this->clientWithFixture('naturalhigh/listing-page-1.html')))
@@ -55,6 +67,16 @@ final class NaturalhighTest extends TestCase
         self::assertSame('NHDTA-402AI', $movie['code']);
         self::assertSame('【AIリマスター】生中痴漢7', $movie['title']);
         self::assertSame('https://www.naturalhigh.co.jp/wp-content/uploads/2026/10/NHDTA-402AI_H4.jpg', $movie['cover_url']);
+    }
+
+    public function test_listing_page_two_markup_wins_when_request_url_is_page_one(): void
+    {
+        $result = (new Listing($this->clientWithFixture('naturalhigh/listing-page-2.html')))
+            ->execute(new CrawlRequestDto(url: 'https://www.naturalhigh.co.jp/all/', type: CrawlType::Listing));
+
+        self::assertSame(2, $result->pagination->currentPage);
+        self::assertSame(3, $result->pagination->nextPage);
+        self::assertSame('https://www.naturalhigh.co.jp/all/?sf_paged=3', $result->pagination->nextUrl);
     }
 
     public function test_detail_maps_every_label_and_extracts_only_the_work_images_in_page_order(): void
@@ -109,6 +131,23 @@ final class NaturalhighTest extends TestCase
         }
     }
 
+    public function test_detail_skips_duplicate_image_urls_and_preserves_first_thumbnail_and_position(): void
+    {
+        $html = str_replace(
+            '<div class="p-style__gallery">',
+            '<div class="p-style__gallery"><a href="https://www.naturalhigh.co.jp/wp-content/uploads/2026/09/NHDTC-271_RGB.jpg"><img src="https://www.naturalhigh.co.jp/wp-content/uploads/2026/09/duplicate-thumbnail.jpg"></a>',
+            $this->loadFixture('naturalhigh/detail-nhdtc-271.html'),
+        );
+        $result = (new Detail($this->clientWithHtml($html)))
+            ->execute(new CrawlRequestDto(url: 'https://www.naturalhigh.co.jp/all/nhdtc-271/', type: CrawlType::Detail));
+        $images = $result->meta['movie']['screenshots'];
+
+        self::assertCount(21, $images);
+        self::assertSame('https://www.naturalhigh.co.jp/wp-content/uploads/2026/09/NHDTC-271_RGB.jpg', $images[0]['url']);
+        self::assertSame('https://www.naturalhigh.co.jp/wp-content/uploads/2026/09/NHDTC-271_01-1.jpg', $images[0]['thumbnail_url']);
+        self::assertSame(range(1, 21), array_column(array_column($images, 'metadata'), 'position'));
+    }
+
     public function test_only_catalog_listing_and_work_detail_urls_are_detected(): void
     {
         $manifests = new FileAdapterManifestRegistry();
@@ -123,5 +162,29 @@ final class NaturalhighTest extends TestCase
         self::assertSame(CrawlType::Detail, $crawler->detectUrl('https://www.naturalhigh.co.jp/all/nhdta-402ai/')->crawlType);
         self::assertFalse($crawler->detectUrl('https://www.naturalhigh.co.jp/series/374bbe57/')->matched);
         self::assertFalse($crawler->detectUrl('https://example.com/all/')->matched);
+    }
+
+    public function test_custom_http_headers_keep_the_required_age_gate_cookie(): void
+    {
+        $fixture = $this->loadFixture('naturalhigh/listing-page-1.html');
+        $fake = ClientBuilder::fake();
+        $fake->respond('GET', '/all/', (new TestResponseSequence())->push(
+            new Response(200, ['Content-Type' => 'text/html; charset=utf-8'], $fixture),
+        ));
+        $manifests = new FileAdapterManifestRegistry();
+        $manifest = $manifests->get('naturalhigh');
+        self::assertNotNull($manifest);
+        $adapter = new NaturalhighCrawler(new ClientFactory(), $manifest);
+
+        (new AdapterExecutor())->execute($adapter, new CrawlRequestDto(
+            url: 'https://www.naturalhigh.co.jp/all/',
+            type: CrawlType::Listing,
+            options: new CrawlOptionsDto(http: new HttpOptionsDto(headers: ['Accept-Language' => 'ja,en;q=0.8'])),
+        ));
+
+        $recorded = $fake->recorded();
+        self::assertCount(1, $recorded);
+        self::assertSame('age_gate=18', $recorded[0]->request->getHeaderLine('Cookie'));
+        self::assertSame('ja,en;q=0.8', $recorded[0]->request->getHeaderLine('Accept-Language'));
     }
 }

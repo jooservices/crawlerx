@@ -103,6 +103,9 @@ final class Detail extends AbstractHtmlType implements TypeInterface
             if ($url === null || preg_match('/\.(?:jpe?g|png|webp)(?:\?|$)/i', $url) !== 1) {
                 continue;
             }
+            if (isset($images[$url])) {
+                continue;
+            }
             $thumbnailUrl = $this->imageSource($image);
             $images[$url] = [
                 'url' => $url,
