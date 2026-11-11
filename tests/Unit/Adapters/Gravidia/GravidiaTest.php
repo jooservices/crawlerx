@@ -39,6 +39,13 @@ final class GravidiaTest extends TestCase
         self::assertSame(['スピ/サン'], $movie['metadata']['labels']);
         self::assertSame('Gravidia', $movie['metadata']['maker']);
 
+        $multiModelMovie = $this->movieById($result->items, '47225');
+        self::assertSame([
+            '上西怜', '佐藤茜', '入間ゆい', '南みゆか', '南雲るい', '宮部のぞみ', '小日向優花', '小野たまり',
+            '幸田あかり', '引地裕美', '柚乃りか', '橘 舞', '水咲優美', '流川結衣', '矢野ななか', '穂波あみ',
+            '篠原冴美', '純米あやの', '美波那緒', '葵りんご', '藤崎里菜', '野村るな', '鈴木Mob.',
+        ], array_column($multiModelMovie['performers'], 'name'));
+
         self::assertSame(1, $result->pagination->currentPage);
         self::assertSame(237, $result->pagination->lastPage);
         self::assertSame(2, $result->pagination->nextPage);
@@ -60,6 +67,10 @@ final class GravidiaTest extends TestCase
         self::assertSame('堀 未央奈', $result->items[0]->meta['movie']['performers'][0]['name']);
         self::assertSame('藤原 宏', $result->items[0]->meta['movie']['metadata']['photographer']);
         self::assertSame('その他', $result->items[0]->meta['movie']['metadata']['label']);
+        $multiModelMovie = $this->movieById($result->items, '46836');
+        self::assertSame([
+            'えなこ', 'よきゅーん', '南あみ', '山本栞', '東雲うみ', '篠崎こころ', '高見奈央',
+        ], array_column($multiModelMovie['performers'], 'name'));
         self::assertSame(2, $result->pagination->currentPage);
         self::assertSame(237, $result->pagination->lastPage);
         self::assertSame(3, $result->pagination->nextPage);
@@ -67,7 +78,7 @@ final class GravidiaTest extends TestCase
         self::assertTrue($result->pagination->hasNextPage);
     }
 
-    public function test_detail_extracts_every_public_field_and_only_the_work_image(): void
+    public function test_detail_extracts_every_public_field_and_pairs_the_work_image_thumbnail(): void
     {
         $result = (new Detail($this->clientWithFixture('gravidia/detail-48277.html')))->execute(new CrawlRequestDto(
             url: self::BASE . '/product/48277',
@@ -87,7 +98,7 @@ final class GravidiaTest extends TestCase
         self::assertSame(['スピ/サン', 'コスプレイヤー', 'その他', 'SEXY', 'カワイイ', 'スレンダー', '水着', 'プール', '屋外'], $movie['tags']);
         self::assertCount(1, $movie['screenshots']);
         self::assertSame('https://gravidia.jp/wp-content/uploads/2026/10/09D183600000d0000000.jpg', $movie['screenshots'][0]['url']);
-        self::assertNull($movie['screenshots'][0]['thumbnail_url']);
+        self::assertSame('https://gravidia.jp/wp-content/uploads/2026/10/09D183600000d0000000-212x300.jpg', $movie['screenshots'][0]['thumbnail_url']);
 
         $metadata = $movie['metadata'];
         self::assertSame('Gravidia', $metadata['maker']);
@@ -100,7 +111,11 @@ final class GravidiaTest extends TestCase
         self::assertSame('2026/11/09', $metadata['release_date_raw']);
         self::assertSame('2026-11-09', $metadata['posted_date']);
         self::assertSame('2026-11-08T21:00:00+00:00', $metadata['published_at']);
-        self::assertSame('1,100円(税込)', $metadata['price']);
+        self::assertSame([
+            'amount' => 1100.0,
+            'currency' => 'JPY',
+            'label' => '1,100円(税込)',
+        ], $metadata['price']);
         self::assertSame('https://gravidia.tameshiyo.me/09D183600000D0000000', $metadata['preview_url']);
         self::assertSame([
             '発売日' => '2026/11/09',
@@ -133,5 +148,20 @@ final class GravidiaTest extends TestCase
         (new Listing($this->clientWithHtml('<html><body><main>nothing</main></body></html>')))->execute(new CrawlRequestDto(
             url: self::BASE . '/search/?post_type=product&cts=cts&s=',
         ));
+    }
+
+    /** @param list<\JOOservices\CrawlerX\Dto\CrawlItemResultDto> $items
+     * @return array<string, mixed>
+     */
+    private function movieById(array $items, string $id): array
+    {
+        foreach ($items as $item) {
+            $movie = $item->meta['movie'];
+            if ($movie['external_id'] === $id) {
+                return $movie;
+            }
+        }
+
+        self::fail('Expected listing movie ' . $id . ' was not found.');
     }
 }

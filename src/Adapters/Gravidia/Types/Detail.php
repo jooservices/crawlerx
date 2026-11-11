@@ -49,9 +49,11 @@ final class Detail extends AbstractHtmlType implements TypeInterface
         $model = $this->firstText($root, Selectors::DETAIL_MODEL);
         $modelUrl = $this->firstAttribute($root, Selectors::DETAIL_MODEL, 'href');
         $tags = $this->texts($root, Selectors::DETAIL_TAGS);
-        $price = $this->firstText($root, Selectors::DETAIL_PRICE);
+        $price = $this->price($this->firstText($root, Selectors::DETAIL_PRICE));
         $preview = $this->firstAttribute($root, Selectors::DETAIL_PREVIEW, 'data-tameshiyomi-url');
         $publishedAt = $this->metaContent($crawler, 'article:published_time');
+        $thumbnail = $this->metaContent($crawler, 'og:image');
+        $thumbnail = $thumbnail === null ? null : $this->absolute($request->url, $thumbnail);
 
         $item = MovieDto::item($request->url, $id, $title, [
             'code' => $id,
@@ -60,7 +62,10 @@ final class Detail extends AbstractHtmlType implements TypeInterface
             'date' => $date,
             'performers' => $model === null ? [] : [$model],
             'tags' => $tags,
-            'screenshots' => $cover === null ? [] : [['url' => $cover, 'thumbnail_url' => null]],
+            'screenshots' => $cover === null ? [] : [[
+                'url' => $cover,
+                'thumbnail_url' => $thumbnail === $cover ? null : $thumbnail,
+            ]],
             'metadata' => MovieMeta::filter([
                 MovieMeta::MAKER => Site::NAME,
                 'product_id' => $id,
@@ -121,6 +126,16 @@ final class Detail extends AbstractHtmlType implements TypeInterface
         $meta = $crawler->filter('meta[property="' . $property . '"]');
 
         return $meta->count() > 0 ? $meta->first()->attr('content') : null;
+    }
+
+    /** @return array{amount: ?float, currency: ?string, label: ?string}|null */
+    private function price(?string $text): ?array
+    {
+        if ($text === null || preg_match('/([\d,]+(?:\.\d+)?)\s*円/u', $text, $match) !== 1) {
+            return null;
+        }
+
+        return MovieMeta::price((float) str_replace(',', '', $match[1]), 'JPY', $text);
     }
 
     private function siteDate(?string $date): ?string

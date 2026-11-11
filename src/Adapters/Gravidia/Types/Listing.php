@@ -47,12 +47,16 @@ final class Listing extends AbstractHtmlType implements TypeInterface
             $photographer = $this->firstText($card, Selectors::CARD_PHOTOGRAPHER);
             $photographer = $photographer === null ? null : trim(preg_replace('/^撮影[：:]\s*/u', '', $photographer) ?? $photographer);
             $model = $this->firstText($card, Selectors::CARD_MODEL);
+            $splitModels = $model === null ? [] : preg_split('/\s*,\s*/u', $model);
+            $models = $model === null
+                ? []
+                : array_values(array_filter(array_map('trim', is_array($splitModels) ? $splitModels : []), static fn(string $name): bool => $name !== ''));
             $label = $this->texts($card, Selectors::CARD_LABEL);
 
             $items[$id] = MovieDto::item($url, $id, $this->firstText($card, Selectors::CARD_TITLE), [
                 'code' => $id,
                 'cover_url' => $this->image($card, Selectors::CARD_IMAGE, $request->url),
-                'performers' => $model === null ? [] : [$model],
+                'performers' => $models,
                 'metadata' => MovieMeta::filter([
                     MovieMeta::MAKER => Site::NAME,
                     'model' => $model,
