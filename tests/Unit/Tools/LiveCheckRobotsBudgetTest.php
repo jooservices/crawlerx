@@ -35,7 +35,7 @@ final class LiveCheckRobotsBudgetTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_the_robots_lookup_counts_toward_the_two_request_adapter_budget(): void
+    public function test_the_robots_lookup_counts_toward_the_three_request_adapter_budget(): void
     {
         $registry = ClientBuilder::fake();
         $registry->respond('GET', '/robots.txt', (new TestResponseSequence())->push(
@@ -112,16 +112,16 @@ final class LiveCheckRobotsBudgetTest extends TestCase
             $this->sample(CrawlType::Detail, 'https://missav.ws/en/fns-247'),
         ]);
 
-        self::assertSame(['ok', 'not-checked'], array_column($results, 'status'));
-        self::assertSame('request_limit', $results[1]['error_code']);
-        self::assertCount(2, $registry->recorded());
+        self::assertSame(['ok', 'ok'], array_column($results, 'status'));
+        self::assertCount(3, $registry->recorded());
         self::assertSame([
             'https://missav.ws/robots.txt',
             'https://missav.ws/en/new',
             'https://missav.ws/en/fns-247',
         ], $requestedUrls);
-        self::assertCount(2, $permittedAt);
+        self::assertCount(3, $permittedAt);
         self::assertGreaterThanOrEqual(10_000_000_000, $permittedAt[1] - $permittedAt[0]);
+        self::assertGreaterThanOrEqual(10_000_000_000, $permittedAt[2] - $permittedAt[1]);
     }
 
     public function test_a_multi_request_listing_does_not_hide_an_unchecked_detail_sample(): void
@@ -195,9 +195,9 @@ final class LiveCheckRobotsBudgetTest extends TestCase
             ),
         ]);
 
-        self::assertSame(['not-checked', 'not-checked'], array_column($results, 'status'));
-        self::assertSame(['request_limit', 'request_limit'], array_column($results, 'error_code'));
-        self::assertCount(2, $registry->recorded());
+        self::assertSame(['blocked', 'not-checked'], array_column($results, 'status'));
+        self::assertSame(['blocked', 'request_limit'], array_column($results, 'error_code'));
+        self::assertCount(3, $registry->recorded());
         self::assertCount(4, $attemptedUrls);
         self::assertSame('https://commons.wikimedia.org/robots.txt', $attemptedUrls[0]);
     }
