@@ -13,6 +13,7 @@ use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Dto\Entity\ScreenshotDto;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
+use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class Detail extends AbstractType implements TypeInterface
@@ -57,6 +58,9 @@ final class Detail extends AbstractType implements TypeInterface
 
         $cover = $body->filter('.left .cover img[src]')->first();
         $coverUrl = $cover->count() > 0 ? TokumaSite::absolute($request->url, $cover->attr('src') ?? '') : null;
+        if (TokumaSite::isPlaceholderImage($coverUrl)) {
+            $coverUrl = null;
+        }
         $summary = self::text($body, '.right > p');
         $longDescription = self::text($dom, '#bookSample');
         $descriptionParts = array_filter([$summary, $longDescription], static fn(?string $value): bool => $value !== null);
@@ -65,10 +69,7 @@ final class Detail extends AbstractType implements TypeInterface
         $isbn = $rows['ISBN'] ?? null;
         $format = $rows['判型・ページ数'] ?? null;
         $pages = $format !== null && preg_match('/(\d+)\s*ページ/u', $format, $match) === 1 ? (int) $match[1] : null;
-        $performers = array_map(
-            static fn(array $author): array => ['name' => $author['name'], 'url' => $author['url']],
-            array_filter($authors, static fn(array $author): bool => str_contains($author['role'], '著')),
-        );
+        $performers = [];
         $screenshots = $coverUrl === null ? [] : [new ScreenshotDto($coverUrl, metadata: ['role' => 'cover'])];
         $item = MovieDto::item(TokumaSite::detailUrl($id), $id, $title, [
             'code' => $isbn,
@@ -78,18 +79,19 @@ final class Detail extends AbstractType implements TypeInterface
             'performers' => $performers,
             'tags' => array_map(static fn(array $genre): string => $genre['name'], $genres),
             'screenshots' => $screenshots,
-            'metadata' => [
+            'metadata' => MovieMeta::filter([
                 'maker' => 'Tokuma Shoten',
                 'isbn' => $isbn,
                 'authors' => $authors,
                 'genres' => $genres,
-                'series' => $series,
+                'series' => $series === [] ? null : implode(', ', array_column($series, 'name')),
+                'series_links' => $series,
                 'format' => $format,
                 'pages' => $pages,
-                'price' => $rows['定価'] ?? null,
+                'price' => TokumaSite::price($rows['定価'] ?? null),
                 'image_count' => $coverUrl === null ? 0 : 1,
                 'source_fields' => $rows,
-            ],
+            ]),
         ]);
         $this->assertUsableMovieDetail($item, 'Tokuma Shoten');
 

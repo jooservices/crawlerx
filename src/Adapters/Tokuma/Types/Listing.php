@@ -13,6 +13,7 @@ use JOOservices\CrawlerX\Dto\CrawlPaginationDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Dto\Entity\MovieDto;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
+use JOOservices\CrawlerX\Support\MovieMeta;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class Listing extends AbstractType implements TypeInterface
@@ -39,24 +40,22 @@ final class Listing extends AbstractType implements TypeInterface
             }
             $image = $card->filter('.image img[src]')->first();
             $cover = $image->count() > 0 ? TokumaSite::absolute($request->url, $image->attr('src') ?? '') : null;
-            if ($cover !== null && str_ends_with($cover, '_mid.jpg')) {
+            if (TokumaSite::isPlaceholderImage($cover)) {
+                $cover = null;
+            } elseif ($cover !== null && str_ends_with($cover, '_mid.jpg')) {
                 $cover = substr($cover, 0, -8) . '.jpg';
             }
             $title = self::text($card, '.ttl');
             $authorLinks = self::links($card, '.author a[href]', $request->url);
-            $performers = array_values(array_map(
-                static fn(array $author): array => ['name' => $author['name'], 'url' => $author['url']],
-                array_filter($authorLinks, static fn(array $author): bool => str_contains($author['role'], '著')),
-            ));
             $items[] = MovieDto::item($url, $id, $title, [
                 'code' => $id,
                 'cover_url' => $cover,
-                'performers' => $performers,
-                'metadata' => [
+                'performers' => [],
+                'metadata' => MovieMeta::filter([
                     'maker' => 'Tokuma Shoten',
-                    'price' => self::text($card, '.price'),
+                    'price' => TokumaSite::price(self::text($card, '.price')),
                     'authors' => $authorLinks,
-                ],
+                ]),
             ]);
         }
         if ($items === []) {
@@ -104,13 +103,18 @@ final class Listing extends AbstractType implements TypeInterface
         $rangeText = $range->count() > 0 ? self::normalize($range->text('')) : '';
         $pageSizeNode = $dom->filter('.resultWrap .number option[selected]')->first();
         $pageSizeText = $pageSizeNode->count() > 0 ? $pageSizeNode->attr('value') : null;
-        $pageSize = is_string($pageSizeText) && ctype_digit($pageSizeText) ? (int) $pageSizeText : null;
-        if ($pageSize === null && preg_match('/\d+[〜～](\d+)件/u', $rangeText, $match) === 1) {
-            $pageSize = (int) $match[1];
+        $configuredPageSize = is_string($pageSizeText) && ctype_digit($pageSizeText) ? (int) $pageSizeText : null;
+        $pageSize = $configuredPageSize;
+        $rangeEnd = null;
+        if ($pageSize === null && preg_match('/(\d+)[〜～](\d+)件/u', $rangeText, $match) === 1) {
+            $rangeEnd = (int) $match[2];
+            $pageSize = $rangeEnd - (int) $match[1] + 1;
         }
-        if ($pageSize !== null && preg_match('/全([\d,]+)件/u', $rangeText, $match) === 1) {
+        if ($pageSize !== null && $pageSize > 0 && preg_match('/全([\d,]+)件/u', $rangeText, $match) === 1) {
             $total = (int) str_replace(',', '', $match[1]);
-            $lastPage = (int) ceil($total / $pageSize);
+            if ($configuredPageSize !== null || ($rangeEnd !== null && $rangeEnd < $total)) {
+                $lastPage = (int) ceil($total / $pageSize);
+            }
         }
         $next = $dom->filter('.resultWrap .pagingWrap a.next[href]')->first();
         $nextUrl = $next->count() > 0 ? TokumaSite::absolute($url, $next->attr('href') ?? '') : null;
