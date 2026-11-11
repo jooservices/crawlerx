@@ -17,7 +17,7 @@
     },
     "base_url": "https://www.mutekimuteki.com",
     "pagination": {
-        "strategy": "query",
+        "strategy": "path",
         "param": "page"
     },
     "config_schema": [

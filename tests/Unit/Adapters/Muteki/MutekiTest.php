@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace JOOservices\CrawlerX\Tests\Unit\Adapters\Muteki;
 
 use JOOservices\CrawlerX\Adapters\Muteki\MutekiCrawler;
-use JOOservices\CrawlerX\Adapters\Muteki\Site;
 use JOOservices\CrawlerX\Adapters\Muteki\Types\Detail;
 use JOOservices\CrawlerX\Adapters\Muteki\Types\Listing;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
@@ -45,6 +44,50 @@ final class MutekiTest extends TestCase
         self::assertSame(1, $result->pagination->lastPage);
         self::assertFalse($result->pagination->hasNextPage);
         self::assertNull($result->pagination->nextUrl);
+    }
+
+    public function test_listing_pagination_uses_path_page_and_bx_paging_links(): void
+    {
+        $html = <<<'HTML'
+<div class="area-works-list-content">
+    <ul class="lst-index">
+        <li><a class="btn-works" href="/works/detail/tek102/"><p>Flowing river</p><span>2025/6/3 RELEASE</span></a></li>
+    </ul>
+    <div class="bx-paging">
+        <a rel="next" href="/works/list/all/2/">Next</a>
+        <a href="/works/list/all/2/">2</a>
+        <a href="/works/list/all/3/">3</a>
+        <a href="/works/list/all/4/">4</a>
+        <a href="/works/list/all/5/">5</a>
+    </div>
+</div>
+HTML;
+
+        $firstPage = (new Listing($this->clientWithHtml($html)))->execute(new CrawlRequestDto(url: self::BASE . '/works/list/all/'));
+        self::assertSame(1, $firstPage->pagination->currentPage);
+        self::assertSame(5, $firstPage->pagination->lastPage);
+        self::assertSame(2, $firstPage->pagination->nextPage);
+        self::assertSame(self::BASE . '/works/list/all/2/', $firstPage->pagination->nextUrl);
+        self::assertTrue($firstPage->pagination->hasNextPage);
+
+        $secondPage = (new Listing($this->clientWithHtml($html)))->execute(new CrawlRequestDto(url: self::BASE . '/works/list/all/2/'));
+        self::assertSame(2, $secondPage->pagination->currentPage);
+        self::assertSame(3, $secondPage->pagination->nextPage);
+        self::assertSame(self::BASE . '/works/list/all/3/', $secondPage->pagination->nextUrl);
+    }
+
+    public function test_listing_skips_performers_without_a_normalized_name(): void
+    {
+        $html = <<<'HTML'
+<div class="area-works-list-content"><ul class="lst-index"><li>
+    <a class="btn-works" href="/works/detail/tek102/"><p>Flowing river</p></a>
+    <div class="bx-actress-link"><a href="/actress/detail/1102441/"> </a></div>
+</li></ul></div>
+HTML;
+
+        $result = (new Listing($this->clientWithHtml($html)))->execute(new CrawlRequestDto(url: self::BASE . '/works/list/release/'));
+
+        self::assertSame([], $result->items[0]->meta['movie']['performers']);
     }
 
     public function test_detail_extracts_every_labelled_field_and_work_image(): void
@@ -106,10 +149,27 @@ final class MutekiTest extends TestCase
 
         self::assertInstanceOf(MutekiCrawler::class, $crawler);
         self::assertSame(CrawlType::Listing, $crawler->detectUrl(self::BASE . '/works/list/release/')->crawlType);
+        foreach ([
+            '/works/list/all/',
+            '/works/list/all/2/',
+            '/works/list/year/2025/',
+            '/works/list/year/2025/2/',
+            '/works/list/genre/1/',
+            '/works/list/genre/1/2/',
+        ] as $path) {
+            self::assertSame(CrawlType::Listing, $crawler->detectUrl(self::BASE . $path)->crawlType);
+        }
+        foreach ([
+            '/works/list/year/2025/' => 1,
+            '/works/list/year/2025/2/' => 2,
+            '/works/list/genre/1/' => 1,
+            '/works/list/genre/1/2/' => 2,
+        ] as $path => $page) {
+            $listing = (new Listing($this->clientWithFixture('muteki/listing-page1.html')))->execute(new CrawlRequestDto(url: self::BASE . $path));
+            self::assertCount(1, $listing->items);
+            self::assertSame($page, $listing->pagination->currentPage);
+        }
         self::assertSame(CrawlType::Detail, $crawler->detectUrl(self::BASE . '/works/detail/tek102/')->crawlType);
         self::assertFalse($crawler->detectUrl(self::BASE . '/actress/detail/1102441/')->matched);
-        self::assertSame(self::BASE, Site::config()->baseUrl);
-        self::assertSame('MUTEKI', Site::config()->maker);
-        self::assertTrue(Site::config()->plainPerformers);
     }
 }

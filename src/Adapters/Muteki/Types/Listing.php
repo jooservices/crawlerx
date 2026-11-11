@@ -30,7 +30,7 @@ final class Listing extends AbstractType implements TypeInterface
     {
         $response = $this->client->get($request->url);
         $dom = new Crawler($this->htmlFromResponse($response->toPsrResponse(), 'MUTEKI', 'listing'));
-        $page = max(1, $request->page);
+        $page = $this->pageFromUrl($request->url);
         $items = [];
 
         foreach ($dom->filter('.area-works-list-content .lst-index > li') as $element) {
@@ -43,16 +43,23 @@ final class Listing extends AbstractType implements TypeInterface
 
             $url = $this->absolute(Site::BASE_URL, $href);
             $id = strtoupper(trim(basename((string) parse_url($url, PHP_URL_PATH)), '/'));
-            $performers = $card->filter('.bx-actress-link a[href]')->each(function (Crawler $link): array {
+            $performers = [];
+            foreach ($card->filter('.bx-actress-link a[href]') as $element) {
+                $link = new Crawler($element);
+                $name = $this->normalizeText($link->text(''));
+                if ($name === null) {
+                    continue;
+                }
+
                 $profileUrl = $this->absolute(Site::BASE_URL, (string) $link->attr('href'));
 
-                return [
-                    'name' => $this->normalizeText($link->text('')) ?? '',
-                    'name_japanese' => $this->normalizeText($link->text('')) ?? '',
+                $performers[] = [
+                    'name' => $name,
+                    'name_japanese' => $name,
                     'url' => $profileUrl,
                     'external_id' => trim(basename((string) parse_url($profileUrl, PHP_URL_PATH)), '/'),
                 ];
-            });
+            }
 
             $items[] = MovieDto::item($url, $id, $title, [
                 'code' => $id,
@@ -67,8 +74,18 @@ final class Listing extends AbstractType implements TypeInterface
             throw new CrawlParseException('MUTEKI listing did not contain expected work cards.');
         }
 
-        $next = $dom->filter('a[rel="next"][href], .pagination a.next[href], .pager a.next[href]');
-        $nextUrl = $next->count() > 0 ? $this->absolute(Site::BASE_URL, (string) $next->first()->attr('href')) : null;
+        $pages = [];
+        foreach ($dom->filter('.bx-paging a[href], a[rel="next"][href], .pagination a.next[href], .pager a.next[href]') as $element) {
+            $link = new Crawler($element);
+            $href = (string) $link->attr('href');
+            $linkedPage = $this->pageFromUrl($this->absolute(Site::BASE_URL, $href));
+            if ($linkedPage > $page) {
+                $pages[$linkedPage] = $this->absolute(Site::BASE_URL, $href);
+            }
+        }
+        ksort($pages);
+        $nextPage = array_key_first($pages);
+        $nextUrl = $nextPage === null ? null : $pages[$nextPage];
 
         return new CrawlListResultDto(
             url: $request->url,
@@ -77,12 +94,20 @@ final class Listing extends AbstractType implements TypeInterface
             items: $items,
             pagination: new CrawlPaginationDto(
                 currentPage: $page,
-                lastPage: $nextUrl === null ? $page : null,
-                nextPage: $nextUrl === null ? null : $page + 1,
+                lastPage: $pages === [] ? $page : max(array_keys($pages)),
+                nextPage: $nextPage,
                 nextUrl: $nextUrl,
                 hasNextPage: $nextUrl !== null,
             ),
         );
+    }
+
+    private function pageFromUrl(string $url): int
+    {
+        $path = (string) parse_url($url, PHP_URL_PATH);
+        preg_match('#^/works/list/(?:release|all|year/\d{4}|genre/\d+)(?:/([1-9]\d*))?/?$#', $path, $match);
+
+        return isset($match[1]) ? (int) $match[1] : 1;
     }
 
     private function date(?string $value): ?string

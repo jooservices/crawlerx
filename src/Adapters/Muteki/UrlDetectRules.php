@@ -32,7 +32,7 @@ trait UrlDetectRules
                 urlType: 'listing',
                 crawlType: CrawlType::Listing,
                 priority: 80,
-                matcher: static fn(string $url, string $path, string $query): bool => preg_match('#^/works/list/(?:release|all)/?$#', $path) === 1,
+                matcher: static fn(string $url, string $path, string $query): bool => preg_match('#^/works/list/(?:release|all|year/\d{4}|genre/\d+)(?:/[1-9]\d*)?/?$#', $path) === 1,
             ),
         ];
     }
