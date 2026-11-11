@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add the NATURAL HIGH (`naturalhigh`) adapter for work listings and details behind the site's age confirmation (JOOXCR-495).
+- Add the FAIR＆WAY (`fairway`) adapter for the release and reserve work listings and work details (JOOXCR-491).
+
 ## [1.8.0] - 2026-11-11
 
 ### Added
