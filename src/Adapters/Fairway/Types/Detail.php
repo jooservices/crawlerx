@@ -58,7 +58,7 @@ final class Detail extends AbstractHtmlType implements TypeInterface
                 'duration' => $formats[0]['duration'] ?? null,
                 'performers' => array_map(static fn(string $name): array => MovieMeta::performer($name), $performers),
                 'tags' => array_column($genres, 'name'),
-                'cover_url' => $images[0] ?? null,
+                'cover_url' => null,
                 'screenshots' => $images,
                 'metadata' => MovieMeta::filter([
                     MovieMeta::MAKER => Site::NAME,

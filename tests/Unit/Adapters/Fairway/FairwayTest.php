@@ -118,7 +118,7 @@ final class FairwayTest extends TestCase
             'https://cdn.up-timely.com/image/33/content/83198/jji6np0LfZyhVSmwnp7Z38pRUCyQgLIhIIesSbba.jpg',
             'https://cdn.up-timely.com/image/33/content/83198/zlKuGDl7pyEqVHFhcXW1BRs0Y8DwGI3ZcfGKRZe8.jpg',
         ];
-        self::assertSame($imageUrls[0], $movie['cover_url']);
+        self::assertNull($movie['cover_url']);
         self::assertCount(10, $movie['screenshots']);
         self::assertSame($imageUrls, array_column($movie['screenshots'], 'url'));
 
