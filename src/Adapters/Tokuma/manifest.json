@@ -1,0 +1,112 @@
+{
+    "slug": "tokuma",
+    "name": "Tokuma Shoten",
+    "version": "1.0.0",
+    "description": "Crawler for Tokuma Shoten's public new-book listing and book details",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\Tokuma\\TokumaCrawler",
+        "capabilities": [
+            "listing",
+            "detail"
+        ]
+    },
+    "base_url": "https://www.tokuma.jp",
+    "pagination": {
+        "strategy": "query",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        }
+    ],
+    "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [
+                    ".resultWrap .bookWrap li"
+                ],
+                "detail": [
+                    "#main .detail"
+                ]
+            }
+        },
+        "targetProfiles": {
+            "new_books": {
+                "label": "New Books",
+                "url": "https://www.tokuma.jp/search/new.html"
+            },
+            "detail_sample": {
+                "label": "Detail sample",
+                "url": "https://www.tokuma.jp/book/b681270.html"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "new_books",
+                "url": "https://www.tokuma.jp/search/new.html",
+                "paginated": true,
+                "loop": true,
+                "priority": 0,
+                "max_pages": 5,
+                "status": "paused"
+            },
+            {
+                "url_type": "detail_sample",
+                "url": "https://www.tokuma.jp/book/b681270.html",
+                "paginated": false,
+                "loop": true,
+                "priority": 1,
+                "status": "paused"
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://www.tokuma.jp/search/new.html",
+                "name": "listing-page1.html",
+                "type": "listing",
+                "followUps": [
+                    {
+                        "url": "https://www.tokuma.jp/search/index.php?page=2&new_status=true&c=1",
+                        "name": "listing-page2.html"
+                    }
+                ]
+            },
+            {
+                "url": "https://www.tokuma.jp/search/index.php?page=2&new_status=true&c=1",
+                "name": "listing-page2.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://www.tokuma.jp/book/b681270.html",
+                "name": "detail-b681270.html",
+                "type": "detail"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30,
+            "page_delay_seconds": 5,
+            "detail_delay_seconds": 5
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 5,
+            "min_gap_seconds": 5,
+            "max_gap_seconds": 30
+        },
+        "browserHeaders": {
+            "Accept-Language": "ja,en-US;q=0.9,en;q=0.8"
+        },
+        "playwrightFetchEnabled": false
+    },
+    "type": "site"
+}
