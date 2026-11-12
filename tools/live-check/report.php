@@ -29,10 +29,9 @@ Usage:
 
 Checks one listing and one detail sample per adapter when available. A gallery
 sample is used for the detail check when an adapter has no detail sample.
-Each adapter has at most two outbound requests, including robots lookups,
-follow-ups, retries, and redirect hops. A fresh robots lookup can use one of
-those requests, so a later selected sample may be reported as not-checked when
-the request budget is exhausted. Requests to the same host are at least 10 seconds apart.
+Each adapter has at most three outbound requests, including robots lookups,
+follow-ups, retries, and redirect hops. A run has a hard cap of 300 outbound
+requests total. Requests to the same host are at least 10 seconds apart.
 Reports are written to build/live-check/ as Markdown and JSON files.
 
 Options:

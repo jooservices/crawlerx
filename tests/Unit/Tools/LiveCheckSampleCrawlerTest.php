@@ -33,7 +33,7 @@ final class LiveCheckSampleCrawlerTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_optional_followup_limit_keeps_both_selected_samples_checked(): void
+    public function test_optional_followup_stays_within_budget_and_keeps_both_samples_checked(): void
     {
         $registry = ClientBuilder::fake();
         $registry->respond('GET', '/dyn/phpauto/movie_lists/list_newest_0.json', (new TestResponseSequence())->push(
@@ -89,9 +89,10 @@ final class LiveCheckSampleCrawlerTest extends TestCase
             'https://en.1pondo.tv/dyn/phpauto/movie_details/movie_id/060426_001.json',
             'https://en.1pondo.tv/dyn/dla/json/movie_gallery/060426_001.json',
         ], $attemptedUrls);
-        self::assertCount(2, $registry->recorded());
-        self::assertCount(2, $permittedAt);
+        self::assertCount(3, $registry->recorded());
+        self::assertCount(3, $permittedAt);
         self::assertGreaterThanOrEqual(10_000_000_000, $permittedAt[1] - $permittedAt[0]);
+        self::assertGreaterThanOrEqual(10_000_000_000, $permittedAt[2] - $permittedAt[1]);
     }
 
     /** @return array{slug: string, adapter_name: string, role: string, name: string, type: CrawlType, url: string, fallback_required: bool} */
