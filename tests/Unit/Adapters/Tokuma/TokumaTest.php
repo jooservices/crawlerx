@@ -115,7 +115,7 @@ final class TokumaTest extends TestCase
         self::assertSame(self::BASE . '/images/book/681270.jpg', $movie['cover_url']);
         self::assertStringContainsString('グラビアモデル・爽香の待望のファースト写真集。', $movie['description']);
         self::assertSame('2026-11-11', $movie['date']);
-        self::assertSame([], $movie['performers']);
+        self::assertSame(['爽香'], array_column($movie['performers'], 'name'));
         self::assertSame(['一般書', '芸能・タレント', '発行元出版社', '徳間書店'], $movie['tags']);
 
         self::assertCount(1, $movie['screenshots']);
