@@ -1,0 +1,101 @@
+{
+    "slug": "digitalark",
+    "name": "DIGITAL ARK",
+    "version": "1.0.0",
+    "description": "Crawler for DIGITAL ARK shop product listings and item details",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\Digitalark\\DigitalarkCrawler",
+        "capabilities": [
+            "listing",
+            "detail"
+        ]
+    },
+    "base_url": "https://shop.digital-ark.com",
+    "pagination": {
+        "strategy": "query",
+        "param": "page"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        }
+    ],
+    "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [
+                    ".item-list-name"
+                ],
+                "detail": [
+                    ".item-name"
+                ]
+            },
+            "soft404Markers": [
+                "page not found",
+                "404 not found"
+            ]
+        },
+        "targetProfiles": {
+            "new_products": {
+                "label": "All releases",
+                "url": "https://shop.digital-ark.com/view/category/release-date"
+            },
+            "product_sample": {
+                "label": "DIGITAL ARK item detail",
+                "url": "https://shop.digital-ark.com/view/item/000000002230"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "new_products",
+                "url": "https://shop.digital-ark.com/view/category/release-date",
+                "paginated": true,
+                "loop": true,
+                "priority": 0
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://shop.digital-ark.com/view/category/release-date",
+                "name": "listing-page-1.html",
+                "type": "listing",
+                "followUps": [
+                    {
+                        "url": "https://shop.digital-ark.com/view/category/release-date?page=2",
+                        "name": "listing-page-2.html"
+                    }
+                ]
+            },
+            {
+                "url": "https://shop.digital-ark.com/view/category/release-date?page=2",
+                "name": "listing-page-2.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://shop.digital-ark.com/view/item/000000002230",
+                "name": "detail-000000002230.html",
+                "type": "detail"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 5,
+            "min_gap_seconds": 5,
+            "max_gap_seconds": 30
+        },
+        "playwrightFetchEnabled": false
+    },
+    "type": "site"
+}
