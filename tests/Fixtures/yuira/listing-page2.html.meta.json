@@ -5,6 +5,6 @@
   "http_status": 200,
   "content_hash": "ca8849a088c13fc308cfb7c4ab56a76607ec93445752711e367e770fe46906e5",
   "target_type": "listing",
-  "fetch_method": "curl",
+  "fetch_method": "http",
   "sanitized": true
 }
