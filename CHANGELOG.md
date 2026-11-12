@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add the COMMA VISION (`comma`) adapter for public product listings and product details.
+- Add the TMA (`tma`) adapter for public product listings and product details.
+- Add the YUIRA (`yuira`) adapter for public product listings and product details.
+- Add the DIGITAL ARK (`digitalark`) adapter for public product listings and product details.
 - Add the NATURAL HIGH (`naturalhigh`) adapter for work listings and details behind the site's age confirmation (JOOXCR-495).
 - Add the FAIR＆WAY (`fairway`) adapter for the release and reserve work listings and work details (JOOXCR-491).
 
