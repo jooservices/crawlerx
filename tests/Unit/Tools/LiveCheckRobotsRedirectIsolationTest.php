@@ -32,6 +32,7 @@ final class LiveCheckRobotsRedirectIsolationTest extends TestCase
         $transport = new LiveCheckRobotsRedirectRecordingTransport([
             new Response(302, ['Location' => '/robots-final']),
             new Response(200, [], "User-agent: *\nAllow: /\n"),
+            new Response(200, [], 'sample page'),
         ]);
         $now = 0;
         $permittedAt = [];
@@ -74,19 +75,23 @@ final class LiveCheckRobotsRedirectIsolationTest extends TestCase
         $limiter->forAdapter('sample-site', static function () use ($robotsClient, $sampleClient): void {
             $robotsClient->get('https://example.test/robots.txt');
             $sampleClient->get('https://example.test/item/1');
+            $sampleClient->get('https://example.test/item/2');
         });
 
         self::assertSame([
             'https://example.test/robots.txt',
             'https://example.test/robots-final',
+            'https://example.test/item/1',
         ], $transport->requestedUrls());
         self::assertSame([
             'https://example.test/robots.txt',
             'https://example.test/robots-final',
             'https://example.test/item/1',
+            'https://example.test/item/2',
         ], $attemptedUrls);
-        self::assertCount(2, $permittedAt);
+        self::assertCount(3, $permittedAt);
         self::assertGreaterThanOrEqual(10_000_000_000, $permittedAt[1] - $permittedAt[0]);
+        self::assertGreaterThanOrEqual(10_000_000_000, $permittedAt[2] - $permittedAt[1]);
         self::assertTrue($limiter->wasBudgetExceeded('sample-site'));
     }
 

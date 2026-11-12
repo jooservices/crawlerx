@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add the NATURAL HIGH (`naturalhigh`) adapter for work listings and details behind the site's age confirmation (JOOXCR-495).
 - Add the FAIR＆WAY (`fairway`) adapter for the release and reserve work listings and work details (JOOXCR-491).
 
+### Changed
+
+- Let live checks spend up to three outbound requests per adapter so the detail or gallery sample can run after robots and listing checks; cap each run at 300 requests (JOOXCR-504).
+
 ## [1.8.0] - 2026-11-11
 
 ### Added
