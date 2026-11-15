@@ -2,6 +2,10 @@
 
 Follow workspace [`AGENTS.md`](../AGENTS.md). Canonical policy is at the JOOservices workspace root.
 
+## Engineering standard
+
+Every change follows the workspace standard [`standards/engineering-principles.md`](../../../standards/engineering-principles.md): SOLID, KISS, YAGNI and DRY, the hard gates (cyclomatic complexity at most 10, no duplicated block of 100 tokens or more, no unused code, no suppression comments, full line and branch coverage of the code you write or change) and the test policy. The project profile is [`.ai/project.json`](.ai/project.json); tickets, developers and reviewers go through the workspace tools (`scripts/dev/assign`, `scripts/dev/develop`, `scripts/dev/check quick|final`, `scripts/git`).
+
 PHP `^8.5` crawl/parse library for JAV catalog sites. Uses `jooservices/client` v4 and `jooservices/dto` v3.
 
 ## Configuration and runtime
@@ -19,6 +23,16 @@ make ci
 ```
 
 Without `CRAWLERX_PHP`, PHP commands run inside this project's Docker (`php:8.5-cli-bookworm`).
+
+## Project commands
+
+| Command | Purpose |
+|---|---|
+| `composer lint` | Pint, PHPCS, PHPStan (max), PHPMD, PHP-CS-Fixer |
+| `composer lint:deptrac` | Layer rules (Adapters, Fetch, Dto, Support, Contracts) |
+| `composer check:manifests`, `check:changelog`, `check:fixtures-meta`, `check:readme-sites` | Repository consistency checks |
+| `composer test:changed` | Tests for the files changed against `origin/develop` |
+| `php -d pcov.enabled=1 vendor/bin/phpunit` | Full suite (needs a coverage driver) |
 
 ## Public API
 
