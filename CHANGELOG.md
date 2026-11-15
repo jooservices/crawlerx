@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-11-15
+
 ### Added
 
 - Add the COMMA VISION (`comma`) adapter for public product listings and product details.
@@ -383,6 +385,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   implementation (Jable performer listing was an alias to the movie parser).
 - Catalog `external_id` for HEYZO/FC2 included the code prefix inconsistently.
 
+[1.9.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.9.0
 [1.8.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.8.0
 [1.7.1]: https://github.com/jooservices/crawlerx/releases/tag/v1.7.1
 [1.7.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.7.0
@@ -392,6 +395,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [1.2.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.2.0
 [1.1.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.1.0
 
+[1.9.0...1.8.0]: https://github.com/jooservices/crawlerx/compare/v1.8.0...v1.9.0
 [1.8.0...1.7.1]: https://github.com/jooservices/crawlerx/compare/v1.7.1...v1.8.0
 [1.7.1...1.7.0]: https://github.com/jooservices/crawlerx/compare/v1.7.0...v1.7.1
 [1.7.0...1.6.0]: https://github.com/jooservices/crawlerx/compare/v1.6.0...v1.7.0
