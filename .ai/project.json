@@ -170,6 +170,12 @@
       "account": "ngocvu",
       "effort": "max",
       "count": 1
+    },
+    {
+      "provider": "claude",
+      "model": "claude-haiku-5-5",
+      "effort": "max",
+      "count": 1
     }
   ]
 }
