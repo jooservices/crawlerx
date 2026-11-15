@@ -74,7 +74,7 @@ The path installation uses this checkout's actual requirements, including
 Released as `1.9.0` — install from Packagist:
 
 ```bash
-composer require jooservices/crawlerx:^1.8
+composer require jooservices/crawlerx:^1.9
 ```
 
 The retired `v1.0.0` is the previous Laravel implementation and does not
