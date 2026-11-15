@@ -1,0 +1,175 @@
+{
+  "identity": {
+    "name": "Viet Vu",
+    "email": "jooservices@gmail.com",
+    "forbiddenTraces": [
+      "(?i)co-authored-by:.*(claude|anthropic|codex|openai|chatgpt|gpt|copilot|gemini|grok|opencode|deepseek|cursor)",
+      "(?i)generated (with|by)\\b",
+      "🤖",
+      "(?i)\\bclaude code\\b"
+    ],
+    "sshKey": "~/.ssh/github_ed25519",
+    "githubUser": "soulevilx"
+  },
+  "setup": [
+    {
+      "name": "deps",
+      "cmd": "composer install --no-interaction --prefer-dist",
+      "cwd": "."
+    },
+    {
+      "name": "env",
+      "cmd": "cp -n .env.example .env",
+      "cwd": "."
+    }
+  ],
+  "stages": [
+    {
+      "name": "lint",
+      "group": "static",
+      "order": 1,
+      "cmd": "composer lint",
+      "changedCmd": "vendor/bin/pint --test {files} && vendor/bin/phpcs --standard=phpcs.xml {files}",
+      "cwd": ".",
+      "when": [
+        "src/**/*.php",
+        "tests/**/*.php",
+        "tools/**/*.php"
+      ],
+      "parallel": "static",
+      "expectedSeconds": 120,
+      "requiresServices": []
+    },
+    {
+      "name": "architecture",
+      "group": "static",
+      "order": 1,
+      "cmd": "composer lint:deptrac",
+      "cwd": ".",
+      "when": [],
+      "parallel": "static",
+      "expectedSeconds": 60,
+      "requiresServices": []
+    },
+    {
+      "name": "contracts",
+      "group": "static",
+      "order": 1,
+      "cmd": "composer check:manifests && composer check:changelog && composer check:fixtures-meta && composer check:readme-sites",
+      "cwd": ".",
+      "when": [],
+      "parallel": "static",
+      "expectedSeconds": 30,
+      "requiresServices": []
+    },
+    {
+      "name": "secrets",
+      "group": "static",
+      "order": 1,
+      "cmd": "{workspace}/scripts/scan/main gitleaks .",
+      "cwd": ".",
+      "when": [],
+      "parallel": "static",
+      "expectedSeconds": 30,
+      "requiresServices": []
+    },
+    {
+      "name": "unit",
+      "group": "test",
+      "order": 2,
+      "cmd": "php -d pcov.enabled=1 vendor/bin/phpunit",
+      "changedCmd": "composer test:changed",
+      "cwd": ".",
+      "when": [
+        "src/**/*.php",
+        "tests/**/*.php",
+        "tools/**/*.php"
+      ],
+      "parallel": "",
+      "expectedSeconds": 900,
+      "requiresServices": []
+    },
+    {
+      "name": "sonar",
+      "group": "analysis",
+      "order": 3,
+      "cmd": "{workspace}/scripts/dev/sonar",
+      "cwd": ".",
+      "when": [],
+      "parallel": "",
+      "expectedSeconds": 300,
+      "requiresServices": []
+    }
+  ],
+  "testGlobs": [
+    "tests/**/*Test.php",
+    "tests/Browser/*.test.mjs"
+  ],
+  "testNamePatterns": [
+    "function (test_[A-Za-z0-9_]+)",
+    "(?:it|test)\\(\\s*['\"`]([^'\"`]+)['\"`]"
+  ],
+  "commitMessage": {
+    "regex": "^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\\([^()\\r\\n]+\\))?: [A-Z].*[^.] \\(JOOXCR-[0-9]+\\)$",
+    "rules": {
+      "requireTicketKeyMatch": true
+    }
+  },
+  "protectedBranches": [
+    "develop",
+    "master"
+  ],
+  "ticketKeyRegex": "JOOXCR-[0-9]+",
+  "forbiddenPatterns": [
+    "@phpstan-ignore",
+    "phpcs:(ignore|disable)",
+    "@SuppressWarnings",
+    "NOSONAR"
+  ],
+  "mechanicalPaths": [
+    "**/*.md",
+    "docs/**",
+    "tests/Fixtures/**"
+  ],
+  "skills": [
+    "engineering-principles",
+    "php-architecture",
+    "dto",
+    "client"
+  ],
+  "touchPoints": [
+    "src/**",
+    "tests/**",
+    "tools/**",
+    "docs/**"
+  ],
+  "reviewers": [
+    {
+      "provider": "claude",
+      "model": "claude-sonnet-5-5",
+      "effort": "max"
+    },
+    {
+      "provider": "codex",
+      "model": "gpt-6.1-terra",
+      "account": "soulevilx",
+      "effort": "max"
+    }
+  ],
+  "developers": [
+    {
+      "provider": "codex",
+      "model": "gpt-6-luna",
+      "account": "soulevilx",
+      "effort": "max",
+      "count": 1
+    },
+    {
+      "provider": "codex",
+      "model": "gpt-6-luna",
+      "account": "ngocvu",
+      "effort": "max",
+      "count": 1
+    }
+  ]
+}
