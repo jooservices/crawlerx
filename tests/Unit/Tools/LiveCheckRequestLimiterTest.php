@@ -73,9 +73,10 @@ final class LiveCheckRequestLimiterTest extends TestCase
         self::assertTrue($detail->ok);
         self::assertCount(3, $attemptedUrls);
         self::assertStringContainsString('/dyn/dla/json/movie_gallery/060426_001.json', $attemptedUrls[2]);
-        self::assertCount(2, $registry->recorded());
-        self::assertCount(2, $permittedAt);
+        self::assertCount(3, $registry->recorded());
+        self::assertCount(3, $permittedAt);
         self::assertGreaterThanOrEqual(10_000_000_000, $permittedAt[1] - $permittedAt[0]);
+        self::assertGreaterThanOrEqual(10_000_000_000, $permittedAt[2] - $permittedAt[1]);
     }
 
     public function test_fetch_retries_use_the_same_adapter_budget_and_host_interval(): void
@@ -117,6 +118,31 @@ final class LiveCheckRequestLimiterTest extends TestCase
         self::assertCount(2, $registry->recorded());
         self::assertCount(2, $permittedAt);
         self::assertGreaterThanOrEqual(10_000_000_000, $permittedAt[1] - $permittedAt[0]);
+    }
+
+    public function test_it_enforces_a_hard_three_hundred_request_run_cap(): void
+    {
+        $now = 0;
+        $limiter = new LiveCheckRequestLimiter(
+            static function (int $microseconds) use (&$now): void {
+                $now += $microseconds * 1_000;
+            },
+            static fn(): int => $now,
+        );
+
+        for ($index = 0; $index < 300; ++$index) {
+            $allowed = $limiter->forAdapter('adapter-' . $index, fn(): bool => $limiter->beforeRequest(
+                'https://example.test/' . $index,
+            ));
+            self::assertTrue($allowed);
+        }
+
+        $allowed = $limiter->forAdapter('adapter-300', static fn(): bool => $limiter->beforeRequest(
+            'https://example.test/last',
+        ));
+
+        self::assertFalse($allowed);
+        self::assertTrue($limiter->wasBudgetExceeded('adapter-300'));
     }
 
     private function fixture(string $name): string

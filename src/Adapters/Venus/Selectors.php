@@ -20,6 +20,8 @@ final class Selectors
 
     public const PAGER_NEXT = '.wp-pagenavi .nextpostslink';
 
+    public const PAGER_PAGES = '.wp-pagenavi a.page[href]';
+
     public const PAGER_LAST = '.wp-pagenavi .last';
 
     public const DETAIL_TITLE = '.products h1';

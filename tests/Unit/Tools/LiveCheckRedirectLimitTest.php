@@ -87,7 +87,10 @@ final class LiveCheckRedirectLimitTest extends TestCase
             'type' => CrawlType::Detail,
             'url' => 'https://example.test/start',
         ];
-        $limiter->forAdapter('sample-site', static fn() => $limiter->beforeRequest('https://example.test/prior'));
+        $limiter->forAdapter('sample-site', static function () use ($limiter): void {
+            $limiter->beforeRequest('https://example.test/prior-one');
+            $limiter->beforeRequest('https://example.test/prior-two');
+        });
         $runner = new LiveCheckReportRunner(
             crawl: static function (array $currentSample) use ($client, $limiter): CrawlOutcomeDto {
                 $limiter->forAdapter($currentSample['slug'], static fn() => $client->get($currentSample['url']));

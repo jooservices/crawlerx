@@ -1,0 +1,88 @@
+{
+    "slug": "comma",
+    "name": "COMMA VISION",
+    "version": "1.0.0",
+    "description": "Crawler for COMMA VISION yearly release listings and DVD product details",
+    "author": "JOOservices",
+    "requires": {
+        "php": ">=8.5",
+        "xcrawlerii": "^1.0"
+    },
+    "adapter": {
+        "class": "JOOservices\\CrawlerX\\Adapters\\Comma\\CommaCrawler",
+        "capabilities": [
+            "listing",
+            "detail"
+        ]
+    },
+    "base_url": "https://comma.co.jp",
+    "pagination": {
+        "strategy": "none"
+    },
+    "config_schema": [
+        {
+            "key": "timeout",
+            "type": "int",
+            "default": 30,
+            "tier": "operational",
+            "label": "Timeout"
+        }
+    ],
+    "runtime": {
+        "fetch": {
+            "profile": "adaptive",
+            "readyMarkers": {
+                "listing": [
+                    "ul.flex-md-wrap > li"
+                ],
+                "detail": [
+                    "section.inner.pt-5 h1"
+                ]
+            },
+            "soft404Markers": [
+                "ページが見つかりません"
+            ]
+        },
+        "targetProfiles": {
+            "release_year": {
+                "label": "Release year 2024",
+                "url": "https://comma.co.jp/ym/2024/"
+            },
+            "product_sample": {
+                "label": "COMMA VISION DVD detail",
+                "url": "https://comma.co.jp/dvd/comt-070b/"
+            }
+        },
+        "defaultTargets": [
+            {
+                "url_type": "release_year",
+                "url": "https://comma.co.jp/ym/2024/",
+                "paginated": false,
+                "loop": false,
+                "priority": 0
+            }
+        ],
+        "fixtureSamples": [
+            {
+                "url": "https://comma.co.jp/ym/2024/",
+                "name": "listing-2024.html",
+                "type": "listing"
+            },
+            {
+                "url": "https://comma.co.jp/dvd/comt-070b/",
+                "name": "detail-comt-070b.html",
+                "type": "detail"
+            }
+        ],
+        "defaultCrawlConfig": {
+            "timeout": 30
+        },
+        "defaultThrottle": {
+            "default_gap_seconds": 5,
+            "min_gap_seconds": 5,
+            "max_gap_seconds": 30
+        },
+        "playwrightFetchEnabled": false
+    },
+    "type": "site"
+}

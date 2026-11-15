@@ -9,14 +9,14 @@ It reads URLs and crawl types from `runtime.fixtureSamples`, preferring
 `listing`/`performer_listing` and `detail`/`performer_detail` samples. If an
 adapter has no detail sample, a `gallery` sample fills that role. An adapter
 without a supported listing sample is checked only with its available sample.
-Each adapter has a budget of two outbound requests. Robots lookups, follow-up
+Each adapter has a budget of three outbound requests. Robots lookups, follow-up
 URLs, retries, and redirect hops all use that budget. The robots policy lookup
 is cached per host for the run, so only the first sample for a host may need to
 spend a request on it. Requests to the same hostname are at least 10 seconds
-apart, including when separate adapters share a host. A request over the
-adapter budget is stopped before it reaches the network. If the robots lookup
-and an earlier sample use the budget before another selected sample can be
-checked, its status is `not-checked` with error code `request_limit`.
+apart, including when separate adapters share a host. The entire run also has
+a hard cap of 300 outbound requests. Requests over either cap are stopped
+before reaching the network; a selected sample that cannot start within its
+adapter budget is reported as `not-checked` with error code `request_limit`.
 
 The live-check command uses the HTTP-only fetch chain. Browser and solver
 methods can send additional requests outside CrawlerX's HTTP transport, so the

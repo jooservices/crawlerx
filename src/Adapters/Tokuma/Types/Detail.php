@@ -69,7 +69,7 @@ final class Detail extends AbstractType implements TypeInterface
         $isbn = $rows['ISBN'] ?? null;
         $format = $rows['判型・ページ数'] ?? null;
         $pages = $format !== null && preg_match('/(\d+)\s*ページ/u', $format, $match) === 1 ? (int) $match[1] : null;
-        $performers = [];
+        $performers = self::performers($authors, $description);
         $screenshots = $coverUrl === null ? [] : [new ScreenshotDto($coverUrl, metadata: ['role' => 'cover'])];
         $item = MovieDto::item(TokumaSite::detailUrl($id), $id, $title, [
             'code' => $isbn,
@@ -151,6 +151,31 @@ final class Detail extends AbstractType implements TypeInterface
         }
 
         return $authors;
+    }
+
+    /**
+     * @param  list<array{name: string, url: string, role: string}>  $authors
+     * @return list<string>
+     */
+    private static function performers(array $authors, ?string $description): array
+    {
+        if ($description === null) {
+            return [];
+        }
+
+        $roles = ['グラビアモデル', 'モデル', 'アイドル', 'タレント'];
+        $performers = [];
+        foreach ($authors as $author) {
+            foreach ($roles as $role) {
+                $pattern = '/' . $role . '[・:：\\s]*' . preg_quote($author['name'], '/') . '(?=[、。・\\s]|の|が|は|$)/u';
+                if (preg_match($pattern, $description) === 1) {
+                    $performers[] = $author['name'];
+                    break;
+                }
+            }
+        }
+
+        return array_values(array_unique($performers));
     }
 
     private static function isoDate(?string $date): ?string

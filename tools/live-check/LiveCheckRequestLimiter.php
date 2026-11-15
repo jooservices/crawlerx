@@ -8,7 +8,9 @@ use Closure;
 
 final class LiveCheckRequestLimiter
 {
-    private const MAX_REQUESTS_PER_ADAPTER = 2;
+    private const MAX_REQUESTS_PER_ADAPTER = 3;
+
+    private const MAX_REQUESTS_PER_RUN = 300;
 
     private const MIN_HOST_INTERVAL_NANOSECONDS = 10_000_000_000;
 
@@ -16,6 +18,8 @@ final class LiveCheckRequestLimiter
 
     /** @var array<string, int> */
     private array $requestCountByAdapter = [];
+
+    private int $requestCountForRun = 0;
 
     /** @var array<string, int> */
     private array $lastRequestByHost = [];
@@ -72,10 +76,13 @@ final class LiveCheckRequestLimiter
     private function permit(string $url, bool $countForAdapter): bool
     {
         $slug = $this->adapterSlug;
-        if ($countForAdapter && $slug !== null
-            && ($this->requestCountByAdapter[$slug] ?? 0) >= self::MAX_REQUESTS_PER_ADAPTER
-        ) {
-            $this->budgetExceededByAdapter[$slug] = true;
+        if ($countForAdapter && (
+            $this->requestCountForRun >= self::MAX_REQUESTS_PER_RUN
+            || ($slug !== null && ($this->requestCountByAdapter[$slug] ?? 0) >= self::MAX_REQUESTS_PER_ADAPTER)
+        )) {
+            if ($slug !== null) {
+                $this->budgetExceededByAdapter[$slug] = true;
+            }
 
             return false;
         }
@@ -87,8 +94,11 @@ final class LiveCheckRequestLimiter
 
         $host = strtolower(rtrim($host, '.'));
         $this->waitForHost($host);
-        if ($countForAdapter && $slug !== null) {
-            $this->requestCountByAdapter[$slug] = ($this->requestCountByAdapter[$slug] ?? 0) + 1;
+        if ($countForAdapter) {
+            ++$this->requestCountForRun;
+            if ($slug !== null) {
+                $this->requestCountByAdapter[$slug] = ($this->requestCountByAdapter[$slug] ?? 0) + 1;
+            }
         }
         $this->lastRequestByHost[$host] = ($this->clockNanoseconds)();
 

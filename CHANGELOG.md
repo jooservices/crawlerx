@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-11-15
+
+### Added
+
+- Add the COMMA VISION (`comma`) adapter for public product listings and product details.
+- Add the TMA (`tma`) adapter for public product listings and product details.
+- Add the YUIRA (`yuira`) adapter for public product listings and product details.
+- Add the DIGITAL ARK (`digitalark`) adapter for public product listings and product details.
+- Add the NATURAL HIGH (`naturalhigh`) adapter for work listings and details behind the site's age confirmation (JOOXCR-495).
+- Add the FAIR＆WAY (`fairway`) adapter for the release and reserve work listings and work details (JOOXCR-491).
+
+### Changed
+
+- Let live checks spend up to three outbound requests per adapter so the detail or gallery sample can run after robots and listing checks; cap each run at 300 requests (JOOXCR-504).
+
 ## [1.8.0] - 2026-11-11
 
 ### Added
@@ -370,6 +385,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   implementation (Jable performer listing was an alias to the movie parser).
 - Catalog `external_id` for HEYZO/FC2 included the code prefix inconsistently.
 
+[1.9.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.9.0
 [1.8.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.8.0
 [1.7.1]: https://github.com/jooservices/crawlerx/releases/tag/v1.7.1
 [1.7.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.7.0
@@ -379,6 +395,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [1.2.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.2.0
 [1.1.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.1.0
 
+[1.9.0...1.8.0]: https://github.com/jooservices/crawlerx/compare/v1.8.0...v1.9.0
 [1.8.0...1.7.1]: https://github.com/jooservices/crawlerx/compare/v1.7.1...v1.8.0
 [1.7.1...1.7.0]: https://github.com/jooservices/crawlerx/compare/v1.7.0...v1.7.1
 [1.7.0...1.6.0]: https://github.com/jooservices/crawlerx/compare/v1.6.0...v1.7.0

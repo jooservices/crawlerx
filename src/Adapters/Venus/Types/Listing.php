@@ -97,7 +97,7 @@ final class Listing extends AbstractHtmlType implements TypeInterface
         $current = $currentText !== null && ctype_digit($currentText) ? (int) $currentText : max(1, $request->page);
         $next = $this->firstAttribute($crawler, Selectors::PAGER_NEXT, 'href');
         $last = $this->firstAttribute($crawler, Selectors::PAGER_LAST, 'href');
-        $lastPage = $last === null ? $current : ($this->pageNumber($last) ?? $current);
+        $lastPage = $last === null ? $this->highestPageNumber($crawler, $current) : ($this->pageNumber($last) ?? $current);
         $nextUrl = $next === null ? null : $this->absolute($request->url, $next);
 
         return new CrawlPaginationDto(
@@ -107,6 +107,16 @@ final class Listing extends AbstractHtmlType implements TypeInterface
             nextUrl: $nextUrl,
             hasNextPage: $nextUrl !== null,
         );
+    }
+
+    private function highestPageNumber(Crawler $crawler, int $current): int
+    {
+        $pages = $crawler->filter(Selectors::PAGER_PAGES)->each(
+            fn(Crawler $link): ?int => $this->pageNumber((string) $link->attr('href')),
+        );
+        $pages = array_filter($pages, static fn(?int $page): bool => $page !== null);
+
+        return $pages === [] ? $current : max($current, ...$pages);
     }
 
     private function pageNumber(string $url): ?int
