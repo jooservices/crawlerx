@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The browser fetch no longer clicks a content link that merely contains the word "enter" while looking for an age gate: the generic `Enter` selectors match the whole text, and a click that takes the requested page to another path returns to the requested page. JavBus performer pages whose filmography has a title such as "Entertainer" or "Centerfolds" were returned as that movie page and rejected with "performer detail is missing a valid external ID" (JOOXCR-522).
+
 ### Changed
 
 - Move the browser container and the fetch lab to Node 26 (26.13.1) and update every Composer and npm dependency, FlareSolverr and the pinned GitHub Actions to their latest releases (JOOXCR-717).
