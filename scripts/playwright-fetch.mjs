@@ -226,7 +226,7 @@ export async function fetchWithBrowser(config, browser) {
         }
 
         const navigationStarted = Date.now();
-        const response = await page.goto(url, {
+        let response = await page.goto(url, {
             waitUntil: 'domcontentloaded',
             timeout: navigationTimeoutMs,
         });
@@ -244,7 +244,7 @@ export async function fetchWithBrowser(config, browser) {
         }
         closePhase('navigation', 'Load page (domcontentloaded)', navigationStarted);
 
-        await dismissInterstitials(page, context, url);
+        response = (await dismissInterstitials(page, context, url)) ?? response;
         if (ssrfViolation || ssrfProxy.wasBlocked()) {
             throw ssrfError ?? ssrfProxy.blockedError() ?? new SsrfBlockedError();
         }

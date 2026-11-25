@@ -1,4 +1,5 @@
 // Age gates and consent interstitials of the sites, shared by the browser scripts.
+// Returns the response of the page the browser had to return to after a click took it away, or null.
 
 export async function dismissInterstitials(page, context, targetUrl) {
     const requestedPath = new URL(targetUrl).pathname;
@@ -37,14 +38,14 @@ export async function dismissInterstitials(page, context, targetUrl) {
         'button:has-text("I am 18")',
         'button:has-text("I\'m 18")',
         'a:has-text("I am 18")',
-        // Exact text: a substring match would click any link whose title contains "enter" (JOOXCR-522).
-        'a:text-is("Enter")',
-        'button:text-is("Enter")',
+        // The whole text of the control, nested elements included: a substring match would click any link
+        // whose title contains "enter" (JOOXCR-522).
+        (current) => current.locator('a, button').filter({ hasText: /^\s*enter\s*$/i }),
         'input[value="I am over 18"]',
         '#age-verify-yes',
     ]) {
         try {
-            const locator = page.locator(selector).first();
+            const locator = (typeof selector === 'string' ? page.locator(selector) : selector(page)).first();
             if ((await locator.count()) > 0 && (await locator.isVisible())) {
                 await locator.click({ timeout: 3000 });
                 await page.waitForTimeout(1500);
@@ -70,9 +71,11 @@ export async function dismissInterstitials(page, context, targetUrl) {
     try {
         // A click that took a requested page somewhere else is not the page that was asked for.
         if (startedOnRequestedPage && new URL(page.url()).pathname !== requestedPath) {
-            await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
+            return await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
         }
     } catch {
         // best-effort: the caller reads whatever page is open
     }
+
+    return null;
 }
