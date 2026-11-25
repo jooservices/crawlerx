@@ -44,7 +44,7 @@ services:
         condition: service_healthy
 
   fixture-site:
-    image: node:22-bookworm-slim@sha256:43ac6c60b8f89723f746e8a92ce91abd5017e627ce1ddfe4238355d3a30b772c
+    image: node:26.13.1-bookworm-slim@sha256:0042e17d232a87a2cd485be1da7900fca4d10a4ad11b29e9285da1d2e54798c9
     working_dir: /app
     volumes:
       - ./tests/Fixtures/site:/app/tests/Fixtures/site:ro
@@ -63,7 +63,7 @@ services:
       retries: 12
 
   flaresolverr:
-    image: ghcr.io/flaresolverr/flaresolverr:v3.5.0
+    image: ghcr.io/flaresolverr/flaresolverr:v3.5.2
     profiles: ["fetch"]
     environment:
       LOG_LEVEL: info
