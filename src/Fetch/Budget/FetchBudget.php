@@ -71,7 +71,7 @@ final class FetchBudget
     /** @phpstan-impure The answer can change as the monotonic deadline advances. */
     public function canStart(FetchMethod $method): bool
     {
-        return $this->remainingSeconds() >= 1.0 && $this->remainingSeconds() >= min(1, $this->methodCap($method));
+        return $this->remainingSeconds() >= min(1, $this->methodCap($method));
     }
 
     public function deadlineSeconds(): int
