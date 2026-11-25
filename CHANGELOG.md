@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Move the browser container and the fetch lab to Node 26 (26.13.1) and update every Composer and npm dependency, FlareSolverr and the pinned GitHub Actions to their latest releases (JOOXCR-717).
+- Drop a duplicated condition from `FetchBudget::canStart`; a method can still start only while a second of the deadline remains (JOOXCR-717).
+
 ## [1.9.0] - 2026-11-15
 
 ### Added
