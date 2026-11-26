@@ -8,6 +8,7 @@ import { assertSafeBrowserUrl, SsrfBlockedError } from './ssrf-guard.mjs';
 import { createSsrfProxyServer, ssrfProxyCertificateSpkiHash } from './ssrf-proxy.mjs';
 import { assertResponseBodyWithinLimit, configuredMaxResponseBytes, ResponseBodyTooLargeError } from './fetch-limits.mjs';
 import { browserCookiesFromHeader, headersForOrigin, splitBrowserHeaders } from './request-security.mjs';
+import { dismissInterstitials } from './interstitials.mjs';
 
 export const DEFAULT_USER_AGENT =
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
@@ -63,70 +64,6 @@ function resolveRecordedVideo(dir) {
     }
 
     return target;
-}
-
-async function dismissInterstitials(page, context, targetUrl) {
-    try {
-        const form = page.locator('#ageVerify form#form1').first();
-        if ((await form.count()) > 0 && (await form.isVisible())) {
-            const checkbox = form.locator('input[type="checkbox"]').first();
-            if ((await checkbox.count()) > 0) {
-                await checkbox.check({ timeout: 3000 });
-            }
-            await Promise.all([
-                page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => null),
-                form.evaluate((element) => {
-                    const submitValue = document.createElement('input');
-                    submitValue.type = 'hidden';
-                    submitValue.name = 'Submit';
-                    submitValue.value = 'confirm';
-                    element.appendChild(submitValue);
-                    element.submit();
-                }),
-            ]);
-            await page.waitForTimeout(1500);
-            if (page.url().includes('/doc/driver-verify')) {
-                await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
-            }
-        }
-    } catch {
-        // best-effort JavBus age form submission
-    }
-
-    for (const selector of [
-        'button[data-action="over18#accept"]',
-        'button:has-text("Yes, I am of legal age")',
-        'button:has-text("I am 18")',
-        'button:has-text("I\'m 18")',
-        'a:has-text("I am 18")',
-        'a:has-text("Enter")',
-        'button:has-text("Enter")',
-        'input[value="I am over 18"]',
-        '#age-verify-yes',
-    ]) {
-        try {
-            const locator = page.locator(selector).first();
-            if ((await locator.count()) > 0 && (await locator.isVisible())) {
-                await locator.click({ timeout: 3000 });
-                await page.waitForTimeout(1500);
-            }
-        } catch {
-            // best-effort
-        }
-    }
-
-    try {
-        const hostname = new URL(page.url()).hostname;
-        const domain = hostname.startsWith('www.') ? hostname.slice(3) : hostname;
-        await context.addCookies([
-            { name: 'over18', value: '18', domain, path: '/' },
-            { name: 'age', value: 'verified', domain, path: '/' },
-            { name: 'dv', value: '1', domain, path: '/' },
-            { name: 'existmag', value: 'all', domain, path: '/' },
-        ]);
-    } catch {
-        // ignore cookie failures
-    }
 }
 
 function isChallenge(pageTitle, html) {
@@ -289,7 +226,7 @@ export async function fetchWithBrowser(config, browser) {
         }
 
         const navigationStarted = Date.now();
-        const response = await page.goto(url, {
+        let response = await page.goto(url, {
             waitUntil: 'domcontentloaded',
             timeout: navigationTimeoutMs,
         });
@@ -307,7 +244,7 @@ export async function fetchWithBrowser(config, browser) {
         }
         closePhase('navigation', 'Load page (domcontentloaded)', navigationStarted);
 
-        await dismissInterstitials(page, context, url);
+        response = (await dismissInterstitials(page, context, url)) ?? response;
         if (ssrfViolation || ssrfProxy.wasBlocked()) {
             throw ssrfError ?? ssrfProxy.blockedError() ?? new SsrfBlockedError();
         }

@@ -303,6 +303,24 @@ final class FetchStrategyContractTest extends TestCase
         self::assertTrue($budget->canStart(FetchMethod::Http));
     }
 
+    public function test_a_method_can_start_only_while_a_second_of_the_deadline_remains(): void
+    {
+        $nowNanoseconds = 0;
+        $budget = FetchBudget::start(
+            new FetchOptionsDto(deadlineSeconds: 30),
+            static function () use (&$nowNanoseconds): int {
+                return $nowNanoseconds;
+            },
+        );
+
+        $nowNanoseconds = 29_000_000_000;
+        self::assertTrue($budget->canStart(FetchMethod::Http));
+
+        $nowNanoseconds = 29_100_000_000;
+        self::assertFalse($budget->canStart(FetchMethod::Http));
+        self::assertFalse($budget->canStart(FetchMethod::Flaresolverr));
+    }
+
     private function fetchResult(int $status, string $body, array $headers = []): FetchResultDto
     {
         return new FetchResultDto(
