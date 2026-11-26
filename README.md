@@ -462,8 +462,8 @@ The browser sidecar sends all browser egress through a loopback-only proxy and
 rejects private, loopback, link-local, and metadata addresses, including every
 redirect hop. It resolves DNS, drops loopback/private/unspecified decoy answers,
 and pins only the remaining public addresses before connecting. IPv4 and IPv6
-are looked up in parallel, and the IPv4 answer is used as soon as it has
-addresses: the IPv6 answer is waited for only `CRAWLERX_DNS_IPV6_GRACE_MS`
+are looked up in parallel, and the IPv4 answer is used as soon as it has an
+address the guard accepts (a blocked decoy such as 127.0.0.1 does not count): the IPv6 answer is waited for only `CRAWLERX_DNS_IPV6_GRACE_MS`
 milliseconds (default `1000`; any value that is not a whole number is
 ignored), because some sites' name servers never answer the IPv6 question. A
 host with no IPv4 address waits for the IPv6 answer in full. Hosts with no
