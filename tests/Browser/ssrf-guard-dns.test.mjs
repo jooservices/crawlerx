@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createSsrfGuard, lookupAll, readIpv6GraceMs } from '../../scripts/ssrf-guard.mjs';
+import { createSsrfGuard, hasGlobalIpv6, lookupAll, readIpv6GraceMs, readIpv6Mode } from '../../scripts/ssrf-guard.mjs';
 
 // A resolver double: `answers` maps a family (4 or 6) to an array of addresses,
 // an Error to reject with, or 'never' for a name server that drops the question.
@@ -36,7 +36,7 @@ test('AC1 resolves from IPv4 within the grace period when the IPv6 question is n
     const resolve = resolver({ 4: ['93.184.216.34'], 6: 'never' });
     const started = Date.now();
 
-    const result = await lookupAll('venus-av.com', { resolve, graceMs: 50 });
+    const result = await lookupAll('venus-av.com', { resolve, ipv6: true, graceMs: 50 });
 
     assert.deepEqual(addresses(result), ['93.184.216.34']);
     assert.ok(Date.now() - started < 500, 'must not wait for the unanswered IPv6 lookup');
@@ -46,7 +46,7 @@ test('AC1 resolves from IPv4 within the grace period when the IPv6 question is n
 test('AC2 returns IPv4 first and IPv6 after it when both answer in time', async () => {
     const resolve = resolver({ 4: ['93.184.216.35', '93.184.216.36'], 6: ['2606:4700::7'] });
 
-    const result = await lookupAll('example.com', { resolve, graceMs: 200 });
+    const result = await lookupAll('example.com', { resolve, ipv6: true, graceMs: 200 });
 
     assert.deepEqual(addresses(result), ['93.184.216.35', '93.184.216.36', '2606:4700::7']);
 });
@@ -54,7 +54,7 @@ test('AC2 returns IPv4 first and IPv6 after it when both answer in time', async 
 test('AC2 keeps an IPv6 answer that arrives inside the grace period', async () => {
     const resolve = resolver({ 4: ['93.184.216.35'], 6: { after: 30, value: ['2606:4700::7'] } });
 
-    const result = await lookupAll('example.com', { resolve, graceMs: 400 });
+    const result = await lookupAll('example.com', { resolve, ipv6: true, graceMs: 400 });
 
     assert.deepEqual(addresses(result), ['93.184.216.35', '2606:4700::7']);
 });
@@ -62,7 +62,7 @@ test('AC2 keeps an IPv6 answer that arrives inside the grace period', async () =
 test('AC3 waits for the IPv6 lookup and uses it when the IPv4 lookup is empty', async () => {
     const resolve = resolver({ 4: [], 6: { after: 80, value: ['2606:4700::9'] } });
 
-    const result = await lookupAll('ipv6-only.example', { resolve, graceMs: 10 });
+    const result = await lookupAll('ipv6-only.example', { resolve, ipv6: true, graceMs: 10 });
 
     assert.deepEqual(addresses(result), ['2606:4700::9']);
 });
@@ -70,7 +70,7 @@ test('AC3 waits for the IPv6 lookup and uses it when the IPv4 lookup is empty', 
 test('AC3 waits for the IPv6 lookup and uses it when the IPv4 lookup fails', async () => {
     const resolve = resolver({ 4: Object.assign(new Error('ENODATA'), { code: 'ENODATA' }), 6: ['2606:4700::9'] });
 
-    const result = await lookupAll('ipv6-only.example', { resolve, graceMs: 10 });
+    const result = await lookupAll('ipv6-only.example', { resolve, ipv6: true, graceMs: 10 });
 
     assert.deepEqual(addresses(result), ['2606:4700::9']);
 });
@@ -79,12 +79,12 @@ test('AC3 rejects with the IPv4 error when both lookups fail', async () => {
     const failure = Object.assign(new Error('ENOTFOUND'), { code: 'ENOTFOUND' });
     const resolve = resolver({ 4: failure, 6: new Error('ENODATA') });
 
-    await assert.rejects(lookupAll('missing.example', { resolve, graceMs: 10 }), (error) => error === failure);
+    await assert.rejects(lookupAll('missing.example', { resolve, ipv6: true, graceMs: 10 }), (error) => error === failure);
 });
 
 test('AC3 the guard still reports dns_failed when both lookups fail', async () => {
     const resolve = resolver({ 4: new Error('ENOTFOUND'), 6: new Error('ENOTFOUND') });
-    const guard = createSsrfGuard({ lookupHost: (host) => lookupAll(host, { resolve, graceMs: 10 }) });
+    const guard = createSsrfGuard({ lookupHost: (host) => lookupAll(host, { resolve, ipv6: true, graceMs: 10 }) });
 
     await assert.rejects(guard('https://missing.example/'), (error) => error.reason === 'dns_failed');
 });
@@ -96,7 +96,7 @@ test('AC4 a late IPv6 answer after the result was returned raises nothing and ch
     try {
         const resolve = resolver({ 4: ['93.184.216.34'], 6: { after: 120, value: new Error('late failure') } });
 
-        const result = await lookupAll('venus-av.com', { resolve, graceMs: 20 });
+        const result = await lookupAll('venus-av.com', { resolve, ipv6: true, graceMs: 20 });
         await new Promise((done) => setTimeout(done, 300));
 
         assert.deepEqual(addresses(result), ['93.184.216.34']);
@@ -109,7 +109,7 @@ test('AC4 a late IPv6 answer after the result was returned raises nothing and ch
 test('AC4 a late IPv6 success after the result was returned does not change the result', async () => {
     const resolve = resolver({ 4: ['93.184.216.34'], 6: { after: 100, value: ['2606:4700::1'] } });
 
-    const result = await lookupAll('venus-av.com', { resolve, graceMs: 20 });
+    const result = await lookupAll('venus-av.com', { resolve, ipv6: true, graceMs: 20 });
     await new Promise((done) => setTimeout(done, 250));
 
     assert.deepEqual(addresses(result), ['93.184.216.34']);
@@ -132,7 +132,7 @@ test('AC6 the guard still drops loopback and private answers of both families', 
         4: ['127.0.0.1', '0.0.0.0', '104.20.42.172'],
         6: ['::1', 'fd00::1', '2606:4700::6810:2aac'],
     });
-    const guard = createSsrfGuard({ lookupHost: (host) => lookupAll(host, { resolve, graceMs: 200 }) });
+    const guard = createSsrfGuard({ lookupHost: (host) => lookupAll(host, { resolve, ipv6: true, graceMs: 200 }) });
 
     const resolved = await guard.resolve('https://en.jable.tv/models/example/');
 
@@ -141,14 +141,14 @@ test('AC6 the guard still drops loopback and private answers of both families', 
 
 test('AC6 the guard rejects a host whose every answer is private', async () => {
     const resolve = resolver({ 4: ['10.0.0.5'], 6: ['fd00::5'] });
-    const guard = createSsrfGuard({ lookupHost: (host) => lookupAll(host, { resolve, graceMs: 50 }) });
+    const guard = createSsrfGuard({ lookupHost: (host) => lookupAll(host, { resolve, ipv6: true, graceMs: 50 }) });
 
     await assert.rejects(guard('https://internal.example/'), (error) => error.name === 'SsrfBlockedError');
 });
 
 test('AC6 a blocked IPv4 decoy does not start the grace period, so a slower public IPv6 answer is kept', async () => {
     const resolve = resolver({ 4: ['0.0.0.0', '127.0.0.1', '10.1.2.3'], 6: { after: 120, value: ['2606:4700::6810:2aac'] } });
-    const guard = createSsrfGuard({ lookupHost: (host) => lookupAll(host, { resolve, graceMs: 20 }) });
+    const guard = createSsrfGuard({ lookupHost: (host) => lookupAll(host, { resolve, ipv6: true, graceMs: 20 }) });
 
     const resolved = await guard.resolve('https://decoy.example/');
 
@@ -158,7 +158,7 @@ test('AC6 a blocked IPv4 decoy does not start the grace period, so a slower publ
 test('AC6 a private IPv4 answer counts as usable when private addresses are allowed (fetch lab)', async () => {
     const resolve = resolver({ 4: ['10.1.2.3'], 6: { after: 120, value: ['2606:4700::6810:2aac'] } });
 
-    const result = await lookupAll('fixture-site', { resolve, graceMs: 20, allowPrivate: true });
+    const result = await lookupAll('fixture-site', { resolve, ipv6: true, graceMs: 20, allowPrivate: true });
 
     assert.deepEqual(addresses(result), ['10.1.2.3']);
 });
@@ -166,8 +166,58 @@ test('AC6 a private IPv4 answer counts as usable when private addresses are allo
 test('AC1 starts the IPv6 lookup in the same tick as the IPv4 lookup, not after it settles', async () => {
     const resolve = resolver({ 4: { after: 100, value: ['93.184.216.34'] }, 6: ['2606:4700::1'] });
 
-    const pending = lookupAll('venus-av.com', { resolve, graceMs: 200 });
+    const pending = lookupAll('venus-av.com', { resolve, ipv6: true, graceMs: 200 });
 
     assert.deepEqual(resolve.calls.map(({ family }) => family), [4, 6], 'both lookups must be started before any answer');
     assert.deepEqual(addresses(await pending), ['93.184.216.34', '2606:4700::1']);
+});
+
+const ifaces = (...entries) => ({ eth0: entries.map(([address, family, internal = false]) => ({ address, family, internal })) });
+
+test('AC7 a host with only loopback and link-local IPv6 addresses has no global IPv6', () => {
+    assert.equal(hasGlobalIpv6(ifaces(['127.0.0.1', 'IPv4', true], ['::1', 'IPv6', true], ['fe80::20c:29ff:fed9:c3e0', 'IPv6'], ['192.168.10.19', 'IPv4'])), false);
+    assert.equal(hasGlobalIpv6({}), false);
+});
+
+test('AC7 a host with a global or unique-local IPv6 address has global IPv6', () => {
+    assert.equal(hasGlobalIpv6(ifaces(['2001:ee0:1234::5', 'IPv6'])), true);
+    assert.equal(hasGlobalIpv6(ifaces(['fd12:3456::5', 'IPv6'])), true);
+});
+
+test('AC7 CRAWLERX_DNS_IPV6 reads auto, on and off and falls back to auto', () => {
+    const mode = (value) => readIpv6Mode(value === undefined ? {} : { CRAWLERX_DNS_IPV6: value });
+
+    assert.equal(mode(undefined), 'auto');
+    assert.equal(mode('auto'), 'auto');
+    assert.equal(mode('on'), 'on');
+    assert.equal(mode('OFF'), 'off');
+    assert.equal(mode('0'), 'off');
+    assert.equal(mode('1'), 'on');
+    assert.equal(mode('maybe'), 'auto');
+});
+
+test('AC7 no IPv6 question is sent at all when IPv6 is off', async () => {
+    const resolve = resolver({ 4: ['93.184.216.34'], 6: 'never' });
+
+    const result = await lookupAll('venus-av.com', { resolve, ipv6: false });
+
+    assert.deepEqual(addresses(result), ['93.184.216.34']);
+    assert.deepEqual(resolve.calls.map(({ family }) => family), [4]);
+});
+
+test('AC7 the IPv6 question is still sent when IPv6 is on', async () => {
+    const resolve = resolver({ 4: ['93.184.216.34'], 6: ['2606:4700::7'] });
+
+    const result = await lookupAll('example.com', { resolve, ipv6: true, graceMs: 100 });
+
+    assert.deepEqual(addresses(result), ['93.184.216.34', '2606:4700::7']);
+    assert.deepEqual(resolve.calls.map(({ family }) => family), [4, 6]);
+});
+
+test('AC7 with IPv6 off an IPv4 failure is the lookup failure', async () => {
+    const failure = new Error('ENOTFOUND');
+    const resolve = resolver({ 4: failure, 6: ['2606:4700::7'] });
+
+    await assert.rejects(lookupAll('v6only.example', { resolve, ipv6: false }), (error) => error === failure);
+    assert.deepEqual(resolve.calls.map(({ family }) => family), [4]);
 });
