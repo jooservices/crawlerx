@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The browser sidecar no longer waits for an IPv6 (AAAA) answer that some sites' name servers never send: it looks up IPv4 and IPv6 in parallel, uses the IPv4 answer as soon as it has an address the guard accepts and waits for the IPv6 answer only `CRAWLERX_DNS_IPV6_GRACE_MS` (default 1000 ms); a host that has only IPv6 addresses still resolves. Browser fetches of idol-gakuen.jp, gravidia.jp and venus-av.com on a host without IPv6 took 60 to 120 s and mostly failed; the same fetches now finish in a few seconds (JOOXCR-727).
 - The browser fetch no longer clicks a content link that merely contains the word "enter" while looking for an age gate: the generic `Enter` selectors match the whole text, and a click that takes the requested page to another path returns to the requested page. JavBus performer pages whose filmography has a title such as "Entertainer" or "Centerfolds" were returned as that movie page and rejected with "performer detail is missing a valid external ID" (JOOXCR-522).
 
 ### Changed

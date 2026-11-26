@@ -144,7 +144,7 @@ function isBlockedAddress(address, allowPrivate) {
  *
  * @param {{allowPrivate?: boolean, allowedHosts?: string|string[], lookupHost?: (hostname: string) => Promise<Array<{address: string}>>}} options
  */
-export function createSsrfGuard({ allowPrivate = false, allowedHosts = '', lookupHost = lookupAll } = {}) {
+export function createSsrfGuard({ allowPrivate = false, allowedHosts = '', lookupHost = (host) => lookupAll(host, { allowPrivate }) } = {}) {
     const hosts = parseAllowedHosts(allowedHosts);
 
     const resolveSafeUrl = async (value) => {
@@ -222,8 +222,65 @@ export function createSsrfGuard({ allowPrivate = false, allowedHosts = '', looku
     return assertSafeUrl;
 }
 
-async function lookupAll(hostname) {
-    return lookup(hostname, { all: true, verbatim: true });
+const DEFAULT_IPV6_GRACE_MS = 1000;
+
+/**
+ * How long a finished IPv4 answer waits for the IPv6 answer
+ * (`CRAWLERX_DNS_IPV6_GRACE_MS`, whole milliseconds; anything else is ignored).
+ *
+ * @param {Record<string, string | undefined>} env
+ */
+export function readIpv6GraceMs(env = process.env) {
+    const raw = env.CRAWLERX_DNS_IPV6_GRACE_MS ?? '';
+    return /^\d+$/.test(raw) ? Number(raw) : DEFAULT_IPV6_GRACE_MS;
+}
+
+/**
+ * Resolve a host through two parallel lookups, one per address family.
+ *
+ * Some name servers never answer the AAAA question (JOOXCR-727), and one
+ * lookup for both families waits for the slower of the two. The IPv4 answer
+ * is the primary: once it has an address the guard accepts, the IPv6 answer is
+ * waited for only `graceMs` and is dropped when late. A blocked decoy answer
+ * such as 127.0.0.1 (JOOXCR-399) does not count, so a host whose IPv4 answers
+ * are all blocked or missing waits for the IPv6 answer in full. Addresses come
+ * back IPv4 first.
+ *
+ * @param {string} hostname
+ * @param {{resolve?: typeof lookup, graceMs?: number, allowPrivate?: boolean}} options
+ * @returns {Promise<Array<{address: string, family: number}>>}
+ */
+export async function lookupAll(hostname, { resolve = lookup, graceMs = readIpv6GraceMs(), allowPrivate = false } = {}) {
+    const ask = (family) => outcome(resolve(hostname, { all: true, verbatim: true, family }));
+    const ipv4Pending = ask(4);
+    const ipv6Pending = ask(6);
+
+    const ipv4 = await ipv4Pending;
+    const hasUsableIpv4 = (ipv4.value ?? []).some(({ address }) => !isBlockedAddress(address, allowPrivate));
+    const ipv6 = hasUsableIpv4 ? await within(ipv6Pending, graceMs) : await ipv6Pending;
+    if (ipv4.error && ipv6?.error) {
+        throw ipv4.error;
+    }
+
+    return [...(ipv4.value ?? []), ...(ipv6?.value ?? [])];
+}
+
+/** Turn a promise into one that never rejects, so a late failure is never unhandled. */
+function outcome(promise) {
+    return promise.then((value) => ({ value }), (error) => ({ error }));
+}
+
+/** The settled outcome, or null when it is not there after `ms`. */
+async function within(pending, ms) {
+    let timer;
+    const expired = new Promise((done) => {
+        timer = setTimeout(() => done(null), ms);
+    });
+    try {
+        return await Promise.race([pending, expired]);
+    } finally {
+        clearTimeout(timer);
+    }
 }
 
 const fetchLab = process.env.CRAWLERX_FETCH_LAB === '1';

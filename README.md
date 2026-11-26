@@ -461,7 +461,12 @@ COMPOSE_FILE=docker-compose.yml:docker-compose.no-ports.yml make fetch-up
 The browser sidecar sends all browser egress through a loopback-only proxy and
 rejects private, loopback, link-local, and metadata addresses, including every
 redirect hop. It resolves DNS, drops loopback/private/unspecified decoy answers,
-and pins only the remaining public addresses before connecting. Hosts with no
+and pins only the remaining public addresses before connecting. IPv4 and IPv6
+are looked up in parallel, and the IPv4 answer is used as soon as it has an
+address the guard accepts (a blocked decoy such as 127.0.0.1 does not count): the IPv6 answer is waited for only `CRAWLERX_DNS_IPV6_GRACE_MS`
+milliseconds (default `1000`; any value that is not a whole number is
+ignored), because some sites' name servers never answer the IPv6 question. A
+host with no IPv4 address waits for the IPv6 answer in full. Hosts with no
 public address left (or a failed DNS lookup) are blocked. Set
 `CRAWLERX_BROWSER_ALLOWED_HOSTS` on the `node` service to restrict fetches
 further; use comma-separated exact hosts or `*.example.org` patterns. The
