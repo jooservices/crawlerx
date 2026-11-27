@@ -17,8 +17,12 @@ trait ParsesJson
     {
         $body = (string) $response->getBody();
 
-        if ($response->getStatusCode() >= 400 || trim($body) === '') {
-            throw new CrawlBlockedException("{$site} {$context} response is blocked or unavailable.");
+        if ($response->getStatusCode() >= 400) {
+            throw new CrawlBlockedException("{$site} {$context} response is blocked or unavailable (HTTP {$response->getStatusCode()}).");
+        }
+
+        if (trim($body) === '') {
+            throw new CrawlBlockedException("{$site} {$context} response is blocked or unavailable (empty body).");
         }
 
         $decoded = json_decode($body, true);

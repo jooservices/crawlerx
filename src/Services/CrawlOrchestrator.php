@@ -12,6 +12,8 @@ use JOOservices\CrawlerX\Dto\CrawlRequestDto;
 use JOOservices\CrawlerX\Dto\SiteProfileDto;
 use JOOservices\CrawlerX\Enums\CrawlType;
 use JOOservices\CrawlerX\Exceptions\AdapterNotFoundException;
+use JOOservices\CrawlerX\Exceptions\CrawlBlockedException;
+use JOOservices\CrawlerX\Exceptions\CrawlFetchException;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
 use JOOservices\CrawlerX\Exceptions\UnsupportedUrlException;
 use JOOservices\CrawlerX\Fetch\FetchFallbackChain;
@@ -73,6 +75,14 @@ final class CrawlOrchestrator
             return $this->service->site($classified['slug'])->crawl($request)->withFetch($fetch->toMeta());
         } catch (CrawlParseException $exception) {
             throw new CrawlParseException($exception->getMessage(), $exception->getCode(), $exception, $fetch->toMeta());
+        } catch (CrawlBlockedException $exception) {
+            // An adapter that is refused on its own request knows nothing about the page fetch that came before it. Without
+            // this the attempts of that fetch are lost and the caller cannot see how the crawl got that far.
+            if ($exception instanceof CrawlFetchException || $exception->fetch !== null) {
+                throw $exception;
+            }
+
+            throw new CrawlBlockedException($exception->getMessage(), $fetch->toMeta(), $exception->getCode(), $exception);
         }
     }
 }
