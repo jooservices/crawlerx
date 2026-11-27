@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.2] - 2026-11-28
+
+### Fixed
+
+- A crawl that an adapter ends with `CrawlBlockedException` (for example a detail request that is refused after the page fetch succeeded) now carries the fetch meta and attempts of that page fetch. Before, `CrawlOrchestrator` attached them only to `CrawlParseException`, so a caller such as javmeta recorded no fetch attempt for the crawl and could not say how it got that far (JOOXCR-371).
+- The JSON adapters (`ParsesJson`) name the cause in the blocked message: `(HTTP <status>)` or `(empty body)` instead of one text for both (JOOXCR-371).
+
 ## [1.9.1] - 2026-11-27
 
 ### Fixed
@@ -397,6 +404,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   implementation (Jable performer listing was an alias to the movie parser).
 - Catalog `external_id` for HEYZO/FC2 included the code prefix inconsistently.
 
+[1.9.2]: https://github.com/jooservices/crawlerx/releases/tag/v1.9.2
 [1.9.1]: https://github.com/jooservices/crawlerx/releases/tag/v1.9.1
 [1.9.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.9.0
 [1.8.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.8.0
@@ -408,6 +416,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [1.2.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.2.0
 [1.1.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.1.0
 
+[1.9.2...1.9.1]: https://github.com/jooservices/crawlerx/compare/v1.9.1...v1.9.2
 [1.9.1...1.9.0]: https://github.com/jooservices/crawlerx/compare/v1.9.0...v1.9.1
 [1.9.0...1.8.0]: https://github.com/jooservices/crawlerx/compare/v1.8.0...v1.9.0
 [1.8.0...1.7.1]: https://github.com/jooservices/crawlerx/compare/v1.7.1...v1.8.0
