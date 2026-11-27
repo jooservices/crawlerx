@@ -38,8 +38,9 @@ class Detail extends AbstractType implements TypeInterface
         $detailUrl = str_contains($request->url, 'movie_details')
             ? $request->url
             : $this->detailJsonUrl($movieId);
+        $startedAt = (int) round(microtime(true) * 1000);
         $detailResponse = $this->client->get($detailUrl);
-        $detail = $this->jsonFromResponse($detailResponse->toPsrResponse(), $this->config->label, 'detail');
+        $detail = $this->jsonFromResponse($detailResponse->toPsrResponse(), $this->config->label, 'detail', $startedAt);
 
         $gallery = null;
         try {

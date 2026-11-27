@@ -9,6 +9,7 @@ use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlOptionsDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
+use JOOservices\CrawlerX\Dto\FetchMetaDto;
 use JOOservices\CrawlerX\Dto\SiteProfileDto;
 use JOOservices\CrawlerX\Enums\CrawlType;
 use JOOservices\CrawlerX\Exceptions\AdapterNotFoundException;
@@ -82,7 +83,14 @@ final class CrawlOrchestrator
                 throw $exception;
             }
 
-            throw new CrawlBlockedException($exception->getMessage(), $fetch->toMeta(), $exception->getCode(), $exception);
+            $meta = $fetch->toMeta();
+
+            throw new CrawlBlockedException(
+                $exception->getMessage(),
+                new FetchMetaDto($meta->methodUsed, $meta->elapsedMs, $meta->challengeDetected, [...$meta->attempts, ...$exception->attempts]),
+                $exception->getCode(),
+                $exception,
+            );
         }
     }
 }

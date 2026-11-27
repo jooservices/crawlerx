@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\Concerns;
 
+use JOOservices\CrawlerX\Fetch\Attempt\AttemptRow;
 use JOOservices\CrawlerX\Exceptions\CrawlBlockedException;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
 use Psr\Http\Message\ResponseInterface;
@@ -11,18 +12,20 @@ use Psr\Http\Message\ResponseInterface;
 trait ParsesJson
 {
     /**
+     * @param  int  $startedAt  when the request was sent, in milliseconds since the epoch, so a refusal is recorded with its duration
      * @return array<string, mixed>
      */
-    protected function jsonFromResponse(ResponseInterface $response, string $site, string $context): array
+    protected function jsonFromResponse(ResponseInterface $response, string $site, string $context, int $startedAt): array
     {
         $body = (string) $response->getBody();
+        $status = $response->getStatusCode();
 
-        if ($response->getStatusCode() >= 400) {
-            throw new CrawlBlockedException("{$site} {$context} response is blocked or unavailable (HTTP {$response->getStatusCode()}).");
+        if ($status >= 400) {
+            throw $this->refused("{$site} {$context} response is blocked or unavailable (HTTP {$status}).", $status, "HTTP {$status}", $startedAt);
         }
 
         if (trim($body) === '') {
-            throw new CrawlBlockedException("{$site} {$context} response is blocked or unavailable (empty body).");
+            throw $this->refused("{$site} {$context} response is blocked or unavailable (empty body).", $status, 'empty body', $startedAt);
         }
 
         $decoded = json_decode($body, true);
@@ -31,6 +34,11 @@ trait ParsesJson
         }
 
         return $this->stringKeyed($decoded);
+    }
+
+    private function refused(string $message, int $status, string $reason, int $startedAt): CrawlBlockedException
+    {
+        return new CrawlBlockedException($message, attempts: [AttemptRow::adapterRequest($status, $reason, $startedAt)]);
     }
 
     /**
