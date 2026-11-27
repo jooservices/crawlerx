@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- A request an adapter sends itself and the site refuses or answers with nothing (the 1Pondo-family listing and detail JSON) is now an attempt of its own in the fetch meta of the blocked error: method `http`, the HTTP status, the error code `http_<status>` or `fetch_error`, the cause (`HTTP <status>` or `empty body`) and its duration. Before, the cause was only in the error message, so a caller that records attempts had no row for the request that failed (JOOXCR-371).
+
 ## [1.9.2] - 2026-11-28
 
 ### Fixed

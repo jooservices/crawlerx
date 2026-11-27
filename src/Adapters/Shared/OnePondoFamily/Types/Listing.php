@@ -80,9 +80,10 @@ class Listing extends AbstractType implements TypeInterface
      */
     private function fetchListPayload(string $listKind, int $offset): array
     {
+        $startedAt = (int) round(microtime(true) * 1000);
         $response = $this->client->get($this->listJsonUrl($listKind, $offset));
 
-        return $this->jsonFromResponse($response->toPsrResponse(), $this->config->label, 'listing');
+        return $this->jsonFromResponse($response->toPsrResponse(), $this->config->label, 'listing', $startedAt);
     }
 
     /**

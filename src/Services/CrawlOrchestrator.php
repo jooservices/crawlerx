@@ -9,6 +9,7 @@ use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlOptionsDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
+use JOOservices\CrawlerX\Dto\FetchMetaDto;
 use JOOservices\CrawlerX\Dto\SiteProfileDto;
 use JOOservices\CrawlerX\Enums\CrawlType;
 use JOOservices\CrawlerX\Exceptions\AdapterNotFoundException;
@@ -16,6 +17,7 @@ use JOOservices\CrawlerX\Exceptions\CrawlBlockedException;
 use JOOservices\CrawlerX\Exceptions\CrawlFetchException;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
 use JOOservices\CrawlerX\Exceptions\UnsupportedUrlException;
+use JOOservices\CrawlerX\Fetch\Attempt\AttemptRow;
 use JOOservices\CrawlerX\Fetch\FetchFallbackChain;
 use JOOservices\CrawlerX\Fetch\FetchPlanResolver;
 
@@ -82,7 +84,17 @@ final class CrawlOrchestrator
                 throw $exception;
             }
 
-            throw new CrawlBlockedException($exception->getMessage(), $fetch->toMeta(), $exception->getCode(), $exception);
+            $meta = $fetch->toMeta();
+            $attempts = $exception->refused === null
+                ? $meta->attempts
+                : [...$meta->attempts, AttemptRow::adapterRequest($exception->refused->status, $exception->refused->reason, $exception->refused->startedAt)];
+
+            throw new CrawlBlockedException(
+                $exception->getMessage(),
+                new FetchMetaDto($meta->methodUsed, $meta->elapsedMs, $meta->challengeDetected, $attempts),
+                $exception->getCode(),
+                $exception,
+            );
         }
     }
 }
