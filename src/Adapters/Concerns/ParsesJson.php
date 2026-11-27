@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JOOservices\CrawlerX\Adapters\Concerns;
 
-use JOOservices\CrawlerX\Fetch\Attempt\AttemptRow;
+use JOOservices\CrawlerX\Dto\RefusedRequestDto;
 use JOOservices\CrawlerX\Exceptions\CrawlBlockedException;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
 use Psr\Http\Message\ResponseInterface;
@@ -38,7 +38,7 @@ trait ParsesJson
 
     private function refused(string $message, int $status, string $reason, int $startedAt): CrawlBlockedException
     {
-        return new CrawlBlockedException($message, attempts: [AttemptRow::adapterRequest($status, $reason, $startedAt)]);
+        return new CrawlBlockedException($message, refused: new RefusedRequestDto($status, $reason, $startedAt));
     }
 
     /**

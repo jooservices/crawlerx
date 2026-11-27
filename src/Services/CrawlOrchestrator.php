@@ -17,6 +17,7 @@ use JOOservices\CrawlerX\Exceptions\CrawlBlockedException;
 use JOOservices\CrawlerX\Exceptions\CrawlFetchException;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
 use JOOservices\CrawlerX\Exceptions\UnsupportedUrlException;
+use JOOservices\CrawlerX\Fetch\Attempt\AttemptRow;
 use JOOservices\CrawlerX\Fetch\FetchFallbackChain;
 use JOOservices\CrawlerX\Fetch\FetchPlanResolver;
 
@@ -84,10 +85,13 @@ final class CrawlOrchestrator
             }
 
             $meta = $fetch->toMeta();
+            $attempts = $exception->refused === null
+                ? $meta->attempts
+                : [...$meta->attempts, AttemptRow::adapterRequest($exception->refused->status, $exception->refused->reason, $exception->refused->startedAt)];
 
             throw new CrawlBlockedException(
                 $exception->getMessage(),
-                new FetchMetaDto($meta->methodUsed, $meta->elapsedMs, $meta->challengeDetected, [...$meta->attempts, ...$exception->attempts]),
+                new FetchMetaDto($meta->methodUsed, $meta->elapsedMs, $meta->challengeDetected, $attempts),
                 $exception->getCode(),
                 $exception,
             );
