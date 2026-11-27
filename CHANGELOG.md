@@ -7,12 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.2] - 2026-11-28
+
 ### Fixed
 
 - A crawl that an adapter ends with `CrawlBlockedException` (for example a detail request that is refused after the page fetch succeeded) now carries the fetch meta and attempts of that page fetch. Before, `CrawlOrchestrator` attached them only to `CrawlParseException`, so a caller such as javmeta recorded no fetch attempt for the crawl and could not say how it got that far (JOOXCR-371).
 - The JSON adapters (`ParsesJson`) name the cause in the blocked message: `(HTTP <status>)` or `(empty body)` instead of one text for both (JOOXCR-371).
-- The browser sidecar no longer asks for IPv6 (AAAA) addresses on a host that has no IPv6 address other than loopback and link-local: the unanswered AAAA question of some Japanese sites stalled the lookups behind it for 5 to 15 s each, and the grace period alone did not help there. `CRAWLERX_DNS_IPV6` (`auto`, the default, `on` or `off`) overrides the detection (JOOXCR-727).
-- The browser sidecar no longer waits for an IPv6 (AAAA) answer that some sites' name servers never send: it looks up IPv4 and IPv6 in parallel, uses the IPv4 answer as soon as it has an address the guard accepts and waits for the IPv6 answer only `CRAWLERX_DNS_IPV6_GRACE_MS` (default 1000 ms); a host that has only IPv6 addresses still resolves. Browser fetches of idol-gakuen.jp, gravidia.jp and venus-av.com on a host without IPv6 took 60 to 120 s and mostly failed; the same fetches now finish in a few seconds (JOOXCR-727).
+
+## [1.9.1] - 2026-11-27
+
+### Fixed
+
+- The browser sidecar no longer stalls on the IPv6 (AAAA) question that some sites' name servers never answer (idol-gakuen.jp, gravidia.jp and venus-av.com took 60 to 120 s and mostly failed on a host without IPv6). A host with no IPv6 address other than loopback and link-local looks up IPv4 only; otherwise IPv4 and IPv6 are looked up in parallel and, once IPv4 has an address the guard accepts, the IPv6 answer is waited for only `CRAWLERX_DNS_IPV6_GRACE_MS` (default 1000 ms). A host that has only IPv6 addresses still resolves. `CRAWLERX_DNS_IPV6` (`auto`, the default, `on` or `off`) overrides the detection (JOOXCR-727).
 - The browser fetch no longer clicks a content link that merely contains the word "enter" while looking for an age gate: the generic `Enter` selectors match the whole text, and a click that takes the requested page to another path returns to the requested page. JavBus performer pages whose filmography has a title such as "Entertainer" or "Centerfolds" were returned as that movie page and rejected with "performer detail is missing a valid external ID" (JOOXCR-522).
 
 ### Changed
@@ -398,6 +404,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   implementation (Jable performer listing was an alias to the movie parser).
 - Catalog `external_id` for HEYZO/FC2 included the code prefix inconsistently.
 
+[1.9.2]: https://github.com/jooservices/crawlerx/releases/tag/v1.9.2
+[1.9.1]: https://github.com/jooservices/crawlerx/releases/tag/v1.9.1
 [1.9.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.9.0
 [1.8.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.8.0
 [1.7.1]: https://github.com/jooservices/crawlerx/releases/tag/v1.7.1
@@ -408,6 +416,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [1.2.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.2.0
 [1.1.0]: https://github.com/jooservices/crawlerx/releases/tag/v1.1.0
 
+[1.9.2...1.9.1]: https://github.com/jooservices/crawlerx/compare/v1.9.1...v1.9.2
+[1.9.1...1.9.0]: https://github.com/jooservices/crawlerx/compare/v1.9.0...v1.9.1
 [1.9.0...1.8.0]: https://github.com/jooservices/crawlerx/compare/v1.8.0...v1.9.0
 [1.8.0...1.7.1]: https://github.com/jooservices/crawlerx/compare/v1.7.1...v1.8.0
 [1.7.1...1.7.0]: https://github.com/jooservices/crawlerx/compare/v1.7.0...v1.7.1
