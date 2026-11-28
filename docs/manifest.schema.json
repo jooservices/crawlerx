@@ -1,0 +1,214 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://github.com/jooservices/crawlerx/blob/develop/docs/manifest.schema.json",
+    "title": "CrawlerX adapter manifest",
+    "description": "The contract of src/Adapters/<Name>/manifest.json. Checked for every adapter by tests/Unit/Tools/ManifestSchemaContractTest.php; the rules that need the code base (the adapter class exists, slugs are unique, the base URL has no credentials) stay in tools/check-manifests.php.",
+    "type": "object",
+    "required": ["slug", "name", "version", "description", "author", "requires", "adapter", "base_url", "pagination", "runtime", "type"],
+    "additionalProperties": false,
+    "properties": {
+        "slug": {
+            "description": "The site identifier used in URLs, settings and metrics.",
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]*$"
+        },
+        "name": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+        "description": {"type": "string", "minLength": 1},
+        "author": {"type": "string", "minLength": 1},
+        "type": {"const": "site"},
+        "base_url": {
+            "description": "An absolute http(s) URL of the site, without credentials, query or fragment.",
+            "type": "string",
+            "pattern": "^https?://[^\\s/?#@]+(/[^\\s?#]*)?$"
+        },
+        "requires": {
+            "type": "object",
+            "required": ["php"],
+            "additionalProperties": false,
+            "properties": {
+                "php": {"type": "string", "minLength": 1},
+                "xcrawlerii": {"type": "string", "minLength": 1}
+            }
+        },
+        "adapter": {
+            "type": "object",
+            "required": ["class", "capabilities"],
+            "additionalProperties": false,
+            "properties": {
+                "class": {"type": "string", "pattern": "^JOOservices\\\\CrawlerX\\\\Adapters\\\\"},
+                "capabilities": {
+                    "description": "The crawl types the adapter supports (the values of App CrawlType).",
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {"$ref": "#/$defs/crawlType"}
+                }
+            }
+        },
+        "pagination": {
+            "type": "object",
+            "required": ["strategy"],
+            "additionalProperties": false,
+            "properties": {
+                "strategy": {"enum": ["query", "path", "segment", "static", "none"]},
+                "param": {"type": "string", "minLength": 1}
+            }
+        },
+        "config_schema": {
+            "description": "The settings the adapter exposes, all operational.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": ["key", "type", "default", "tier", "label"],
+                "additionalProperties": false,
+                "properties": {
+                    "key": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+                    "type": {"enum": ["int", "bool"]},
+                    "default": {"type": ["integer", "boolean"]},
+                    "tier": {"const": "operational"},
+                    "label": {"type": "string", "minLength": 1}
+                }
+            }
+        },
+        "runtime": {
+            "type": "object",
+            "required": ["fetch", "targetProfiles", "fixtureSamples", "defaultCrawlConfig", "defaultThrottle", "playwrightFetchEnabled"],
+            "additionalProperties": false,
+            "properties": {
+                "fetch": {
+                    "type": "object",
+                    "required": ["profile", "readyMarkers", "soft404Markers"],
+                    "additionalProperties": false,
+                    "properties": {
+                        "profile": {"enum": ["adaptive", "browser_likely", "http_only"]},
+                        "readyMarkers": {
+                            "description": "Per crawl type, the selectors that show the page is ready.",
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "listing": {"$ref": "#/$defs/stringList"},
+                                "detail": {"$ref": "#/$defs/stringList"},
+                                "search": {"$ref": "#/$defs/stringList"},
+                                "gallery": {"$ref": "#/$defs/stringList"},
+                                "performer_listing": {"$ref": "#/$defs/stringList"},
+                                "performer_detail": {"$ref": "#/$defs/stringList"},
+                                "performer_search": {"$ref": "#/$defs/stringList"}
+                            }
+                        },
+                        "soft404Markers": {"$ref": "#/$defs/stringList"},
+                        "chain": {
+                            "type": "array",
+                            "minItems": 1,
+                            "uniqueItems": true,
+                            "items": {"enum": ["http", "curl_impersonate", "playwright", "playwright_stealth", "chrome_stealth", "puppeteer_stealth", "flaresolverr"]}
+                        },
+                        "settleAfterReadyMs": {"type": "integer", "minimum": 0}
+                    }
+                },
+                "targetProfiles": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "object",
+                        "required": ["label"],
+                        "additionalProperties": false,
+                        "properties": {
+                            "label": {"type": "string", "minLength": 1},
+                            "url": {"type": "string", "minLength": 1},
+                            "url_template": {"type": "string", "minLength": 1},
+                            "date_format": {"type": "string", "minLength": 1}
+                        },
+                        "anyOf": [{"required": ["url"]}, {"required": ["url_template"]}]
+                    }
+                },
+                "defaultTargets": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["url_type", "url", "paginated", "loop", "priority"],
+                        "additionalProperties": false,
+                        "properties": {
+                            "url_type": {"type": "string", "minLength": 1},
+                            "url": {"type": "string", "minLength": 1},
+                            "paginated": {"type": "boolean"},
+                            "loop": {"type": "boolean"},
+                            "priority": {"type": "integer"},
+                            "max_pages": {"type": "integer", "minimum": 1},
+                            "optional": {"type": "boolean"},
+                            "status": {"enum": ["paused"]}
+                        }
+                    }
+                },
+                "fixtureSamples": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "object",
+                        "required": ["url", "name", "type"],
+                        "additionalProperties": false,
+                        "properties": {
+                            "url": {"type": "string", "minLength": 1},
+                            "name": {"type": "string", "minLength": 1},
+                            "type": {"enum": ["listing", "detail", "search", "gallery", "performer_listing", "performer_detail", "performer_search", "supporting"]},
+                            "followUps": {
+                                "type": "array",
+                                "minItems": 1,
+                                "items": {
+                                    "type": "object",
+                                    "required": ["url", "name"],
+                                    "additionalProperties": false,
+                                    "properties": {
+                                        "url": {"type": "string", "minLength": 1},
+                                        "name": {"type": "string", "minLength": 1}
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "defaultCrawlConfig": {
+                    "description": "The default value of each setting of config_schema.",
+                    "type": "object",
+                    "additionalProperties": {"type": ["integer", "boolean"]}
+                },
+                "defaultThrottle": {
+                    "type": "object",
+                    "required": ["default_gap_seconds", "min_gap_seconds", "max_gap_seconds"],
+                    "additionalProperties": false,
+                    "properties": {
+                        "default_gap_seconds": {"type": "number", "minimum": 0},
+                        "min_gap_seconds": {"type": "number", "minimum": 0},
+                        "max_gap_seconds": {"type": "number", "minimum": 0}
+                    }
+                },
+                "browserHeaders": {
+                    "type": "object",
+                    "additionalProperties": {"type": "string"}
+                },
+                "playwrightFetchEnabled": {"type": "boolean"},
+                "queueSupervisor": {
+                    "type": "object",
+                    "required": ["minProcesses", "maxProcesses"],
+                    "additionalProperties": false,
+                    "properties": {
+                        "minProcesses": {"type": "integer", "minimum": 1},
+                        "maxProcesses": {"type": "integer", "minimum": 1},
+                        "balance": {"type": "string", "minLength": 1},
+                        "nice": {"type": "integer"},
+                        "memory": {"type": "integer", "minimum": 1},
+                        "timeout": {"type": "integer", "minimum": 1},
+                        "wait": {"type": "integer", "minimum": 0}
+                    }
+                }
+            }
+        }
+    },
+    "$defs": {
+        "crawlType": {"enum": ["listing", "detail", "search", "gallery", "performer_listing", "performer_detail", "performer_search"]},
+        "stringList": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"type": "string", "minLength": 1}
+        }
+    }
+}
