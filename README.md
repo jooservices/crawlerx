@@ -5,7 +5,7 @@
 [![Quality Gate (master)](https://sonarcloud.io/api/project_badges/measure?project=jooservices_crawlerx&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=jooservices_crawlerx)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/jooservices/crawlerx/badge)](https://securityscorecards.dev/viewer/?uri=github.com/jooservices/crawlerx)
 [![PHP Version](https://img.shields.io/badge/PHP-8.5%2B-blue.svg)](https://www.php.net/)
-[![Release 1.8.0](https://img.shields.io/badge/release-1.8.0-blue.svg)](CHANGELOG.md)
+[![Release 1.9.2](https://img.shields.io/badge/release-1.9.2-blue.svg)](CHANGELOG.md)
 [![GitHub Release](https://img.shields.io/github/v/release/jooservices/crawlerx?display_name=tag)](https://github.com/jooservices/crawlerx/releases)
 [![Packagist Version](https://img.shields.io/packagist/v/jooservices/crawlerx)](https://packagist.org/packages/jooservices/crawlerx)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -26,7 +26,7 @@ echo $item->meta['movie']['code'];              // YMDS-282
 
 > [!NOTE]
 > Packagist `v1.0.0` is the retired Laravel implementation. This
-> framework-agnostic rebuild is released as `1.8.0` and provides the API
+> framework-agnostic rebuild is released as `1.9.2` and provides the API
 > documented here.
 
 ## Features
@@ -71,10 +71,10 @@ The path installation uses this checkout's actual requirements, including
 
 ### Tagged release
 
-Released as `1.8.0` — install from Packagist:
+Released as `1.9.2` — install from Packagist:
 
 ```bash
-composer require jooservices/crawlerx:^1.8
+composer require jooservices/crawlerx:^1.9
 ```
 
 The retired `v1.0.0` is the previous Laravel implementation and does not
@@ -461,7 +461,15 @@ COMPOSE_FILE=docker-compose.yml:docker-compose.no-ports.yml make fetch-up
 The browser sidecar sends all browser egress through a loopback-only proxy and
 rejects private, loopback, link-local, and metadata addresses, including every
 redirect hop. It resolves DNS, drops loopback/private/unspecified decoy answers,
-and pins only the remaining public addresses before connecting. Hosts with no
+and pins only the remaining public addresses before connecting. IPv4 and IPv6
+are looked up in parallel, and the IPv4 answer is used as soon as it has an
+address the guard accepts (a blocked decoy such as 127.0.0.1 does not count): the IPv6 answer is waited for only `CRAWLERX_DNS_IPV6_GRACE_MS`
+milliseconds (default `1000`; any value that is not a whole number is
+ignored), because some sites' name servers never answer the IPv6 question. On a
+host with no IPv6 address other than loopback and link-local the IPv6 question
+is not asked at all; set `CRAWLERX_DNS_IPV6` to `on` or `off` to override that
+detection (default `auto`). A host with no IPv4 address waits for the IPv6
+answer in full. Hosts with no
 public address left (or a failed DNS lookup) are blocked. Set
 `CRAWLERX_BROWSER_ALLOWED_HOSTS` on the `node` service to restrict fetches
 further; use comma-separated exact hosts or `*.example.org` patterns. The
@@ -471,11 +479,11 @@ blocked by this policy return the non-retryable `ssrf_blocked` error (with
 `ssrfReason` when known) and stop the fetch fallback chain.
 
 The browser image is built with `CRAWLERX_VERSION` set to the matching
-CrawlerX package release (for example, `1.8.0`); the sidecar reports that value
+CrawlerX package release (for example, `1.9.2`); the sidecar reports that value
 in its health response. With Compose, set it when building:
 
 ```bash
-CRAWLERX_VERSION=1.8.0 docker compose build node
+CRAWLERX_VERSION=1.9.2 docker compose build node
 ```
 
 Compose's local image name remains

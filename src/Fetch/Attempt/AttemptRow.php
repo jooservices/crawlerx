@@ -12,6 +12,19 @@ use JOOservices\CrawlerX\Enums\FetchMethod;
 final class AttemptRow
 {
     /**
+     * The row of a request an adapter sent itself (for example the JSON of a movie) that the site refused or answered with
+     * nothing, so the cause is recorded next to the attempts of the page fetch.
+     *
+     * @return array{started_at: string, duration_ms: int, http_status: ?int, cf_mitigated: ?string, outcome: string, error_code: ?string, method: string, elapsed_ms: int, status: int, challenge: bool, ok: bool, error?: string|null}
+     */
+    public static function adapterRequest(int $status, string $reason, int $started): array
+    {
+        $elapsed = max(0, (int) round(microtime(true) * 1000) - $started);
+
+        return self::build(FetchMethod::Http, $elapsed, $status, false, false, $reason, started: $started);
+    }
+
+    /**
      * @param array<string, list<string>> $headers
      * @return array{started_at: string, duration_ms: int, http_status: ?int, cf_mitigated: ?string, outcome: string, error_code: ?string, method: string, elapsed_ms: int, status: int, challenge: bool, ok: bool, error?: string|null}
      */

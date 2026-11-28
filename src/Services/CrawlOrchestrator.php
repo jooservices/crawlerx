@@ -9,11 +9,15 @@ use JOOservices\CrawlerX\Dto\CrawlItemResultDto;
 use JOOservices\CrawlerX\Dto\CrawlListResultDto;
 use JOOservices\CrawlerX\Dto\CrawlOptionsDto;
 use JOOservices\CrawlerX\Dto\CrawlRequestDto;
+use JOOservices\CrawlerX\Dto\FetchMetaDto;
 use JOOservices\CrawlerX\Dto\SiteProfileDto;
 use JOOservices\CrawlerX\Enums\CrawlType;
 use JOOservices\CrawlerX\Exceptions\AdapterNotFoundException;
+use JOOservices\CrawlerX\Exceptions\CrawlBlockedException;
+use JOOservices\CrawlerX\Exceptions\CrawlFetchException;
 use JOOservices\CrawlerX\Exceptions\CrawlParseException;
 use JOOservices\CrawlerX\Exceptions\UnsupportedUrlException;
+use JOOservices\CrawlerX\Fetch\Attempt\AttemptRow;
 use JOOservices\CrawlerX\Fetch\FetchFallbackChain;
 use JOOservices\CrawlerX\Fetch\FetchPlanResolver;
 
@@ -73,6 +77,24 @@ final class CrawlOrchestrator
             return $this->service->site($classified['slug'])->crawl($request)->withFetch($fetch->toMeta());
         } catch (CrawlParseException $exception) {
             throw new CrawlParseException($exception->getMessage(), $exception->getCode(), $exception, $fetch->toMeta());
+        } catch (CrawlBlockedException $exception) {
+            // An adapter that is refused on its own request knows nothing about the page fetch that came before it. Without
+            // this the attempts of that fetch are lost and the caller cannot see how the crawl got that far.
+            if ($exception instanceof CrawlFetchException || $exception->fetch !== null) {
+                throw $exception;
+            }
+
+            $meta = $fetch->toMeta();
+            $attempts = $exception->refused === null
+                ? $meta->attempts
+                : [...$meta->attempts, AttemptRow::adapterRequest($exception->refused->status, $exception->refused->reason, $exception->refused->startedAt)];
+
+            throw new CrawlBlockedException(
+                $exception->getMessage(),
+                new FetchMetaDto($meta->methodUsed, $meta->elapsedMs, $meta->challengeDetected, $attempts),
+                $exception->getCode(),
+                $exception,
+            );
         }
     }
 }

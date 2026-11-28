@@ -52,4 +52,50 @@ final class CrawlOrchestratorTest extends CrawlerXTestCase
         self::assertFalse($outcome->ok);
         self::assertSame(CrawlErrorCode::UnsupportedUrl, $outcome->error?->code);
     }
+
+    public function test_a_blocked_adapter_request_keeps_the_fetch_attempts_and_names_the_status(): void
+    {
+        FixtureResponder::for('GET', 'https://www.muramura.tv/movies/103126_1273/')->body($this->moviePage());
+        FixtureResponder::for('GET', 'https://www.muramura.tv/dyn/phpauto/movie_details/movie_id/103126_1273.json')->body('{}', 403);
+
+        $outcome = CrawlerXFactory::create()->url('https://www.muramura.tv/movies/103126_1273/')->type(CrawlType::Detail)->tryCrawl();
+
+        self::assertFalse($outcome->ok);
+        self::assertSame(CrawlErrorCode::Blocked, $outcome->error?->code);
+        self::assertStringContainsString('HTTP 403', (string) $outcome->error?->message);
+        self::assertNotNull($outcome->error?->fetch);
+        self::assertNotSame([], $outcome->error->fetch->attempts);
+        self::assertSame('ok', $outcome->error->fetch->attempts[0]['outcome']);
+        self::assertCount(2, $outcome->error->fetch->attempts);
+        $refused = $outcome->error->fetch->attempts[1];
+        self::assertSame('http', $refused['method']);
+        self::assertSame('error', $refused['outcome']);
+        self::assertSame(403, $refused['http_status']);
+        self::assertSame('http_403', $refused['error_code']);
+        self::assertSame('HTTP 403', $refused['error']);
+        self::assertGreaterThanOrEqual(0, $refused['duration_ms']);
+    }
+
+    public function test_a_blocked_adapter_request_with_an_empty_body_says_so(): void
+    {
+        FixtureResponder::for('GET', 'https://www.muramura.tv/movies/103126_1273/')->body($this->moviePage());
+        FixtureResponder::for('GET', 'https://www.muramura.tv/dyn/phpauto/movie_details/movie_id/103126_1273.json')->body('', 200);
+
+        $outcome = CrawlerXFactory::create()->url('https://www.muramura.tv/movies/103126_1273/')->type(CrawlType::Detail)->tryCrawl();
+
+        self::assertSame(CrawlErrorCode::Blocked, $outcome->error?->code);
+        self::assertStringContainsString('empty body', (string) $outcome->error?->message);
+        self::assertNotNull($outcome->error?->fetch);
+        self::assertCount(2, $outcome->error->fetch->attempts);
+        $empty = $outcome->error->fetch->attempts[1];
+        self::assertSame('error', $empty['outcome']);
+        self::assertSame(200, $empty['http_status']);
+        self::assertSame('fetch_error', $empty['error_code']);
+        self::assertSame('empty body', $empty['error']);
+    }
+
+    private function moviePage(): string
+    {
+        return '<html><head><title>Muramura</title></head><body>' . str_repeat('movie ', 400) . '</body></html>';
+    }
 }

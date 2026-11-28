@@ -2,7 +2,7 @@
 
 A new source touches only its own folders plus one CHANGELOG line. No shared test or doc needs an edit: the shared tests and the adapter-count assertions read `src/Adapters/*/manifest.json`.
 
-1. Create `src/Adapters/<Site>/` with the adapter, its types and `manifest.json` (copy a similar adapter's manifest).
+1. Create `src/Adapters/<Site>/` with the adapter, its types and `manifest.json` (copy a similar adapter's manifest; it must satisfy the contract in `docs/manifest.schema.json`, which `tests/Unit/Tools/ManifestSchemaContractTest.php` checks for every adapter and reports by adapter and rule).
 2. Capture fixtures under `tests/Fixtures/<slug>/` (see [tools/fixtures/README.md](../tools/fixtures/README.md)) and add adapter tests under `tests/Unit/Adapters/<Site>/`.
 3. List every fixture in `runtime.fixtureSamples` (`url`, `name`, `type`). `AllAdaptersCrawlTest` and `ManifestFixtureExecutorTest` crawl each non-`supporting`/`taxonomy` sample through its fixture; `supporting` and `taxonomy` samples are only registered as extra responses. A sample whose fixture file is missing is skipped by the shared tests, so check that every `name` matches a file.
 4. If crawling a sample requests other pages (for example a date index that links to a date-listing page), declare them on that sample:
