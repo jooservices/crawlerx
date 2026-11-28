@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `docs/manifest.schema.json` writes the adapter manifest contract as a JSON Schema (keys, types, required keys, the slug pattern, the capability, pagination and fetch values), and `tests/Unit/Tools/ManifestSchemaContractTest.php` validates every `src/Adapters/*/manifest.json` against it and names the adapter, the path and the violated rule. Test support only, no change to any manifest or adapter (JOOXCR-513).
+
 ### Fixed
 
 - A request an adapter sends itself and the site refuses or answers with nothing (the 1Pondo-family listing and detail JSON) is now an attempt of its own in the fetch meta of the blocked error: method `http`, the HTTP status, the error code `http_<status>` or `fetch_error`, the cause (`HTTP <status>` or `empty body`) and its duration. Before, the cause was only in the error message, so a caller that records attempts had no row for the request that failed (JOOXCR-371).
