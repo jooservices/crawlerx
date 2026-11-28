@@ -27,6 +27,20 @@ from that layer; Adapters must not depend directly on Fetch. CI runs
 [`CONTRIBUTING.md`](../CONTRIBUTING.md) and [ADR-005](decisions/005-deptrac-report-only.md)
 for the current enforcement and the superseded report-only decision.
 
+## Decisions
+
+The architecture decisions are recorded as ADRs in [`docs/decisions/`](decisions/):
+
+| ADR | Decision | Status |
+| --- | --- | --- |
+| [ADR-001](decisions/001-concern-traits-per-responsibility.md) | Keep shared adapter concerns single-purpose; a new helper is a new trait file with its own test | Accepted |
+| [ADR-002](decisions/002-robots-default-on.md) | robots.txt is respected by default | Accepted |
+| [ADR-003](decisions/003-proxy-opt-in.md) | Outbound HTTP proxies are opt-in | Accepted |
+| [ADR-004](decisions/004-response-cache-default-off.md) | The response cache is off by default | Accepted |
+| [ADR-005](decisions/005-deptrac-report-only.md) | Deptrac was report-only at first; CI now enforces it through the required `Coverage upload` check | Superseded |
+| [ADR-006](decisions/006-complexity-and-duplication-gates.md) | Gate cyclomatic complexity and duplication with a shrinking baseline | Proposed |
+| [ADR-007](decisions/007-full-coverage-for-new-code.md) | Require full line and branch coverage for new and changed code | Proposed |
+
 ## Request lifecycle
 
 `CrawlerX::url()` delegates to the factory and returns a clone-on-write request
